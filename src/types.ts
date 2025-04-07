@@ -1,0 +1,58 @@
+export interface HistoryItemProps {
+  item: HistoryItem;
+  index: number;
+  onRestore: (item: HistoryItem) => void;
+  isDarkMode: boolean;
+}
+
+export interface HistoryItem {
+  type: 'json' | 'json_vast';
+  content?: any;
+  jsonContent?: any;
+  vastContent?: string;
+  vastPath?: string;
+  vastUrl?: string;
+  timestamp: number;
+}
+
+export interface SearchPanelProps {
+  targetRef: React.RefObject<HTMLDivElement | null>;
+  contentType: string;
+  isDarkMode: boolean;
+}
+
+export interface SearchResult {
+  element: HTMLElement;
+  rowIndex: number;
+}
+
+export interface JsonVastExplorerProps {
+  isDarkMode: boolean;
+  history: HistoryItem[];
+  setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
+  showHistory: boolean;
+  setShowHistory: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export interface JsonDiffInspectorProps {
+  isDarkMode: boolean;
+}
+
+export interface TabNavigationProps {
+  activeTab: string;
+  setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  isDarkMode: boolean;
+}
+
+export interface StructuralDifference {
+  path: string;
+  type: 'missing_in_right' | 'missing_in_left';
+  description: string;
+}
+
+export interface ValueDifference {
+  path: string;
+  leftValue: any;
+  rightValue: any;
+  description: string;
+} 
