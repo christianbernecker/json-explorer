@@ -1,37 +1,33 @@
-<<<<<<< HEAD
-name: Deploy to Staging
+name: Deploy to Staging via Webhook
 
 on:
   push:
-    branches: [ staging ]
-  workflow_dispatch:
+    branches:
+      - staging
+      - master-r6p9cm0bf
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm ci
-        
-      - name: Copy staging environment variables
-        run: cp .env.staging .env.production
         
       - name: Build
         run: npm run build
         
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-        
-      - name: Deploy to Staging
+      # Direkter Webhook-Aufruf statt Vercel CLI für zuverlässigeres Deployment
+      - name: Trigger Vercel Deployment Webhook
         run: |
-          vercel --local-config=vercel.staging.json --token=${{ secrets.VERCEL_TOKEN }} --confirm --name adtech-toolbox-staging -e NODE_ENV=staging 
-=======
- 
->>>>>>> master-r6p9cm0bf
+          echo "Triggering Vercel Deployment via Webhook..."
+          curl -X POST https://api.vercel.com/v1/integrations/deploy/prj_aiXcDB1YBSVhM9MdaxCcs6Cg8zq0/WhSr1Ws0SO
+          echo "Deployment triggered successfully!" 
