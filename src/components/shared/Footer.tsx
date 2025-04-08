@@ -26,7 +26,7 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
       )}
       <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
         <div className="text-sm mb-2 md:mb-0">
-          &copy; {new Date().getFullYear()} JSON Tools - by <a href="mailto:info@adtech-toolbox.com" className={`hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Christian Bernecker</a>
+          &copy; {new Date().getFullYear()} JSON Tools <span className="mx-1">|</span> <span className="font-semibold">v1.0.0</span> <span className="mx-1">|</span> by <a href="mailto:info@adtech-toolbox.com" className={`hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Christian Bernecker</a>
           {isStaging && <span className="ml-2 px-2 py-1 text-xs rounded-full bg-yellow-500 text-black font-bold">STAGING</span>}
         </div>
         <div className="flex space-x-6 text-xs">
