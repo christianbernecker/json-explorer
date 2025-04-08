@@ -156,7 +156,7 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
         </h3>
         <p className="mt-2">We may update this privacy policy from time to time to reflect changes in our practices or for legal reasons. 
           We will notify you of any material changes by posting the new privacy policy on this page.</p>
-        <p className="mt-2">Last updated: {new Date().toLocaleDateString()}</p>
+        <p className="mt-2">Last updated: {new Date().toISOString().split('T')[0]}</p>
       </div>
     </div>
   );
