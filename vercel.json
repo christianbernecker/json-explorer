@@ -1,24 +1,15 @@
 {
   "version": 2,
-  "routes": [
-    { 
-      "src": "/json-explorer", 
-      "dest": "/json-explorer/index.html" 
-    },
-    { 
-      "src": "/json-explorer/(.*)", 
-      "dest": "/json-explorer/$1" 
-    },
+  "rewrites": [
+    { "source": "/json-explorer", "destination": "/" },
+    { "source": "/json-explorer/(.*)", "destination": "/$1" }
+  ],
+  "headers": [
     {
-      "handle": "filesystem"
-    },
-    { 
-      "src": "/json-explorer/(.*).(js|css|ico|jpg|jpeg|png|gif|svg|webp)",
-      "dest": "/json-explorer/$1.$2"
-    },
-    { 
-      "src": "/json-explorer/(.*)", 
-      "dest": "/json-explorer/index.html" 
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "s-maxage=0" }
+      ]
     }
   ]
 } 

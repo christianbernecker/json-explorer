@@ -19,9 +19,8 @@ const App = () => {
     localStorage.setItem('jsonTools_darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  // Use basename="/json-explorer" for the router
   return (
-    <Router basename="/json-explorer">
+    <Router>
       <Routes>
         <Route path="/" element={<JsonToolsApp parentIsDarkMode={isDarkMode} setParentIsDarkMode={setIsDarkMode} />} />
         <Route path="/imprint" element={<Imprint isDarkMode={isDarkMode} />} />
