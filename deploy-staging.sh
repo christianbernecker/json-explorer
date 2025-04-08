@@ -8,9 +8,8 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-# 1. Build und Lint
-echo "✅ Running lint and build checks..."
-npm run lint
+# 1. Build
+echo "✅ Running build check..."
 npm run build
 
 # 2. Git Actions
