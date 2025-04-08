@@ -12,10 +12,7 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
           1. Data Controller
         </h3>
         <p className="mt-2">
-          Christian Bernecker<br />
-          Musterstraße 123<br />
-          12345 Musterstadt<br />
-          Germany<br />
+          JSON Tools<br />
           Email: <a href="mailto:info@adtech-toolbox.com" className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'} hover:underline`}>
             info@adtech-toolbox.com
           </a>
@@ -31,12 +28,12 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
           For all data protection related inquiries, please contact:
         </p>
         <p className="mt-1">
-          Email: <a href="mailto:privacy@adtech-toolbox.com" className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'} hover:underline`}>
-            privacy@adtech-toolbox.com
+          Email: <a href="mailto:info@adtech-toolbox.com" className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'} hover:underline`}>
+            info@adtech-toolbox.com
           </a>
         </p>
       </div>
-      
+
       <div>
         <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
           3. Data Processing and Legal Basis
@@ -148,11 +145,8 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
         </h3>
         <p className="mt-2">
           You have the right to lodge a complaint with a supervisory authority if you believe that the processing of your 
-          personal data violates the GDPR. The responsible supervisory authority for data protection issues is:
-        </p>
-        <p className="mt-1">
-          [Name and contact details of the responsible data protection authority in Germany, 
-          e.g., the data protection authority of the federal state where your business is located]
+          personal data violates the GDPR. The responsible supervisory authority for data protection issues is the data 
+          protection authority in your country of residence or the location of the alleged infringement.
         </p>
       </div>
       
