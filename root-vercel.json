@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "routes": [
+    { 
+      "src": "/", 
+      "status": 302,
+      "headers": { "Location": "/json-explorer" }
+    }
+  ]
+} 

@@ -6,12 +6,15 @@ export interface HistoryItemProps {
 }
 
 export interface HistoryItem {
-  type: 'json' | 'json_vast';
+  type: 'json' | 'json_vast' | 'json_diff';
   content?: any;
   jsonContent?: any;
   vastContent?: string;
   vastPath?: string;
   vastUrl?: string;
+  leftJson?: string;
+  rightJson?: string;
+  comparisonMode?: string;
   timestamp: number;
 }
 
@@ -36,6 +39,10 @@ export interface JsonVastExplorerProps {
 
 export interface JsonDiffInspectorProps {
   isDarkMode: boolean;
+  history: HistoryItem[];
+  setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
+  showHistory: boolean;
+  setShowHistory: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export interface TabNavigationProps {
