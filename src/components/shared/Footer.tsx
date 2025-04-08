@@ -1,6 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+// Leeres Export-Statement zur Sicherstellung, dass die Datei als Modul behandelt wird
+export {};
+
 interface FooterProps {
   isDarkMode: boolean;
 }
