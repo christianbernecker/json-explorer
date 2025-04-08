@@ -1,10 +1,18 @@
 {
   "version": 2,
-  "rewrites": [
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/json-explorer", "destination": "/index.html" },
-    { "source": "/json-explorer/(.*)", "destination": "/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "build" }
+    }
+  ],
+  "routes": [
+    { "src": "^/$", "status": 307, "headers": { "Location": "/json-explorer" } },
+    { "handle": "filesystem" },
+    { "src": "/json-explorer", "dest": "/" },
+    { "src": "/json-explorer/(.*)", "dest": "/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "headers": [
     {

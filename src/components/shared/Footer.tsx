@@ -19,14 +19,6 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
     <footer className={`mt-auto py-4 border-t ${
       isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-600'
     }`}>
-      {/* Staging Environment Banner */}
-      {isStaging && (
-        <div className={`text-center py-1 mb-2 font-bold ${
-          isDarkMode ? 'bg-yellow-600 text-black' : 'bg-yellow-300 text-black'
-        }`}>
-          STAGING ENVIRONMENT
-        </div>
-      )}
       <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
         <div className="text-sm mb-2 md:mb-0">
           &copy; {new Date().getFullYear()} JSON Tools <span className="mx-1">|</span> <span className="font-semibold">v1.0.0</span> <span className="mx-1">|</span> by <a href="mailto:info@adtech-toolbox.com" className={`hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Christian Bernecker</a>
