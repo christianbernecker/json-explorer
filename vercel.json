@@ -12,14 +12,10 @@
     { "handle": "filesystem" },
     { "src": "/json-explorer", "dest": "/" },
     { "src": "/json-explorer/(.*)", "dest": "/$1" },
-    { "src": "/(.*)", "dest": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "s-maxage=0" }
-      ]
+    { 
+      "src": "/(.*)", 
+      "dest": "/index.html",
+      "headers": { "Cache-Control": "s-maxage=0" }
     }
   ]
 } 
