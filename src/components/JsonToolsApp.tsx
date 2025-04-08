@@ -5,7 +5,7 @@ import {
 } from '../types';
 import JsonVastExplorer from './JsonVastExplorer';
 import JsonDiffInspector from './JsonDiffInspector';
-import { Footer } from './shared';
+import { Footer } from './common';
 
 // App Tab Navigation
 const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationProps) => {
