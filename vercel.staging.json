@@ -13,5 +13,9 @@
     { "src": "/json-explorer", "dest": "/" },
     { "src": "/json-explorer/(.*)", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
-  ]
+  ],
+  "github": {
+    "enabled": true,
+    "silent": true
+  }
 } 

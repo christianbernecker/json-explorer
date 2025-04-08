@@ -1,6 +1,9 @@
-# JSON Explorer
+# JSON Explorer & Diff Tool
 
-A tool for exploring, formatting, and manipulating JSON data.
+This tool provides several features for working with JSON:
+- JSON validation and formatting
+- JSON diff comparison
+- VAST ad tag exploration
 
 ## Features
 
@@ -26,6 +29,40 @@ npm install
 ```bash
 npm start
 ```
+
+## Deployment Process
+
+The application uses a two-branch strategy:
+- `main` branch for production (www.adtech-toolbox.com)
+- `staging` branch for staging (staging.adtech-toolbox.com)
+
+### Deployment Options
+
+1. **Manual Production Deployment**
+   ```
+   npm run deploy
+   ```
+
+2. **Manual Staging Deployment**
+   ```
+   npm run deploy:staging
+   ```
+
+3. **Automated Deployments**
+   - Pushing to `staging` branch automatically deploys to staging environment
+   - Pushing to `main` branch updates the production environment
+
+## Configuration
+
+- The app is configured with the base path `/json-explorer`
+- Routing is handled by React Router with the appropriate base path
+- Vercel configuration is in `vercel.json` with proper routes for SPA
+
+## Project Structure
+
+- `src/components/` - React components
+- `src/pages/` - Page components for routes
+- `public/` - Static assets
 
 ## Technologies
 

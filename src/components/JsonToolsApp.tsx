@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   HistoryItem as HistoryItemType, 
   TabNavigationProps
@@ -58,6 +58,8 @@ interface JsonToolsAppProps {
 function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppProps) {
   // Shared state between tools
   const [activeTab, setActiveTab] = useState('explorer');
+  
+  // Refactor dark mode state management to avoid flickering
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Use parent dark mode state if available, otherwise use local storage
     if (parentIsDarkMode !== undefined) {
@@ -67,20 +69,27 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
     return savedDarkMode ? JSON.parse(savedDarkMode) : false;
   });
   
-  // Effect to sync dark mode with parent
+  // Create a memoized toggle function to reduce renders
+  const toggleDarkMode = useCallback(() => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    
+    // Synchronize with parent if available
+    if (setParentIsDarkMode) {
+      setParentIsDarkMode(newDarkMode);
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('jsonTools_darkMode', JSON.stringify(newDarkMode));
+  }, [isDarkMode, setParentIsDarkMode]);
+  
+  // Sync with parent changes (one-way from parent to local)
   useEffect(() => {
     if (parentIsDarkMode !== undefined && parentIsDarkMode !== isDarkMode) {
       setIsDarkMode(parentIsDarkMode);
+      localStorage.setItem('jsonTools_darkMode', JSON.stringify(parentIsDarkMode));
     }
   }, [parentIsDarkMode, isDarkMode]);
-
-  // Effect to sync dark mode back to parent
-  useEffect(() => {
-    if (setParentIsDarkMode && isDarkMode !== parentIsDarkMode) {
-      setParentIsDarkMode(isDarkMode);
-    }
-    localStorage.setItem('jsonTools_darkMode', JSON.stringify(isDarkMode));
-  }, [isDarkMode, setParentIsDarkMode, parentIsDarkMode]);
   
   // Split histories for both tools
   const [vastExplorerHistory, setVastExplorerHistory] = useState<HistoryItemType[]>(() => {
@@ -114,7 +123,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
         switch (e.key.toLowerCase()) {
           case 'd': // Toggle Dark Mode
             e.preventDefault();
-            setIsDarkMode((prev: boolean) => !prev);
+            toggleDarkMode();
             break;
           case 'h': // Show/hide history for active tab
             e.preventDefault();
@@ -142,10 +151,10 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeTab]);
+  }, [activeTab, toggleDarkMode]);
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-200`}>
+    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-75`}>
       <div className="flex-grow p-6 w-full max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -198,7 +207,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
           )}
           
           <button 
-            onClick={() => setIsDarkMode((prev: boolean) => !prev)}
+            onClick={toggleDarkMode}
             className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} transition flex items-center ml-auto`}
             title="Toggle Dark Mode (Ctrl+Shift+D)"
           >

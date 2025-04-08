@@ -19,8 +19,11 @@ const App = () => {
     localStorage.setItem('jsonTools_darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
+  // Get the basename from the homepage value in package.json
+  const basename = process.env.PUBLIC_URL || '';
+
   return (
-    <Router>
+    <Router basename={basename}>
       <Routes>
         <Route path="/" element={<JsonToolsApp parentIsDarkMode={isDarkMode} setParentIsDarkMode={setIsDarkMode} />} />
         <Route path="/imprint" element={<Imprint isDarkMode={isDarkMode} />} />

@@ -1,0 +1,33 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ staging ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Copy staging environment variables
+        run: cp .env.staging .env.production
+        
+      - name: Build
+        run: npm run build
+        
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+        
+      - name: Deploy to Staging
+        run: |
+          vercel --local-config=vercel.staging.json --token=${{ secrets.VERCEL_TOKEN }} --confirm --name adtech-toolbox-staging -e NODE_ENV=staging 
