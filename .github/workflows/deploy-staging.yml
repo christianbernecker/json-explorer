@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 name: Deploy to Staging
 
 on:
@@ -31,3 +32,6 @@ jobs:
       - name: Deploy to Staging
         run: |
           vercel --local-config=vercel.staging.json --token=${{ secrets.VERCEL_TOKEN }} --confirm --name adtech-toolbox-staging -e NODE_ENV=staging 
+=======
+ 
+>>>>>>> master-r6p9cm0bf
