@@ -1,6 +1,7 @@
 {
   "version": 2,
   "rewrites": [
+    { "source": "/", "destination": "/json-explorer" },
     { "source": "/json-explorer", "destination": "/" },
     { "source": "/json-explorer/(.*)", "destination": "/$1" }
   ],
