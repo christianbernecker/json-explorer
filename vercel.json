@@ -1,9 +1,10 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/", "destination": "/json-explorer" },
-    { "source": "/json-explorer", "destination": "/" },
-    { "source": "/json-explorer/(.*)", "destination": "/$1" }
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/json-explorer", "destination": "/index.html" },
+    { "source": "/json-explorer/(.*)", "destination": "/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
