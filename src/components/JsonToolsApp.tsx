@@ -226,7 +226,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
       <div className={`mb-4 p-3 rounded-lg text-sm ${
         isDarkMode ? 'bg-gray-800 text-gray-300 border border-gray-700' : 'bg-blue-50 text-blue-800 border border-blue-100'
       }`}>
-        <strong>Keyboard Shortcuts:</strong> 
+        <strong>Keyboard Shortcuts: </strong> 
         {activeTab === 'explorer' ? (
           <span>
             Ctrl+Shift+F (Format), 
