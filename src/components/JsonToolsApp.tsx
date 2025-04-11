@@ -6,6 +6,7 @@ import {
 import JsonVastExplorer from './JsonVastExplorer';
 import JsonDiffInspector from './JsonDiffInspector';
 import { Footer } from './shared';
+import { SEO, StructuredData } from './seo';
 
 // App Tab Navigation
 const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationProps) => {
@@ -155,6 +156,18 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
 
   return (
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-75`}>
+      <SEO 
+        title="JSON Validator, Formatter & Diff Tool | Online JSON und VAST Analyzer"
+        description="Kostenlose Tools zum Vergleichen, Validieren und Analysieren von JSON-Dateien und VAST AdTags. Einfach zu bedienen und ohne Installation."
+        additionalMetaTags={[
+          { name: 'keywords', content: 'JSON validator, JSON formatter, JSON vergleich, VAST validator, AdTech tools' },
+          { name: 'author', content: 'Christian Bernecker' }
+        ]}
+      />
+      <StructuredData 
+        appVersion="v1.1.2" 
+        isDarkMode={isDarkMode}
+      />
       <div className="flex-grow p-6 w-full max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">

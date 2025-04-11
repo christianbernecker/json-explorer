@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { PrivacyContent } from '../components/shared';
+import { SEO } from '../components/seo';
 
 interface PrivacyProps {
   isDarkMode: boolean;
@@ -9,6 +10,11 @@ interface PrivacyProps {
 const Privacy: React.FC<PrivacyProps> = ({ isDarkMode }) => {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-200`}>
+      <SEO 
+        title="Datenschutzerklärung | JSON Explorer & VAST AdTag Tools"
+        description="Datenschutzrichtlinien und Informationen zur Datenverarbeitung im JSON Explorer und VAST AdTag Tools."
+        canonical="https://www.adtech-toolbox.com/json-explorer/privacy"
+      />
       <div className="w-full max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
