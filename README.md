@@ -102,6 +102,44 @@ npm install
 npm start
 ```
 
+### Versionierung und Tag-Strategie
+
+Wir verwenden Git-Tags, um wichtige Versionen zu markieren und eine einfache Wiederherstellung zu ermöglichen:
+
+#### Version-Tags
+
+- **Produktion**: Jede in Produktion befindliche Version erhält ein Tag (z.B. `v1.1.1`)
+- **Meilensteine**: Wichtige Entwicklungsmeilensteine werden ebenfalls getaggt
+
+#### Zugriff auf spezifische Versionen
+
+Um jederzeit zu einer spezifischen Version zurückzukehren:
+
+```bash
+# Temporärer Checkout einer Version (nur zum Ansehen)
+git checkout v1.1.1
+
+# Neuen Branch auf Basis einer Version erstellen
+git checkout -b hotfix-branch v1.1.1
+
+# Staging-Branch auf eine bestimmte Version zurücksetzen
+git checkout staging
+git reset --hard v1.1.1
+git push --force origin staging
+```
+
+#### Neue Tags erstellen
+
+Wenn eine Version in Produktion geht oder ein wichtiger Entwicklungsmeilenstein erreicht ist:
+
+```bash
+# Tag erstellen
+git tag -a v1.1.x -m "Beschreibung der Version"
+
+# Tag zum Remote-Repository pushen
+git push origin v1.1.x
+```
+
 ### Branch-Strategie
 
 - `master-r6p9cm0bf`: Production-Branch
