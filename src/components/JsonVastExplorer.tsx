@@ -35,6 +35,11 @@ const JsonVastExplorer = React.memo(({
   // Custom hook for Syntax Highlighting
   const { highlightJson, highlightXml, formatXml } = useHighlighter();
   
+  // Helper function to add to history
+  const addToHistoryItem = useCallback((item: HistoryItemType) => {
+    setHistory(prev => [item, ...prev].slice(0, 10));
+  }, [setHistory]);
+  
   // Find VAST content - Optimized with useCallback
   const findVastContent = useCallback((obj: any) => {
     if (typeof obj !== 'object' || obj === null) return null;
@@ -102,7 +107,7 @@ const JsonVastExplorer = React.memo(({
           timestamp: new Date().getTime()
         };
         
-        setHistory(prev => [newHistoryItem, ...prev].slice(0, 10));
+        addToHistoryItem(newHistoryItem);
       } else {
         setFormattedJson(parsedJson);
         setEmbeddedVastContent(null);
@@ -117,7 +122,7 @@ const JsonVastExplorer = React.memo(({
           timestamp: new Date().getTime()
         };
         
-        setHistory(prev => [newHistoryItem, ...prev].slice(0, 10));
+        addToHistoryItem(newHistoryItem);
       }
     } catch (err: any) {
       setError(`Parsing error: ${err.message}`);
@@ -126,7 +131,7 @@ const JsonVastExplorer = React.memo(({
       setVastPath('');
       setVastUrl('');
     }
-  }, [jsonInput, findVastContent, formatXml, extractVastUrl, setHistory]);
+  }, [jsonInput, findVastContent, formatXml, extractVastUrl, addToHistoryItem]);
   
   // Copy content to clipboard - Optimized with useCallback
   const copyToClipboard = useCallback((text: string, type: string) => {

@@ -35,6 +35,7 @@ export interface JsonVastExplorerProps {
   setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
   showHistory: boolean;
   setShowHistory: React.Dispatch<React.SetStateAction<boolean>>;
+  addToHistory?: (item: HistoryItem) => void;
 }
 
 export interface JsonDiffInspectorProps {

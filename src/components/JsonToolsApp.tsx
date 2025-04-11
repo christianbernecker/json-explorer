@@ -263,6 +263,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
           setHistory={setVastExplorerHistory}
           showHistory={showVastExplorerHistory}
           setShowHistory={setShowVastExplorerHistory}
+          addToHistory={(item) => setVastExplorerHistory(prev => [item, ...prev].slice(0, 10))}
         />
       ) : (
         <JsonDiffInspector 
