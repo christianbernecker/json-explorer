@@ -11,19 +11,19 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-  title = 'JSON Validator, Formatter & Diff Tool | Online JSON und VAST Analyzer',
-  description = 'Kostenlose Tools zum Vergleichen, Validieren und Analysieren von JSON-Dateien und VAST AdTags. Einfach zu bedienen und ohne Installation.',
+  title = 'JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer',
+  description = 'Free tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required.',
   canonical = 'https://www.adtech-toolbox.com/json-explorer',
   ogType = 'website',
   ogImage = '/json-explorer/og-image.png',
   additionalMetaTags = []
 }) => {
-  // Bestimme die aktuelle URL
+  // Determine current URL
   const currentUrl = typeof window !== 'undefined' ? window.location.href : canonical;
   
   return (
     <Helmet>
-      {/* Grundlegende Meta-Tags */}
+      {/* Basic Meta Tags */}
       <title>{title}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonical} />
@@ -42,7 +42,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
       
-      {/* Zusätzliche Meta-Tags */}
+      {/* Additional Meta Tags */}
       {additionalMetaTags.map((tag, index) => (
         <meta key={index} name={tag.name} content={tag.content} />
       ))}

@@ -252,33 +252,33 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
       />
       
       {/* Tool description for SEO */}
-      <section className={`mb-6 p-4 rounded-lg text-sm ${
-        isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50 border border-gray-200'
+      <section className={`mb-6 p-3 rounded-lg text-xs ${
+        isDarkMode ? 'bg-gray-800 bg-opacity-30 border border-gray-700' : 'bg-gray-50 bg-opacity-70 border border-gray-200'
       }`}>
-        <h2 className={`text-lg font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-          Online JSON und VAST AdTag Tools
+        <h2 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+          JSON and VAST AdTag Tools
         </h2>
-        <p className={`mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          Validieren, formatieren und vergleichen Sie JSON-Daten oder analysieren Sie VAST AdTags direkt im Browser. 
-          Unsere kostenlosen Online-Tools bieten umfassende Funktionen für Entwickler und AdTech-Spezialisten.
+        <p className={`mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          Validate, format, and compare JSON data or analyze VAST AdTags directly in your browser.
+          Our free online tools provide comprehensive features for developers and AdTech specialists.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
           <div>
-            <h3 className={`font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>JSON Explorer Features:</h3>
-            <ul className={`list-disc pl-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              <li>JSON-Syntax validieren und formatieren</li>
-              <li>VAST AdTag Explorer mit XML-Unterstützung</li>
-              <li>Automatische Fehlererkennung</li>
-              <li>Syntax-Highlighting für bessere Lesbarkeit</li>
+            <h3 className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>JSON Explorer Features:</h3>
+            <ul className={`list-disc pl-4 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <li>Validate and format JSON syntax</li>
+              <li>VAST AdTag Explorer with XML support</li>
+              <li>Automatic error detection</li>
+              <li>Syntax highlighting for better readability</li>
             </ul>
           </div>
           <div>
-            <h3 className={`font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>JSON Diff Features:</h3>
-            <ul className={`list-disc pl-5 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              <li>JSON-Objekte vergleichen und Unterschiede hervorheben</li>
-              <li>Mehrere Vergleichsmodi (strukturell, semantisch)</li>
-              <li>Kopieren der Ergebnisse mit einem Klick</li>
-              <li>Historie für schnellen Zugriff auf frühere Vergleiche</li>
+            <h3 className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>JSON Diff Features:</h3>
+            <ul className={`list-disc pl-4 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <li>Compare JSON objects and highlight differences</li>
+              <li>Multiple comparison modes (structural, semantic)</li>
+              <li>Copy results with one click</li>
+              <li>History for quick access to previous comparisons</li>
             </ul>
           </div>
         </div>
