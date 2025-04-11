@@ -1,6 +1,6 @@
 {
   "name": "json-explorer",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "homepage": "/json-explorer",
   "dependencies": {
@@ -21,9 +21,10 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:production": "GENERATE_SOURCEMAP=false NODE_ENV=production react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy": "npm run build && vercel --prod",
+    "deploy": "npm run build:production && vercel --prod",
     "deploy:staging": "npm run build && vercel --local-config=vercel.staging.json -e NODE_ENV=staging"
   },
   "eslintConfig": {
