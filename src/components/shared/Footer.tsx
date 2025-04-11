@@ -28,23 +28,39 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
     }`}>
       <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
         <div className="text-sm mb-2 md:mb-0">
-          &copy; {new Date().getFullYear()} JSON Tools <span className="mx-1">|</span> <span className="font-semibold">{displayVersion}</span> <span className="mx-1">|</span> by <a href="mailto:info@adtech-toolbox.com" className={`hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Christian Bernecker</a>
+          &copy; {new Date().getFullYear()} <span className="font-medium">JSON Validator & AdTech Tools</span> <span className="mx-1">|</span> <span className="font-semibold">{displayVersion}</span> <span className="mx-1">|</span> Entwickelt von <a href="mailto:info@adtech-toolbox.com" className={`hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} title="Kontakt zum Entwickler">Christian Bernecker</a>
           {isStaging && <span className="ml-2 px-2 py-1 text-xs rounded-full bg-yellow-500 text-black font-bold">STAGING</span>}
         </div>
-        <div className="flex space-x-6 text-xs">
+        <nav className="flex space-x-6 text-xs" aria-label="Rechtliche Informationen">
           <Link 
             to="/imprint" 
             className={`hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+            title="Impressum und rechtliche Informationen"
           >
-            Imprint
+            Impressum
           </Link>
           <Link 
             to="/privacy" 
             className={`hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+            title="Datenschutzerklärung und Informationen zur Datenverarbeitung"
           >
-            Data Privacy
+            Datenschutz
           </Link>
-        </div>
+          <a
+            href="https://github.com/christianbernecker/json-explorer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+            title="GitHub Repository des JSON Explorer"
+          >
+            GitHub
+          </a>
+        </nav>
+      </div>
+      <div className="container mx-auto px-4 mt-2 text-xs text-center">
+        <p className={isDarkMode ? 'text-gray-500' : 'text-gray-400'}>
+          Kostenlose Online-Tools für JSON-Validierung, Formatierung, Vergleich und VAST AdTag-Analyse
+        </p>
       </div>
     </footer>
   );
