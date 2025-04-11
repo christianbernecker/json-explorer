@@ -12,7 +12,7 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
           1. Data Controller
         </h3>
         <p className="mt-2">
-          JSON Tools<br />
+          Adtech Toolbox<br />
           Email: <a href="mailto:info@adtech-toolbox.com" className={`${isDarkMode ? 'text-blue-400' : 'text-blue-600'} hover:underline`}>
             info@adtech-toolbox.com
           </a>

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 export {};
 
 // Define the current version
-const APP_VERSION = 'v1.1.0'; // Production Release April 2024
+const APP_VERSION = 'v1.1.1'; // Production Release April 2024
 
 interface FooterProps {
   isDarkMode: boolean;
