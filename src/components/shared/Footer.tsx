@@ -34,13 +34,6 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
     }
     
     try {
-      // Check if window.klaro is available
-      if (!window.klaro) {
-        console.error('Klaro is not available on window object');
-        window.location.href = '/json-explorer/legal/privacy';
-        return;
-      }
-      
       console.log('Attempting to open consent manager...');
       openConsentManager();
       console.log('Consent manager opened successfully');
