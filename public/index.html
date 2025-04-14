@@ -45,6 +45,8 @@
         embedded: false,
         groupByPurpose: true,
         cookieExpiresAfterDays: 365,
+        noAutoLoad: false, // Klaro automatisch laden
+        testing: true, // Immer anzeigen für Testzwecke
         styling: {
           theme: ['light', 'top', 'wide'],
           additionalClass: 'json-explorer-cmp-modal',
@@ -78,33 +80,33 @@
         }
       };
     </script>
-    <script defer src="https://cdn.kiprotect.com/klaro/v0.7/klaro.js" onload="console.log('Klaro loaded from CDN')"></script>
+    <script src="https://cdn.kiprotect.com/klaro/v0.7/klaro.js" onload="console.log('Klaro loaded from CDN');"></script>
   </head>
   <body>
+    <!-- Test-Indikator außerhalb des React-Roots -->
+    <div id="deploy-test" style="position: fixed; bottom: 10px; left: 10px; background: yellow; padding: 5px; font-size: 10px; z-index: 9999;">
+      TCF 2.0 Test v1
+    </div>
+    
     <noscript>You need to enable JavaScript to run this app. Please enable JavaScript in your browser.</noscript>
     <div id="root"></div>
     
-    <!-- Kleiner Test-Indikator um zu sehen, ob der Deploy funktioniert hat -->
-    <div id="deploy-test" style="position: fixed; bottom: 10px; left: 10px; background: yellow; padding: 5px; font-size: 10px; z-index: 9999; display: none;">
-      TCF 2.0 Deployment Test
-    </div>
-    
-    <!-- Aktiviere Klaro, nachdem die Seite geladen wurde -->
+    <!-- Klaro manuell anzeigen -->
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM fully loaded');
-        
-        // Mache den Test-Indikator sichtbar
-        document.getElementById('deploy-test').style.display = 'block';
-        
-        // Warte kurz, bis Klaro vollständig geladen ist
-        setTimeout(function() {
-          if (window.klaro) {
-            console.log('Klaro is available, ready to be shown via Privacy Settings');
-          } else {
-            console.error('Klaro not loaded properly');
+      // Klaro beim Laden der Seite anzeigen
+      window.addEventListener('load', function() {
+        console.log('Window loaded, showing Klaro');
+        if (window.klaro) {
+          try {
+            // Klaro manuell anzeigen
+            window.klaro.show(window.klaroConfig);
+            console.log('Klaro.show called successfully');
+          } catch (e) {
+            console.error('Error showing Klaro:', e);
           }
-        }, 1000);
+        } else {
+          console.error('Klaro not available on window object');
+        }
       });
     </script>
   </body>
