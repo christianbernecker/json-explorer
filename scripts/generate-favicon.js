@@ -15,6 +15,7 @@ if (!fs.existsSync(inputSvg)) {
 // Generate PNGs for different sizes
 const outputPng192 = path.join(__dirname, '../public/logo192.png');
 const outputPng512 = path.join(__dirname, '../public/logo512.png');
+const outputFavicon = path.join(__dirname, '../public/favicon.png');
 
 // Generate favicons in different sizes
 const faviconSizes = [16, 32, 48, 64];
@@ -45,7 +46,15 @@ Promise.all(
 )
   .then(() => {
     console.log('✅ All favicon sizes generated!');
-    console.log('Please use a tool like https://www.favicon-generator.org/ to create the final favicon.ico');
+    
+    // Copy 32x32 favicon as main favicon.png
+    return sharp(inputSvg)
+      .resize(32, 32)
+      .png()
+      .toFile(outputFavicon)
+      .then(() => {
+        console.log('✅ favicon.png generated!');
+      });
   })
   .catch((error) => {
     console.error('Error generating favicons:', error);
