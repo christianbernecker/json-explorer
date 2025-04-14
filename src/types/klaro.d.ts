@@ -56,7 +56,7 @@ declare module 'klaro' {
     };
     privacyPolicy?: {
       default?: string;
-      [lang: string]?: string;
+      [lang: string]: string;
     };
     additionalClass?: string;
     cookieDomain?: string;
