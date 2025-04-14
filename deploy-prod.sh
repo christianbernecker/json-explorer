@@ -36,7 +36,7 @@ git push origin master-r6p9cm0bf
 
 # 4. Webhook für Production auslösen
 echo "✅ Triggering deployment webhook..."
-RESPONSE=$(curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_hYVKytirGfL7HnaoXNwjVioBkifl/DALaYfn4i3)
+RESPONSE=$(curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_j18jOo7H76ge7XNlqQtNUCwqrIfe/M8sHj7yBFj)
 JOB_ID=$(echo $RESPONSE | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
 
 echo "✅ Deployment initiated with Job ID: $JOB_ID"
