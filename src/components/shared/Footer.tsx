@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 export {};
 
 // Constants for app information
-const APP_VERSION = 'v1.1.3'; // Current Production Version
+const APP_VERSION = 'v1.1.4'; // Current Production Version
 const APP_VERSION_NEXT = 'v1.1.5'; // Next version in development
 
 interface FooterProps {
