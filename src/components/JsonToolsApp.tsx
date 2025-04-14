@@ -169,7 +169,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
         ]}
       />
       <StructuredData 
-        appVersion="v1.1.3" 
+        appVersion="v1.1.4-beta" 
         isDarkMode={isDarkMode}
       />
       <div className="flex-grow p-6 w-full max-w-6xl mx-auto">

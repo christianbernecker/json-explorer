@@ -2,6 +2,14 @@
 
 All notable changes to the JSON Explorer project will be documented in this file.
 
+## [1.1.4] - In Development
+
+### Planned
+- Performance optimizations
+- Additional export formats
+- Enhanced UI feedback for user actions
+- Improved accessibility features
+
 ## [1.1.3] - 2024-07-16
 
 ### Added

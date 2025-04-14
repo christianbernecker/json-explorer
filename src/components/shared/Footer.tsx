@@ -6,7 +6,7 @@ export {};
 
 // Constants for app information
 const APP_VERSION = 'v1.1.3'; // Current Production Version
-const APP_VERSION_NEXT = 'v1.1.4'; // Next version in development
+const APP_VERSION_NEXT = 'v1.1.5'; // Next version in development
 
 interface FooterProps {
   isDarkMode: boolean;
