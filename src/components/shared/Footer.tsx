@@ -25,8 +25,25 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
 
   // Function to manually show the CMP
   const showCMP = () => {
+    console.log('Privacy Settings button clicked');
+    
+    // Make sure we're in a browser context
+    if (typeof window === 'undefined' || !window) {
+      console.error('Window is undefined');
+      return;
+    }
+    
     try {
+      // Check if window.klaro is available
+      if (!window.klaro) {
+        console.error('Klaro is not available on window object');
+        window.location.href = '/json-explorer/legal/privacy';
+        return;
+      }
+      
+      console.log('Attempting to open consent manager...');
       openConsentManager();
+      console.log('Consent manager opened successfully');
     } catch (e) {
       console.error('Failed to open consent manager:', e);
       // Redirect to privacy policy as fallback
