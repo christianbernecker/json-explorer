@@ -2,6 +2,14 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { openConsentManager } from '../../cmp';
 
+// Erweiterung der Window-Schnittstelle für Klaro
+declare global {
+  interface Window {
+    klaro?: any;
+    klaroConfig?: any;
+  }
+}
+
 // Leeres Export-Statement zur Sicherstellung, dass die Datei als Modul behandelt wird
 export {};
 
@@ -34,16 +42,30 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
     }
     
     try {
-      console.log('Attempting to open consent manager directly...');
+      console.log('Attempting to open consent manager directly via window.klaro.show...');
       // Versuchen, Klaro direkt zu verwenden, falls es verfügbar ist
-      if (window.klaro) {
-        console.log('Klaro found on window object');
+      if (window.klaro && typeof window.klaro.show === 'function') {
         window.klaro.show();
-        console.log('Klaro.show called directly');
+        console.log('Klaro.show called successfully');
       } else {
-        console.log('Klaro not found on window, trying openConsentManager');
-        // Fallback: unsere eigene Funktion verwenden
-        openConsentManager();
+        console.error('Klaro not properly initialized on window');
+        
+        // Als Fallback die CMP manuell initialisieren
+        if (window.klaroConfig && typeof window.klaro !== 'undefined') {
+          console.log('Trying to initialize and show Klaro manually');
+          
+          // Klaro manuell initialisieren
+          try {
+            window.klaro.renderKlaro(window.klaroConfig);
+            console.log('Klaro manually rendered');
+          } catch (err) {
+            console.error('Failed to render Klaro manually:', err);
+            window.location.href = '/json-explorer/legal/privacy';
+          }
+        } else {
+          console.error('Klaro or klaroConfig not available on window');
+          window.location.href = '/json-explorer/legal/privacy';
+        }
       }
     } catch (e) {
       console.error('Failed to open consent manager:', e);

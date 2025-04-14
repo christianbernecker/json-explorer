@@ -6,7 +6,7 @@ import './index.css';
 import JsonToolsApp from './components';
 import Imprint from './pages/Imprint';
 import Privacy from './pages/Privacy';
-import ConsentManager from './cmp';
+// import ConsentManager from './cmp';
 
 // Create an App component to handle routing and global state
 const App = () => {
@@ -27,7 +27,8 @@ const App = () => {
   return (
     <HelmetProvider>
       <Router basename={basename}>
-        <ConsentManager />
+        {/* ConsentManager wird vorübergehend auskommentiert, da wir die direkte Integration verwenden */}
+        {/* <ConsentManager /> */}
         <Routes>
           {/* Main App */}
           <Route path="/" element={<JsonToolsApp parentIsDarkMode={isDarkMode} setParentIsDarkMode={setIsDarkMode} />} />

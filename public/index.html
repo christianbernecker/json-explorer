@@ -34,9 +34,69 @@
     <link rel="dns-prefetch" href="//fonts.googleapis.com" />
     <link rel="dns-prefetch" href="//www.google-analytics.com" />
     <link rel="dns-prefetch" href="//vendor-list.consensu.org" />
+    
+    <!-- Klaro CMP Direct Integration -->
+    <script>
+      window.klaroConfig = {
+        elementID: 'klaro',
+        storageMethod: 'localStorage',
+        storageName: 'json-explorer-consent',
+        htmlTexts: true,
+        embedded: false,
+        groupByPurpose: true,
+        cookieExpiresAfterDays: 365,
+        styling: {
+          theme: ['light', 'top', 'wide'],
+          additionalClass: 'json-explorer-cmp-modal',
+        },
+        // Services 
+        services: [
+          {
+            name: 'analytics',
+            title: 'Google Analytics',
+            purposes: ['analytics'],
+            required: false,
+            default: false,
+            cookies: [/^_ga/],
+          }
+        ],
+        translations: {
+          en: {
+            privacyPolicyUrl: '/legal/privacy-policy',
+            consentModal: {
+              title: 'Privacy Settings',
+              description: 'Here you can see and customize the information that we collect about you.',
+            },
+            purposes: {
+              analytics: 'Analytics & Performance',
+            },
+            ok: 'Accept',
+            acceptAll: 'Accept all',
+            acceptSelected: 'Accept selected',
+            decline: 'Decline',
+          }
+        }
+      };
+    </script>
+    <script defer src="https://cdn.kiprotect.com/klaro/v0.7/klaro.js" onload="console.log('Klaro loaded from CDN')"></script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app. Please enable JavaScript in your browser.</noscript>
     <div id="root"></div>
+    
+    <!-- Aktiviere Klaro, nachdem die Seite geladen wurde -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM fully loaded');
+        // Warte kurz, bis Klaro vollständig geladen ist
+        setTimeout(function() {
+          if (window.klaro) {
+            console.log('Klaro is available, ready to be shown via Privacy Settings');
+          } else {
+            console.error('Klaro not loaded properly');
+          }
+        }, 1000);
+      });
+    </script>
   </body>
 </html> 
