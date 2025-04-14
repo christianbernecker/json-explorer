@@ -42,6 +42,20 @@ const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
       
+      {/* DNS Prefetch for Performance */}
+      <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+      <link rel="dns-prefetch" href="//www.google-analytics.com" />
+      <link rel="dns-prefetch" href="//www.googletagmanager.com" />
+      
+      {/* Preload Critical Assets */}
+      <link rel="preload" href="/json-explorer/fonts/inter-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      <link rel="preload" href="/json-explorer/og-image.png" as="image" />
+      
+      {/* Performance & Security */}
+      <meta name="referrer" content="no-referrer-when-downgrade" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      
       {/* Additional Meta Tags */}
       {additionalMetaTags.map((tag, index) => (
         <meta key={index} name={tag.name} content={tag.content} />

@@ -19,7 +19,7 @@ const StructuredData: React.FC<StructuredDataProps> = ({ appVersion, isDarkMode 
       "price": "0",
       "priceCurrency": "EUR"
     },
-    "description": "Kostenlose Online-Tools zum Vergleichen, Validieren und Analysieren von JSON-Dateien und VAST AdTags.",
+    "description": "Free online tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required.",
     "softwareVersion": appVersion,
     "datePublished": "2023-01-15",
     "author": {
@@ -31,10 +31,10 @@ const StructuredData: React.FC<StructuredDataProps> = ({ appVersion, isDarkMode 
       "target": "https://www.adtech-toolbox.com/json-explorer/"
     },
     "featureList": [
-      "JSON Validierung und Formatierung",
-      "Vergleich von JSON-Objekten",
-      "VAST AdTag Analyse",
-      "Syntax-Highlighting",
+      "JSON Validation and Formatting",
+      "JSON Object Comparison",
+      "VAST AdTag Analysis",
+      "Syntax Highlighting",
       "Dark Mode"
     ]
   };

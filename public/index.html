@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#3b82f6" />
     <meta
@@ -14,11 +13,24 @@
     <meta name="robots" content="index, follow" />
     <meta name="language" content="English" />
     <meta name="revisit-after" content="7 days" />
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="%PUBLIC_URL%/favicon.ico" as="image" type="image/x-icon" />
+    <link rel="preload" href="%PUBLIC_URL%/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
+    
+    <!-- App resources -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
     <title>JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer</title>
+    
     <!-- Google Tag verification -->
     <meta name="google-site-verification" content="YOUR_SITE_VERIFICATION_CODE" />
+    
+    <!-- DNS prefetching -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//www.google-analytics.com" />
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app. Please enable JavaScript in your browser.</noscript>

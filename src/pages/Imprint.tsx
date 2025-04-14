@@ -11,8 +11,8 @@ const Imprint: React.FC<ImprintProps> = ({ isDarkMode }) => {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-200`}>
       <SEO 
-        title="Impressum | JSON Explorer & VAST AdTag Tools"
-        description="Rechtliche Informationen und Impressum für den JSON Explorer und VAST AdTag Tools."
+        title="Imprint | JSON Explorer & VAST AdTag Tools"
+        description="Legal information and imprint for the JSON Explorer and VAST AdTag Tools."
         canonical="https://www.adtech-toolbox.com/json-explorer/imprint"
       />
       <div className="w-full max-w-6xl mx-auto px-6 py-8">

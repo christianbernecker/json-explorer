@@ -22,7 +22,7 @@ const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationPro
         }`}
         onClick={() => setActiveTab('explorer')}
         aria-pressed={activeTab === 'explorer'}
-        aria-label="JSON Validator und VAST AdTag Explorer"
+        aria-label="JSON Validator and VAST AdTag Explorer"
       >
         <div className="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -41,13 +41,13 @@ const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationPro
         }`}
         onClick={() => setActiveTab('comparator')}
         aria-pressed={activeTab === 'comparator'}
-        aria-label="JSON Vergleichstool"
+        aria-label="JSON Comparison Tool"
       >
         <div className="flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
           </svg>
-          <span>JSON Diff Vergleichstool</span>
+          <span>JSON Diff Comparison Tool</span>
         </div>
       </button>
     </nav>
@@ -161,10 +161,10 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
   return (
     <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-75`}>
       <SEO 
-        title="JSON Validator, Formatter & Diff Tool | Online JSON und VAST Analyzer"
-        description="Kostenlose Tools zum Vergleichen, Validieren und Analysieren von JSON-Dateien und VAST AdTags. Einfach zu bedienen und ohne Installation."
+        title="JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer"
+        description="Free tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required."
         additionalMetaTags={[
-          { name: 'keywords', content: 'JSON validator, JSON formatter, JSON vergleich, VAST validator, AdTech tools' },
+          { name: 'keywords', content: 'JSON validator, JSON formatter, JSON comparison, VAST validator, AdTech tools' },
           { name: 'author', content: 'Christian Bernecker' }
         ]}
       />
@@ -184,7 +184,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
           <div>
             <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-blue-600'}`}>JSON Validator & VAST AdTag Tools</h1>
             <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              Online JSON-Formatter, Diff-Tool und VAST AdTag Explorer
+              Online JSON Formatter, Diff Tool and VAST AdTag Explorer
             </p>
           </div>
         </div>
