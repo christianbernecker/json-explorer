@@ -25,6 +25,11 @@ This document outlines the planned features and improvements for the v1.1.4 rele
 
 ## New Features
 
+### Privacy & Compliance
+- [x] Implement Usercentrics CMP for cookie/data processing consent
+- [x] Add Usercentrics embeddings to Privacy Policy
+- [ ] Implement automated cookie scanning
+
 ### Export Enhancements
 - [ ] Add CSV export option
 - [ ] Implement PDF report generation
