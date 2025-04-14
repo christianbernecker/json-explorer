@@ -14,15 +14,6 @@ echo "  ✓ Checked that you're deploying to the main branch"
 echo "=============================================================="
 echo ""
 
-# Require explicit confirmation of reading the guide
-read -p "Have you read the deployment guide (DEPLOYMENT.md)? (yes/no): " read_guide
-
-if [ "$read_guide" != "yes" ]; then
-    echo "Please read the deployment guide (DEPLOYMENT.md) before proceeding."
-    echo "Deployment aborted."
-    exit 1
-fi
-
 # Prüfen, ob eine Commit-Nachricht angegeben wurde
 if [ -z "$1" ]; then
     echo "Fehler: Keine Commit-Nachricht angegeben"
@@ -30,15 +21,21 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
-# Bestätigung vom Benutzer einholen
-echo "⚠️ ACHTUNG: Du bist dabei, auf PRODUCTION zu deployen!"
-echo "Alle Änderungen werden von staging nach main gemergt."
-read -p "Bist du sicher, dass du fortfahren möchtest? (j/n): " confirm
+# Automatische Prüfung der Versionsnummern
+echo "✅ Checking version numbers..."
+PACKAGE_VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
+FOOTER_VERSION=$(grep -o "APP_VERSION = 'v[^']*'" src/components/shared/Footer.tsx | cut -d"'" -f2)
 
-if [ "$confirm" != "j" ]; then
-    echo "Deployment abgebrochen."
-    exit 0
+if [ "v$PACKAGE_VERSION" != "$FOOTER_VERSION" ]; then
+    echo "❌ Error: Version mismatch between package.json ($PACKAGE_VERSION) and Footer.tsx ($FOOTER_VERSION)"
+    exit 1
 fi
+
+echo "✅ Version numbers are consistent: $FOOTER_VERSION"
+
+# Deployment-Info anzeigen
+echo "⚠️ DEPLOYMENT INFO: Production deployment is starting"
+echo "All changes will be merged from staging to main."
 
 # 1. Build und Lint überprüfen
 echo "✅ Running lint and build checks..."
