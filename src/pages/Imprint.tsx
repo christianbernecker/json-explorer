@@ -13,7 +13,7 @@ const Imprint: React.FC<ImprintProps> = ({ isDarkMode }) => {
       <SEO 
         title="Imprint | JSON Explorer & VAST AdTag Tools"
         description="Legal information and imprint for the JSON Explorer and VAST AdTag Tools."
-        canonical="https://www.adtech-toolbox.com/json-explorer/imprint"
+        canonical="https://www.adtech-toolbox.com/json-explorer/legal/imprint"
       />
       <div className="w-full max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">

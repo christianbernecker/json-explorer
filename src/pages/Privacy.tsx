@@ -13,7 +13,7 @@ const Privacy: React.FC<PrivacyProps> = ({ isDarkMode }) => {
       <SEO 
         title="Privacy Policy | JSON Explorer & VAST AdTag Tools"
         description="Privacy guidelines and information about data processing in the JSON Explorer and VAST AdTag Tools."
-        canonical="https://www.adtech-toolbox.com/json-explorer/privacy"
+        canonical="https://www.adtech-toolbox.com/json-explorer/legal/privacy"
       />
       <div className="w-full max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">

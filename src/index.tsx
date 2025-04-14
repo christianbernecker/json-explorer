@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import './index.css';
 import JsonToolsApp from './components';
@@ -27,9 +27,16 @@ const App = () => {
     <HelmetProvider>
       <Router basename={basename}>
         <Routes>
+          {/* Main App */}
           <Route path="/" element={<JsonToolsApp parentIsDarkMode={isDarkMode} setParentIsDarkMode={setIsDarkMode} />} />
-          <Route path="/imprint" element={<Imprint isDarkMode={isDarkMode} />} />
-          <Route path="/privacy" element={<Privacy isDarkMode={isDarkMode} />} />
+          
+          {/* New Legal Routes */}
+          <Route path="/legal/imprint" element={<Imprint isDarkMode={isDarkMode} />} />
+          <Route path="/legal/privacy" element={<Privacy isDarkMode={isDarkMode} />} />
+          
+          {/* Keep old routes for backward compatibility and redirect to new ones */}
+          <Route path="/imprint" element={<Navigate to="/legal/imprint" replace />} />
+          <Route path="/privacy" element={<Navigate to="/legal/privacy" replace />} />
         </Routes>
       </Router>
     </HelmetProvider>

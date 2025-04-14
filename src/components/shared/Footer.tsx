@@ -33,14 +33,14 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
         </div>
         <nav className="flex space-x-6 text-xs" aria-label="Legal Information">
           <Link 
-            to="/imprint" 
+            to="/legal/imprint" 
             className={`hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
             title="Imprint and legal information"
           >
             Imprint
           </Link>
           <Link 
-            to="/privacy" 
+            to="/legal/privacy" 
             className={`hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
             title="Privacy policy and data processing information"
           >
