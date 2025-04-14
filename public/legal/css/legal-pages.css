@@ -1,0 +1,57 @@
+/* Legal Pages CSS for Privacy and Imprint */
+
+/* Usercentrics Embedding Styles */
+.uc-embed {
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.uc-embed h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.uc-embed p {
+  margin-bottom: 1rem;
+}
+
+.uc-embed-tracker {
+  width: 100%;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.uc-embed-service-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.uc-embed-service-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.uc-embed-service-list li:last-child {
+  border-bottom: none;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .uc-embed-service-list li {
+    border-color: #4b5563;
+  }
+}
+
+/* Utility classes */
+.dark-mode .uc-embed,
+.dark-mode .uc-embed-tracker {
+  color: #e5e7eb;
+}
+
+.dark-mode .uc-embed-service-list li {
+  border-color: #4b5563;
+} 

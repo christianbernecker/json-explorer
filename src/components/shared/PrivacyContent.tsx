@@ -74,9 +74,35 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
         </ul>
       </div>
       
+      {/* Usercentrics Data Processing Services Embedding */}
       <div>
         <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-          5. Cookies and Tracking
+          5. Data Processing Services
+        </h3>
+        <p className="mt-2">
+          Below you will find information about all data processing services we use on this website:
+        </p>
+        <div className="mt-4 p-4 rounded border border-gray-300 dark:border-gray-600">
+          <div className="uc-embed" uc-embed-type="category"></div>
+        </div>
+      </div>
+      
+      {/* Tracker Declaration */}
+      <div>
+        <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+          6. Tracker Information
+        </h3>
+        <p className="mt-2">
+          The following is a list of all trackers used on our website:
+        </p>
+        <div className="mt-4 p-4 rounded border border-gray-300 dark:border-gray-600">
+          <div className="uc-embed-tracker"></div>
+        </div>
+      </div>
+      
+      <div>
+        <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+          7. Cookies and Tracking
         </h3>
         <p className="mt-2">
           We may use cookies for essential functionality and analytics purposes. Third-party vendors, 
@@ -101,7 +127,7 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
       
       <div>
         <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-          6. Third-Party Services and Data Transfer
+          8. Third-Party Services and Data Transfer
         </h3>
         <p className="mt-2">
           We may use third-party services for analytics and advertising purposes:
@@ -119,7 +145,7 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
       
       <div>
         <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-          7. Your Rights
+          9. Your Rights
         </h3>
         <p className="mt-2">You have the right to:</p>
         <ul className="list-disc ml-5 mt-2">
@@ -141,7 +167,7 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
       
       <div>
         <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-          8. Right to Lodge a Complaint
+          10. Right to Lodge a Complaint
         </h3>
         <p className="mt-2">
           You have the right to lodge a complaint with a supervisory authority if you believe that the processing of your 
@@ -152,7 +178,7 @@ const PrivacyContent: React.FC<PrivacyContentProps> = ({ isDarkMode }) => {
       
       <div>
         <h3 className={`text-lg font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-          9. Changes to this Privacy Policy
+          11. Changes to this Privacy Policy
         </h3>
         <p className="mt-2">We may update this privacy policy from time to time to reflect changes in our practices or for legal reasons. 
           We will notify you of any material changes by posting the new privacy policy on this page.</p>

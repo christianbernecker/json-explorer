@@ -1,93 +1,356 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Privacy Policy | JSON Explorer & VAST AdTag Tools</title>
-  <meta name="description" content="Privacy guidelines and information about data processing in the JSON Explorer and VAST AdTag Tools.">
-  <link rel="canonical" href="https://www.adtech-toolbox.com/json-explorer/legal/privacy">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-</head>
-<body class="bg-white text-gray-700 min-h-screen">
-  <div class="w-full max-w-6xl mx-auto px-6 py-8">
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center">
-        <div class="mr-3 bg-gradient-to-r from-blue-500 to-indigo-600 p-3 rounded-lg text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-2xl font-bold text-blue-600">Data Privacy</h1>
-          <div class="text-sm text-gray-500">Privacy Policy</div>
-        </div>
-      </div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta
+      name="description"
+      content="Privacy Policy for JSON Explorer & VAST AdTag Tools - Information about data processing, cookies, and your rights."
+    />
+    <meta name="keywords" content="privacy policy, data protection, GDPR, JSON validator, VAST validator" />
+    <meta name="author" content="Christian Bernecker" />
+    <meta name="robots" content="index, follow" />
+    
+    <link rel="icon" href="/json-explorer/favicon.png" />
+    <link rel="stylesheet" href="/json-explorer/legal/css/legal-pages.css" />
+    
+    <title>Privacy Policy | JSON Explorer & VAST AdTag Tools</title>
+    
+    <!-- Usercentrics CMP -->
+    <script
+      src="https://web.cmp.usercentrics.eu/modules/autoblocker.js">
+    </script>
+    <script 
+      id="usercentrics-cmp"
+      src="https://web.cmp.usercentrics.eu/ui/loader.js" 
+      data-settings-id="AVmhdo98bxlHZn" 
+      async>
+    </script>
+    
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        line-height: 1.6;
+        color: #374151;
+        background-color: #f9fafb;
+        margin: 0;
+        padding: 0;
+      }
       
-      <a 
-        href="/json-explorer" 
-        class="flex items-center px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
-        </svg>
-        Back to App
-      </a>
-    </div>
-
-    <div class="p-6 rounded-lg shadow-sm bg-gray-50">
-      <div class="space-y-6">
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+      
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+      
+      .logo-section {
+        display: flex;
+        align-items: center;
+      }
+      
+      .logo {
+        background: linear-gradient(to right, #3b82f6, #4f46e5);
+        color: white;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+      }
+      
+      h1 {
+        color: #1e40af;
+        margin: 0;
+        font-size: 1.5rem;
+      }
+      
+      .subtitle {
+        color: #6b7280;
+        font-size: 0.875rem;
+      }
+      
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        background-color: #f3f4f6;
+        color: #4b5563;
+        border-radius: 0.375rem;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+      
+      .back-link:hover {
+        background-color: #e5e7eb;
+      }
+      
+      main {
+        background-color: white;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      }
+      
+      h2 {
+        color: #1e40af;
+        font-size: 1.25rem;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      
+      h2:first-child {
+        margin-top: 0;
+      }
+      
+      a {
+        color: #2563eb;
+        text-decoration: none;
+      }
+      
+      a:hover {
+        text-decoration: underline;
+      }
+      
+      ul {
+        padding-left: 1.5rem;
+      }
+      
+      .embedded-container {
+        margin: 1rem 0;
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+      }
+      
+      /* Dark mode support */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #111827;
+          color: #e5e7eb;
+        }
+        
+        main {
+          background-color: #1f2937;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+          color: #3b82f6;
+        }
+        
+        h2 {
+          color: #60a5fa;
+        }
+        
+        .subtitle {
+          color: #9ca3af;
+        }
+        
+        .back-link {
+          background-color: #374151;
+          color: #e5e7eb;
+        }
+        
+        .back-link:hover {
+          background-color: #4b5563;
+        }
+        
+        a {
+          color: #60a5fa;
+        }
+        
+        .embedded-container {
+          border-color: #4b5563;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo-section">
+          <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div>
+            <h1>Data Privacy</h1>
+            <div class="subtitle">Privacy Policy</div>
+          </div>
+        </div>
+        
+        <a href="/json-explorer/" class="back-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="margin-right: 0.5rem;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+          </svg>
+          Back to App
+        </a>
+      </header>
+      
+      <main>
         <div>
-          <h3 class="text-lg font-medium text-gray-700">
-            1. Data Controller
-          </h3>
-          <p class="mt-2">
+          <h2>1. Data Controller</h2>
+          <p>
             Adtech Toolbox<br />
-            Email: <a href="mailto:info@adtech-toolbox.com" class="text-blue-600 hover:underline">
-              info@adtech-toolbox.com
-            </a>
+            Email: <a href="mailto:info@adtech-toolbox.com">info@adtech-toolbox.com</a>
           </p>
         </div>
         
         <div>
-          <h3 class="text-lg font-medium text-gray-700">
-            2. Data Protection Officer
-          </h3>
-          <p class="mt-2">
+          <h2>2. Data Protection Officer</h2>
+          <p>
             We have not appointed a Data Protection Officer as it is not required for our operations under Art. 37 GDPR.
             For all data protection related inquiries, please contact:
           </p>
-          <p class="mt-1">
-            Email: <a href="mailto:info@adtech-toolbox.com" class="text-blue-600 hover:underline">
-              info@adtech-toolbox.com
-            </a>
+          <p>
+            Email: <a href="mailto:info@adtech-toolbox.com">info@adtech-toolbox.com</a>
           </p>
         </div>
 
         <div>
-          <h3 class="text-lg font-medium text-gray-700">
-            3. Data Processing and Legal Basis
-          </h3>
-          <p class="mt-2">
+          <h2>3. Data Processing and Legal Basis</h2>
+          <p>
             JSON Tools is designed to operate primarily client-side, processing data directly in your browser. 
             No user data is transmitted to our servers during normal operation of the core functionality.
           </p>
-          <p class="mt-2">
+          <p>
             When you use our tools to format or compare JSON or analyze VAST files, all processing happens locally 
             on your device. The data you input is not sent to our servers.
           </p>
-          <p class="mt-2">
+          <p>
             <strong>Legal basis for processing:</strong>
           </p>
-          <ul class="list-disc ml-5 mt-1">
+          <ul>
             <li>For the functionality of our website: Art. 6(1)(b) GDPR - processing is necessary for the performance of a contract</li>
             <li>For analytics and improving our service: Art. 6(1)(f) GDPR - legitimate interests</li>
             <li>For marketing (if applicable): Art. 6(1)(a) GDPR - consent</li>
           </ul>
         </div>
         
-        <!-- Shortened for brevity -->
-      </div>
+        <div>
+          <h2>4. Data Storage and Retention</h2>
+          <p>
+            We use local storage to save your preferences (like dark mode) and history items. 
+            This data is stored only on your device and is not accessible to us.
+          </p>
+          <p>
+            <strong>Storage duration:</strong>
+          </p>
+          <ul>
+            <li>Local storage data: Until you clear your browser data or we update the application structure</li>
+            <li>Server logs (for technical purposes): 30 days</li>
+            <li>Analytics data (if applicable): 14 months in anonymized form</li>
+          </ul>
+        </div>
+        
+        <!-- Usercentrics Data Processing Services Embedding -->
+        <div>
+          <h2>5. Data Processing Services</h2>
+          <p>
+            Below you will find information about all data processing services we use on this website:
+          </p>
+          <div class="embedded-container">
+            <div class="uc-embed" uc-embed-type="category"></div>
+          </div>
+        </div>
+        
+        <!-- Tracker Declaration -->
+        <div>
+          <h2>6. Tracker Information</h2>
+          <p>
+            The following is a list of all trackers used on our website:
+          </p>
+          <div class="embedded-container">
+            <div class="uc-embed-tracker"></div>
+          </div>
+        </div>
+        
+        <div>
+          <h2>7. Cookies and Tracking</h2>
+          <p>
+            We may use cookies for essential functionality and analytics purposes. Third-party vendors, 
+            including Google, may use cookies to serve ads based on a user's prior visits to our website.
+          </p>
+          <p>
+            <strong>Types of cookies we use:</strong>
+          </p>
+          <ul>
+            <li><strong>Essential cookies:</strong> Required for the basic functionality of the website</li>
+            <li><strong>Preference cookies:</strong> Allow the website to remember your preferences</li>
+            <li><strong>Statistics cookies:</strong> Help us understand how visitors interact with our website</li>
+            <li><strong>Marketing cookies:</strong> Used to track visitors across websites for advertising purposes</li>
+          </ul>
+          <p>
+            You can opt out of personalized advertising by visiting <a href="https://www.aboutads.info/choices/" 
+            target="_blank" rel="noopener noreferrer">www.aboutads.info</a>.
+          </p>
+        </div>
+        
+        <div>
+          <h2>8. Third-Party Services and Data Transfer</h2>
+          <p>
+            We may use third-party services for analytics and advertising purposes:
+          </p>
+          <ul>
+            <li>Google Analytics</li>
+            <li>Google AdSense</li>
+          </ul>
+          <p>
+            <strong>Data transfer to third countries:</strong> Some of our service providers are based outside the EU/EEA. 
+            When we transfer your data to these providers, we ensure appropriate safeguards through Standard Contractual Clauses 
+            or adequacy decisions by the European Commission.
+          </p>
+        </div>
+        
+        <div>
+          <h2>9. Your Rights</h2>
+          <p>You have the right to:</p>
+          <ul>
+            <li>Request information about your stored data (Art. 15 GDPR)</li>
+            <li>Request the correction of incorrect data (Art. 16 GDPR)</li>
+            <li>Request the deletion of your data (Art. 17 GDPR)</li>
+            <li>Request the restriction of data processing (Art. 18 GDPR)</li>
+            <li>Data portability (Art. 20 GDPR)</li>
+            <li>Revoke your consent for future processing (Art. 7(3) GDPR)</li>
+            <li>Object to data processing based on legitimate interests (Art. 21 GDPR)</li>
+          </ul>
+          <p>
+            To exercise these rights, please contact us at <a href="mailto:info@adtech-toolbox.com">info@adtech-toolbox.com</a>.
+          </p>
+        </div>
+        
+        <div>
+          <h2>10. Right to Lodge a Complaint</h2>
+          <p>
+            You have the right to lodge a complaint with a supervisory authority if you believe that the processing of your 
+            personal data violates the GDPR. The responsible supervisory authority for data protection issues is the data 
+            protection authority in your country of residence or the location of the alleged infringement.
+          </p>
+        </div>
+        
+        <div>
+          <h2>11. Changes to this Privacy Policy</h2>
+          <p>We may update this privacy policy from time to time to reflect changes in our practices or for legal reasons. 
+            We will notify you of any material changes by posting the new privacy policy on this page.</p>
+          <p>Last updated: <span id="update-date">2024-07-16</span></p>
+        </div>
+      </main>
     </div>
-  </div>
-</body>
+    
+    <script>
+      // Update the date dynamically
+      document.getElementById('update-date').textContent = new Date().toISOString().split('T')[0];
+    </script>
+  </body>
 </html> 
