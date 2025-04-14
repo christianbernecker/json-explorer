@@ -1,5 +1,9 @@
 name: Deploy to Production
 
+# This workflow deploys the main branch to production
+# IMPORTANT: The main branch is the production branch
+# All changes to production must go through the main branch
+
 on:
   push:
     branches: [ main ]

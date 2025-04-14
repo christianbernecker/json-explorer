@@ -10,7 +10,7 @@ fi
 
 # Bestätigung vom Benutzer einholen
 echo "⚠️ ACHTUNG: Du bist dabei, auf PRODUCTION zu deployen!"
-echo "Alle Änderungen werden von staging nach master-r6p9cm0bf gemergt."
+echo "Alle Änderungen werden von staging nach main gemergt."
 read -p "Bist du sicher, dass du fortfahren möchtest? (j/n): " confirm
 
 if [ "$confirm" != "j" ]; then
@@ -25,14 +25,14 @@ npm run build:production
 
 # 2. Zum Production-Branch wechseln und mergen
 echo "✅ Switching to production branch..."
-git checkout master-r6p9cm0bf
+git checkout main
 
 echo "✅ Merging from staging..."
 git merge staging -m "Merge staging into production: $1"
 
 # 3. Nach Production pushen
 echo "✅ Pushing to production branch..."
-git push origin master-r6p9cm0bf
+git push origin main
 
 # 4. Webhook für Production auslösen
 echo "✅ Triggering deployment webhook..."

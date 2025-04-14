@@ -9,7 +9,9 @@ Eine Web-Anwendung zum Analysieren und Vergleichen von JSON-Daten.
 - VAST AdTag Explorer für die AdTech-Branche
 - Kopieren und Teilen von JSON-Daten
 
-## Deployment-Anleitung
+## Deployment
+
+**Wichtig:** Eine detaillierte Dokumentation zum Deployment-Prozess findet sich in der [DEPLOYMENT.md](./DEPLOYMENT.md) Datei.
 
 ### Voraussetzungen
 
@@ -45,7 +47,7 @@ Für das Production-Deployment ist ein separates Skript vorhanden:
 
 Dieser Prozess erfordert eine Bestätigung und führt dann:
 - Überprüfung von Lint und Build
-- Merge von staging in den master-r6p9cm0bf Branch
+- Merge von staging in den main Branch
 - Push zum Remote-Repository
 - Die Anwendung ist nach dem Deployment unter [https://www.adtech-toolbox.com/json-explorer](https://www.adtech-toolbox.com/json-explorer) verfügbar
 
@@ -64,6 +66,9 @@ Dieser Prozess erfordert eine Bestätigung und führt dann:
 
 4. **Import-Pfad-Fehler**
    - **Lösung**: Überprüfe die Pfade in Import-Anweisungen, insbesondere bei Komponenten mit ähnlichen Namen
+
+5. **Änderungen nicht in Produktion sichtbar**
+   - **Lösung**: Überprüfe, ob du den main Branch aktualisiert hast, da dies der Branch für Production-Deployments ist
 
 #### Korrekte vercel.json-Konfiguration
 
@@ -108,7 +113,7 @@ Wir verwenden Git-Tags, um wichtige Versionen zu markieren und eine einfache Wie
 
 #### Version-Tags
 
-- **Produktion**: Jede in Produktion befindliche Version erhält ein Tag (z.B. `v1.1.1`)
+- **Produktion**: Jede in Produktion befindliche Version erhält ein Tag (z.B. `v1.1.2`)
 - **Meilensteine**: Wichtige Entwicklungsmeilensteine werden ebenfalls getaggt
 
 #### Zugriff auf spezifische Versionen
@@ -117,14 +122,14 @@ Um jederzeit zu einer spezifischen Version zurückzukehren:
 
 ```bash
 # Temporärer Checkout einer Version (nur zum Ansehen)
-git checkout v1.1.1
+git checkout v1.1.2
 
 # Neuen Branch auf Basis einer Version erstellen
-git checkout -b hotfix-branch v1.1.1
+git checkout -b hotfix-branch v1.1.2
 
 # Staging-Branch auf eine bestimmte Version zurücksetzen
 git checkout staging
-git reset --hard v1.1.1
+git reset --hard v1.1.2
 git push --force origin staging
 ```
 
@@ -142,7 +147,7 @@ git push origin v1.1.x
 
 ### Branch-Strategie
 
-- `master-r6p9cm0bf`: Production-Branch
+- `main`: Production-Branch
 - `staging`: Staging/Vorproduktions-Branch
 - Feature-Branches sollten auf Basis von `staging` erstellt werden
 
