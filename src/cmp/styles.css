@@ -1,0 +1,284 @@
+/* CMP Styles for JSON Explorer */
+
+/* Main container */
+.klaro {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Modal overlay */
+.klaro .cookie-modal,
+.klaro .cookie-notice {
+  z-index: 1000;
+}
+
+/* Main modal */
+.klaro .cookie-modal .cm-modal {
+  background-color: #fff;
+  border-radius: 8px;
+  max-width: 640px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .klaro .cookie-modal .cm-modal {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+  }
+  
+  .klaro .cookie-modal .cm-modal .cm-header,
+  .klaro .cookie-modal .cm-modal .cm-body,
+  .klaro .cookie-modal .cm-modal .cm-footer {
+    background-color: #1f2937;
+    color: #e5e7eb;
+  }
+  
+  .klaro .cookie-modal .cm-modal .cm-header h1 {
+    color: #60a5fa;
+  }
+  
+  .klaro .cookie-modal .cm-modal .cm-body p,
+  .klaro .cookie-modal .cm-modal .cm-body ul li {
+    color: #d1d5db;
+  }
+  
+  .klaro .cookie-modal .cm-modal .cm-body .cm-service {
+    background-color: #374151;
+    border-color: #4b5563;
+  }
+  
+  .klaro .cookie-modal .cm-modal .cm-footer .cm-btn {
+    background-color: #374151;
+    color: #e5e7eb;
+  }
+  
+  .klaro .cookie-modal .cm-modal .cm-footer .cm-btn.cm-btn-success {
+    background-color: #3b82f6;
+    color: #ffffff;
+  }
+}
+
+/* Header styles */
+.klaro .cookie-modal .cm-modal .cm-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1em;
+}
+
+.klaro .cookie-modal .cm-modal .cm-header h1 {
+  font-size: 1.4em;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+/* Body styles */
+.klaro .cookie-modal .cm-modal .cm-body {
+  padding: 1em;
+}
+
+.klaro .cookie-modal .cm-modal .cm-body p {
+  margin-bottom: 1em;
+  color: #4b5563;
+}
+
+/* Service items */
+.klaro .cookie-modal .cm-modal .cm-body .cm-services {
+  margin-top: 1em;
+}
+
+.klaro .cookie-modal .cm-modal .cm-body .cm-service {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 0.5em;
+  padding: 1em;
+}
+
+.klaro .cookie-modal .cm-modal .cm-body .cm-service .cm-service-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.klaro .cookie-modal .cm-modal .cm-body .cm-service .cm-service-title {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Purpose items */
+.klaro .cookie-modal .cm-modal .cm-body .cm-purpose {
+  margin-bottom: 1em;
+}
+
+.klaro .cookie-modal .cm-modal .cm-body .cm-purpose .cm-purpose-title {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5em;
+}
+
+/* Footer styles */
+.klaro .cookie-modal .cm-modal .cm-footer {
+  padding: 1em;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Buttons */
+.klaro .cookie-modal .cm-modal .cm-footer .cm-btn {
+  padding: 0.5em 1em;
+  border-radius: 0.375rem;
+  font-size: 14px;
+  margin-left: 0.5em;
+  cursor: pointer;
+  border: none;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.klaro .cookie-modal .cm-modal .cm-footer .cm-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.klaro .cookie-modal .cm-modal .cm-footer .cm-btn.cm-btn-success {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.klaro .cookie-modal .cm-modal .cm-footer .cm-btn.cm-btn-success:hover {
+  background-color: #2563eb;
+}
+
+/* Cookie notice (small banner) */
+.klaro .cookie-notice {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  bottom: 1em;
+  right: 1em;
+  max-width: 360px;
+  padding: 1em;
+  z-index: 1000;
+}
+
+@media (prefers-color-scheme: dark) {
+  .klaro .cookie-notice {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    border-color: #374151;
+  }
+  
+  .klaro .cookie-notice .cn-body p {
+    color: #d1d5db;
+  }
+  
+  .klaro .cookie-notice .cn-body .cn-buttons .cn-btn {
+    background-color: #374151;
+    color: #e5e7eb;
+  }
+  
+  .klaro .cookie-notice .cn-body .cn-buttons .cn-btn.cn-accept {
+    background-color: #3b82f6;
+    color: #ffffff;
+  }
+}
+
+.klaro .cookie-notice .cn-body {
+  margin-bottom: 0.5em;
+}
+
+.klaro .cookie-notice .cn-body p {
+  color: #4b5563;
+  margin-bottom: 1em;
+}
+
+.klaro .cookie-notice .cn-body .cn-buttons {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.klaro .cookie-notice .cn-body .cn-buttons .cn-btn {
+  padding: 0.5em 1em;
+  border-radius: 0.375rem;
+  font-size: 14px;
+  margin-left: 0.5em;
+  cursor: pointer;
+  border: none;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.klaro .cookie-notice .cn-body .cn-buttons .cn-btn:hover {
+  background-color: #e5e7eb;
+}
+
+.klaro .cookie-notice .cn-body .cn-buttons .cn-btn.cn-accept {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.klaro .cookie-notice .cn-body .cn-buttons .cn-btn.cn-accept:hover {
+  background-color: #2563eb;
+}
+
+/* Toggle switches */
+.klaro .cm-toggle-slider {
+  background-color: #d1d5db;
+  border-radius: 1rem;
+  cursor: pointer;
+  width: 3rem;
+  height: 1.5rem;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.klaro .cm-toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 0.25rem;
+  left: 0.25rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background-color: #ffffff;
+  transition: transform 0.2s;
+}
+
+.klaro input:checked + .cm-toggle-slider {
+  background-color: #3b82f6;
+}
+
+.klaro input:checked + .cm-toggle-slider::before {
+  transform: translateX(1.5rem);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .klaro .cookie-modal .cm-modal {
+    max-width: 90%;
+    margin: 5% auto;
+  }
+  
+  .klaro .cookie-notice {
+    left: 1em;
+    right: 1em;
+    max-width: none;
+  }
+  
+  .klaro .cookie-modal .cm-modal .cm-footer {
+    flex-direction: column;
+  }
+  
+  .klaro .cookie-modal .cm-modal .cm-footer .cm-btn {
+    margin: 0.5em 0 0 0;
+    width: 100%;
+  }
+} 
