@@ -1,10 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" rx="12" fill="url(#gradient)"/>
-  <path d="M19 44H45C46.1046 44 47 43.1046 47 42V22C47 20.8954 46.1046 20 45 20H34V22C34 23.1046 33.1046 24 32 24H28C26.8954 24 26 23.1046 26 22V20H24.5C23.6716 20 23 20.6716 23 21.5V42C23 43.3807 24.1193 44.5 25.5 44.5H45Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <defs>
-    <linearGradient id="gradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#3B82F6"/> <!-- blue-500 -->
-      <stop offset="1" stop-color="#4F46E5"/> <!-- indigo-600 -->
-    </linearGradient>
-  </defs>
+  <rect width="64" height="64" rx="12" fill="#3B82F6"/>
+  <path d="M19 20H31V27C31 28.1046 31.8954 29 33 29H40V44H19V20Z" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M31 20V27C31 28.1046 31.8954 29 33 29H40L31 20Z" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg> 
