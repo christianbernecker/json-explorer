@@ -46,15 +46,6 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
           >
             Privacy
           </Link>
-          <a
-            href="https://github.com/christianbernecker/json-explorer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
-            title="GitHub repository of JSON Explorer"
-          >
-            GitHub
-          </a>
         </nav>
       </div>
       <div className="container mx-auto px-4 mt-2 text-[10px] text-center">
