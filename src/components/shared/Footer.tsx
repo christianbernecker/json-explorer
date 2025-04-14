@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { openConsentManager } from '../../cmp';
 
 // Leeres Export-Statement zur Sicherstellung, dass die Datei als Modul behandelt wird
 export {};
@@ -22,6 +23,17 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
   // Display version based on environment
   const displayVersion = isStaging ? `${APP_VERSION_NEXT} (Preview)` : APP_VERSION;
 
+  // Function to manually show the CMP
+  const showCMP = () => {
+    try {
+      openConsentManager();
+    } catch (e) {
+      console.error('Failed to open consent manager:', e);
+      // Redirect to privacy policy as fallback
+      window.location.href = '/json-explorer/legal/privacy';
+    }
+  };
+
   return (
     <footer className={`mt-auto py-4 border-t ${
       isDarkMode ? 'bg-gray-900 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-600'
@@ -32,6 +44,13 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
           {isStaging && <span className="ml-2 px-2 py-1 text-xs rounded-full bg-yellow-500 text-black font-bold">STAGING</span>}
         </div>
         <nav className="flex space-x-6 text-xs" aria-label="Legal Information">
+          <button 
+            onClick={showCMP} 
+            className={`hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
+            title="Manage your privacy and cookie settings"
+          >
+            Privacy Settings
+          </button>
           <Link 
             to="/legal/imprint" 
             className={`hover:underline ${isDarkMode ? 'hover:text-blue-400' : 'hover:text-blue-600'}`}
