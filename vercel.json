@@ -49,6 +49,14 @@
       "continue": true
     },
     { 
+      "src": "/(.*)\\.xml$", 
+      "dest": "/$1.xml",
+      "headers": { 
+        "Content-Type": "application/xml; charset=utf-8",
+        "Cache-Control": "public, max-age=3600, s-maxage=86400"
+      }
+    },
+    { 
       "src": "/(.*)", 
       "dest": "/index.html",
       "headers": { 

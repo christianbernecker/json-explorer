@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 // Leeres Export-Statement zur Sicherstellung, dass die Datei als Modul behandelt wird
 export {};
 
-// Define the current version
-const APP_VERSION = 'v1.1.1'; // Current Production Version
-const APP_VERSION_NEXT = 'v1.1.2'; // Next version in development
+// Constants for app information
+const APP_VERSION = 'v1.1.2'; // Current Production Version
+const APP_VERSION_NEXT = 'v1.1.3'; // Next version in development
 
 interface FooterProps {
   isDarkMode: boolean;
