@@ -62,7 +62,7 @@
         ],
         translations: {
           en: {
-            privacyPolicyUrl: '/legal/privacy-policy',
+            privacyPolicyUrl: '/json-explorer/legal/privacy',
             consentModal: {
               title: 'Privacy Settings',
               description: 'Here you can see and customize the information that we collect about you.',
@@ -84,10 +84,19 @@
     <noscript>You need to enable JavaScript to run this app. Please enable JavaScript in your browser.</noscript>
     <div id="root"></div>
     
+    <!-- Kleiner Test-Indikator um zu sehen, ob der Deploy funktioniert hat -->
+    <div id="deploy-test" style="position: fixed; bottom: 10px; left: 10px; background: yellow; padding: 5px; font-size: 10px; z-index: 9999; display: none;">
+      TCF 2.0 Deployment Test
+    </div>
+    
     <!-- Aktiviere Klaro, nachdem die Seite geladen wurde -->
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         console.log('DOM fully loaded');
+        
+        // Mache den Test-Indikator sichtbar
+        document.getElementById('deploy-test').style.display = 'block';
+        
         // Warte kurz, bis Klaro vollständig geladen ist
         setTimeout(function() {
           if (window.klaro) {

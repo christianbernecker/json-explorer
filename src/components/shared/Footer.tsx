@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { openConsentManager } from '../../cmp';
 
 // Erweiterung der Window-Schnittstelle für Klaro
