@@ -1,6 +1,17 @@
 #!/bin/bash
 set -e  # Exit on error
 
+# Display deployment guide reminder
+echo "=============================================================="
+echo "                STAGING DEPLOYMENT CHECKLIST                  "
+echo "=============================================================="
+echo "Before proceeding, ensure you have:"
+echo "  ✓ Read the DEPLOYMENT.md guide"
+echo "  ✓ Made all necessary code changes and tests"
+echo "  ✓ Committed your changes locally"
+echo "=============================================================="
+echo ""
+
 # Prüfen, ob eine Commit-Nachricht angegeben wurde
 if [ -z "$1" ]; then
     echo "Fehler: Keine Commit-Nachricht angegeben"

@@ -1,6 +1,28 @@
 #!/bin/bash
 set -e  # Exit on error
 
+# Display deployment guide reminder
+echo "=============================================================="
+echo "               PRODUCTION DEPLOYMENT CHECKLIST                "
+echo "=============================================================="
+echo "Before proceeding, ensure you have:"
+echo "  ✓ Read the DEPLOYMENT.md guide"
+echo "  ✓ Tested all changes on staging"
+echo "  ✓ Updated version numbers in package.json and Footer.tsx"
+echo "  ✓ Verified SEO elements are in place"
+echo "  ✓ Checked that you're deploying to the main branch"
+echo "=============================================================="
+echo ""
+
+# Require explicit confirmation of reading the guide
+read -p "Have you read the deployment guide (DEPLOYMENT.md)? (yes/no): " read_guide
+
+if [ "$read_guide" != "yes" ]; then
+    echo "Please read the deployment guide (DEPLOYMENT.md) before proceeding."
+    echo "Deployment aborted."
+    exit 1
+fi
+
 # Prüfen, ob eine Commit-Nachricht angegeben wurde
 if [ -z "$1" ]; then
     echo "Fehler: Keine Commit-Nachricht angegeben"

@@ -32,7 +32,10 @@
     "eject": "react-scripts eject",
     "deploy": "npm run build:production && vercel --prod",
     "deploy:staging": "npm run build && vercel --local-config=vercel.staging.json -e NODE_ENV=staging",
-    "seo-validate": "node scripts/seo-validation/validate.js"
+    "seo-validate": "node scripts/seo-validation/validate.js",
+    "install-hooks": "node scripts/install-hooks.js",
+    "postinstall": "npm run install-hooks",
+    "prepare-deploy": "cat DEPLOYMENT.md | head -n 30"
   },
   "eslintConfig": {
     "extends": [

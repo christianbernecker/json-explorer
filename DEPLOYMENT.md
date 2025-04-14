@@ -32,10 +32,11 @@ For deploying to the staging environment:
 ```
 
 This script will:
-1. Run build checks
-2. Commit changes
-3. Push to the staging branch
-4. Trigger the staging deployment webhook
+1. Display a pre-deployment checklist
+2. Run build checks
+3. Commit changes
+4. Push to the staging branch
+5. Trigger the staging deployment webhook
 
 ### Production Deployment
 
@@ -47,11 +48,28 @@ For deploying to the production environment:
 ```
 
 This script will:
-1. Run lint and build checks
-2. Switch to the main branch
-3. Merge changes from staging
-4. Push to the main branch
-5. Trigger the production deployment webhook
+1. Display a pre-deployment checklist and require confirmation
+2. Run lint and build checks
+3. Switch to the main branch
+4. Merge changes from staging
+5. Push to the main branch
+6. Trigger the production deployment webhook
+
+## Automatic Deployment Safeguards
+
+Several safeguards have been implemented to ensure proper deployment:
+
+1. **Pre-deployment Checklists**: Both deployment scripts show checklists to remind you of key steps.
+
+2. **Required Confirmation**: The production deployment script requires explicit confirmation that you've read the guide.
+
+3. **Git Hooks**: 
+   - The `pre-push` hook reminds you about the deployment process when pushing to staging or main branches.
+   - The `pre-commit` hook updates the sitemap with current dates.
+
+4. **NPM Scripts**:
+   - `npm run install-hooks`: Installs the git hooks (runs automatically after `npm install`)
+   - `npm run prepare-deploy`: Shows a summary of the deployment guide
 
 ## Version Management
 
