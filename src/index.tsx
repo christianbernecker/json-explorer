@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import './index.css';
 import JsonToolsApp from './components';
 import Imprint from './pages/Imprint';
@@ -19,14 +20,19 @@ const App = () => {
     localStorage.setItem('jsonTools_darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
+  // Get the basename from the homepage value in package.json
+  const basename = process.env.PUBLIC_URL || '';
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<JsonToolsApp parentIsDarkMode={isDarkMode} setParentIsDarkMode={setIsDarkMode} />} />
-        <Route path="/imprint" element={<Imprint isDarkMode={isDarkMode} />} />
-        <Route path="/privacy" element={<Privacy isDarkMode={isDarkMode} />} />
-      </Routes>
-    </Router>
+    <HelmetProvider>
+      <Router basename={basename}>
+        <Routes>
+          <Route path="/" element={<JsonToolsApp parentIsDarkMode={isDarkMode} setParentIsDarkMode={setIsDarkMode} />} />
+          <Route path="/imprint" element={<Imprint isDarkMode={isDarkMode} />} />
+          <Route path="/privacy" element={<Privacy isDarkMode={isDarkMode} />} />
+        </Routes>
+      </Router>
+    </HelmetProvider>
   );
 };
 

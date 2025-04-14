@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ImprintContent } from '../components/shared';
+import { SEO } from '../components/seo';
 
 interface ImprintProps {
   isDarkMode: boolean;
@@ -9,6 +10,11 @@ interface ImprintProps {
 const Imprint: React.FC<ImprintProps> = ({ isDarkMode }) => {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-200`}>
+      <SEO 
+        title="Imprint | JSON Explorer & VAST AdTag Tools"
+        description="Legal information and imprint for the JSON Explorer and VAST AdTag Tools."
+        canonical="https://www.adtech-toolbox.com/json-explorer/imprint"
+      />
       <div className="w-full max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
