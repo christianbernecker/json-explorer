@@ -34,12 +34,21 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
     }
     
     try {
-      console.log('Attempting to open consent manager...');
-      openConsentManager();
-      console.log('Consent manager opened successfully');
+      console.log('Attempting to open consent manager directly...');
+      // Versuchen, Klaro direkt zu verwenden, falls es verfügbar ist
+      if (window.klaro) {
+        console.log('Klaro found on window object');
+        window.klaro.show();
+        console.log('Klaro.show called directly');
+      } else {
+        console.log('Klaro not found on window, trying openConsentManager');
+        // Fallback: unsere eigene Funktion verwenden
+        openConsentManager();
+      }
     } catch (e) {
       console.error('Failed to open consent manager:', e);
       // Redirect to privacy policy as fallback
+      console.log('Redirecting to privacy page as fallback');
       window.location.href = '/json-explorer/legal/privacy';
     }
   };

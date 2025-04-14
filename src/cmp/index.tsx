@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import klaroConfig from './config';
-import { show, initialize, getManager, consent } from 'klaro/dist/klaro';
+import * as klaro from 'klaro';
 import { TCF_PURPOSES } from './config';
 import './styles.css';
 
@@ -27,8 +27,7 @@ export const hasConsent = (serviceName: string): boolean => {
   if (typeof window === 'undefined' || !window.klaro) {
     return false;
   }
-  const manager = getManager();
-  return manager?.getConsent(serviceName) || false;
+  return window.klaro.getManager().getConsent(serviceName);
 };
 
 /**
@@ -60,28 +59,27 @@ export const initCMP = (): void => {
   }
 
   try {
-    // Initialisiere Klaro mit der korrekten Funktion
-    initialize(klaroConfig);
+    console.log('Initializing CMP...');
     
-    // Mache Klaro global verfügbar
-    window.klaro = {
-      show: show,
-      initialize: initialize,
-      getManager: getManager,
-      consent: consent
-    };
+    // Make Klaro available globally
+    window.klaro = klaro;
     
-    // Zeige den Consent-Manager, wenn noch keine Einwilligung gegeben wurde
-    const manager = getManager();
-    const consentGiven = manager?.confirmed;
-    if (!consentGiven) {
+    // Initialize Klaro with our config
+    klaro.initialize(klaroConfig);
+    
+    // Show the consent manager if no consent was given yet
+    const manager = klaro.getManager();
+    if (!manager?.confirmed) {
+      console.log('No consent given yet, showing CMP after delay...');
       setTimeout(() => {
-        show(klaroConfig);
+        klaro.show(klaroConfig);
       }, 800);
     }
 
     // Make TCF API available globally
     if (klaroConfig.tcf2?.enabled && !window.__tcfapi) {
+      console.log('Setting up TCF API...');
+      
       // This would be a simplified version, in a real implementation additional TCF API methods would be needed
       window.__tcfapi = {
         addEventListener: (event, callback) => {
@@ -92,8 +90,7 @@ export const initCMP = (): void => {
         },
         getTCData: (callback, vendorIds) => {
           // Basic implementation to provide TCF data
-          const manager = getManager();
-          const allConsents = manager?.consents || {};
+          const manager = klaro.getManager();
           const purposeConsents: Record<number, boolean> = {};
           
           // Map service consents to purpose consents
@@ -135,6 +132,7 @@ export const ConsentManager: React.FC = () => {
     // Verzögere die Initialisierung um sicherzustellen, dass das DOM bereit ist
     setTimeout(() => {
       try {
+        console.log('ConsentManager component mounted, initializing CMP...');
         initCMP();
       } catch (e) {
         console.error('Error initializing CMP in component:', e);
@@ -151,9 +149,10 @@ export const ConsentManager: React.FC = () => {
  * Open the consent manager
  */
 export const openConsentManager = (): void => {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && window.klaro) {
     try {
-      show(klaroConfig);
+      console.log('Opening consent manager...');
+      window.klaro.show(klaroConfig);
     } catch (e) {
       console.error('Failed to show consent manager:', e);
     }
