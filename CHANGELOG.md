@@ -2,6 +2,22 @@
 
 All notable changes to the JSON Explorer project will be documented in this file.
 
+## [1.1.4] - 2024-07-18
+
+### Added
+- Created standalone static HTML pages for legal content
+- Added 404 error page for better handling of non-existent URLs
+- Implemented CSS injection script for static HTML pages
+
+### Changed
+- Removed CMP-related scripts and configurations
+- Updated Vercel routing rules for improved navigation
+- Optimized build process to include CSS injection for static pages
+
+### Fixed
+- Fixed routing issues for legal pages
+- Improved static page styling and navigation
+
 ## [1.1.3] - 2024-07-16
 
 ### Added
