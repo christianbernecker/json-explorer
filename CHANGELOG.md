@@ -2,7 +2,7 @@
 
 All notable changes to the JSON Explorer project will be documented in this file.
 
-## [1.1.5] - 2024-07-19
+## [Upcoming - 1.1.5]
 
 ### Changed
 - Moved version display from header to footer for cleaner UI
