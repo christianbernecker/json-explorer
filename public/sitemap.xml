@@ -7,13 +7,19 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.adtech-toolbox.com/json-explorer/legal/imprint</loc>
+    <loc>https://www.adtech-toolbox.com/json-explorer/imprint2</loc>
     <lastmod>2025-04-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://www.adtech-toolbox.com/json-explorer/legal/privacy</loc>
+    <loc>https://www.adtech-toolbox.com/json-explorer/privacy2</loc>
+    <lastmod>2025-04-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://www.adtech-toolbox.com/json-explorer/contact2</loc>
     <lastmod>2025-04-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.3</priority>

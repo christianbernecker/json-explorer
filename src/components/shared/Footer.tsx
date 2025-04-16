@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { APP_VERSION, APP_VERSION_NEXT } from '../../constants';
 
 const Footer: React.FC = () => {
@@ -16,24 +15,24 @@ const Footer: React.FC = () => {
             )}
           </div>
           <div className="flex space-x-4">
-            <Link
-              to="/json-explorer/legal/privacy"
+            <a
+              href="/json-explorer/privacy2"
               className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Privacy Policy
-            </Link>
-            <Link
-              to="/json-explorer/legal/imprint"
+            </a>
+            <a
+              href="/json-explorer/imprint2"
               className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Imprint
-            </Link>
-            <Link
-              to="/json-explorer/contact"
+            </a>
+            <a
+              href="/json-explorer/contact2"
               className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Contact
-            </Link>
+            </a>
           </div>
         </div>
       </div>

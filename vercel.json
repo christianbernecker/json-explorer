@@ -27,7 +27,7 @@
     },
     { 
       "src": "/json-explorer/legal/imprint", 
-      "dest": "/legal/imprint.html",
+      "dest": "/imprint2.html",
       "headers": { 
         "Cache-Control": "public, max-age=86400, s-maxage=604800",
         "X-Content-Type-Options": "nosniff",
@@ -37,7 +37,7 @@
     },
     { 
       "src": "/json-explorer/legal/privacy", 
-      "dest": "/legal/privacy.html",
+      "dest": "/privacy2.html",
       "headers": { 
         "Cache-Control": "public, max-age=86400, s-maxage=604800",
         "X-Content-Type-Options": "nosniff",
