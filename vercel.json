@@ -9,6 +9,7 @@
   ],
   "routes": [
     { "src": "^/$", "status": 307, "headers": { "Location": "/json-explorer" } },
+    { "src": "/contact", "dest": "/contact.html" },
     { "handle": "filesystem" },
     { 
       "src": "/json-explorer", 
