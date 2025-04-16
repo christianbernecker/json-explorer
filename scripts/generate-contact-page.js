@@ -18,71 +18,206 @@ const contactHtml = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact | JSON Explorer & VAST AdTag Tools</title>
   <meta name="description" content="Contact information for the JSON Explorer and VAST AdTag Tools.">
-  <link rel="canonical" href="https://www.adtech-toolbox.com/json-explorer/contact">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <link rel="canonical" href="https://www.adtech-toolbox.com/contact">
+  <style>
+    :root {
+      --color-primary: #3b82f6;
+      --color-primary-dark: #2563eb;
+      --color-secondary: #4f46e5;
+      --color-text: #374151;
+      --color-text-light: #6b7280;
+      --color-bg: #ffffff;
+      --color-bg-light: #f9fafb;
+      --color-border: #e5e7eb;
+      --color-link: #2563eb;
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-family);
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .icon {
+      width: 3rem;
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 1rem;
+      border-radius: 0.5rem;
+      background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+      color: white;
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+    }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background-color: #f3f4f6;
+      color: var(--color-text);
+      text-decoration: none;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s;
+    }
+
+    .back-link:hover {
+      background-color: #e5e7eb;
+    }
+
+    .back-icon {
+      margin-right: 0.5rem;
+    }
+
+    .card {
+      background-color: var(--color-bg-light);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .content {
+      margin-top: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    p {
+      margin-bottom: 1rem;
+    }
+
+    a {
+      color: var(--color-link);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+    }
+
+    /* Dark mode media query */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-primary: #3b82f6;
+        --color-text: #f3f4f6;
+        --color-text-light: #d1d5db;
+        --color-bg: #111827;
+        --color-bg-light: #1f2937;
+        --color-border: #374151;
+        --color-link: #60a5fa;
+      }
+
+      .back-link {
+        background-color: #1f2937;
+        color: #f3f4f6;
+      }
+
+      .back-link:hover {
+        background-color: #374151;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .back-link {
+        margin-top: 1rem;
+      }
+    }
+  </style>
 </head>
-<body class="bg-white text-gray-700 min-h-screen">
-  <div class="w-full max-w-6xl mx-auto px-6 py-8">
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center">
-        <div class="mr-3 bg-gradient-to-r from-blue-500 to-indigo-600 p-3 rounded-lg text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-left">
+        <div class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
         <div>
-          <h1 class="text-2xl font-bold text-blue-600">Contact Us</h1>
-          <div class="text-sm text-gray-500">Get in touch</div>
+          <h1 class="title">Contact Us</h1>
+          <div class="subtitle">Get in touch</div>
         </div>
       </div>
       
-      <a 
-        href="/json-explorer" 
-        class="flex items-center px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" />
+      <a href="/json-explorer" class="back-link">
+        <svg class="back-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
         Back to App
       </a>
-    </div>
+    </header>
 
-    <div class="p-6 rounded-lg shadow-sm bg-gray-50">
-      <div class="space-y-6">
-        <div>
-          <p>If you have any questions or feedback regarding the JSON Explorer tools, please feel free to reach out.</p>
-          
-          <h2 class="text-lg font-semibold mt-6 mb-3 text-gray-700">Contact Information</h2>
-          <p>
-            <strong>Email:</strong> <a href="mailto:info@adtech-toolbox.com" class="text-blue-600 hover:underline ml-1">
-              info@adtech-toolbox.com
-            </a>
-          </p>
-          
-          <h2 class="text-lg font-semibold mt-6 mb-3 text-gray-700">GitHub Repository</h2>
-          <p>For technical issues, feature requests, or contributions, please visit our GitHub repository:</p>
-          <p>
-            <a 
-              href="https://github.com/christianbernecker/json-explorer" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              class="text-blue-600 hover:underline"
-            >
-              JSON Explorer on GitHub
-            </a>
-          </p>
-          <p>You can open an issue for bugs or start a discussion for feature ideas.</p>
-          
-          <div class="mt-8 pt-4 border-t border-gray-300">
-            <p class="text-sm">
-              <a href="/json-explorer/contact2" class="text-blue-600 hover:underline">
-                View alternative contact page
-              </a> (Vanilla HTML/CSS version)
-            </p>
-          </div>
-        </div>
+    <div class="card">
+      <div class="content">
+        <p>If you have any questions or feedback regarding the JSON Explorer tools, please feel free to reach out.</p>
+        
+        <h2>Contact Information</h2>
+        <p>
+          <strong>Email:</strong> 
+          <a href="mailto:info@adtech-toolbox.com">info@adtech-toolbox.com</a>
+        </p>
       </div>
     </div>
+
+    <footer class="footer">
+      <p>© 2025 JSON Explorer | <a href="/legal/imprint">Imprint</a> | <a href="/legal/privacy">Privacy Policy</a></p>
+    </footer>
   </div>
 </body>
 </html>`;
