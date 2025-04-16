@@ -4,19 +4,37 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contact | JSON Explorer</title>
-  <link rel="stylesheet" href="/index.css"> <!-- Basis-Styling laden -->
+  <link rel="stylesheet" href="/index.css"> <!-- Link zum Tailwind CSS -->
+  <style>
+    /* Falls spezifisches Styling benötigt wird, kann es hier bleiben */
+  </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900">
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Contact Us</h1>
-    <div class="prose dark:prose-invert text-gray-800 dark:text-gray-200">
-      <p>If you have any questions or feedback, feel free to reach out.</p>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <h1 class="text-3xl sm:text-4xl font-bold mb-8 text-gray-900 dark:text-white">Contact Us</h1>
+    
+    {/* Verwende prose für das Styling des Inhaltsbereichs */}
+    <div class="prose dark:prose-invert max-w-none">
+      <p>If you have any questions or feedback regarding the JSON Explorer tools, please feel free to reach out.</p>
+      
+      <h2 class="text-xl font-semibold mt-6 mb-3 text-gray-900 dark:text-white">Contact Information</h2>
       <p>
         <strong>Email:</strong> 
         <a href="mailto:info@adtech-toolbox.com" class="text-blue-600 dark:text-blue-400 hover:underline">info@adtech-toolbox.com</a>
       </p>
-      <p>Alternatively, you can open an issue or discussion on our GitHub repository.</p>
-      <p><a href="/json-explorer" class="text-blue-600 dark:text-blue-400 hover:underline">Back to JSON Explorer</a></p>
+      
+      <h2 class="text-xl font-semibold mt-6 mb-3 text-gray-900 dark:text-white">GitHub Repository</h2>
+      <p>For technical issues, feature requests, or contributions, please visit our GitHub repository:</p>
+      <p>
+        <a href="https://github.com/christianbernecker/json-explorer" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">JSON Explorer on GitHub</a>
+      </p>
+      <p>You can open an issue for bugs or start a discussion for feature ideas.</p>
+
+      <hr class="my-8 border-gray-300 dark:border-gray-600">
+
+      <p>
+        <a href="/json-explorer" class="text-blue-600 dark:text-blue-400 hover:underline">&larr; Back to JSON Explorer</a>
+      </p>
     </div>
   </div>
 </body>
