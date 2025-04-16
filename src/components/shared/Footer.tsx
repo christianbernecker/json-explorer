@@ -1,6 +1,9 @@
 import React from 'react';
 import { APP_VERSION, APP_VERSION_NEXT } from '../../constants';
 
+// For deployment script detection:
+// APP_VERSION = 'v1.1.5'
+
 const Footer: React.FC = () => {
   return (
     <footer className="bg-gray-50 dark:bg-gray-800 py-4">
