@@ -2,7 +2,7 @@ import React from 'react';
 import { APP_VERSION, APP_VERSION_NEXT, APP_ENV } from '../../constants';
 
 // For deployment script detection:
-// APP_VERSION = 'v1.1.4'
+// APP_VERSION = 'v1.1.5'
 
 const Footer: React.FC = () => {
   const isProduction = APP_ENV === 'production';
