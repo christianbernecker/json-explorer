@@ -9,8 +9,9 @@
   ],
   "routes": [
     { "src": "^/$", "status": 307, "headers": { "Location": "/json-explorer" } },
-    { "src": "/legal/imprint", "dest": "/imprint.html" },
-    { "src": "/legal/privacy", "dest": "/privacy.html" },
+    { "src": "/404", "dest": "/404.html" },
+    { "src": "/legal/imprint", "dest": "/legal/imprint.html" },
+    { "src": "/legal/privacy", "dest": "/legal/privacy.html" },
     { "src": "/contact", "dest": "/contact.html" },
     { "handle": "filesystem" },
     { 
@@ -26,7 +27,7 @@
     },
     { 
       "src": "/json-explorer/legal/imprint", 
-      "dest": "/imprint.html",
+      "dest": "/legal/imprint.html",
       "headers": { 
         "Cache-Control": "public, max-age=86400, s-maxage=604800",
         "X-Content-Type-Options": "nosniff",
@@ -36,7 +37,7 @@
     },
     { 
       "src": "/json-explorer/legal/privacy", 
-      "dest": "/privacy.html",
+      "dest": "/legal/privacy.html",
       "headers": { 
         "Cache-Control": "public, max-age=86400, s-maxage=604800",
         "X-Content-Type-Options": "nosniff",

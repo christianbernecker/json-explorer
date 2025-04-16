@@ -11,6 +11,7 @@
     { "src": "^/$", "status": 307, "headers": { "Location": "/json-explorer" } },
     { "handle": "filesystem" },
     { "src": "/json-explorer", "dest": "/" },
+    { "src": "/404", "dest": "/404.html" },
     { "src": "/legal/imprint", "dest": "/legal/imprint.html" },
     { "src": "/legal/privacy", "dest": "/legal/privacy.html" },
     { "src": "/contact", "dest": "/contact.html" },
