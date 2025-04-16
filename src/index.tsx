@@ -6,6 +6,7 @@ import './index.css';
 import JsonToolsApp from './components';
 import Imprint from './pages/Imprint';
 import Privacy from './pages/Privacy';
+import Contact from './pages/Contact';
 // import ConsentManager from './cmp';
 
 // Create an App component to handle routing and global state
@@ -36,6 +37,7 @@ const App = () => {
           {/* New Legal Routes */}
           <Route path="/legal/imprint" element={<Imprint isDarkMode={isDarkMode} />} />
           <Route path="/legal/privacy" element={<Privacy isDarkMode={isDarkMode} />} />
+          <Route path="/contact" element={<Contact isDarkMode={isDarkMode} />} />
           
           {/* Keep old routes for backward compatibility and redirect to new ones */}
           <Route path="/imprint" element={<Navigate to="/legal/imprint" replace />} />

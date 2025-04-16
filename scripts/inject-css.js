@@ -25,29 +25,35 @@ const cssPath = `/static/css/${cssFileName}`;
 const cssLinkTag = `<link rel="stylesheet" href="${cssPath}">`;
 
 console.log(`Found CSS file: ${cssPath}`);
-console.log(`Injecting into: ${contactHtmlPath}`);
 
-// 2. Lese contact.html aus dem build-Ordner
-let htmlContent = '';
-try {
-  htmlContent = fs.readFileSync(contactHtmlPath, 'utf8');
-} catch (err) {
-  console.error(`Error reading ${contactHtmlPath}:`, err);
-  process.exit(1);
-}
+// 2. Überprüfe, ob die contact.html Datei existiert
+if (fs.existsSync(contactHtmlPath)) {
+  console.log(`Injecting into: ${contactHtmlPath}`);
+  
+  // 3. Lese contact.html aus dem build-Ordner
+  let htmlContent = '';
+  try {
+    htmlContent = fs.readFileSync(contactHtmlPath, 'utf8');
+  } catch (err) {
+    console.error(`Error reading ${contactHtmlPath}:`, err);
+    process.exit(1);
+  }
 
-// 3. Ersetze den Platzhalter
-const newHtmlContent = htmlContent.replace(placeholder, cssLinkTag);
+  // 4. Ersetze den Platzhalter
+  const newHtmlContent = htmlContent.replace(placeholder, cssLinkTag);
 
-if (newHtmlContent === htmlContent) {
-    console.warn(`Placeholder "${placeholder}" not found in ${contactHtmlPath}. CSS link not injected.`);
+  if (newHtmlContent === htmlContent) {
+      console.warn(`Placeholder "${placeholder}" not found in ${contactHtmlPath}. CSS link not injected.`);
+  } else {
+      // 5. Schreibe die geänderte Datei zurück
+      try {
+        fs.writeFileSync(contactHtmlPath, newHtmlContent, 'utf8');
+        console.log(`Successfully injected CSS link into ${contactHtmlPath}`);
+      } catch (err) {
+        console.error(`Error writing ${contactHtmlPath}:`, err);
+        process.exit(1);
+      }
+  }
 } else {
-    // 4. Schreibe die geänderte Datei zurück
-    try {
-      fs.writeFileSync(contactHtmlPath, newHtmlContent, 'utf8');
-      console.log(`Successfully injected CSS link into ${contactHtmlPath}`);
-    } catch (err) {
-      console.error(`Error writing ${contactHtmlPath}:`, err);
-      process.exit(1);
-    }
+  console.log(`Contact HTML file (${contactHtmlPath}) not found. Skipping CSS injection.`);
 } 
