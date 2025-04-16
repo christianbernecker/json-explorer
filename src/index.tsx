@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { HelmetProvider } from 'react-helmet-async';
 import './index.css';
 import JsonToolsApp from './components';
-import Contact from './pages/Contact';
 // import ConsentManager from './cmp';
 
 // Create an App component to handle routing and global state
@@ -31,9 +30,6 @@ const App = () => {
         <Routes>
           {/* Main App */}
           <Route path="/" element={<JsonToolsApp parentIsDarkMode={isDarkMode} setParentIsDarkMode={setIsDarkMode} />} />
-          
-          {/* Contact Route */}
-          <Route path="/contact" element={<Contact isDarkMode={isDarkMode} />} />
           
           {/* Redirects for old routes - now using static HTML pages */}
           <Route path="/imprint" element={<Navigate to="/legal/imprint" replace />} />
