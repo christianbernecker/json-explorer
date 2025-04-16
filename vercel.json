@@ -11,6 +11,8 @@
     { "src": "^/$", "status": 307, "headers": { "Location": "/json-explorer" } },
     { "src": "/contact", "dest": "/contact.html" },
     { "src": "/contact2", "dest": "/contact2.html" },
+    { "src": "/imprint2", "dest": "/imprint2.html" },
+    { "src": "/privacy2", "dest": "/privacy2.html" },
     { "handle": "filesystem" },
     { 
       "src": "/json-explorer", 
@@ -56,6 +58,26 @@
     { 
       "src": "/json-explorer/contact2", 
       "dest": "/contact2.html",
+      "headers": { 
+        "Cache-Control": "public, max-age=86400, s-maxage=604800",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block"
+      }
+    },
+    { 
+      "src": "/json-explorer/imprint2", 
+      "dest": "/imprint2.html",
+      "headers": { 
+        "Cache-Control": "public, max-age=86400, s-maxage=604800",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block"
+      }
+    },
+    { 
+      "src": "/json-explorer/privacy2", 
+      "dest": "/privacy2.html",
       "headers": { 
         "Cache-Control": "public, max-age=86400, s-maxage=604800",
         "X-Content-Type-Options": "nosniff",

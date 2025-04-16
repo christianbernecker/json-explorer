@@ -15,6 +15,8 @@
     { "src": "/json-explorer/legal/privacy", "dest": "/legal/privacy.html" },
     { "src": "/json-explorer/contact", "dest": "/contact.html" },
     { "src": "/json-explorer/contact2", "dest": "/contact2.html" },
+    { "src": "/json-explorer/imprint2", "dest": "/imprint2.html" },
+    { "src": "/json-explorer/privacy2", "dest": "/privacy2.html" },
     { "src": "/json-explorer/(.*)", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ],
