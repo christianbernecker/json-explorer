@@ -1,3 +1,4 @@
 // App Version Constants
-export const APP_VERSION = 'v1.1.3'; // Current Production Version
-export const APP_VERSION_NEXT = 'v1.1.4'; // Next version in development 
+export const APP_VERSION = 'v1.1.5';
+export const APP_VERSION_NEXT = 'v1.1.6';
+export const APP_ENV = process.env.NODE_ENV === 'production' ? 'production' : 'development';
