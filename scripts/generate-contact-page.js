@@ -72,6 +72,14 @@ const contactHtml = `<!DOCTYPE html>
             </a>
           </p>
           <p>You can open an issue for bugs or start a discussion for feature ideas.</p>
+          
+          <div class="mt-8 pt-4 border-t border-gray-300">
+            <p class="text-sm">
+              <a href="/json-explorer/contact2" class="text-blue-600 hover:underline">
+                View alternative contact page
+              </a> (Vanilla HTML/CSS version)
+            </p>
+          </div>
         </div>
       </div>
     </div>
