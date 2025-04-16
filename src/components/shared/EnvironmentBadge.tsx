@@ -1,4 +1,5 @@
 import React from 'react';
+import { APP_VERSION_NEXT } from '../../constants';
 
 interface EnvironmentBadgeProps {
   environment: string;
@@ -6,7 +7,7 @@ interface EnvironmentBadgeProps {
 }
 
 const EnvironmentBadge: React.FC<EnvironmentBadgeProps> = ({ environment, version }) => {
-  // Determine badge color based on environment
+  // Determine badge color and style based on environment
   const getBadgeColor = () => {
     switch (environment.toLowerCase()) {
       case 'production':
@@ -20,11 +21,17 @@ const EnvironmentBadge: React.FC<EnvironmentBadgeProps> = ({ environment, versio
     }
   };
 
+  // Determine if we should add the preview text for staging/development
+  const isPreviewEnvironment = environment.toLowerCase() !== 'production';
+  const isStaging = environment.toLowerCase() === 'staging';
+
   return (
     <div className={`${getBadgeColor()} text-white text-xs font-medium py-1 px-2 rounded-md inline-flex items-center`}>
       {version}
-      {environment.toLowerCase() !== 'production' && (
-        <span className="ml-1">({environment})</span>
+      {isPreviewEnvironment && (
+        <span className="ml-1">
+          {isStaging ? `(${APP_VERSION_NEXT} Preview)` : `(${environment})`}
+        </span>
       )}
     </div>
   );

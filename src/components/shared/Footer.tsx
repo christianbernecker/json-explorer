@@ -2,7 +2,7 @@ import React from 'react';
 import { APP_VERSION, APP_VERSION_NEXT } from '../../constants';
 
 // For deployment script detection:
-// APP_VERSION = 'v1.1.5'
+// APP_VERSION = 'v1.1.4'
 
 const Footer: React.FC = () => {
   return (
