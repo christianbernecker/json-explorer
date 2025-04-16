@@ -1,22 +1,20 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import JsonToolsApp from './components/JsonToolsApp';
-import { Privacy, Imprint } from './pages';
-import ConsentManager from './cmp';
+import NotFound from './components/NotFound';
+import Legal from './components/Legal';
+import './App.css';
 
-const App: React.FC = () => {
-  const basename = process.env.PUBLIC_URL || '';
-  
+function App() {
   return (
-    <Router basename={basename}>
-      <ConsentManager />
+    <Router>
       <Routes>
-        <Route path="/legal/privacy" element={<Privacy isDarkMode={false} />} />
-        <Route path="/legal/imprint" element={<Imprint isDarkMode={false} />} />
-        <Route path="/" element={<JsonToolsApp />} />
+        <Route path="/json-explorer" element={<JsonToolsApp />} />
+        <Route path="/json-explorer/legal/:page" element={<Legal />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
-};
+}
 
 export default App; 

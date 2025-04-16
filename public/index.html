@@ -2,13 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#3b82f6" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="theme-color" content="#4285f4" />
     <meta
       name="description"
-      content="Free tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required."
+      content="Free JSON Validator & VAST AdTag Explorer - Format, validate and analyze JSON & VAST AdTag formats in your browser!"
     />
-    <meta name="keywords" content="JSON validator, JSON formatter, JSON diff, VAST validator, VAST Explorer, AdTech tools" />
+    <meta name="keywords" content="json validator, json formatter, vast adtag, adtech tools, vast explorer, json explorer, json diff" />
     <meta name="author" content="Christian Bernecker" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="English" />
@@ -16,7 +16,7 @@
     
     <!-- Preload critical assets -->
     <link rel="preload" href="%PUBLIC_URL%/favicon.png" as="image" type="image/png" />
-    <link rel="preload" href="%PUBLIC_URL%/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="%PUBLIC_URL%/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
     
     <!-- App resources -->
     <link rel="icon" href="%PUBLIC_URL%/favicon.png" />
@@ -25,255 +25,18 @@
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     
-    <title>JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer</title>
+    <title>JSON Validator & VAST AdTag Explorer | Online Tools</title>
     
     <!-- Google Tag verification -->
-    <meta name="google-site-verification" content="YOUR_SITE_VERIFICATION_CODE" />
+    <meta name="google-site-verification" content="iDDOHIW1DXVww4lBWPg7A3tPTPVc5jqLnpIFmn_VYXY" />
     
     <!-- DNS prefetching -->
     <link rel="dns-prefetch" href="//fonts.googleapis.com" />
     <link rel="dns-prefetch" href="//www.google-analytics.com" />
     <link rel="dns-prefetch" href="//vendor-list.consensu.org" />
-    
-    <!-- Klaro CMP Direct Integration mit vollständiger TCF 2.0 Unterstützung -->
-    <script>
-      // TCF 2.0 Purposes definieren (IAB standard)
-      const TCF_PURPOSES = {
-        STORE_INFO: 1,           // Informationen auf dem Gerät speichern
-        BASIC_ADS: 2,            // Grundlegende Anzeigen
-        PERSONALIZED_PROFILE: 3, // Personalisiertes Profil erstellen
-        PERSONALIZED_ADS: 4,     // Personalisierte Anzeigen auswählen
-        CONTENT_PROFILE: 5,      // Inhaltsprofil erstellen
-        PERSONALIZED_CONTENT: 6, // Personalisierte Inhalte auswählen
-        AD_PERFORMANCE: 7,       // Anzeigenleistung messen
-        CONTENT_PERFORMANCE: 8,  // Inhaltsleistung messen
-        MARKET_RESEARCH: 9,      // Marktforschung
-        IMPROVE_PRODUCTS: 10     // Produkte entwickeln und verbessern
-      };
-      
-      // TCF 2.0 Special Purposes (benötigen nur berechtigtes Interesse)
-      const SPECIAL_PURPOSES = {
-        ENSURE_SECURITY: 1,      // Sicherheit gewährleisten
-        TECHNICAL_DELIVERY: 2    // Technische Auslieferung sicherstellen
-      };
-      
-      // TCF 2.0 Features (benötigen kein separates Consent)
-      const FEATURES = {
-        MATCHING_DATA: 1,        // Daten mit Offline-Datenquellen abgleichen
-        LINKING_DEVICES: 2,      // Verschiedene Geräte verknüpfen
-        RECEIVE_AUTO_SENDING: 3  // Automatisch gesendete Geräteeigenschaften empfangen
-      };
-      
-      // TCF 2.0 Special Features (opt-in erforderlich)
-      const SPECIAL_FEATURES = {
-        PRECISE_GEO: 1,          // Präzise Geolokalisierung
-        DEVICE_CHARACTERISTICS: 2 // Aktives Scannen von Geräteeigenschaften
-      };
-
-      // Hauptkonfiguration für Klaro
-      window.klaroConfig = {
-        // Allgemeine Einstellungen
-        elementID: 'klaro',
-        storageMethod: 'localStorage',
-        storageName: 'json-explorer-consent',
-        htmlTexts: true,
-        embedded: false,
-        groupByPurpose: true,
-        cookieExpiresAfterDays: 365,
-        noAutoLoad: false,
-        testing: false,          // In Produktion auf false setzen
-        hideLearnMore: false,    // "Mehr erfahren" Link anzeigen
-        acceptAll: true,         // "Alle akzeptieren" Button anzeigen
-        hideDeclineAll: false,   // "Alle ablehnen" Button anzeigen
-        noticeAsModal: true,     // Banner als Modal anzeigen
-        
-        // Styling Einstellungen
-        styling: {
-          theme: ['light', 'top', 'wide'],
-          additionalClass: 'json-explorer-cmp-modal',
-        },
-        
-        // TCF 2.0 Integration
-        tcf2: {
-          enabled: true,
-          scope: 'global',       // 'global' oder 'service-specific'
-          contextualConsentOnly: false,
-          
-          // Default-Einstellungen für Purposes
-          defaultConsents: {
-            purposes: {
-              [TCF_PURPOSES.STORE_INFO]: true,            // Essentiell für das Funktionieren
-              [TCF_PURPOSES.BASIC_ADS]: false,            // Opt-in
-              [TCF_PURPOSES.PERSONALIZED_PROFILE]: false, // Opt-in
-              [TCF_PURPOSES.PERSONALIZED_ADS]: false,     // Opt-in
-              [TCF_PURPOSES.CONTENT_PROFILE]: false,      // Opt-in
-              [TCF_PURPOSES.PERSONALIZED_CONTENT]: false, // Opt-in
-              [TCF_PURPOSES.AD_PERFORMANCE]: false,       // Opt-in
-              [TCF_PURPOSES.CONTENT_PERFORMANCE]: false,  // Opt-in
-              [TCF_PURPOSES.MARKET_RESEARCH]: false,      // Opt-in
-              [TCF_PURPOSES.IMPROVE_PRODUCTS]: false,     // Opt-in
-            },
-            specialFeatures: {
-              [SPECIAL_FEATURES.PRECISE_GEO]: false,           // Opt-in
-              [SPECIAL_FEATURES.DEVICE_CHARACTERISTICS]: false, // Opt-in
-            }
-          },
-          
-          // IAB TCF 2.0 CMP Einstellungen
-          cmpId: 123,                   // Muss durch eine offizielle IAB CMP ID ersetzt werden
-          cmpVersion: 1,
-          vendorListUpdateFrequency: 7, // Wie oft die Vendor-Liste aktualisiert wird (in Tagen)
-          publisherCountryCode: 'DE',   // Das Land des Publishers
-          purposeOneTreatment: false,   // Spezielle Behandlung für Purpose 1 in bestimmten Ländern
-          publisherConsentScope: 'service-group',
-          publisherName: 'JSON Explorer',
-          publisherPurposeIds: Object.values(TCF_PURPOSES),
-          publisherSpecialPurposeIds: Object.values(SPECIAL_PURPOSES),
-          
-          // Vendor-Liste URL (offizielle IAB-Liste)
-          vendorList: 'https://vendor-list.consensu.org/v2/vendor-list.json'
-        },
-        
-        // Dienste (Services) Konfiguration
-        services: [
-          {
-            name: 'analytics',
-            title: 'Web Analytics',
-            description: 'Wir verwenden Analytics-Tools, um zu verstehen, wie unsere Website genutzt wird und um sie zu verbessern.',
-            purposes: [
-              TCF_PURPOSES.STORE_INFO,
-              TCF_PURPOSES.CONTENT_PERFORMANCE,
-              TCF_PURPOSES.MARKET_RESEARCH,
-              TCF_PURPOSES.IMPROVE_PRODUCTS
-            ],
-            cookies: [
-              /^_ga/,    // Google Analytics Cookies
-              /^_gid/,
-              /^_gat/
-            ],
-            required: false,
-            default: false,
-            optOut: false,
-            onlyOnce: true,
-          },
-          {
-            name: 'advertising',
-            title: 'Werbung',
-            description: 'Werbepartner sammeln Informationen, um Ihnen relevantere Werbung anzuzeigen.',
-            purposes: [
-              TCF_PURPOSES.STORE_INFO,
-              TCF_PURPOSES.BASIC_ADS,
-              TCF_PURPOSES.PERSONALIZED_PROFILE,
-              TCF_PURPOSES.PERSONALIZED_ADS,
-              TCF_PURPOSES.AD_PERFORMANCE
-            ],
-            cookies: [
-              /^IDE/,    // Google Ad Cookies
-              /^NID/,
-              /^DSID/,
-              /^__gads/,
-              /^__gac/
-            ],
-            required: false,
-            default: false,
-            optOut: false,
-            onlyOnce: true,
-          }
-        ],
-        
-        // Übersetzungen für UI-Elemente
-        translations: {
-          en: {
-            privacyPolicyUrl: '/json-explorer/legal/privacy',
-            consentModal: {
-              title: 'Privacy Preferences',
-              description: 'Here you can assess and customize the services that we would like to use on this website. You are in charge! Enable or disable services as you see fit.',
-            },
-            purposeItem: {
-              service: 'service',
-              services: 'services',
-            },
-            purposes: {
-              [TCF_PURPOSES.STORE_INFO]: 'Store information on your device',
-              [TCF_PURPOSES.BASIC_ADS]: 'Basic ads',
-              [TCF_PURPOSES.PERSONALIZED_PROFILE]: 'Create personalized ad profile',
-              [TCF_PURPOSES.PERSONALIZED_ADS]: 'Select personalized ads',
-              [TCF_PURPOSES.CONTENT_PROFILE]: 'Create personalized content profile',
-              [TCF_PURPOSES.PERSONALIZED_CONTENT]: 'Select personalized content',
-              [TCF_PURPOSES.AD_PERFORMANCE]: 'Measure ad performance',
-              [TCF_PURPOSES.CONTENT_PERFORMANCE]: 'Measure content performance',
-              [TCF_PURPOSES.MARKET_RESEARCH]: 'Market research',
-              [TCF_PURPOSES.IMPROVE_PRODUCTS]: 'Develop and improve products',
-            },
-            specialPurposes: {
-              [SPECIAL_PURPOSES.ENSURE_SECURITY]: 'Ensure security and prevent fraud',
-              [SPECIAL_PURPOSES.TECHNICAL_DELIVERY]: 'Technical delivery of ads or content',
-            },
-            features: {
-              [FEATURES.MATCHING_DATA]: 'Match data from offline sources',
-              [FEATURES.LINKING_DEVICES]: 'Link different devices',
-              [FEATURES.RECEIVE_AUTO_SENDING]: 'Receive automatically sent device characteristics',
-            },
-            specialFeatures: {
-              [SPECIAL_FEATURES.PRECISE_GEO]: 'Use precise geolocation data',
-              [SPECIAL_FEATURES.DEVICE_CHARACTERISTICS]: 'Actively scan device characteristics',
-            },
-            ok: 'Accept',
-            save: 'Save preferences',
-            acceptAll: 'Accept all',
-            acceptSelected: 'Accept selected',
-            decline: 'Decline',
-            close: 'Close',
-            service: {
-              disableAll: {
-                title: 'Enable or disable all services',
-                description: 'Use this switch to enable or disable all services.',
-              },
-              optOut: {
-                title: 'This service is loaded by default (but you can opt out)',
-                description: 'This service is loaded by default but you can opt out here.',
-              },
-              required: {
-                title: 'This service is always required',
-                description: 'This service is essential for the functioning of this website and cannot be disabled.',
-              },
-              purposes: 'Processing purposes: ',
-              purpose: 'Processing purpose: ',
-            },
-            poweredBy: 'Powered by GDPR-compliant technology',
-            learnMore: 'Learn more',
-          }
-        }
-      };
-    </script>
-    <script src="https://cdn.kiprotect.com/klaro/v0.7/klaro.js" onload="console.log('Klaro loaded from CDN');"></script>
   </head>
   <body>
-    <!-- Test-Indikator außerhalb des React-Roots -->
-    <div id="deploy-test" style="position: fixed; bottom: 10px; left: 10px; background: yellow; padding: 5px; font-size: 10px; z-index: 9999;">
-      TCF 2.0 v1.0
-    </div>
-    
     <noscript>You need to enable JavaScript to run this app. Please enable JavaScript in your browser.</noscript>
     <div id="root"></div>
-    
-    <!-- Klaro manuell anzeigen -->
-    <script>
-      // Klaro beim Laden der Seite anzeigen
-      window.addEventListener('load', function() {
-        console.log('Window loaded, showing Klaro');
-        if (window.klaro) {
-          try {
-            // Klaro manuell anzeigen
-            window.klaro.show(window.klaroConfig);
-            console.log('Klaro.show called successfully');
-          } catch (e) {
-            console.error('Error showing Klaro:', e);
-          }
-        } else {
-          console.error('Klaro not available on window object');
-        }
-      });
-    </script>
   </body>
 </html> 
