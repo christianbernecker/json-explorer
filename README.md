@@ -113,7 +113,7 @@ Wir verwenden Git-Tags, um wichtige Versionen zu markieren und eine einfache Wie
 
 #### Version-Tags
 
-- **Produktion**: Jede in Produktion befindliche Version erhält ein Tag (z.B. `v1.1.2`)
+- **Produktion**: Jede in Produktion befindliche Version erhält ein Tag (z.B. `v1.1.3`)
 - **Meilensteine**: Wichtige Entwicklungsmeilensteine werden ebenfalls getaggt
 
 #### Zugriff auf spezifische Versionen
@@ -122,14 +122,14 @@ Um jederzeit zu einer spezifischen Version zurückzukehren:
 
 ```bash
 # Temporärer Checkout einer Version (nur zum Ansehen)
-git checkout v1.1.2
+git checkout v1.1.3
 
 # Neuen Branch auf Basis einer Version erstellen
-git checkout -b hotfix-branch v1.1.2
+git checkout -b hotfix-branch v1.1.3
 
 # Staging-Branch auf eine bestimmte Version zurücksetzen
 git checkout staging
-git reset --hard v1.1.2
+git reset --hard v1.1.3
 git push --force origin staging
 ```
 

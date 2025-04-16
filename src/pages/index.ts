@@ -1,7 +1,1 @@
-import Privacy from './Privacy';
-import Imprint from './Imprint';
-
-export {
-  Privacy,
-  Imprint
-}; 
+// Keine Exporte mehr notwendig, da Imprint und Privacy static HTML sind export {};
