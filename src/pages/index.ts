@@ -1,1 +1,2 @@
-// Keine Exporte mehr notwendig, da Imprint und Privacy static HTML sind export {};
+// Keine Exporte mehr notwendig, da Imprint und Privacy static HTML sind
+export {};
