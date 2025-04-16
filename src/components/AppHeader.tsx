@@ -1,6 +1,4 @@
 import React from 'react';
-import { EnvironmentBadge } from './shared';
-import { APP_VERSION, APP_ENV } from '../constants';
 
 interface AppHeaderProps {
   isDarkMode: boolean;
@@ -38,13 +36,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             JSON Validator & VAST AdTag Tools
           </h1>
           <div className="flex items-center">
-            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} mr-2`}>
+            <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               Online JSON Formatter, Diff Tool and VAST AdTag Explorer
             </p>
-            <EnvironmentBadge
-              environment={APP_ENV}
-              version={APP_VERSION}
-            />
           </div>
         </div>
       </div>
