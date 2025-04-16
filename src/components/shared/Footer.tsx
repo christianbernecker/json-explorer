@@ -16,22 +16,16 @@ const Footer: React.FC = () => {
           </div>
           <div className="flex space-x-4">
             <a
-              href="/json-explorer/privacy2"
+              href="/json-explorer/legal/privacy"
               className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Privacy Policy
             </a>
             <a
-              href="/json-explorer/imprint2"
+              href="/json-explorer/legal/imprint"
               className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Imprint
-            </a>
-            <a
-              href="/json-explorer/contact2"
-              className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Contact
             </a>
           </div>
         </div>
