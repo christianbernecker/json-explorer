@@ -33,7 +33,7 @@ git push origin staging
 
 # 3. Webhook auslösen
 echo "✅ Triggering deployment webhook..."
-RESPONSE=$(curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_aiXcDB1YBSVhM9MdaxCcs6Cg8zq0/WhSr1Ws0SO)
+RESPONSE=$(curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_aiXcDB1YBSVhM9MdaxCcs6Cg8zq0/t3eH9cSNFN)
 JOB_ID=$(echo $RESPONSE | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
 
 echo "✅ Deployment initiated with Job ID: $JOB_ID"
