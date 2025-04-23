@@ -37,6 +37,13 @@ echo "✅ Triggering deployment webhook..."
 RESPONSE=$(curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_aiXcDB1YBSVhM9MdaxCcs6Cg8zq0/t3eH9cSNFN)
 JOB_ID=$(echo $RESPONSE | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
 
+# Check if JOB_ID was extracted successfully
+if [ -z "$JOB_ID" ]; then
+    echo "❌ Fehler: Konnte keine Job-ID vom Vercel Webhook extrahieren. Antwort war:"
+    echo "$RESPONSE"
+    exit 1
+fi
+
 echo "✅ Deployment initiated with Job ID: $JOB_ID"
 echo ""
 echo "✅ Deployment status URL: https://vercel.com/christianberneckers-projects/adtech-toolbox-staging/deployments"
