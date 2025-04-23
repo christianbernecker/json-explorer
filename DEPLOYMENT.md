@@ -18,11 +18,13 @@ The application has two environments:
 
 2. **Staging**: https://staging.adtech-toolbox.com/json-explorer
    - Deployed from the `staging` branch
-   - Staging webhook: `https://api.vercel.com/v1/integrations/deploy/prj_aiXcDB1YBSVhM9MdaxCcs6Cg8zq0/WhSr1Ws0SO`
+   - Staging webhook: `https://api.vercel.com/v1/integrations/deploy/prj_aiXcDB1YBSVhM9MdaxCcs6Cg8zq0/t3eH9cSNFN`
 
 ## Deployment Process
 
 ### Staging Deployment
+
+**Important:** Use the provided script for staging deployments. Vercel\'s automatic deployment via Git push has proven unreliable for this setup. The script ensures the deployment is triggered correctly using the manual deploy hook.
 
 For deploying to the staging environment:
 
@@ -36,7 +38,7 @@ This script will:
 2. Run build checks
 3. Commit changes
 4. Push to the staging branch
-5. Trigger the staging deployment webhook
+5. Trigger the staging deployment webhook **manually**
 
 ### Production Deployment
 
@@ -73,10 +75,9 @@ Several safeguards have been implemented to ensure proper deployment:
 
 ## Version Management
 
-1. Update the version number in `package.json` before deployment
-2. Update the version constants in `src/components/shared/Footer.tsx`:
-   - `APP_VERSION`: Current production version
-   - `APP_VERSION_NEXT`: Next version in development
+1.  **Production Version (`APP_VERSION`):** Update the `APP_VERSION` constant in `src/constants.ts` before a production deployment. This version number is displayed on the production site.
+2.  **Staging/Preview Version:** The staging environment (`staging.adtech-toolbox.com` and `*.vercel.app` URLs) automatically displays "v[Next Version]-preview" (e.g., "v1.1.5-preview") in the footer. This is determined by checking the browser\'s hostname directly in `src/components/shared/Footer.tsx` and does not require manual updates for staging.
+3.  **(Optional) `APP_VERSION_NEXT`:** The `APP_VERSION_NEXT` constant in `src/constants.ts` can still be used for internal tracking or documentation of the next planned version but is not currently displayed in the UI.
 
 ## Pre-deployment Checklist
 
@@ -104,9 +105,13 @@ The sitemap date is also updated as part of the pre-commit hook and deploy scrip
 If deployment issues occur:
 
 1. Verify you are on the correct branch
-2. Check webhook responses
-3. Verify Vercel project settings
-4. Check build errors in deployment logs
+2. **Deployment does not appear in Vercel UI:**
+   - Check the `curl` command in `./deploy-staging.sh` uses the correct **Staging webhook URL**.
+   - Verify this URL matches the active **Deploy Hook** for the `staging` branch in Vercel project settings (Settings -> Git -> Deploy Hooks).
+   - Manually trigger the hook URL in your browser to see if it works. If it does, the issue might be with the environment executing the script.
+3. Check webhook responses (if the script fails during the `curl` command).
+4. Verify Vercel project settings (especially Git connection, Build settings, Domain assignments).
+5. Check build errors in Vercel deployment logs (if the deployment starts but fails).
 
 ## Rollback Process
 
