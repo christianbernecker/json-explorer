@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - staging
-      - master-r6p9cm0bf
+      # - master-r6p9cm0bf # Removed this branch as it seems specific/temporary? Keep if needed.
   workflow_dispatch:
 
 jobs:
@@ -13,14 +13,27 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 2
+          fetch-depth: 2 # Fetch enough history for the deploy script if it needs git info
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
           
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps # Install dependencies first
+        
       - name: Run Deployment Script
-        run: ./deploy-staging.sh "Deploy staging via GitHub Action (${{ github.sha }})"
+        run: ./deploy-staging.sh "Deploy staging via GitHub Action (${{ github.sha }})" # Run the script
         env:
-          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL_STAGING }} # Ensure this secret is set in GitHub repository settings 
+          # Pass the webhook URL to the script via env var
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL_STAGING }} # Ensure this secret is set in GitHub repo settings
+
+# Ensure old/redundant steps below this point are removed by the edit model.
+# The following steps are replaced by the 'Run Deployment Script' step above:
+#      - name: Build
+#        run: npm run build
+#      - name: Trigger Vercel Deployment Webhook
+#        run: | ... curl ...
+#      - name: Run Deployment Script (the duplicate one at the end)
+#        run: ./deploy-staging.sh ... 
