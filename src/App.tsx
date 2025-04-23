@@ -8,7 +8,6 @@ import PrivacyPage from './components/PrivacyPage';
 import ImprintPage from './components/ImprintPage';
 import NotFound from './components/NotFound';
 import NavigationBar from './components/NavigationBar';
-import './App.css';
 
 function App() {
   return (
