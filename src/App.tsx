@@ -7,13 +7,13 @@ import AppOverview from './components/AppOverview';
 import PrivacyPage from './components/PrivacyPage';
 import ImprintPage from './components/ImprintPage';
 import NotFound from './components/NotFound';
-import Navbar from './components/Navbar';
+import NavigationBar from './components/NavigationBar';
 import './App.css';
 
 function App() {
   return (
     <Router>
-      <Navbar />
+      <NavigationBar />
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/apps" element={<AppOverview />} />
