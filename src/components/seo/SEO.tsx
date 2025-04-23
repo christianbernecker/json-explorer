@@ -4,18 +4,18 @@ import { Helmet } from 'react-helmet-async';
 interface SEOProps {
   title?: string;
   description?: string;
-  canonical?: string;
+  canonical: string;
   ogType?: string;
   ogImage?: string;
   additionalMetaTags?: Array<{ name: string; content: string }>;
 }
 
 const SEO: React.FC<SEOProps> = ({
-  title = 'JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer',
-  description = 'Free tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required.',
-  canonical = 'https://www.adtech-toolbox.com/json-explorer',
+  title = 'AdTech Toolbox | Online Tools for Digital Advertising Professionals',
+  description = 'Free online tools for digital advertising professionals, including JSON explorer, data visualizer, and more.',
+  canonical,
   ogType = 'website',
-  ogImage = '/json-explorer/og-image.png',
+  ogImage = '/og-image.png',
   additionalMetaTags = []
 }) => {
   // Determine current URL
@@ -48,8 +48,8 @@ const SEO: React.FC<SEOProps> = ({
       <link rel="dns-prefetch" href="//www.googletagmanager.com" />
       
       {/* Preload Critical Assets */}
-      <link rel="preload" href="/json-explorer/fonts/inter-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-      <link rel="preload" href="/json-explorer/og-image.png" as="image" />
+      <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      <link rel="preload" href="/og-image.png" as="image" />
       
       {/* Performance & Security */}
       <meta name="referrer" content="no-referrer-when-downgrade" />

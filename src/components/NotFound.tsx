@@ -10,7 +10,7 @@ const NotFound: React.FC = () => {
           The page you are looking for does not exist.
         </p>
         <Link
-          to="/json-explorer"
+          to="/"
           className="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors"
         >
           Go to Home

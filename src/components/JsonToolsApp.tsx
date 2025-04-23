@@ -168,6 +168,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
           { name: 'keywords', content: 'JSON validator, JSON formatter, JSON comparison, VAST validator, AdTech tools' },
           { name: 'author', content: 'Christian Bernecker' }
         ]}
+        canonical="https://www.adtech-toolbox.com/apps/json-explorer"
       />
       <StructuredData 
         appVersion="v1.1.4" 
