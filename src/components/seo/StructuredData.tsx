@@ -49,12 +49,6 @@ const StructuredData: React.FC<StructuredDataProps> = ({ appVersion, isDarkMode 
         "position": 1,
         "name": "AdTech Toolbox",
         "item": "https://www.adtech-toolbox.com/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "JSON Explorer",
-        "item": "https://www.adtech-toolbox.com/json-explorer/"
       }
     ]
   };

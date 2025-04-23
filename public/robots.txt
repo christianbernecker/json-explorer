@@ -2,5 +2,9 @@
 User-agent: *
 Allow: /
 
+# Google AdsBot
+User-agent: AdsBot-Google
+Allow: /
+
 # Sitemap location
-Sitemap: https://www.adtech-toolbox.com/json-explorer/sitemap.xml 
+Sitemap: https://www.adtech-toolbox.com/sitemap.xml 
