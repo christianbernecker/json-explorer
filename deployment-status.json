@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu Apr 24 17:19:31 CEST 2025", "commit": "Unify legal pages styling (light/dark) and increase header padding"}
+{"deployment": "staging", "timestamp": "Thu Apr 24 17:21:18 CEST 2025", "commit": "Remove logo toggle functionality in NavigationBar"}
