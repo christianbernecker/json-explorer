@@ -25,31 +25,36 @@ const Footer: React.FC = () => {
   }, []); // Leeres Array: Effekt nur einmal nach dem Mounten ausführen
 
   return (
-    <footer className="bg-gray-50 dark:bg-gray-800 py-4 mt-auto">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="text-sm text-gray-600 dark:text-gray-300 mb-4 md:mb-0">
-            © {currentYear} AdTech Toolbox | JSON Explorer | 
-            {/* Zeige Preview-Version, wenn Hostname passt, sonst normale Version */}
-            {isPreview ? (
-              <span> Version v1.1.5-preview</span> 
-            ) : (
-              <span> Version {APP_VERSION}</span> 
-            )}
-          </div>
-          <div className="flex space-x-4">
-            <Link
-              to="/legal/privacy"
-              className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Privacy Policy
-            </Link>
-            <Link
-              to="/legal/imprint"
-              className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              Imprint
-            </Link>
+    <footer className="mt-auto">
+      {/* Thin blue line above the footer */}
+      <div className="h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 w-full"></div>
+      
+      <div className="bg-gray-50 dark:bg-gray-800 py-4">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="text-sm text-gray-600 dark:text-gray-300 mb-4 md:mb-0">
+              © {currentYear} AdTech Toolbox | JSON Explorer | 
+              {/* Zeige Preview-Version, wenn Hostname passt, sonst normale Version */}
+              {isPreview ? (
+                <span> Version v1.1.5-preview</span> 
+              ) : (
+                <span> Version {APP_VERSION}</span> 
+              )}
+            </div>
+            <div className="flex space-x-4">
+              <Link
+                to="/legal/privacy"
+                className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                to="/legal/imprint"
+                className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+              >
+                Imprint
+              </Link>
+            </div>
           </div>
         </div>
       </div>

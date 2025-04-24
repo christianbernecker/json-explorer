@@ -14,15 +14,15 @@ echo ""
 
 echo ""
 
-# Prüfen, ob eine Commit-Nachricht angegeben wurde
+# Check for a commit message
 COMMIT_MSG="$1"
 if [ -z "$COMMIT_MSG" ]; then
     # Use a default message if running in CI and no message provided
     if [ "$CI" = "true" ]; then
         COMMIT_MSG="Deploy via CI"
     else
-        echo "Fehler: Keine Commit-Nachricht angegeben (local run)"
-        echo "Verwendung: ./deploy-staging.sh \"Deine Commit-Nachricht\""
+        echo "Error: No commit message provided (local run)"
+        echo "Usage: ./deploy-staging.sh \"Your commit message\""
         exit 1
     fi
 fi
@@ -44,20 +44,31 @@ else
   echo "ℹ️ Skipping git commit and push in CI environment."
 fi
 
-# 3. Webhook auslösen
-echo "✅ Triggering deployment webhook..."
-# Check if VERCEL_DEPLOY_HOOK_URL is set (passed from GH Action)
+# 3. Trigger webhook - Only if not already triggered by GitHub Action
+if [ "$CI" = "true" ]; then
+  # In CI, check if webhook was already triggered by checking env var
+  if [ -n "$WEBHOOK_ALREADY_TRIGGERED" ]; then
+    echo "ℹ️ Webhook already triggered. Skipping duplicate webhook call."
+    exit 0
+  fi
+  
+  # Mark webhook as triggered to prevent double calls
+  export WEBHOOK_ALREADY_TRIGGERED=true
+fi
+
+# Only trigger the webhook if VERCEL_DEPLOY_HOOK_URL is set
 if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
   echo "❌ Error: VERCEL_DEPLOY_HOOK_URL environment variable is not set."
   exit 1
 fi
 
+echo "✅ Triggering deployment webhook..."
 RESPONSE=$(curl -s -X POST "$VERCEL_DEPLOY_HOOK_URL")
 JOB_ID=$(echo $RESPONSE | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
 
 # Check if JOB_ID was extracted successfully
 if [ -z "$JOB_ID" ]; then
-    echo "❌ Fehler: Konnte keine Job-ID vom Vercel Webhook extrahieren. Antwort war:"
+    echo "❌ Error: Could not extract Job ID from Vercel webhook response:"
     echo "$RESPONSE"
     exit 1
 fi
@@ -67,4 +78,4 @@ echo ""
 echo "✅ Deployment status URL: https://vercel.com/christianberneckers-projects/adtech-toolbox-staging/deployments"
 echo "✅ Application URL: https://staging.adtech-toolbox.com/json-explorer"
 echo ""
-echo "⏱️ Bitte warte ca. 1-2 Minuten, bis das Deployment abgeschlossen ist."
+echo "⏱️ Please wait approximately 1-2 minutes for the deployment to complete."

@@ -12,7 +12,10 @@ const NavigationBar: React.FC = () => {
           {/* Logo/Brand */}
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="h-10 w-10 mr-2 rounded bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
+                AT
+              </div>
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-500 dark:from-blue-400 dark:to-indigo-300">
                 AdTech Toolbox
               </span>
             </Link>
@@ -32,31 +35,6 @@ const NavigationBar: React.FC = () => {
                 className={`${linkStyle} border-b-2 border-transparent hover:border-blue-500`}
               >
                 Data Visualizer
-              </Link>
-              {/* All Apps Link */}
-              <Link 
-                to="/apps" 
-                className={`${linkStyle} border-b-2 border-transparent hover:border-blue-500`}
-              >
-                All Apps
-              </Link>
-            </div>
-          </div>
-          
-          {/* Right side links - moved from footer */}
-          <div className="hidden md:block">
-            <div className="flex items-center space-x-4">
-              <Link 
-                to="/legal/privacy" 
-                className={`${linkStyle} text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200`}
-              >
-                Privacy
-              </Link>
-              <Link 
-                to="/legal/imprint" 
-                className={`${linkStyle} text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200`}
-              >
-                Imprint
               </Link>
             </div>
           </div>

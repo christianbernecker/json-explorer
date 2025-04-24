@@ -14,17 +14,17 @@ The application has two environments:
 
 1. **Production**: https://www.adtech-toolbox.com/json-explorer
    - Deployed from the `main` branch
-   - Production webhook: `https://api.vercel.com/v1/integrations/deploy/prj_j18jOo7H76ge7XNlqQtNUCwqrIfe/M8sHj7yBFj`
+   - Production webhook: [REDACTED - stored in GitHub Secrets]
 
 2. **Staging**: https://staging.adtech-toolbox.com/json-explorer
    - Deployed from the `staging` branch
-   - Staging webhook: `https://api.vercel.com/v1/integrations/deploy/prj_aiXcDB1YBSVhM9MdaxCcs6Cg8zq0/t3eH9cSNFN`
+   - Staging webhook: [REDACTED - stored in GitHub Secrets]
 
 ## Deployment Process
 
 ### Staging Deployment
 
-**Important:** Use the provided script for staging deployments. Vercel\'s automatic deployment via Git push has proven unreliable for this setup. The script ensures the deployment is triggered correctly using the manual deploy hook.
+**Important:** Use the provided script for staging deployments. The script has been optimized to prevent double deployments, which can occur when both GitHub Actions and the deployment script try to trigger the webhook simultaneously.
 
 For deploying to the staging environment:
 
@@ -36,9 +36,9 @@ For deploying to the staging environment:
 This script will:
 1. Display a pre-deployment checklist
 2. Run build checks
-3. Commit changes
-4. Push to the staging branch
-5. Trigger the staging deployment webhook **manually**
+3. Commit changes (if running locally)
+4. Push to the staging branch (if running locally)
+5. Trigger the staging deployment webhook **exactly once**
 
 ### Production Deployment
 
@@ -61,22 +61,24 @@ This script will:
 
 Several safeguards have been implemented to ensure proper deployment:
 
-1. **Pre-deployment Checklists**: Both deployment scripts show checklists to remind you of key steps.
+1. **Double Deployment Prevention**: The deployment script now checks if it's running in a CI environment and prevents duplicate webhook calls.
 
-2. **Required Confirmation**: The production deployment script requires explicit confirmation that you've read the guide.
+2. **Pre-deployment Checklists**: Both deployment scripts show checklists to remind you of key steps.
 
-3. **Git Hooks**: 
+3. **Required Confirmation**: The production deployment script requires explicit confirmation that you've read the guide.
+
+4. **Git Hooks**: 
    - The `pre-push` hook reminds you about the deployment process when pushing to staging or main branches.
    - The `pre-commit` hook updates the sitemap with current dates.
 
-4. **NPM Scripts**:
+5. **NPM Scripts**:
    - `npm run install-hooks`: Installs the git hooks (runs automatically after `npm install`)
    - `npm run prepare-deploy`: Shows a summary of the deployment guide
 
 ## Version Management
 
 1.  **Production Version (`APP_VERSION`):** Update the `APP_VERSION` constant in `src/constants.ts` before a production deployment. This version number is displayed on the production site.
-2.  **Staging/Preview Version:** The staging environment (`staging.adtech-toolbox.com` and `*.vercel.app` URLs) automatically displays "v[Next Version]-preview" (e.g., "v1.1.5-preview") in the footer. This is determined by checking the browser\'s hostname directly in `src/components/shared/Footer.tsx` and does not require manual updates for staging.
+2.  **Staging/Preview Version:** The staging environment (`staging.adtech-toolbox.com` and `*.vercel.app` URLs) automatically displays "v[Next Version]-preview" (e.g., "v1.1.5-preview") in the footer. This is determined by checking the browser's hostname directly in `src/components/shared/Footer.tsx` and does not require manual updates for staging.
 3.  **(Optional) `APP_VERSION_NEXT`:** The `APP_VERSION_NEXT` constant in `src/constants.ts` can still be used for internal tracking or documentation of the next planned version but is not currently displayed in the UI.
 
 ## Pre-deployment Checklist
@@ -105,13 +107,14 @@ The sitemap date is also updated as part of the pre-commit hook and deploy scrip
 If deployment issues occur:
 
 1. Verify you are on the correct branch
-2. **Deployment does not appear in Vercel UI:**
-   - Check the `curl` command in `./deploy-staging.sh` uses the correct **Staging webhook URL**.
+2. **Double deployments:** If you notice double deployments being triggered, check that you are not manually triggering a deployment while GitHub Actions is already doing so. The script has been updated to prevent this in most cases.
+3. **Deployment does not appear in Vercel UI:**
+   - Check the `curl` command in `./deploy-staging.sh` uses the correct **Staging webhook URL** from GitHub Secrets.
    - Verify this URL matches the active **Deploy Hook** for the `staging` branch in Vercel project settings (Settings -> Git -> Deploy Hooks).
    - Manually trigger the hook URL in your browser to see if it works. If it does, the issue might be with the environment executing the script.
-3. Check webhook responses (if the script fails during the `curl` command).
-4. Verify Vercel project settings (especially Git connection, Build settings, Domain assignments).
-5. Check build errors in Vercel deployment logs (if the deployment starts but fails).
+4. Check webhook responses (if the script fails during the `curl` command).
+5. Verify Vercel project settings (especially Git connection, Build settings, Domain assignments).
+6. Check build errors in Vercel deployment logs (if the deployment starts but fails).
 
 ## Rollback Process
 
