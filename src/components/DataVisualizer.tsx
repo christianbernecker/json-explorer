@@ -58,7 +58,7 @@ const KNOWN_DIMENSIONS = [
   'category', 'type', 'status', 'name', 'id', 'region', 'country', 'city', 'state'
 ];
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+// This function is used to identify dimensions and metrics columns in the data
 const identifyColumnTypes = (data: DataRow[]): { dimensions: string[], metrics: string[] } => {
   if (data.length === 0) return { dimensions: [], metrics: [] };
   
@@ -111,7 +111,6 @@ const identifyColumnTypes = (data: DataRow[]): { dimensions: string[], metrics: 
   
   return { dimensions, metrics };
 };
-/* eslint-enable @typescript-eslint/no-unused-vars */
 
 const aggregateData = (
   data: DataRow[], 
@@ -509,8 +508,15 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             const nonEmptyColumns = identifyNonEmptyColumns(processedData);
             console.log('Detected non-empty columns:', nonEmptyColumns);
             
+            // Identify dimensions and metrics from the data
+            const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
+            console.log('Detected dimensions:', detectedDimensions);
+            console.log('Detected metrics:', detectedMetrics);
+            
             setRawData(processedData);
             setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
+            setDimensions(detectedDimensions);
+            setMetrics(detectedMetrics);
             setIsLoading(false);
           },
           error: (error: Error) => {
@@ -583,8 +589,15 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         const nonEmptyColumns = identifyNonEmptyColumns(processedData);
         console.log('Detected non-empty columns:', nonEmptyColumns);
         
+        // Identify dimensions and metrics from the data
+        const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
+        console.log('Detected dimensions:', detectedDimensions);
+        console.log('Detected metrics:', detectedMetrics);
+        
         setRawData(processedData);
         setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
+        setDimensions(detectedDimensions);
+        setMetrics(detectedMetrics);
         setIsLoading(false);
         
       } else if (extension === 'json') {
@@ -621,8 +634,16 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             });
             
             const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+            
+            // Identify dimensions and metrics from the data
+            const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
+            console.log('Detected dimensions:', detectedDimensions);
+            console.log('Detected metrics:', detectedMetrics);
+            
             setRawData(processedData);
             setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
+            setDimensions(detectedDimensions);
+            setMetrics(detectedMetrics);
             setIsLoading(false);
           } else if (typeof jsonData === 'object' && jsonData !== null) {
             // Handle single object - convert to array with one item
@@ -649,8 +670,16 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             });
             
             const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+            
+            // Identify dimensions and metrics from the data
+            const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
+            console.log('Detected dimensions:', detectedDimensions);
+            console.log('Detected metrics:', detectedMetrics);
+            
             setRawData(processedData);
             setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
+            setDimensions(detectedDimensions);
+            setMetrics(detectedMetrics);
             setIsLoading(false);
           } else {
             setFileError('Invalid JSON format: expected an array of objects or a single object');
