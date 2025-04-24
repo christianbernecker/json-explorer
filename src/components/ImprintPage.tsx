@@ -9,7 +9,7 @@ function ImprintPage() {
         title="Imprint | AdTech Toolbox"
         description="Legal information and imprint for the AdTech Toolbox web application."
       />
-      <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+      <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
         <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Imprint</h1>
         <p className="mb-6 text-gray-600 dark:text-gray-300">Legal Information</p>
         

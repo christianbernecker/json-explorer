@@ -16,10 +16,10 @@ const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationPro
         className={`py-3 px-6 focus:outline-none ${
           activeTab === 'explorer'
             ? isDarkMode 
-              ? 'border-b-2 border-blue-500 text-blue-500' 
-              : 'border-b-2 border-blue-600 text-blue-600'
-            : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-        }`}
+              ? 'border-b-2 border-blue-500 text-blue-500 font-medium' 
+              : 'border-b-2 border-blue-600 text-blue-600 font-medium'
+            : isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+        } transition-colors duration-200`}
         onClick={() => setActiveTab('explorer')}
         aria-pressed={activeTab === 'explorer'}
         aria-label="JSON Validator and VAST AdTag Explorer"
@@ -35,10 +35,10 @@ const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationPro
         className={`py-3 px-6 focus:outline-none ${
           activeTab === 'comparator'
             ? isDarkMode 
-              ? 'border-b-2 border-blue-500 text-blue-500' 
-              : 'border-b-2 border-blue-600 text-blue-600'
-            : isDarkMode ? 'text-gray-400' : 'text-gray-500'
-        }`}
+              ? 'border-b-2 border-blue-500 text-blue-500 font-medium' 
+              : 'border-b-2 border-blue-600 text-blue-600 font-medium'
+            : isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+        } transition-colors duration-200`}
         onClick={() => setActiveTab('comparator')}
         aria-pressed={activeTab === 'comparator'}
         aria-label="JSON Comparison Tool"
@@ -159,7 +159,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
   }, [activeTab, toggleDarkMode]);
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-75`}>
+    <div className={`container mx-auto px-4 py-8 mb-20 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-75`}>
       <SEO 
         title="JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer"
         description="Free tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required."
@@ -173,7 +173,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
         appVersion="v1.1.4" 
         isDarkMode={isDarkMode}
       />
-      <div className="flex-grow p-6 w-full max-w-6xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto">
       {/* Header */}
       <AppHeader 
         isDarkMode={isDarkMode}
@@ -195,77 +195,31 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
       />
       
       {/* Tool description for SEO */}
-      <section className={`mb-6 p-3 rounded-lg text-xs ${
-        isDarkMode ? 'bg-gray-800 bg-opacity-30 border border-gray-700' : 'bg-gray-50 bg-opacity-70 border border-gray-200'
+      <section className={`mb-6 p-4 rounded-lg text-sm ${
+        isDarkMode ? 'bg-gray-800 bg-opacity-50 border border-gray-700' : 'bg-gray-50 bg-opacity-80 border border-gray-200'
       }`}>
-        <h2 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          JSON and VAST AdTag Tools
-        </h2>
-        <p className={`mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-          Validate, format, and compare JSON data or analyze VAST AdTags directly in your browser.
-          Our free online tools provide comprehensive features for developers and AdTech specialists.
+        <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+          {activeTab === 'explorer' 
+            ? "JSON Validator and VAST Explorer allows you to validate, format, and explore JSON data or VAST XML AdTags. Paste your content, upload a file, or fetch from a URL." 
+            : "JSON Diff Comparison Tool helps you compare two JSON structures side by side, highlighting differences. Perfect for debugging API changes or config files."
+          }
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-          <div>
-            <h3 className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>JSON Explorer Features:</h3>
-            <ul className={`list-disc pl-4 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              <li>Validate and format JSON syntax</li>
-              <li>VAST AdTag Explorer with XML support</li>
-              <li>Automatic error detection</li>
-              <li>Syntax highlighting for better readability</li>
-            </ul>
-          </div>
-          <div>
-            <h3 className={`text-xs font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>JSON Diff Features:</h3>
-            <ul className={`list-disc pl-4 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              <li>Compare JSON objects and highlight differences</li>
-              <li>Multiple comparison modes (structural, semantic)</li>
-              <li>Copy results with one click</li>
-              <li>History for quick access to previous comparisons</li>
-            </ul>
-          </div>
-        </div>
       </section>
       
-      {/* Keyboard Shortcuts Help */}
-      <div className={`mb-4 p-3 rounded-lg text-sm ${
-        isDarkMode ? 'bg-gray-800 text-gray-300 border border-gray-700' : 'bg-blue-50 text-blue-800 border border-blue-100'
-      }`}>
-        <strong>Keyboard Shortcuts: </strong> 
-        {activeTab === 'explorer' ? (
-          <span>
-            Ctrl+Shift+F (Format), 
-            Ctrl+Shift+L (Clear), 
-            Ctrl+Shift+H (History), 
-            Ctrl+Shift+D (Dark Mode), 
-            Ctrl+Shift+1/2 (Switch Tabs)
-          </span>
-        ) : (
-          <span>
-            Ctrl+Shift+C (Compare), 
-            Ctrl+Shift+L (Clear), 
-            Ctrl+Shift+H (History), 
-            Ctrl+Shift+D (Dark Mode), 
-            Ctrl+Shift+1/2 (Switch Tabs)
-          </span>
-        )}
-      </div>
-      
-      {/* Active Tool Content */}
+      {/* Active Tool */}
       {activeTab === 'explorer' ? (
         <JsonVastExplorer 
           isDarkMode={isDarkMode} 
-          history={vastExplorerHistory}
           setHistory={setVastExplorerHistory}
+          history={vastExplorerHistory}
           showHistory={showVastExplorerHistory}
           setShowHistory={setShowVastExplorerHistory}
-          addToHistory={(item) => setVastExplorerHistory(prev => [item, ...prev].slice(0, 10))}
         />
       ) : (
         <JsonDiffInspector 
-          isDarkMode={isDarkMode}
-          history={diffInspectorHistory}
+          isDarkMode={isDarkMode} 
           setHistory={setDiffInspectorHistory}
+          history={diffInspectorHistory}
           showHistory={showDiffInspectorHistory}
           setShowHistory={setShowDiffInspectorHistory}
         />
