@@ -1208,11 +1208,11 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                     onClick={exportToCsv} 
                     className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
                       isDarkMode 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                     }`}
                   >
-                    CSV
+                    CSV Export
                   </button>
                   <button 
                     onClick={exportToJson} 
@@ -1222,39 +1222,39 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                         : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                     }`}
                   >
-                    JSON
+                    JSON Export
                   </button>
                   <button 
                     onClick={exportToExcel} 
                     className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
                       isDarkMode 
-                        ? 'bg-green-700 hover:bg-green-600 text-white' 
-                        : 'bg-green-600 hover:bg-green-700 text-white'
+                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                     }`}
                   >
-                    Excel
+                    Excel Export
                   </button>
                   {activeTab === 'visualize' && (
                     <button 
                       onClick={exportChartAsPng} 
                       className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
                         isDarkMode 
-                          ? 'bg-purple-700 hover:bg-purple-600 text-white' 
-                          : 'bg-purple-600 hover:bg-purple-700 text-white'
+                          ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                       }`}
                     >
-                      PNG
+                      PNG Export
                     </button>
                   )}
                   <button 
                     onClick={exportToPdf} 
                     className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
                       isDarkMode 
-                        ? 'bg-red-700 hover:bg-red-600 text-white' 
-                        : 'bg-red-600 hover:bg-red-700 text-white'
+                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                     }`}
                   >
-                    PDF
+                    PDF Export
                   </button>
                   <button 
                     onClick={() => setRawData([])} 
