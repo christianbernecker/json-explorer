@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu Apr 24 17:08:03 CEST 2025", "commit": "Fehlerbehebung: Ungenutzten Link-Import entfernt"}
+{"deployment": "staging", "timestamp": "Thu Apr 24 17:11:39 CEST 2025", "commit": "Revert AppHeader text to English"}
