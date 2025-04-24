@@ -5,7 +5,6 @@ import {
 } from '../types';
 import JsonVastExplorer from './JsonVastExplorer';
 import JsonDiffInspector from './JsonDiffInspector';
-import { Footer } from './shared';
 import { SEO, StructuredData } from './seo';
 import AppHeader from './AppHeader';
 
@@ -272,9 +271,6 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
         />
       )}
       </div>
-      
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }

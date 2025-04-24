@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// Wir brauchen nur noch APP_VERSION
+import { Link } from 'react-router-dom';
 import { APP_VERSION } from '../../constants'; 
 
 // For deployment script detection:
@@ -25,11 +25,11 @@ const Footer: React.FC = () => {
   }, []); // Leeres Array: Effekt nur einmal nach dem Mounten ausführen
 
   return (
-    <footer className="bg-gray-50 dark:bg-gray-800 py-4">
+    <footer className="bg-gray-50 dark:bg-gray-800 py-4 mt-auto">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="text-sm text-gray-600 dark:text-gray-300 mb-4 md:mb-0">
-            © {currentYear} JSON Explorer | 
+            © {currentYear} AdTech Toolbox | JSON Explorer | 
             {/* Zeige Preview-Version, wenn Hostname passt, sonst normale Version */}
             {isPreview ? (
               <span> Version v1.1.5-preview</span> 
@@ -38,18 +38,18 @@ const Footer: React.FC = () => {
             )}
           </div>
           <div className="flex space-x-4">
-            <a
-              href="/legal/privacy"
+            <Link
+              to="/legal/privacy"
               className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Privacy Policy
-            </a>
-            <a
-              href="/legal/imprint"
+            </Link>
+            <Link
+              to="/legal/imprint"
               className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
             >
               Imprint
-            </a>
+            </Link>
           </div>
         </div>
       </div>
