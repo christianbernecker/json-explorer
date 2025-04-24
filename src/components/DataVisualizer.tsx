@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { AgGridReact } from 'ag-grid-react';
 import { ColDef, GridApi } from 'ag-grid-community';
@@ -234,8 +234,60 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   
   // Calculate chart data 
   const chartData = useMemo(() => {
+    // Debug log to see the current dimensions and selected values
+    console.log('Current dimensions:', dimensions);
+    console.log('Selected dimension:', selectedDimension);
+    console.log('Selected metric:', selectedMetric);
+    
+    if (!selectedDimension || !selectedMetric) {
+      console.warn('Missing dimension or metric selection');
+      return [];
+    }
+    
     return aggregateData(rawData, selectedDimension, selectedMetric, aggregationType);
-  }, [rawData, selectedDimension, selectedMetric, aggregationType]);
+  }, [rawData, selectedDimension, selectedMetric, aggregationType, dimensions]);
+  
+  // Effect to ensure selected dimension and metric are valid
+  useEffect(() => {
+    if (rawData.length > 0) {
+      // Ensure we have a valid dimension selected
+      if (!selectedDimension || !dimensions.includes(selectedDimension)) {
+        console.log('Setting default dimension from', dimensions);
+        // Try to find a date dimension first
+        const dateDimension = dimensions.find(d => 
+          d.toLowerCase().includes('date') || 
+          d.toLowerCase().includes('day') || 
+          d.toLowerCase().includes('month')
+        );
+        
+        if (dateDimension) {
+          console.log('Found date dimension:', dateDimension);
+          setSelectedDimension(dateDimension);
+        } else if (dimensions.length > 0) {
+          console.log('Using first available dimension:', dimensions[0]);
+          setSelectedDimension(dimensions[0]);
+        }
+      }
+      
+      // Ensure we have a valid metric selected
+      if (!selectedMetric || !metrics.includes(selectedMetric)) {
+        console.log('Setting default metric from', metrics);
+        // Try to find standard metrics
+        const commonMetrics = ['impressions', 'clicks', 'cost', 'conversions'];
+        const preferredMetric = metrics.find(m => 
+          commonMetrics.some(common => m.toLowerCase().includes(common))
+        );
+        
+        if (preferredMetric) {
+          console.log('Found preferred metric:', preferredMetric);
+          setSelectedMetric(preferredMetric);
+        } else if (metrics.length > 0) {
+          console.log('Using first available metric:', metrics[0]);
+          setSelectedMetric(metrics[0]);
+        }
+      }
+    }
+  }, [dimensions, metrics, rawData, selectedDimension, selectedMetric]);
   
   // Process the uploaded file
   const processFile = useCallback(async (file: File) => {
@@ -413,10 +465,58 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
 
   // Chart rendering function 
   const renderChart = () => {
+    if (!selectedDimension || !selectedMetric) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+          <p className="mb-4">No dimension or metric selected for visualization</p>
+          <div className="grid grid-cols-1 gap-2">
+            {dimensions.length > 0 && (
+              <select 
+                value={selectedDimension || ''} 
+                onChange={(e) => setSelectedDimension(e.target.value)}
+                className={`px-3 py-2 rounded border ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-700'
+                }`}
+              >
+                <option value="" disabled>Select dimension...</option>
+                {dimensions.map(dim => (
+                  <option key={dim} value={dim}>{dim}</option>
+                ))}
+              </select>
+            )}
+            {metrics.length > 0 && (
+              <select 
+                value={selectedMetric || ''} 
+                onChange={(e) => setSelectedMetric(e.target.value)}
+                className={`px-3 py-2 rounded border ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-700'
+                }`}
+              >
+                <option value="" disabled>Select metric...</option>
+                {metrics.map(met => (
+                  <option key={met} value={met}>{met}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     if (chartData.length === 0) {
       return (
-        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-          No data available for visualization
+        <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+          <p className="mb-4">No data available for visualization</p>
+          <p className="text-sm mb-2">Current selection:</p>
+          <ul className="text-sm mb-4">
+            <li>Dimension: {selectedDimension}</li>
+            <li>Metric: {selectedMetric}</li>
+          </ul>
+          <p className="text-sm">Try selecting different options</p>
         </div>
       );
     }
@@ -822,10 +922,19 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                               : 'bg-white border-gray-300 text-gray-700'
                           }`}
                         >
-                          {dimensions.map(dim => (
-                            <option key={dim} value={dim}>{dim}</option>
-                          ))}
+                          {dimensions.length === 0 ? (
+                            <option value="">No dimensions available</option>
+                          ) : (
+                            dimensions.map(dim => (
+                              <option key={dim} value={dim}>{dim}</option>
+                            ))
+                          )}
                         </select>
+                        {!selectedDimension && dimensions.length > 0 && (
+                          <p className="text-red-500 text-xs mt-1">
+                            Please select a dimension
+                          </p>
+                        )}
                       </div>
                       
                       <div>
