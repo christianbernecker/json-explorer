@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu Apr 24 14:38:49 CEST 2025", "commit": "Fix ESLint errors in DataVisualizer component"}
+{"deployment": "staging", "timestamp": "Thu Apr 24 14:48:12 CEST 2025", "commit": "Fix Dimensionen- und Metriken-Erkennung in DataVisualizer"}

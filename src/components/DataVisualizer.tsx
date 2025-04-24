@@ -10,6 +10,8 @@ import {
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { SEO } from './seo';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
@@ -58,7 +60,60 @@ const KNOWN_DIMENSIONS = [
   'category', 'type', 'status', 'name', 'id', 'region', 'country', 'city', 'state'
 ];
 
-// This function is used to identify dimensions and metrics columns in the data
+// Verbesserte Date-Erkennung
+const isDateString = (value: string): boolean => {
+  // Skip empty values
+  if (!value) return false;
+  
+  // Überprüfe gängige Datumsformate
+  const isoDateRegex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/;
+  const germanDateRegex = /^\d{1,2}\.\d{1,2}\.\d{2,4}$/;
+  const commonDateRegex = /^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$/;
+  
+  if (isoDateRegex.test(value) || germanDateRegex.test(value) || commonDateRegex.test(value)) {
+    // Versuche zu parsen
+    const date = new Date(value);
+    return !isNaN(date.getTime());
+  }
+  
+  // Für andere Formate versuchen
+  try {
+    const date = new Date(value);
+    // Überprüfe, ob es ein plausibles Datum ist (zwischen 1900 und 2100)
+    const year = date.getFullYear();
+    if (!isNaN(date.getTime()) && year >= 1900 && year <= 2100) {
+      return true;
+    }
+  } catch (e) {
+    // Fehler beim Parsen
+  }
+  
+  return false;
+};
+
+// Hilfsfunktion: Prüft, ob eine Spalte Datumswerte enthält
+const checkForDateColumn = (data: DataRow[], columnKey: string): boolean => {
+  // Nehme Stichprobe von max. 10 Zeilen
+  const sampleSize = Math.min(10, data.length);
+  const samples = data.slice(0, sampleSize);
+  
+  // Zähle, wie viele Werte als Datum erkannt werden
+  let dateCount = 0;
+  
+  samples.forEach(row => {
+    const value = row[columnKey];
+    if (value instanceof Date) {
+      dateCount++;
+    } else if (typeof value === 'string' && isDateString(value)) {
+      dateCount++;
+    }
+  });
+  
+  // Wenn mindestens 50% der Stichproben Datumswerte sind, ist es eine Datumsspalte
+  return dateCount / sampleSize >= 0.5;
+};
+
+// Funktion zur Identifizierung von Dimensions und Metrics
 const identifyColumnTypes = (data: DataRow[]): { dimensions: string[], metrics: string[] } => {
   if (data.length === 0) return { dimensions: [], metrics: [] };
   
@@ -67,7 +122,14 @@ const identifyColumnTypes = (data: DataRow[]): { dimensions: string[], metrics: 
   const metrics: string[] = [];
   
   Object.entries(firstRow).forEach(([key, value]) => {
-    // Check if the column name is in the known dimensions list (case-insensitive)
+    // Überprüfe zuerst, ob es ein Datums-Typ ist
+    const hasDateValues = checkForDateColumn(data, key);
+    if (hasDateValues) {
+      dimensions.push(key);
+      return;
+    }
+    
+    // Überprüfe bekannte Dimensions
     const isKnownDimension = KNOWN_DIMENSIONS.some(dim => 
       key.toLowerCase() === dim.toLowerCase() || 
       key.toLowerCase().includes('id') ||
@@ -81,22 +143,7 @@ const identifyColumnTypes = (data: DataRow[]): { dimensions: string[], metrics: 
       return;
     }
     
-    // Check if values are dates
-    const sampleValues = data.slice(0, Math.min(5, data.length)).map(row => row[key]);
-    const hasPotentialDateValues = sampleValues.some(val => 
-      typeof val === 'string' && 
-      (
-        /^\d{4}-\d{2}-\d{2}/.test(val) || // ISO date format
-        /^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/.test(val) // Common date formats
-      )
-    );
-    
-    if (hasPotentialDateValues) {
-      dimensions.push(key);
-      return;
-    }
-    
-    // Use the original numeric check as fallback
+    // Numerische Check als Fallback
     const numericCount = data.reduce((count, row) => {
       return isNumeric(row[key]) ? count + 1 : count;
     }, 0);
@@ -108,6 +155,9 @@ const identifyColumnTypes = (data: DataRow[]): { dimensions: string[], metrics: 
       dimensions.push(key);
     }
   });
+  
+  console.log("Identifizierte Dimensionen:", dimensions);
+  console.log("Identifizierte Metriken:", metrics);
   
   return { dimensions, metrics };
 };
@@ -263,22 +313,6 @@ const identifyColumnType = (values: any[]): string => {
   return 'string';
 };
 /* eslint-enable @typescript-eslint/no-unused-vars */
-
-/**
- * Checks if a string represents a valid date
- */
-const isDateString = (value: string): boolean => {
-  // Skip empty values
-  if (!value) return false;
-  
-  // Check for common date formats
-  const dateRegex = /^\d{4}-\d{2}-\d{2}|^\d{2}[./-]\d{2}[./-]\d{4}|^\d{2}[./-]\d{2}[./-]\d{2}/;
-  if (!dateRegex.test(value)) return false;
-  
-  // Try to parse as date
-  const date = new Date(value);
-  return !isNaN(date.getTime());
-};
 
 /**
  * Identifies columns that have at least one non-empty value
@@ -789,9 +823,66 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
     }
   }, [gridApi, fileName]);
 
+  // Export chart as PNG
+  const exportChartAsPng = useCallback(() => {
+    const chartElement = document.getElementById('chart-container');
+    if (chartElement) {
+      html2canvas(chartElement).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${fileName.split('.')[0] || 'chart'}_export.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    }
+  }, [fileName]);
+
+  // Export as PDF
+  const exportToPdf = useCallback(() => {
+    const chartElement = document.getElementById('chart-container');
+    const tableElement = document.getElementById('data-grid-container');
+    
+    const pdf = new jsPDF('landscape', 'pt', 'a4');
+    
+    // Add title
+    pdf.setFontSize(18);
+    pdf.text(`Data Export: ${fileName}`, 40, 40);
+    
+    if (chartElement) {
+      html2canvas(chartElement).then(chartCanvas => {
+        const chartImgData = chartCanvas.toDataURL('image/png');
+        pdf.addImage(chartImgData, 'PNG', 40, 60, 500, 300);
+        
+        if (tableElement) {
+          html2canvas(tableElement).then(tableCanvas => {
+            const tableImgData = tableCanvas.toDataURL('image/png');
+            pdf.addPage();
+            pdf.text('Data Table', 40, 40);
+            pdf.addImage(tableImgData, 'PNG', 40, 60, 750, 450);
+            pdf.save(`${fileName.split('.')[0] || 'data'}_export.pdf`);
+          });
+        } else {
+          pdf.save(`${fileName.split('.')[0] || 'data'}_export.pdf`);
+        }
+      });
+    } else if (tableElement) {
+      html2canvas(tableElement).then(tableCanvas => {
+        const tableImgData = tableCanvas.toDataURL('image/png');
+        pdf.text('Data Table', 40, 40);
+        pdf.addImage(tableImgData, 'PNG', 40, 60, 750, 450);
+        pdf.save(`${fileName.split('.')[0] || 'data'}_export.pdf`);
+      });
+    }
+  }, [fileName]);
+
   // AG-Grid onGridReady handler
   const onGridReady = useCallback((params: { api: GridApi }) => {
     setGridApi(params.api);
+    
+    // Auto-size columns after data is loaded
+    setTimeout(() => {
+      params.api.sizeColumnsToFit();
+    }, 100);
+    
   }, []);
 
   // Define tabs for navigation
@@ -1112,40 +1203,62 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                   </div>
                 </div>
                 
-                <div className="mt-4 md:mt-0 flex gap-2">
+                <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
                   <button 
                     onClick={exportToCsv} 
-                    className={`px-3 py-1.5 rounded text-sm font-medium ${
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
                       isDarkMode 
                         ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                     }`}
                   >
-                    Export CSV
+                    CSV
                   </button>
                   <button 
                     onClick={exportToJson} 
-                    className={`px-3 py-1.5 rounded text-sm font-medium ${
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
                       isDarkMode 
                         ? 'bg-gray-700 hover:bg-gray-600 text-white' 
                         : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
                     }`}
                   >
-                    Export JSON
+                    JSON
                   </button>
                   <button 
                     onClick={exportToExcel} 
-                    className={`px-3 py-1.5 rounded text-sm font-medium ${
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
                       isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                        ? 'bg-green-700 hover:bg-green-600 text-white' 
+                        : 'bg-green-600 hover:bg-green-700 text-white'
                     }`}
                   >
-                    Export Excel
+                    Excel
+                  </button>
+                  {activeTab === 'visualize' && (
+                    <button 
+                      onClick={exportChartAsPng} 
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                        isDarkMode 
+                          ? 'bg-purple-700 hover:bg-purple-600 text-white' 
+                          : 'bg-purple-600 hover:bg-purple-700 text-white'
+                      }`}
+                    >
+                      PNG
+                    </button>
+                  )}
+                  <button 
+                    onClick={exportToPdf} 
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                      isDarkMode 
+                        ? 'bg-red-700 hover:bg-red-600 text-white' 
+                        : 'bg-red-600 hover:bg-red-700 text-white'
+                    }`}
+                  >
+                    PDF
                   </button>
                   <button 
                     onClick={() => setRawData([])} 
-                    className={`px-3 py-1.5 rounded text-sm font-medium ${
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
                       isDarkMode 
                         ? 'bg-gray-700 hover:bg-gray-600 text-white' 
                         : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
@@ -1236,7 +1349,9 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                         </select>
                       </div>
                     </div>
-                    {renderChart()}
+                    <div id="chart-container">
+                      {renderChart()}
+                    </div>
                   </div>
                 </div>
                 
@@ -1372,7 +1487,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                     <h3 className={`font-medium mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                       Data Preview
                     </h3>
-                    <div 
+                    <div id="data-grid-container"
                       className={`w-full h-[300px] ${gridThemeClass}`}
                     >
                       <AgGridReact
@@ -1401,18 +1516,30 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                   <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                     Data Table
                   </h3>
-                  <button 
-                    onClick={exportToCsv} 
-                    className={`px-3 py-1.5 rounded text-sm font-medium ${
-                      isDarkMode 
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                        : 'bg-blue-500 hover:bg-blue-600 text-white'
-                    }`}
-                  >
-                    Export CSV
-                  </button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={exportToCsv} 
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                        isDarkMode 
+                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                          : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      }`}
+                    >
+                      CSV
+                    </button>
+                    <button 
+                      onClick={exportToExcel} 
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                        isDarkMode 
+                          ? 'bg-green-700 hover:bg-green-600 text-white' 
+                          : 'bg-green-600 hover:bg-green-700 text-white'
+                      }`}
+                    >
+                      Excel
+                    </button>
+                  </div>
                 </div>
-                <div 
+                <div id="data-table-container"
                   className={`w-full h-[700px] ${gridThemeClass}`}
                 >
                   <AgGridReact
