@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu Apr 24 13:26:11 CEST 2025", "commit": "Modernize DataVisualizer component with responsive dashboard, enhanced charts and export functionality"}
+{"deployment": "staging", "timestamp": "Thu Apr 24 13:34:48 CEST 2025", "commit": "Improve dimension detection with AdTech industry standard dimension names"}

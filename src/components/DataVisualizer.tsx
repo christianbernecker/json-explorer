@@ -119,10 +119,59 @@ const aggregateData = (
 ): AggregatedData[] => {
   if (!data.length || !dimension || !metric) return [];
   
+  // Handle case where dimension and metric are the same column
+  if (dimension === metric) {
+    console.warn('Dimension and metric are the same column. Using a fallback metric.');
+    // Try to find any numeric column as fallback
+    const fallbackMetric = Object.keys(data[0]).find(key => 
+      key !== dimension && 
+      data.some(row => isNumeric(row[key]))
+    );
+    
+    if (fallbackMetric) {
+      console.log(`Using ${fallbackMetric} as fallback metric instead of ${metric}`);
+      metric = fallbackMetric;
+    }
+  }
+  
   const aggregated: { [key: string]: { sum: number, count: number } } = {};
   
+  // Handle date formatting for better grouping
+  const isDateDimension = dimension.toLowerCase().includes('date') || 
+                          dimension.toLowerCase().includes('day') ||
+                          dimension.toLowerCase().includes('month');
+
   data.forEach(row => {
-    const dimValue = String(row[dimension] || 'Unknown');
+    let dimValue: string;
+    
+    // Format date values consistently if this appears to be a date dimension
+    if (isDateDimension) {
+      const rawValue = row[dimension];
+      
+      // Try to parse and format dates consistently
+      if (rawValue instanceof Date) {
+        dimValue = rawValue.toISOString().split('T')[0]; // YYYY-MM-DD
+      } else if (typeof rawValue === 'string' && (
+        rawValue.includes('-') || rawValue.includes('/') || rawValue.match(/^\d{1,2}\.\d{1,2}\.\d{2,4}$/)
+      )) {
+        try {
+          const date = new Date(rawValue);
+          if (!isNaN(date.getTime())) {
+            dimValue = date.toISOString().split('T')[0]; // YYYY-MM-DD
+          } else {
+            dimValue = String(rawValue || 'Unknown');
+          }
+        } catch(e) {
+          dimValue = String(rawValue || 'Unknown');
+        }
+      } else {
+        dimValue = String(rawValue || 'Unknown');
+      }
+    } else {
+      // Non-date dimension
+      dimValue = String(row[dimension] || 'Unknown');
+    }
+    
     const metricValue = Number(row[metric] || 0);
     
     if (!aggregated[dimValue]) {
@@ -135,10 +184,27 @@ const aggregateData = (
     }
   });
   
-  return Object.entries(aggregated).map(([name, { sum, count }]) => ({
+  // Convert to array and sort by dimension value
+  let result = Object.entries(aggregated).map(([name, { sum, count }]) => ({
     name,
     value: aggregationType === 'sum' ? sum : (count > 0 ? sum / count : 0)
   }));
+  
+  // Sort by date if it's a date dimension
+  if (isDateDimension) {
+    result.sort((a, b) => {
+      // Try parsing as dates
+      const dateA = new Date(a.name);
+      const dateB = new Date(b.name);
+      
+      if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+        return dateA.getTime() - dateB.getTime();
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }
+  
+  return result;
 };
 
 // Main Component
@@ -225,9 +291,36 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         setDimensions(dims);
         setMetrics(mets);
         
-        // Set default selections if available
-        if (dims.length > 0) setSelectedDimension(dims[0]);
-        if (mets.length > 0) setSelectedMetric(mets[0]);
+        // Set default selections with smart defaults
+        // For dimension, prefer categorical or date fields
+        if (dims.length > 0) {
+          // Try to find a good dimension (prefer date columns or those with "name" in them)
+          const dateColumn = dims.find(col => 
+            col.toLowerCase().includes('date') || 
+            col.toLowerCase().includes('day') || 
+            col.toLowerCase().includes('month')
+          );
+          
+          const nameColumn = dims.find(col => 
+            col.toLowerCase().includes('name')
+          );
+          
+          setSelectedDimension(dateColumn || nameColumn || dims[0]);
+        }
+        
+        // For metric, prefer common metrics like impressions, clicks, cost
+        if (mets.length > 0) {
+          const preferredMetricNames = ['impressions', 'clicks', 'cost', 'conversions', 'revenue'];
+          
+          // Find the first metric that matches our preferred list
+          const preferredMetric = mets.find(metric => 
+            preferredMetricNames.some(preferred => 
+              metric.toLowerCase().includes(preferred)
+            )
+          );
+          
+          setSelectedMetric(preferredMetric || mets[0]);
+        }
         
         // Switch to dashboard view with visualizations
         setActiveTab('dashboard');
