@@ -12,6 +12,7 @@
     { "src": "/(.*)", "dest": "/index.html" }
   ],
   "github": {
-    "enabled": false
+    "enabled": true,
+    "silent": false
   }
 } 
