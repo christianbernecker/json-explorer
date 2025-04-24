@@ -24,7 +24,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   setShowDiffInspectorHistory
 }) => {
   return (
-    <div className={`flex flex-col lg:flex-row items-center justify-between py-8 px-4 mb-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md`}>
+    <div className={`flex flex-col lg:flex-row items-center justify-between py-10 px-4 mb-6 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md`}>
       <div className="flex items-center mb-4 lg:mb-0">
         <div className="mr-5 bg-gradient-to-r from-blue-500 to-indigo-600 p-4 rounded-xl text-white flex items-center justify-center" style={{ width: '50px', height: '50px', minWidth: '50px' }} aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="JSON Explorer">

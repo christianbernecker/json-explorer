@@ -7,7 +7,7 @@ interface ImprintPageProps {
 
 function ImprintPage({ isDarkMode }: ImprintPageProps) {
   return (
-    <div className={`container mx-auto px-4 py-8 mb-20 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'}`}>
+    <div className={`container mx-auto px-4 py-8 mb-20 ${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-white text-gray-800'}`}>
       <SEO 
         canonical="https://www.adtech-toolbox.com/legal/imprint" 
         title="Imprint | AdTech Toolbox"
