@@ -14,4 +14,22 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Add custom AG-Grid dark theme styles */
+.ag-theme-custom-dark {
+  --ag-background-color: #1f2937;
+  --ag-border-color: #374151;
+  --ag-header-background-color: #111827;
+  --ag-odd-row-background-color: rgba(0, 0, 0, 0.1);
+  --ag-cell-horizontal-border: #374151;
+  --ag-header-foreground-color: #d1d5db;
+  --ag-foreground-color: #e5e7eb;
+  --ag-input-disabled-background-color: rgba(0, 0, 0, 0.2);
+  --ag-disabled-foreground-color: rgba(255, 255, 255, 0.5);
+  --ag-checkbox-background-color: #374151;
+  --ag-checkbox-unchecked-color: #9ca3af;
+  --ag-selected-row-background-color: rgba(59, 130, 246, 0.2);
+  --ag-row-hover-color: rgba(59, 130, 246, 0.1);
+  --ag-popup-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 } 

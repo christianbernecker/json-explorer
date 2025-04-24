@@ -1,7 +1,11 @@
 import React from 'react';
 import { SEO } from './seo';
 
-function ImprintPage() {
+interface ImprintPageProps {
+  isDarkMode: boolean;
+}
+
+function ImprintPage({ isDarkMode }: ImprintPageProps) {
   return (
     <div className="container mx-auto px-4 py-8 mb-20">
       <SEO 

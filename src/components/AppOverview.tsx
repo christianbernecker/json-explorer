@@ -1,7 +1,11 @@
 import React from 'react';
 import { SEO } from './seo';
 
-function AppOverview() {
+interface AppOverviewProps {
+  isDarkMode: boolean;
+}
+
+function AppOverview({ isDarkMode }: AppOverviewProps) {
   return (
     <div>
       <SEO canonical="https://www.adtech-toolbox.com/apps" />

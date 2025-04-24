@@ -2,4 +2,5 @@ export { default as HistoryItem } from './HistoryItem';
 export { default as SearchPanel } from './SearchPanel';
 export { default as Footer } from './Footer';
 export { default as Modal } from './Modal';
-export { default as EnvironmentBadge } from './EnvironmentBadge'; 
+export { default as EnvironmentBadge } from './EnvironmentBadge';
+export { default as Button } from './Button'; 

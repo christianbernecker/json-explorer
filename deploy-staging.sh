@@ -12,6 +12,9 @@ echo "  ✓ Committed your changes locally"
 echo "=============================================================="
 echo ""
 
+# Always emphasize staging deployment
+echo "⚠️ REMEMBER: ALWAYS deploy to STAGING before production!"
+echo "This script will deploy your changes to the staging environment."
 echo ""
 
 # Check for a commit message
@@ -44,38 +47,15 @@ else
   echo "ℹ️ Skipping git commit and push in CI environment."
 fi
 
-# 3. Trigger webhook - Only if not already triggered by GitHub Action
-if [ "$CI" = "true" ]; then
-  # In CI, check if webhook was already triggered by checking env var
-  if [ -n "$WEBHOOK_ALREADY_TRIGGERED" ]; then
-    echo "ℹ️ Webhook already triggered. Skipping duplicate webhook call."
-    exit 0
-  fi
-  
-  # Mark webhook as triggered to prevent double calls
-  export WEBHOOK_ALREADY_TRIGGERED=true
-fi
+# 3. Create a simple status file to track deployment
+echo "✅ Creating deployment marker..."
+echo "{\"deployment\": \"staging\", \"timestamp\": \"$(date)\", \"commit\": \"$COMMIT_MSG\"}" > deployment-status.json
 
-# Only trigger the webhook if VERCEL_DEPLOY_HOOK_URL is set
-if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
-  echo "❌ Error: VERCEL_DEPLOY_HOOK_URL environment variable is not set."
-  exit 1
-fi
-
-echo "✅ Triggering deployment webhook..."
-RESPONSE=$(curl -s -X POST "$VERCEL_DEPLOY_HOOK_URL")
-JOB_ID=$(echo $RESPONSE | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
-
-# Check if JOB_ID was extracted successfully
-if [ -z "$JOB_ID" ]; then
-    echo "❌ Error: Could not extract Job ID from Vercel webhook response:"
-    echo "$RESPONSE"
-    exit 1
-fi
-
-echo "✅ Deployment initiated with Job ID: $JOB_ID"
+# Deployment Info - Vercel builds are triggered automatically by the push to staging
 echo ""
+echo "✅ Deployment triggered via Git push. Vercel will automatically start building."
 echo "✅ Deployment status URL: https://vercel.com/christianberneckers-projects/adtech-toolbox-staging/deployments"
-echo "✅ Application URL: https://staging.adtech-toolbox.com/json-explorer"
+echo "✅ Application URL: https://staging.adtech-toolbox.com"
 echo ""
 echo "⏱️ Please wait approximately 1-2 minutes for the deployment to complete."
+echo "⚠️ ALWAYS test thoroughly on staging before deploying to production!"

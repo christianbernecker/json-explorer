@@ -1,7 +1,11 @@
 import React from 'react';
 import { SEO } from './seo';
 
-function PrivacyPage() {
+interface PrivacyPageProps {
+  isDarkMode: boolean;
+}
+
+function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
   return (
     <div className="container mx-auto px-4 py-8 mb-20">
       <SEO 

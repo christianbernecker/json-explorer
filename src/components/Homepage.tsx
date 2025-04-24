@@ -2,7 +2,11 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { SEO } from './seo';
 
-function Homepage() {
+interface HomepageProps {
+  isDarkMode: boolean;
+}
+
+function Homepage({ isDarkMode }: HomepageProps) {
   return (
     <div className="container mx-auto px-4 py-8 mb-20">
       <SEO 

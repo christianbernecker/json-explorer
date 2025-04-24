@@ -1,132 +1,69 @@
-# JSON Explorer Deployment Guide
+# Deployment Process
 
-This document describes the deployment process for the JSON Explorer application.
+This document outlines the deployment process for the AdTech Toolbox application.
 
-## Branch Structure
+## IMPORTANT: Always Deploy to Staging First
 
-- **`main`**: Production branch. All changes to production must be deployed from this branch.
-- **`staging`**: Staging branch for pre-production testing.
-- Other feature branches should be created as needed and merged into `staging` first.
+**Never deploy directly to production without testing on staging first.**
 
-## Environment Setup
+The staging environment is set up to mirror production as closely as possible, allowing you to catch and fix issues before they affect real users.
 
-The application has two environments:
+## Deployment Workflow
 
-1. **Production**: https://www.adtech-toolbox.com/json-explorer
-   - Deployed from the `main` branch
-   - Production webhook: [REDACTED - stored in GitHub Secrets]
-
-2. **Staging**: https://staging.adtech-toolbox.com/json-explorer
-   - Deployed from the `staging` branch
-   - Staging webhook: [REDACTED - stored in GitHub Secrets]
-
-## Deployment Process
-
-### Staging Deployment
-
-**Important:** Use the provided script for staging deployments. The script has been optimized to prevent double deployments, which can occur when both GitHub Actions and the deployment script try to trigger the webhook simultaneously.
-
-For deploying to the staging environment:
+### 1. Staging Deployment
 
 ```bash
-# Deploy with an informative commit message
-./deploy-staging.sh "Your meaningful commit message"
+# Run the staging deployment script with a commit message
+./deploy-staging.sh "Your descriptive commit message"
 ```
 
 This script will:
-1. Display a pre-deployment checklist
-2. Run build checks
-3. Commit changes (if running locally)
-4. Push to the staging branch (if running locally)
-5. Trigger the staging deployment webhook **exactly once**
+- Build the application
+- Commit your changes (if run locally)
+- Push to the staging branch
+- Trigger automatic deployment on Vercel
 
-### Production Deployment
+The staging application will be available at: **[https://staging.adtech-toolbox.com](https://staging.adtech-toolbox.com)**
 
-For deploying to the production environment:
+### 2. Testing on Staging
 
-```bash
-# Deploy with an informative commit message
-./deploy-prod.sh "Your meaningful commit message"
-```
+After deploying to staging, thoroughly test your changes:
 
-This script will:
-1. Display a pre-deployment checklist and require confirmation
-2. Run lint and build checks
-3. Switch to the main branch
-4. Merge changes from staging
-5. Push to the main branch
-6. Trigger the production deployment webhook
+- Verify all features work as expected
+- Check both light and dark modes
+- Test on different browsers and devices
+- Validate all critical user flows
 
-## Automatic Deployment Safeguards
+### 3. Production Deployment
 
-Several safeguards have been implemented to ensure proper deployment:
-
-1. **Double Deployment Prevention**: The deployment script now checks if it's running in a CI environment and prevents duplicate webhook calls.
-
-2. **Pre-deployment Checklists**: Both deployment scripts show checklists to remind you of key steps.
-
-3. **Required Confirmation**: The production deployment script requires explicit confirmation that you've read the guide.
-
-4. **Git Hooks**: 
-   - The `pre-push` hook reminds you about the deployment process when pushing to staging or main branches.
-   - The `pre-commit` hook updates the sitemap with current dates.
-
-5. **NPM Scripts**:
-   - `npm run install-hooks`: Installs the git hooks (runs automatically after `npm install`)
-   - `npm run prepare-deploy`: Shows a summary of the deployment guide
-
-## Version Management
-
-1.  **Production Version (`APP_VERSION`):** Update the `APP_VERSION` constant in `src/constants.ts` before a production deployment. This version number is displayed on the production site.
-2.  **Staging/Preview Version:** The staging environment (`staging.adtech-toolbox.com` and `*.vercel.app` URLs) automatically displays "v[Next Version]-preview" (e.g., "v1.1.5-preview") in the footer. This is determined by checking the browser's hostname directly in `src/components/shared/Footer.tsx` and does not require manual updates for staging.
-3.  **(Optional) `APP_VERSION_NEXT`:** The `APP_VERSION_NEXT` constant in `src/constants.ts` can still be used for internal tracking or documentation of the next planned version but is not currently displayed in the UI.
-
-## Pre-deployment Checklist
-
-Before deploying to production, ensure:
-
-- All features are tested on staging
-- Version numbers are updated
-- SEO elements are in place (meta tags, sitemap.xml, etc.)
-- Automated tests pass
-- Performance check completed
-
-## Sitemap Updates
-
-The sitemap is automatically updated during build:
+Only after successful testing on staging:
 
 ```bash
-# Manual update
-npm run update-sitemap
+# Run the production deployment script
+npm run deploy
 ```
 
-The sitemap date is also updated as part of the pre-commit hook and deploy scripts.
+## Deployment Checklist
+
+Before any deployment, ensure:
+
+- All code changes are committed
+- All tests pass
+- The application builds successfully
+- You have proper permissions to deploy
 
 ## Troubleshooting
 
-If deployment issues occur:
+If you encounter issues during deployment:
 
-1. Verify you are on the correct branch
-2. **Double deployments:** If you notice double deployments being triggered, check that you are not manually triggering a deployment while GitHub Actions is already doing so. The script has been updated to prevent this in most cases.
-3. **Deployment does not appear in Vercel UI:**
-   - Check the `curl` command in `./deploy-staging.sh` uses the correct **Staging webhook URL** from GitHub Secrets.
-   - Verify this URL matches the active **Deploy Hook** for the `staging` branch in Vercel project settings (Settings -> Git -> Deploy Hooks).
-   - Manually trigger the hook URL in your browser to see if it works. If it does, the issue might be with the environment executing the script.
-4. Check webhook responses (if the script fails during the `curl` command).
-5. Verify Vercel project settings (especially Git connection, Build settings, Domain assignments).
-6. Check build errors in Vercel deployment logs (if the deployment starts but fails).
+1. Check the Vercel deployment logs
+2. Verify your branch is up to date
+3. Ensure environment variables are correctly set
 
-## Rollback Process
+## Rollback Procedure
 
-To rollback a production deployment:
+If a deployment causes issues:
 
-```bash
-# Checkout the previous working version tag (example: v1.1.1)
-git checkout v1.1.1
-
-# Create a rollback branch
-git checkout -b rollback-to-v1.1.1
-
-# Deploy the rollback
-./deploy-prod.sh "Rollback to v1.1.1 due to [reason]"
-``` 
+1. Immediately deploy the previous stable version to staging
+2. Verify it resolves the issue
+3. Deploy the stable version to production 

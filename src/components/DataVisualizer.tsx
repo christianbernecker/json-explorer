@@ -13,6 +13,8 @@ import { SEO } from './seo';
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+// We'll handle dark mode without importing the dark theme CSS
+// and use the provided classes instead
 
 // Types
 interface DataRow {
@@ -24,6 +26,10 @@ type ChartType = 'bar' | 'line' | 'pie';
 interface AggregatedData {
   name: string;
   value: number;
+}
+
+interface DataVisualizerProps {
+  isDarkMode: boolean;
 }
 
 // Helper functions
@@ -86,7 +92,7 @@ const aggregateData = (
 };
 
 // Main Component
-function DataVisualizer() {
+function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   // State for file upload
   const [isLoading, setIsLoading] = useState(false);
   const [fileName, setFileName] = useState('');
@@ -100,10 +106,6 @@ function DataVisualizer() {
   
   // UI states
   const [activeTab, setActiveTab] = useState<'import' | 'table' | 'visualize' | 'analytics'>('import');
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedDarkMode = localStorage.getItem('dataVisualizer_darkMode');
-    return savedDarkMode ? JSON.parse(savedDarkMode) : false;
-  });
   
   // Visualization states
   const [chartType, setChartType] = useState<ChartType>('bar');
@@ -114,14 +116,10 @@ function DataVisualizer() {
   // AG-Grid states
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   
-  // Toggle dark mode
-  const toggleDarkMode = useCallback(() => {
-    setIsDarkMode((prev: boolean) => {
-      const newValue = !prev;
-      localStorage.setItem('dataVisualizer_darkMode', JSON.stringify(newValue));
-      return newValue;
-    });
-  }, []);
+  // Calculate chart data outside of the renderChart function
+  const chartData = useMemo(() => {
+    return aggregateData(rawData, selectedDimension, selectedMetric, aggregationType);
+  }, [rawData, selectedDimension, selectedMetric, aggregationType]);
   
   // Process the uploaded file
   const processFile = useCallback(async (file: File) => {
@@ -181,7 +179,7 @@ function DataVisualizer() {
         if (dims.length > 0) setSelectedDimension(dims[0]);
         if (mets.length > 0) setSelectedMetric(mets[0]);
         
-        // Switch to table view
+        // Switch to data view with visualizations
         setActiveTab('table');
       } else {
         throw new Error('No data found in the file');
@@ -209,50 +207,259 @@ function DataVisualizer() {
     }
   });
   
-  // Export data as CSV
-  const exportToCsv = useCallback(() => {
-    if (!gridApi) return;
-    
-    const params = {
-      suppressQuotes: false,
-      fileName: `${fileName.split('.')[0] || 'export'}_${new Date().toISOString().slice(0, 10)}.csv`
-    };
-    
-    gridApi.exportDataAsCsv(params);
-  }, [gridApi, fileName]);
-  
-  // Handle grid ready event
-  const onGridReady = (params: any) => {
-    setGridApi(params.api);
-  };
-  
-  // Chart data for visualization
-  const chartData = useMemo(() => {
-    return aggregateData(rawData, selectedDimension, selectedMetric, aggregationType);
-  }, [rawData, selectedDimension, selectedMetric, aggregationType]);
-  
-  // Generate pie chart colors
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FF6B6B', '#6B66FF'];
-  
-  // Grid default column definition
-  const defaultColDef = useMemo(() => ({
-    flex: 1,
-    minWidth: 100,
-    sortable: true,
-    filter: true,
-  }), []);
+  // Add the function for rendering charts with dark mode support
+  const renderChart = () => {
+    if (chartData.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+          No data available for visualization
+        </div>
+      );
+    }
 
-  // Dark mode class for AG-Grid
-  const gridThemeClass = isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine';
-  
-  // Tabs configuration
+    // Colors for pie chart
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658', '#8dd1e1'];
+    
+    return (
+      <ResponsiveContainer width="100%" height={400}>
+        {chartType === 'bar' ? (
+          <BarChart data={chartData} margin={{ top: 10, right: 30, left: 20, bottom: 40 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#444' : '#eee'} />
+            <XAxis 
+              dataKey="name" 
+              angle={-45} 
+              textAnchor="end" 
+              height={70}
+              tick={{ fill: isDarkMode ? '#e5e7eb' : '#374151', fontSize: 12 }}
+            />
+            <YAxis 
+              tick={{ fill: isDarkMode ? '#e5e7eb' : '#374151' }}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: isDarkMode ? '#374151' : '#fff', 
+                borderColor: isDarkMode ? '#4b5563' : '#e5e7eb', 
+                color: isDarkMode ? '#e5e7eb' : '#374151' 
+              }} 
+            />
+            <Legend />
+            <Bar 
+              dataKey="value" 
+              name={`${selectedMetric} (${aggregationType})`} 
+              fill={isDarkMode ? '#60a5fa' : '#3b82f6'} 
+              radius={[4, 4, 0, 0]}
+            />
+          </BarChart>
+        ) : chartType === 'line' ? (
+          <LineChart data={chartData} margin={{ top: 10, right: 30, left: 20, bottom: 40 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={isDarkMode ? '#444' : '#eee'} />
+            <XAxis 
+              dataKey="name" 
+              angle={-45} 
+              textAnchor="end" 
+              height={70}
+              tick={{ fill: isDarkMode ? '#e5e7eb' : '#374151', fontSize: 12 }}
+            />
+            <YAxis 
+              tick={{ fill: isDarkMode ? '#e5e7eb' : '#374151' }}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: isDarkMode ? '#374151' : '#fff', 
+                borderColor: isDarkMode ? '#4b5563' : '#e5e7eb', 
+                color: isDarkMode ? '#e5e7eb' : '#374151' 
+              }} 
+            />
+            <Legend />
+            <Line
+              type="monotone"
+              dataKey="value"
+              name={`${selectedMetric} (${aggregationType})`}
+              stroke={isDarkMode ? '#60a5fa' : '#3b82f6'}
+              strokeWidth={2}
+              dot={{ r: 5 }}
+              activeDot={{ r: 8 }}
+            />
+          </LineChart>
+        ) : (
+          <PieChart>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              labelLine={true}
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              outerRadius={120}
+              fill="#8884d8"
+              dataKey="value"
+              nameKey="name"
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip 
+              formatter={(value) => [`${value} (${selectedMetric})`, aggregationType]}
+              contentStyle={{ 
+                backgroundColor: isDarkMode ? '#374151' : '#fff', 
+                borderColor: isDarkMode ? '#4b5563' : '#e5e7eb', 
+                color: isDarkMode ? '#e5e7eb' : '#374151' 
+              }} 
+            />
+            <Legend wrapperStyle={{ color: isDarkMode ? '#e5e7eb' : '#374151' }} />
+          </PieChart>
+        )}
+      </ResponsiveContainer>
+    );
+  };
+
+  // Define grid theme class based on dark mode
+  const gridThemeClass = isDarkMode 
+    ? 'ag-theme-alpine ag-theme-custom-dark' 
+    : 'ag-theme-alpine';
+
+  // Define the export to CSV function
+  const exportToCsv = useCallback(() => {
+    if (gridApi) {
+      gridApi.exportDataAsCsv({
+        fileName: `${fileName.split('.')[0] || 'data'}_export.csv`
+      });
+    }
+  }, [gridApi, fileName]);
+
+  // AG-Grid onGridReady handler
+  const onGridReady = useCallback((params: any) => {
+    setGridApi(params.api);
+  }, []);
+
+  // Define tabs for navigation
   const tabs = [
     { id: 'import', label: 'Import Data', disabled: false },
     { id: 'table', label: 'Data Table', disabled: rawData.length === 0 },
     { id: 'visualize', label: 'Visualize', disabled: rawData.length === 0 },
     { id: 'analytics', label: 'Advanced Analytics', disabled: rawData.length === 0 }
   ];
-  
+
+  // Render functions
+  const renderDataView = () => {
+    if (rawData.length === 0) {
+      return null;
+    }
+
+    // Create the layout with side-by-side data table and visualization
+    return (
+      <div className="flex flex-col lg:flex-row w-full gap-4">
+        {/* Data Table Section - Take half width on larger screens */}
+        <div className="lg:w-1/2 flex flex-col">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Data Table</h3>
+            <div className="flex gap-2">
+              {/* Table controls */}
+              <button 
+                onClick={exportToCsv} 
+                className="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                Export CSV
+              </button>
+            </div>
+          </div>
+          
+          {/* AG-Grid with dark mode support */}
+          <div 
+            className={`w-full h-[500px] ${gridThemeClass}`}
+          >
+            <AgGridReact
+              rowData={rawData}
+              columnDefs={columnDefs}
+              onGridReady={onGridReady}
+              pagination={true}
+              paginationPageSize={10}
+              defaultColDef={{
+                flex: 1,
+                minWidth: 100,
+                sortable: true, 
+                filter: true
+              }}
+            />
+          </div>
+        </div>
+        
+        {/* Visualization Section - Take half width on larger screens */}
+        <div className="lg:w-1/2 flex flex-col">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Visualization</h3>
+            <div className="flex gap-2">
+              {/* Chart type selector */}
+              <select
+                value={chartType}
+                onChange={(e) => setChartType(e.target.value as ChartType)}
+                className="px-3 py-1 text-sm border rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600"
+              >
+                <option value="bar">Bar Chart</option>
+                <option value="line">Line Chart</option>
+                <option value="pie">Pie Chart</option>
+              </select>
+            </div>
+          </div>
+          
+          {/* Chart configuration */}
+          <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Dimension
+                </label>
+                <select
+                  value={selectedDimension}
+                  onChange={(e) => setSelectedDimension(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600"
+                >
+                  {dimensions.map(dim => (
+                    <option key={dim} value={dim}>{dim}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Metric
+                </label>
+                <select
+                  value={selectedMetric}
+                  onChange={(e) => setSelectedMetric(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600"
+                >
+                  {metrics.map(met => (
+                    <option key={met} value={met}>{met}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Aggregation
+                </label>
+                <select
+                  value={aggregationType}
+                  onChange={(e) => setAggregationType(e.target.value as 'sum' | 'average')}
+                  className="w-full px-3 py-2 border rounded-md bg-white dark:bg-gray-700 text-gray-800 dark:text-white border-gray-300 dark:border-gray-600"
+                >
+                  <option value="sum">Sum</option>
+                  <option value="average">Average</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart display */}
+          <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            {renderChart()}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 mb-20">
       <SEO 
@@ -266,20 +473,6 @@ function DataVisualizer() {
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Data Visualizer</h1>
-            <button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
-            >
-              {isDarkMode ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-              )}
-            </button>
           </div>
           
           {/* Basic Information */}
@@ -426,225 +619,10 @@ function DataVisualizer() {
           )}
           
           {/* Table Tab */}
-          {activeTab === 'table' && (
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Data Table</h2>
-                <button
-                  onClick={exportToCsv}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition"
-                  disabled={rawData.length === 0}
-                >
-                  Export as CSV
-                </button>
-              </div>
-              
-              <div 
-                className={`${gridThemeClass} w-full h-[60vh]`}
-              >
-                <AgGridReact
-                  rowData={rawData}
-                  columnDefs={columnDefs}
-                  defaultColDef={defaultColDef}
-                  pagination={true}
-                  paginationPageSize={20}
-                  onGridReady={onGridReady}
-                  enableCellTextSelection={true}
-                  animateRows={true}
-                />
-              </div>
-            </div>
-          )}
+          {activeTab === 'table' && renderDataView()}
           
           {/* Visualization Tab */}
-          {activeTab === 'visualize' && (
-            <div>
-              <div className="flex flex-col md:flex-row gap-6 mb-8">
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Chart Settings</h2>
-                  
-                  {/* Controls */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Chart Type
-                      </label>
-                      <select
-                        value={chartType}
-                        onChange={(e) => setChartType(e.target.value as ChartType)}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        <option value="bar">Bar Chart</option>
-                        <option value="line">Line Chart</option>
-                        <option value="pie">Pie Chart</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Dimension (Category)
-                      </label>
-                      <select
-                        value={selectedDimension}
-                        onChange={(e) => setSelectedDimension(e.target.value)}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        {dimensions.map(dim => (
-                          <option key={dim} value={dim}>{dim}</option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Metric (Value)
-                      </label>
-                      <select
-                        value={selectedMetric}
-                        onChange={(e) => setSelectedMetric(e.target.value)}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        {metrics.map(metric => (
-                          <option key={metric} value={metric}>{metric}</option>
-                        ))}
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Aggregation Type
-                      </label>
-                      <select
-                        value={aggregationType}
-                        onChange={(e) => setAggregationType(e.target.value as 'sum' | 'average')}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                      >
-                        <option value="sum">Sum</option>
-                        <option value="average">Average</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex-[2]">
-                  <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Visualization</h2>
-                  
-                  {chartData.length > 0 ? (
-                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 h-[400px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        {chartType === 'bar' ? (
-                          <BarChart data={chartData} margin={{ top: 10, right: 30, left: 20, bottom: 40 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis 
-                              dataKey="name" 
-                              angle={-45} 
-                              textAnchor="end" 
-                              height={70}
-                              tick={{ fill: isDarkMode ? '#e5e7eb' : '#374151', fontSize: 12 }}
-                            />
-                            <YAxis 
-                              tick={{ fill: isDarkMode ? '#e5e7eb' : '#374151' }}
-                            />
-                            <Tooltip 
-                              contentStyle={{ backgroundColor: isDarkMode ? '#374151' : '#fff', borderColor: isDarkMode ? '#4b5563' : '#e5e7eb', color: isDarkMode ? '#e5e7eb' : '#374151' }} 
-                            />
-                            <Legend />
-                            <Bar 
-                              dataKey="value" 
-                              name={`${selectedMetric} (${aggregationType})`} 
-                              fill="#3b82f6" 
-                              radius={[4, 4, 0, 0]}
-                            />
-                          </BarChart>
-                        ) : chartType === 'line' ? (
-                          <LineChart data={chartData} margin={{ top: 10, right: 30, left: 20, bottom: 40 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis 
-                              dataKey="name" 
-                              angle={-45} 
-                              textAnchor="end" 
-                              height={70}
-                              tick={{ fill: isDarkMode ? '#e5e7eb' : '#374151', fontSize: 12 }}
-                            />
-                            <YAxis 
-                              tick={{ fill: isDarkMode ? '#e5e7eb' : '#374151' }}
-                            />
-                            <Tooltip 
-                              contentStyle={{ backgroundColor: isDarkMode ? '#374151' : '#fff', borderColor: isDarkMode ? '#4b5563' : '#e5e7eb', color: isDarkMode ? '#e5e7eb' : '#374151' }} 
-                            />
-                            <Legend />
-                            <Line
-                              type="monotone"
-                              dataKey="value"
-                              name={`${selectedMetric} (${aggregationType})`}
-                              stroke="#3b82f6"
-                              strokeWidth={2}
-                              dot={{ r: 5 }}
-                              activeDot={{ r: 8 }}
-                            />
-                          </LineChart>
-                        ) : (
-                          <PieChart>
-                            <Pie
-                              data={chartData}
-                              cx="50%"
-                              cy="50%"
-                              labelLine={true}
-                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                              outerRadius={120}
-                              fill="#8884d8"
-                              dataKey="value"
-                              nameKey="name"
-                            >
-                              {chartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                              ))}
-                            </Pie>
-                            <Tooltip 
-                              formatter={(value) => [`${value} (${selectedMetric})`, aggregationType]}
-                              contentStyle={{ backgroundColor: isDarkMode ? '#374151' : '#fff', borderColor: isDarkMode ? '#4b5563' : '#e5e7eb', color: isDarkMode ? '#e5e7eb' : '#374151' }} 
-                            />
-                            <Legend />
-                          </PieChart>
-                        )}
-                      </ResponsiveContainer>
-                    </div>
-                  ) : (
-                    <div className="p-8 text-center text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                      No data available for visualization. Please select valid dimension and metric.
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              {/* Data Preview */}
-              <div>
-                <h3 className="text-lg font-medium mb-3 text-gray-800 dark:text-white">Aggregated Data</h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-800">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                          {selectedDimension || 'Dimension'}
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                          {`${selectedMetric || 'Metric'} (${aggregationType})`}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                      {chartData.map((entry, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">{entry.name}</td>
-                          <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">{entry.value.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          )}
+          {activeTab === 'visualize' && renderDataView()}
           
           {/* Advanced Analytics Tab (Placeholder) */}
           {activeTab === 'analytics' && (
