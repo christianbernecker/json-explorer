@@ -12,29 +12,47 @@ echo "  ✓ Committed your changes locally"
 echo "=============================================================="
 echo ""
 
+echo ""
+
 # Prüfen, ob eine Commit-Nachricht angegeben wurde
-if [ -z "$1" ]; then
-    echo "Fehler: Keine Commit-Nachricht angegeben"
-    echo "Verwendung: ./deploy-staging.sh \"Deine Commit-Nachricht\""
-    exit 1
+COMMIT_MSG="$1"
+if [ -z "$COMMIT_MSG" ]; then
+    # Use a default message if running in CI and no message provided
+    if [ "$CI" = "true" ]; then
+        COMMIT_MSG="Deploy via CI"
+    else
+        echo "Fehler: Keine Commit-Nachricht angegeben (local run)"
+        echo "Verwendung: ./deploy-staging.sh \"Deine Commit-Nachricht\""
+        exit 1
+    fi
 fi
 
 # 1. Build
 echo "✅ Running build check..."
 npm run build
 
-# 2. Git Actions
-echo "✅ Committing changes..."
-git add .
-git commit -m "$1" || echo "No changes to commit"
+# 2. Git Actions - Only run if NOT in CI environment
+if [ "$CI" != "true" ]; then
+  echo "✅ Committing changes (local run only)..."
+  git add .
+  # Use the specific commit message passed or defaulted
+  git commit -m "$COMMIT_MSG" || echo "No changes to commit (local run only)"
 
-echo "✅ Pushing to staging branch..."
-git push origin staging
+  echo "✅ Pushing to staging branch (local run only)..."
+  git push origin staging
+else
+  echo "ℹ️ Skipping git commit and push in CI environment."
+fi
 
 # 3. Webhook auslösen
 echo "✅ Triggering deployment webhook..."
-# Use the correct, confirmed hook URL
-RESPONSE=$(curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_aiXcDB1YBSVhM9MdaxCcs6Cg8zq0/t3eH9cSNFN)
+# Check if VERCEL_DEPLOY_HOOK_URL is set (passed from GH Action)
+if [ -z "$VERCEL_DEPLOY_HOOK_URL" ]; then
+  echo "❌ Error: VERCEL_DEPLOY_HOOK_URL environment variable is not set."
+  exit 1
+fi
+
+RESPONSE=$(curl -s -X POST "$VERCEL_DEPLOY_HOOK_URL")
 JOB_ID=$(echo $RESPONSE | grep -o '"id":"[^"]*"' | cut -d'"' -f4)
 
 # Check if JOB_ID was extracted successfully
