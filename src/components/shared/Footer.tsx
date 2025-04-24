@@ -25,9 +25,9 @@ const Footer: React.FC = () => {
   }, []); // Leeres Array: Effekt nur einmal nach dem Mounten ausführen
 
   return (
-    <footer className="mt-auto">
-      {/* Thin blue line above the footer */}
-      <div className="h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 w-full"></div>
+    <footer className="fixed bottom-0 left-0 right-0 z-10">
+      {/* Thinner blue line above the footer */}
+      <div className="h-0.25 bg-gradient-to-r from-blue-500 to-indigo-600 w-full"></div>
       
       <div className="bg-gray-50 dark:bg-gray-800 py-4">
         <div className="container mx-auto px-4">
