@@ -37,7 +37,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </h1>
           <div className="flex items-center">
             <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-              Visualisiere und analysiere JSON-Daten einfach und effizient
+              Visualize and analyze JSON data easily and efficiently
             </p>
           </div>
         </div>
@@ -53,12 +53,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 ? (showVastExplorerHistory ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600')
                 : (showVastExplorerHistory ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
             } transition`}
-            title="Verlauf anzeigen/ausblenden (Ctrl+Shift+H)"
+            title="Show/Hide History (Ctrl+Shift+H)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>Verlauf ({vastExplorerHistoryLength})</span>
+            <span>History ({vastExplorerHistoryLength})</span>
           </button>
         )}
         
@@ -70,12 +70,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 ? (showDiffInspectorHistory ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200 hover:bg-gray-600')
                 : (showDiffInspectorHistory ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
             } transition`}
-            title="Verlauf anzeigen/ausblenden (Ctrl+Shift+H)"
+            title="Show/Hide History (Ctrl+Shift+H)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <span>Verlauf ({diffInspectorHistoryLength})</span>
+            <span>History ({diffInspectorHistoryLength})</span>
           </button>
         )}
       </div>
