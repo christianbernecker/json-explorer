@@ -33,3 +33,49 @@ code {
   --ag-row-hover-color: rgba(59, 130, 246, 0.1);
   --ag-popup-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 } 
+
+/* Additional specific overrides for AG-Grid dark theme */
+.ag-theme-custom-dark .ag-header-cell {
+  color: #d1d5db;
+  background-color: #111827;
+  border-bottom: 2px solid #374151;
+}
+
+.ag-theme-custom-dark .ag-cell {
+  color: #e5e7eb;
+  border-right: 1px solid #374151 !important;
+}
+
+.ag-theme-custom-dark .ag-row {
+  border-bottom: 1px solid #374151;
+}
+
+.ag-theme-custom-dark .ag-row-odd {
+  background-color: #1a2234;
+}
+
+.ag-theme-custom-dark .ag-row-hover {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.ag-theme-custom-dark .ag-row-selected {
+  background-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Fix for input elements in AG-Grid for dark mode */
+.ag-theme-custom-dark input,
+.ag-theme-custom-dark select {
+  background-color: #374151;
+  color: #e5e7eb;
+  border: 1px solid #4b5563;
+}
+
+.ag-theme-custom-dark .ag-filter-toolpanel-header,
+.ag-theme-custom-dark .ag-filter-toolpanel-search,
+.ag-theme-custom-dark .ag-status-bar,
+.ag-theme-custom-dark .ag-header-row,
+.ag-theme-custom-dark .ag-panel-title-bar-title,
+.ag-theme-custom-dark .ag-multi-filter-group-title-bar {
+  background-color: #1f2937;
+  color: #e5e7eb;
+} 

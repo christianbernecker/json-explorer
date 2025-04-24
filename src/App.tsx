@@ -41,7 +41,7 @@ function App() {
     <Router>
       <div className={`flex flex-col min-h-screen ${isDarkMode ? 'dark bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
         <NavigationBar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
-        <main className="flex-grow pb-20">
+        <main className="flex-grow pb-20 w-full">
           <Routes>
             <Route path="/" element={<Homepage isDarkMode={isDarkMode} />} />
             <Route path="/apps" element={<AppOverview isDarkMode={isDarkMode} />} />

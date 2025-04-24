@@ -14,6 +14,7 @@ echo ""
 
 # Always emphasize staging deployment
 echo "⚠️ REMEMBER: ALWAYS deploy to STAGING before production!"
+echo "⚠️ WORKFLOW: Git Staging → Vercel → Test on Staging URL (NOT localhost)"
 echo "This script will deploy your changes to the staging environment."
 echo ""
 
@@ -59,3 +60,4 @@ echo "✅ Application URL: https://staging.adtech-toolbox.com"
 echo ""
 echo "⏱️ Please wait approximately 1-2 minutes for the deployment to complete."
 echo "⚠️ ALWAYS test thoroughly on staging before deploying to production!"
+echo "⚠️ NEVER test on localhost - ALWAYS use the staging URL for testing!"
