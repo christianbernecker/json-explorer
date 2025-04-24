@@ -38,6 +38,26 @@ const isNumeric = (value: any): boolean => {
   return !isNaN(Number(value)) && value !== null && value !== '';
 };
 
+// Predefined list of known dimension names from AdTech industry
+const KNOWN_DIMENSIONS = [
+  'Ad Sequence Position', 'Agency Name', 'App Bundle', 'App Store URL', 'Assigned Agency ID', 
+  'Assigned Agency Name', 'Assigned Publisher ID', 'Auction Type', 'Bid Source', 'Brand ID', 
+  'Brand Name', 'Browser Major Version', 'Browser Name', 'CTV Channel', 'Campaign Advertiser', 
+  'Campaign Agency', 'Campaign CPD Cost Setting', 'Campaign Category', 'Campaign Contract ID', 
+  'Campaign ID', 'Campaign Type', 'Core DSP Ad Id', 'Core DSP Campaign ID', 'Core DSP Campaign Name',
+  'Creative Height', 'Creative Width', 'Custom Slot ID', 'DSP Creative ID', 'DSP Partner ID', 
+  'DSP Partner Name', 'Date', 'Device Brand', 'Device Geo Country', 'Device Name', 'Device OS', 
+  'Device Type', 'Format', 'Format Type', 'Landing Page Domain', 'Month', 'OS Version', 
+  'Price Rule ID', 'Price Rule Name', 'Price Type', 'Publisher Account Manager', 'Publisher ID', 
+  'Publisher Name', 'Slot Default Format', 'Slot ID', 'Slot Name', 'Slot Size', 'TCF Status', 
+  'Targeted Dimensions', 'Test Impression', 'Traffic Source', 'Traffic Type', 'Video Error Code', 
+  'WT-ID', 'Website Domain', 'Website ID', 'Website Name', 'Week of Year', 'Year', 'Zip Code',
+  // Date-related columns should always be dimensions
+  'day', 'week', 'month', 'year', 'date', 'datetime', 'quarter',
+  // Common categorical fields
+  'category', 'type', 'status', 'name', 'id', 'region', 'country', 'city', 'state'
+];
+
 const identifyColumnTypes = (data: DataRow[]): { dimensions: string[], metrics: string[] } => {
   if (data.length === 0) return { dimensions: [], metrics: [] };
   
@@ -46,7 +66,36 @@ const identifyColumnTypes = (data: DataRow[]): { dimensions: string[], metrics: 
   const metrics: string[] = [];
   
   Object.entries(firstRow).forEach(([key, value]) => {
-    // Check if more than 80% of values in this column are numeric
+    // Check if the column name is in the known dimensions list (case-insensitive)
+    const isKnownDimension = KNOWN_DIMENSIONS.some(dim => 
+      key.toLowerCase() === dim.toLowerCase() || 
+      key.toLowerCase().includes('id') ||
+      key.toLowerCase().includes('name') ||
+      key.toLowerCase().includes('type') ||
+      key.toLowerCase().includes('category')
+    );
+    
+    if (isKnownDimension) {
+      dimensions.push(key);
+      return;
+    }
+    
+    // Check if values are dates
+    const sampleValues = data.slice(0, Math.min(5, data.length)).map(row => row[key]);
+    const hasPotentialDateValues = sampleValues.some(val => 
+      typeof val === 'string' && 
+      (
+        /^\d{4}-\d{2}-\d{2}/.test(val) || // ISO date format
+        /^\d{1,2}[-/]\d{1,2}[-/]\d{2,4}/.test(val) // Common date formats
+      )
+    );
+    
+    if (hasPotentialDateValues) {
+      dimensions.push(key);
+      return;
+    }
+    
+    // Use the original numeric check as fallback
     const numericCount = data.reduce((count, row) => {
       return isNumeric(row[key]) ? count + 1 : count;
     }, 0);
