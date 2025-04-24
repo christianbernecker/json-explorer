@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu Apr 24 17:21:18 CEST 2025", "commit": "Remove logo toggle functionality in NavigationBar"}
+{"deployment": "staging", "timestamp": "Thu Apr 24 17:22:16 CEST 2025", "commit": "Increase NavigationBar height to h-20"}

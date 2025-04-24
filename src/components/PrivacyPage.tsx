@@ -13,7 +13,7 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
         title="Privacy Policy | AdTech Toolbox"
         description="Privacy Policy for the AdTech Toolbox web application."
       />
-      <div className="max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
+      <div className={`max-w-6xl mx-auto ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-8`}>
         <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Data Privacy</h1>
         <p className="mb-6 text-gray-600 dark:text-gray-300">Privacy Policy</p>
         
