@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu Apr 24 13:41:47 CEST 2025", "commit": "Fix chart data handling for better visualization of date-based metrics"}
+{"deployment": "staging", "timestamp": "Thu Apr 24 13:48:12 CEST 2025", "commit": "Fix dimension selection and chart display issues"}

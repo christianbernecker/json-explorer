@@ -117,7 +117,10 @@ const aggregateData = (
   metric: string, 
   aggregationType: 'sum' | 'average' = 'sum'
 ): AggregatedData[] => {
-  if (!data.length || !dimension || !metric) return [];
+  if (!data.length || !dimension || !metric) {
+    console.warn('Missing data, dimension or metric');
+    return [];
+  }
   
   // Handle case where dimension and metric are the same column
   if (dimension === metric) {
@@ -131,16 +134,22 @@ const aggregateData = (
     if (fallbackMetric) {
       console.log(`Using ${fallbackMetric} as fallback metric instead of ${metric}`);
       metric = fallbackMetric;
+    } else {
+      console.error('No suitable fallback metric found');
+      return [];
     }
   }
   
   const aggregated: { [key: string]: { sum: number, count: number } } = {};
   
-  // Handle date formatting for better grouping
+  // Check if this is a date dimension for better formatting
   const isDateDimension = dimension.toLowerCase().includes('date') || 
                           dimension.toLowerCase().includes('day') ||
                           dimension.toLowerCase().includes('month');
 
+  console.log('Processing dimension:', dimension, 'isDateDimension:', isDateDimension);
+
+  // First pass: aggregate the data
   data.forEach(row => {
     let dimValue: string;
     
@@ -148,9 +157,12 @@ const aggregateData = (
     if (isDateDimension) {
       const rawValue = row[dimension];
       
+      console.log('Date dimension raw value:', rawValue, 'type:', typeof rawValue);
+      
       // Try to parse and format dates consistently
       if (rawValue instanceof Date) {
         dimValue = rawValue.toISOString().split('T')[0]; // YYYY-MM-DD
+        console.log('Formatted date from Date object:', dimValue);
       } else if (typeof rawValue === 'string' && (
         rawValue.includes('-') || rawValue.includes('/') || rawValue.match(/^\d{1,2}\.\d{1,2}\.\d{2,4}$/)
       )) {
@@ -158,21 +170,33 @@ const aggregateData = (
           const date = new Date(rawValue);
           if (!isNaN(date.getTime())) {
             dimValue = date.toISOString().split('T')[0]; // YYYY-MM-DD
+            console.log('Formatted date from string:', dimValue);
           } else {
             dimValue = String(rawValue || 'Unknown');
+            console.log('Could not parse date from string:', rawValue);
           }
         } catch(e) {
           dimValue = String(rawValue || 'Unknown');
+          console.log('Error parsing date:', e);
         }
       } else {
         dimValue = String(rawValue || 'Unknown');
+        console.log('Using raw value as dimension:', dimValue);
       }
     } else {
       // Non-date dimension
       dimValue = String(row[dimension] || 'Unknown');
     }
     
-    const metricValue = Number(row[metric] || 0);
+    // Safe numeric conversion for metric values
+    const rawMetricValue = row[metric];
+    let metricValue = 0;
+    
+    if (typeof rawMetricValue === 'number') {
+      metricValue = rawMetricValue;
+    } else if (typeof rawMetricValue === 'string' && !isNaN(Number(rawMetricValue))) {
+      metricValue = Number(rawMetricValue);
+    }
     
     if (!aggregated[dimValue]) {
       aggregated[dimValue] = { sum: 0, count: 0 };
@@ -192,19 +216,137 @@ const aggregateData = (
   
   // Sort by date if it's a date dimension
   if (isDateDimension) {
+    console.log('Sorting by date...');
     result.sort((a, b) => {
       // Try parsing as dates
       const dateA = new Date(a.name);
       const dateB = new Date(b.name);
       
       if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+        console.log(`Comparing dates: ${a.name} (${dateA}) vs ${b.name} (${dateB})`);
         return dateA.getTime() - dateB.getTime();
       }
+      console.log(`Falling back to string comparison: ${a.name} vs ${b.name}`);
       return a.name.localeCompare(b.name);
     });
+
+    console.log('Sorted date data:', result);
+  } else {
+    // For non-date dimensions with numeric values, try to sort numerically
+    const isNumericDimension = !isNaN(Number(result[0]?.name));
+    if (isNumericDimension) {
+      result.sort((a, b) => Number(a.name) - Number(b.name));
+    }
   }
   
   return result;
+};
+
+// Entferne die doppelte identifyColumnType-Funktion und füge isDateString hinzu
+const identifyColumnType = (values: any[]): string => {
+  if (values.length === 0) return 'string';
+  
+  // Check if all non-null values are numbers
+  const nonNullValues = values.filter(v => v !== null && v !== undefined && v !== '');
+  if (nonNullValues.length === 0) return 'string';
+  
+  // Check if all values are numbers
+  const allNumbers = nonNullValues.every(v => typeof v === 'number' || (typeof v === 'string' && !isNaN(Number(v))));
+  if (allNumbers) return 'number';
+  
+  // Check if all values are dates
+  const allDates = nonNullValues.every(v => v instanceof Date || (typeof v === 'string' && isDateString(v)));
+  if (allDates) return 'date';
+  
+  // Default to string
+  return 'string';
+};
+
+/**
+ * Checks if a string represents a valid date
+ */
+const isDateString = (value: string): boolean => {
+  // Skip empty values
+  if (!value) return false;
+  
+  // Check for common date formats
+  const dateRegex = /^\d{4}-\d{2}-\d{2}|^\d{2}[./-]\d{2}[./-]\d{4}|^\d{2}[./-]\d{2}[./-]\d{2}/;
+  if (!dateRegex.test(value)) return false;
+  
+  // Try to parse as date
+  const date = new Date(value);
+  return !isNaN(date.getTime());
+};
+
+/**
+ * Identifies columns that have at least one non-empty value
+ */
+const identifyNonEmptyColumns = (data: DataRow[]): string[] => {
+  const nonEmptyColumns: string[] = [];
+  
+  if (data.length === 0) return nonEmptyColumns;
+  
+  // Get all possible column names from the first row
+  const allColumns = Object.keys(data[0]);
+  
+  // Check each column for non-empty values
+  allColumns.forEach(column => {
+    const hasNonEmptyValue = data.some(row => {
+      const value = row[column];
+      return value !== null && value !== undefined && value !== '';
+    });
+    
+    if (hasNonEmptyValue) {
+      nonEmptyColumns.push(column);
+    }
+  });
+  
+  return nonEmptyColumns;
+};
+
+// Generate AG-Grid column definitions from data
+const generateColumnDefs = (data: DataRow[], nonEmptyColumns: string[]): ColDef[] => {
+  if (data.length === 0 || nonEmptyColumns.length === 0) return [];
+  
+  const columnDefs: ColDef[] = nonEmptyColumns.map(field => {
+    // Determine column type for appropriate filtering
+    const sampleValues = data
+      .slice(0, 10)
+      .map(row => row[field])
+      .filter(val => val !== undefined && val !== null && val !== '');
+    
+    const hasDateValue = sampleValues.some(val => val instanceof Date);
+    const hasNumericValue = sampleValues.some(val => typeof val === 'number');
+    
+    let filterType: string;
+    
+    if (hasDateValue) {
+      filterType = 'agDateColumnFilter';
+    } else if (hasNumericValue) {
+      filterType = 'agNumberColumnFilter';
+    } else {
+      filterType = 'agTextColumnFilter';
+    }
+    
+    return {
+      field,
+      headerName: field,
+      sortable: true,
+      filter: filterType,
+      resizable: true,
+      // Special rendering for dates
+      cellRenderer: hasDateValue 
+        ? (params: any) => {
+            if (params.value instanceof Date) {
+              return params.value.toISOString().split('T')[0];
+            }
+            return params.value;
+          }
+        : undefined
+    };
+  });
+  
+  return columnDefs;
 };
 
 // Main Component
@@ -290,102 +432,263 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   }, [dimensions, metrics, rawData, selectedDimension, selectedMetric]);
   
   // Process the uploaded file
-  const processFile = useCallback(async (file: File) => {
+  const processFile = async (file: File) => {
     setIsLoading(true);
     setFileError(null);
     setFileName(file.name);
     
     try {
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
-      let data: DataRow[] = [];
+      const extension = file.name.split('.').pop()?.toLowerCase();
       
-      if (fileExtension === 'csv') {
-        // Parse CSV file
-        const parseResult = await new Promise<Papa.ParseResult<DataRow>>((resolve, reject) => {
-          Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: true,
-            complete: resolve,
-            error: reject
-          });
+      if (extension === 'csv') {
+        const text = await file.text();
+        Papa.parse<Record<string, unknown>>(text, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            if (results.data.length === 0) {
+              setFileError('No data found in the file');
+              setIsLoading(false);
+              return;
+            }
+            
+            console.log('CSV parse results:', results);
+            
+            // Convert date strings to Date objects for CSV
+            const processedData = results.data.map(row => {
+              const processedRow: DataRow = {};
+              
+              // Ensure row is a proper object before using Object.entries
+              if (row && typeof row === 'object') {
+                Object.entries(row as Record<string, unknown>).forEach(([key, value]) => {
+                  // Skip empty values
+                  if (value === undefined || value === null || value === '') {
+                    processedRow[key] = '';
+                    return;
+                  }
+                  
+                  // Check if this might be a date field
+                  const lowerKey = key.toLowerCase();
+                  const mightBeDate = 
+                    lowerKey.includes('date') || 
+                    lowerKey.includes('day') || 
+                    lowerKey.includes('month') ||
+                    lowerKey.includes('zeit') ||  // German
+                    lowerKey.includes('time');
+                  
+                  if (mightBeDate && typeof value === 'string') {
+                    try {
+                      const dateValue = new Date(value);
+                      if (!isNaN(dateValue.getTime())) {
+                        console.log(`Converting field ${key} with value ${value} to Date object:`, dateValue);
+                        processedRow[key] = dateValue;
+                        return;
+                      }
+                    } catch (e) {
+                      console.log(`Failed to parse date from ${key}:`, value);
+                    }
+                  }
+                  
+                  // Try to convert numeric strings to numbers
+                  if (typeof value === 'string' && !isNaN(Number(value))) {
+                    processedRow[key] = Number(value);
+                  } else {
+                    processedRow[key] = value;
+                  }
+                });
+              }
+              
+              return processedRow;
+            });
+            
+            const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+            console.log('Detected non-empty columns:', nonEmptyColumns);
+            
+            setRawData(processedData);
+            setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
+            setIsLoading(false);
+          },
+          error: (error: Error) => {
+            console.error('CSV parsing error:', error);
+            setFileError(`Error parsing CSV: ${error.message}`);
+            setIsLoading(false);
+          }
+        });
+      } else if (extension === 'xlsx' || extension === 'xls') {
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Use cellDates: true to automatically convert dates
+        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+        
+        if (workbook.SheetNames.length === 0) {
+          setFileError('No sheets found in the workbook');
+          setIsLoading(false);
+          return;
+        }
+        
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Convert to JSON with header option for column names
+        const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: "A" });
+        
+        if (rawJson.length <= 1) {  // Only has header row or empty
+          setFileError('No data found in the Excel file');
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log('Excel raw data:', rawJson);
+        
+        // Extract headers from the first row
+        const firstRow = rawJson[0] as Record<string, string>;
+        const headers = Object.values(firstRow);
+        
+        // Process the data starting from the second row
+        const processedData = rawJson.slice(1).map((row) => {
+          const processedRow: DataRow = {};
+          
+          // Type safety check
+          if (typeof row === 'object' && row !== null) {
+            const typedRow = row as Record<string, any>;
+            // Use for...in loop with hasOwnProperty for safe iteration
+            for (const colIndex in typedRow) {
+              if (Object.prototype.hasOwnProperty.call(typedRow, colIndex)) {
+                const value = typedRow[colIndex];
+                const headerIndex = Object.keys(firstRow || {}).indexOf(colIndex);
+                const header = headers[headerIndex] || `Column ${colIndex}`;
+                
+                // Detect and convert date values
+                if (value instanceof Date) {
+                  processedRow[header] = value;
+                } else if (typeof value === 'string' && isDateString(value)) {
+                  processedRow[header] = new Date(value);
+                } else {
+                  processedRow[header] = value;
+                }
+              }
+            }
+          }
+          
+          return processedRow;
         });
         
-        data = parseResult.data;
-      } else if (['xlsx', 'xls'].includes(fileExtension || '')) {
-        // Parse Excel file
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer);
-        const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
-        data = XLSX.utils.sheet_to_json(worksheet);
-      } else {
-        throw new Error(`Unsupported file type: ${fileExtension}`);
-      }
-      
-      // Process data
-      if (data.length > 0) {
-        setRawData(data);
+        console.log('Processed Excel data:', processedData);
         
-        // Create column definitions for AG-Grid
-        const columns = Object.keys(data[0]).map(field => ({
-          field,
-          headerName: field,
-          sortable: true,
-          filter: true,
-          resizable: true
-        }));
+        const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+        console.log('Detected non-empty columns:', nonEmptyColumns);
         
-        setColumnDefs(columns);
+        setRawData(processedData);
+        setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
+        setIsLoading(false);
         
-        // Identify dimensions and metrics
-        const { dimensions: dims, metrics: mets } = identifyColumnTypes(data);
-        setDimensions(dims);
-        setMetrics(mets);
+      } else if (extension === 'json') {
+        const text = await file.text();
         
-        // Set default selections with smart defaults
-        // For dimension, prefer categorical or date fields
-        if (dims.length > 0) {
-          // Try to find a good dimension (prefer date columns or those with "name" in them)
-          const dateColumn = dims.find(col => 
-            col.toLowerCase().includes('date') || 
-            col.toLowerCase().includes('day') || 
-            col.toLowerCase().includes('month')
-          );
+        try {
+          const jsonData = JSON.parse(text);
           
-          const nameColumn = dims.find(col => 
-            col.toLowerCase().includes('name')
-          );
-          
-          setSelectedDimension(dateColumn || nameColumn || dims[0]);
+          // Handle array of objects
+          if (Array.isArray(jsonData)) {
+            // Convert date strings to Date objects
+            const processedData = jsonData.map((item) => {
+              // Type safety check
+              if (typeof item !== 'object' || item === null) {
+                return {} as DataRow;
+              }
+              
+              const row: DataRow = {};
+              
+              // Type-safe iteration with proper checks
+              const typedItem = item as Record<string, unknown>;
+              for (const key in typedItem) {
+                if (Object.prototype.hasOwnProperty.call(typedItem, key)) {
+                  const value = typedItem[key];
+                  if (typeof value === 'string' && isDateString(value)) {
+                    row[key] = new Date(value);
+                  } else {
+                    row[key] = value;
+                  }
+                }
+              }
+              
+              return row;
+            });
+            
+            const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+            setRawData(processedData);
+            setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
+            setIsLoading(false);
+          } else if (typeof jsonData === 'object' && jsonData !== null) {
+            // Handle single object - convert to array with one item
+            const processedData = [jsonData].map((item) => {
+              const row: DataRow = {};
+              
+              // Make sure item is an object before iterating
+              if (typeof item === 'object' && item !== null) {
+                const typedItem = item as Record<string, unknown>;
+                // Use for...in loop with hasOwnProperty for type safety
+                for (const key in typedItem) {
+                  if (Object.prototype.hasOwnProperty.call(typedItem, key)) {
+                    const value = typedItem[key];
+                    if (typeof value === 'string' && isDateString(value)) {
+                      row[key] = new Date(value);
+                    } else {
+                      row[key] = value;
+                    }
+                  }
+                }
+              }
+              
+              return row;
+            });
+            
+            const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+            setRawData(processedData);
+            setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
+            setIsLoading(false);
+          } else {
+            setFileError('Invalid JSON format: expected an array of objects or a single object');
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error('JSON parsing error:', error);
+          setFileError(`Error parsing JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          setIsLoading(false);
         }
-        
-        // For metric, prefer common metrics like impressions, clicks, cost
-        if (mets.length > 0) {
-          const preferredMetricNames = ['impressions', 'clicks', 'cost', 'conversions', 'revenue'];
-          
-          // Find the first metric that matches our preferred list
-          const preferredMetric = mets.find(metric => 
-            preferredMetricNames.some(preferred => 
-              metric.toLowerCase().includes(preferred)
-            )
-          );
-          
-          setSelectedMetric(preferredMetric || mets[0]);
-        }
-        
-        // Switch to dashboard view with visualizations
-        setActiveTab('dashboard');
       } else {
-        throw new Error('No data found in the file');
+        setFileError(`Unsupported file format: ${extension}. Please upload a CSV, Excel, or JSON file.`);
+        setIsLoading(false);
       }
     } catch (error) {
-      console.error('Error processing file:', error);
-      setFileError(error instanceof Error ? error.message : 'Unknown error processing file');
-    } finally {
+      console.error('File processing error:', error);
+      setFileError(`Error processing the file: ${error instanceof Error ? error.message : String(error)}`);
       setIsLoading(false);
     }
-  }, []);
+  };
+  
+  // Helper function to format date values consistently
+  const formatDateValue = (value: any): string => {
+    if (value instanceof Date) {
+      // Convert date object to string (YYYY-MM-DD)
+      return value.toISOString().split('T')[0];
+    } else if (typeof value === 'string') {
+      // Check if string represents a date
+      const datePattern = /^\d{1,2}[\/\.-]\d{1,2}[\/\.-]\d{2,4}$/;
+      if (datePattern.test(value) || value.includes('-')) {
+        try {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0];
+          }
+        } catch (e) {
+          // Failed to parse as date, return original
+        }
+      }
+    }
+    // Return as string for any other case
+    return String(value);
+  };
   
   // Setup dropzone
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -451,7 +754,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   }, [gridApi, fileName]);
 
   // AG-Grid onGridReady handler
-  const onGridReady = useCallback((params: any) => {
+  const onGridReady = useCallback((params: { api: GridApi }) => {
     setGridApi(params.api);
   }, []);
 
