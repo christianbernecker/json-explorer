@@ -50,31 +50,45 @@ function Homepage() {
           </div>
         </Link>
         
-        {/* Data Visualizer Card */}
+        {/* Data Visualizer Card - with same color scheme but different design pattern */}
         <Link 
           to="/apps/data-visualizer" 
           className="group block rounded-xl overflow-hidden shadow-lg transition transform hover:-translate-y-1 hover:shadow-xl"
         >
-          <div className="h-2 bg-gradient-to-r from-green-500 to-teal-600"></div>
-          <div className="p-8 bg-white dark:bg-gray-800">
-            <div className="flex items-center mb-4">
-              <div className="h-12 w-12 rounded-lg bg-gradient-to-r from-green-500 to-teal-600 flex items-center justify-center text-white mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Data Visualizer</h2>
+          <div className="h-2 bg-gradient-to-r from-indigo-600 to-blue-500"></div>
+          <div className="p-8 bg-white dark:bg-gray-800 relative overflow-hidden">
+            {/* Background pattern for visual distinction */}
+            <div className="absolute inset-0 opacity-5 dark:opacity-10">
+              <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <circle cx="5" cy="5" r="1.5" fill="currentColor" className="text-indigo-500" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+              </svg>
             </div>
             
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Transform raw data into beautiful visualizations. Create charts, graphs, and interactive dashboards to gain insights from your AdTech data.
-            </p>
-            
-            <div className="flex items-center text-green-600 dark:text-green-400 group-hover:text-green-800 dark:group-hover:text-green-300 transition-colors">
-              <span className="font-medium">Open Tool</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
+            <div className="relative">
+              <div className="flex items-center mb-4">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-500 flex items-center justify-center text-white mr-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Data Visualizer</h2>
+              </div>
+              
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Transform raw data into beautiful visualizations. Create charts, graphs, and interactive dashboards to gain insights from your AdTech data.
+              </p>
+              
+              <div className="flex items-center text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-800 dark:group-hover:text-indigo-300 transition-colors">
+                <span className="font-medium">Open Tool</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
             </div>
           </div>
         </Link>

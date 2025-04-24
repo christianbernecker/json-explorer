@@ -11,66 +11,60 @@ function ImprintPage() {
       />
       <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
         <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Imprint</h1>
+        <p className="mb-6 text-gray-600 dark:text-gray-300">Legal Information</p>
         
         <div className="space-y-6 text-gray-700 dark:text-gray-300">
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Information According to § 5 TMG</h2>
-            <div className="space-y-2">
-              <p>AdTech Toolbox</p>
-              <p>Musterstraße 123</p>
-              <p>12345 Musterstadt</p>
-              <p>Germany</p>
-            </div>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Information according to § 5 TMG</h2>
+            <p>Christian Bernecker</p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Contact</h2>
-            <div className="space-y-2">
-              <p>Phone: +49 123 456789</p>
-              <p>Email: contact@adtech-toolbox.com</p>
-            </div>
-          </section>
-          
-          <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Represented by</h2>
-            <p>Jane Doe, CEO</p>
-          </section>
-          
-          <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">VAT ID</h2>
-            <p>VAT ID Number according to § 27 a of the Value Added Tax Act:</p>
-            <p>DE123456789</p>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Email:</h2>
+            <p><a href="mailto:info@adtech-toolbox.com" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">info@adtech-toolbox.com</a></p>
           </section>
           
           <section>
             <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Responsible for Content</h2>
-            <p>Jane Doe</p>
-            <p>AdTech Toolbox</p>
-            <p>Musterstraße 123</p>
-            <p>12345 Musterstadt</p>
+            <p>Christian Bernecker</p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Dispute Resolution</h2>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">EU Online Dispute Resolution</h2>
             <p>
               The European Commission provides a platform for online dispute resolution (OS):
-              <a href="https://ec.europa.eu/consumers/odr/" className="text-blue-500 hover:text-blue-700 ml-1" target="_blank" rel="noopener noreferrer">
+              <a href="https://ec.europa.eu/consumers/odr/" className="text-blue-600 hover:text-blue-800 dark:text-blue-400 ml-1" target="_blank" rel="noopener noreferrer">
                 https://ec.europa.eu/consumers/odr/
               </a>
             </p>
             <p className="mt-2">
-              We are not willing or obliged to participate in dispute resolution proceedings before a consumer arbitration board.
+              My email address can be found in this imprint.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Liability for Content</h2>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Disclaimer</h2>
             <p>
-              As a service provider, we are responsible for our own content on these pages according to general laws. 
-              However, we are not obliged to monitor transmitted or stored third-party information or to investigate 
-              circumstances that indicate illegal activity.
+              The contents of this website have been created with the utmost care. However, the provider does not guarantee the accuracy, completeness, and 
+              timeliness of the information provided. The use of the website's content is at the user's own risk.
+            </p>
+            <p className="mt-3">
+              This website contains links to external websites over which the provider has no control. Therefore, the provider cannot assume any liability for these 
+              external contents. The respective provider of the linked pages is always responsible for the content of these pages.
             </p>
           </section>
+          
+          <section>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">Copyright</h2>
+            <p>
+              The content and works created by the website operator on these pages are subject to German copyright law. The duplication, processing, 
+              distribution, and any kind of exploitation outside the limits of copyright law require the written consent of the respective author or creator.
+            </p>
+          </section>
+        </div>
+        
+        <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+          © 2023 JSON Explorer | <a href="/legal/privacy" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">Privacy Policy</a> | <a href="/legal/imprint" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">Contact</a>
         </div>
       </div>
     </div>

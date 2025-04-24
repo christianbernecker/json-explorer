@@ -10,82 +10,116 @@ function PrivacyPage() {
         description="Privacy Policy for the AdTech Toolbox web application."
       />
       <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-8">
-        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Privacy Policy</h1>
+        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Data Privacy</h1>
+        <p className="mb-6 text-gray-600 dark:text-gray-300">Privacy Policy</p>
         
-        <div className="space-y-6 text-gray-700 dark:text-gray-300">
+        <div className="space-y-8 text-gray-700 dark:text-gray-300">
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">1. Introduction</h2>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">1. Data Controller</h2>
+            <p>Adtech Toolbox</p>
+            <p>Email: <a href="mailto:info@adtech-toolbox.com" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">info@adtech-toolbox.com</a></p>
+          </section>
+          
+          <section>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">2. Data Protection Officer</h2>
             <p>
-              At AdTech Toolbox, we respect your privacy and are committed to protecting your personal data. 
-              This privacy policy will inform you about how we look after your personal data when you visit our website 
-              and tell you about your privacy rights and how the law protects you.
+              We have not appointed a Data Protection Officer as it is not required for our operations under Art. 37 GDPR. For all data protection related inquiries, please contact:
+            </p>
+            <p className="mt-2">
+              Email: <a href="mailto:info@adtech-toolbox.com" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">info@adtech-toolbox.com</a>
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">2. Data We Collect</h2>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">3. Data Processing and Legal Basis</h2>
             <p>
-              The AdTech Toolbox applications (JSON Explorer and Data Visualizer) process all data locally in your browser. 
-              No data that you input into our tools is sent to our servers or stored by us in any way.
+              JSON Tools is designed to operate primarily client-side, processing data directly in your browser. No user data is transmitted to our servers during normal operation of the core functionality.
             </p>
             <p className="mt-2">
-              We may collect anonymous usage statistics to help us improve our tools, such as:
+              When you use our tools to format or compare JSON or analyze VAST files, all processing happens locally on your device. The data you input is not sent to our servers.
             </p>
+            <p className="mt-4 font-medium">Legal basis for processing:</p>
             <ul className="list-disc pl-6 mt-2 space-y-1">
-              <li>Browser type and version</li>
-              <li>Time and duration of visits</li>
-              <li>Pages viewed</li>
-              <li>Referring website</li>
+              <li>For the functionality of our website: Art. 6(1)(b) GDPR - processing is necessary for the performance of a contract</li>
+              <li>For analytics and improving our service: Art. 6(1)(f) GDPR - legitimate interests</li>
+              <li>For marketing (if applicable): Art. 6(1)(a) GDPR - consent</li>
             </ul>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">3. Cookies</h2>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">4. Data Storage and Retention</h2>
             <p>
-              We use essential cookies to ensure the proper functioning of our website. These cookies are necessary for 
-              the website to work properly and cannot be switched off in our systems.
+              We use local storage to save your preferences (like dark mode) and history items. This data is stored only on your device and is not accessible to us.
             </p>
-            <p className="mt-2">
-              We do not use any advertising or tracking cookies unless you explicitly consent to them.
+            <p className="mt-4 font-medium">Storage duration:</p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Local storage data: Until you clear your browser data or we update the application structure</li>
+              <li>Server logs (for technical purposes): 30 days</li>
+              <li>Analytics data (if applicable): 14 months in anonymized form</li>
+            </ul>
+          </section>
+          
+          <section>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">5. Cookies and Tracking</h2>
+            <p>
+              We may use cookies for essential functionality and analytics purposes. Third-party vendors, including Google, may use cookies to serve ads based on a user's prior visits to our website.
+            </p>
+            <p className="mt-4 font-medium">Types of cookies we use:</p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li><strong>Essential cookies:</strong> Required for the basic functionality of the website</li>
+              <li><strong>Preference cookies:</strong> Allow the website to remember your preferences</li>
+              <li><strong>Statistics cookies:</strong> Help us understand how visitors interact with our website</li>
+              <li><strong>Marketing cookies:</strong> Used to track visitors across websites for advertising purposes</li>
+            </ul>
+            <p className="mt-3">
+              You can opt out of personalized advertising by visiting <a href="http://www.aboutads.info" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">www.aboutads.info</a>.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">4. Your Rights</h2>
-            <p>
-              Under data protection laws, you have rights including:
-            </p>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">6. Third-Party Services and Data Transfer</h2>
+            <p>We may use third-party services for analytics and advertising purposes:</p>
             <ul className="list-disc pl-6 mt-2 space-y-1">
-              <li>Your right of access</li>
-              <li>Your right to rectification</li>
-              <li>Your right to erasure</li>
-              <li>Your right to restriction of processing</li>
-              <li>Your right to data portability</li>
-              <li>Your right to object</li>
+              <li>Google Analytics</li>
+              <li>Google AdSense</li>
+            </ul>
+            <p className="mt-4 font-medium">Data transfer to third countries:</p>
+            <p>
+              Some of our service providers are based outside the EU/EEA. When we transfer your data to these providers, we ensure appropriate safeguards through Standard Contractual Clauses or adequacy decisions by the European Commission.
+            </p>
+          </section>
+          
+          <section>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">7. Your Rights</h2>
+            <p>You have the right to:</p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>Request information about your stored data (Art. 15 GDPR)</li>
+              <li>Request the correction of incorrect data (Art. 16 GDPR)</li>
+              <li>Request the deletion of your data (Art. 17 GDPR)</li>
+              <li>Request the restriction of data processing (Art. 18 GDPR)</li>
+              <li>Data portability (Art. 20 GDPR)</li>
+              <li>Revoke your consent for future processing (Art. 7(3) GDPR)</li>
+              <li>Object to data processing based on legitimate interests (Art. 21 GDPR)</li>
             </ul>
             <p className="mt-2">
-              If you wish to exercise any of these rights, please contact us.
+              To exercise these rights, please contact us at <a href="mailto:info@adtech-toolbox.com" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">info@adtech-toolbox.com</a>.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">5. Contact Information</h2>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">8. Right to Lodge a Complaint</h2>
             <p>
-              If you have any questions about this privacy policy or our privacy practices, please contact us at:
-            </p>
-            <p className="mt-2 font-medium">
-              Email: privacy@adtech-toolbox.com
+              You have the right to lodge a complaint with a supervisory authority if you believe that the processing of your personal data violates the GDPR. The responsible supervisory authority for data protection issues is the data protection authority in your country of residence or the location of the alleged infringement.
             </p>
           </section>
           
           <section>
-            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">6. Changes to This Policy</h2>
+            <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">9. Changes to this Privacy Policy</h2>
             <p>
-              We may update this privacy policy from time to time. The updated version will be indicated by an updated 
-              "Last updated" date and the updated version will be effective as soon as it is accessible.
+              We may update this privacy policy from time to time to reflect changes in our practices or for legal reasons. We will notify you of any material changes by posting the new privacy policy on this page.
             </p>
             <p className="mt-4 text-sm">
-              Last updated: April 24, 2023
+              Last updated: April 16, 2023
             </p>
           </section>
         </div>
