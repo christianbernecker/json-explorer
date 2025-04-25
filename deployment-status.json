@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 08:53:29 CEST 2025", "commit": "Align heading styles on PrivacyPage with ImprintPage"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 08:56:56 CEST 2025", "commit": "Fix subtitle color on PrivacyPage and ensure consistency"}

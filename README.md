@@ -151,6 +151,16 @@ git push origin v1.1.x
 - `staging`: Staging/Vorproduktions-Branch
 - Feature-Branches sollten auf Basis von `staging` erstellt werden
 
+## Styling-Richtlinien
+
+- **Konsistenz**: Achte darauf, dass UI-Elemente über die gesamte Anwendung hinweg ein konsistentes Erscheinungsbild haben. Verwende vorhandene Komponenten und Stile wieder, wo immer möglich.
+- **Dark Mode**: Alle UI-Komponenten müssen sowohl im Light Mode als auch im Dark Mode korrekt und ästhetisch ansprechend dargestellt werden. Teste Änderungen immer in beiden Modi.
+  - Verwende die bereitgestellten Theme-Variablen oder Tailwind CSS Dark Mode Klassen (`dark:`).
+  - Achte auf ausreichenden Kontrast und Lesbarkeit in beiden Modi.
+- **Tailwind CSS**: Nutze die Utility-Klassen von Tailwind CSS bevorzugt für das Styling. Definiere nur dann benutzerdefinierte CSS-Klassen, wenn es unbedingt notwendig ist.
+- **Responsiveness**: Stelle sicher, dass das Layout auf verschiedenen Bildschirmgrößen gut funktioniert. Teste auf mobilen Geräten und Desktops.
+- **Barrierefreiheit (Accessibility)**: Berücksichtige grundlegende Aspekte der Barrierefreiheit, wie z.B. semantisches HTML, ausreichende Kontraste und Tastaturnavigation.
+
 ## Lizenz
 
 Copyright © 2025 Christian Bernecker. Alle Rechte vorbehalten. 
