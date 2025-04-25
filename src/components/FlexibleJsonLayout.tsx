@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { Responsive, WidthProvider, Layout, Layouts } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -41,42 +41,45 @@ const Panel: React.FC<PanelProps> = ({
   onCollapse,
   collapsible = false
 }) => {
+  const [collapsed, setCollapsed] = useState(isCollapsed);
+  
+  useEffect(() => {
+    setCollapsed(isCollapsed);
+  }, [isCollapsed]);
+  
+  const handleCollapse = () => {
+    setCollapsed(!collapsed);
+    if (onCollapse) onCollapse();
+  };
+  
   return (
-    <div 
-      className={`json-explorer-panel ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} 
-      border rounded-lg shadow-sm`}
-      data-grid-id={id}
-    >
-      <div 
-        className={`json-explorer-panel-header ${isDarkMode ? 'bg-gray-700 border-gray-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-700'}`}
-      >
-        <div className="font-medium">{title}</div>
-        <div className="flex items-center space-x-2">
-          {onCollapse && (
-            <button 
-              onClick={onCollapse}
-              className={`p-1 rounded-md ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
-              title={isCollapsed ? "Erweitern" : "Einklappen"}
-            >
-              {isCollapsed ? (
-                <ArrowsPointingOutIcon className="w-4 h-4" />
+    <div className={`json-explorer-panel h-full flex flex-col overflow-hidden ${isDarkMode ? 'json-explorer-panel-dark' : 'json-explorer-panel-light'}`}>
+      <div className="json-explorer-panel-header flex items-center px-4 py-2 cursor-move">
+        <h3 className="flex-1 font-medium truncate">{title}</h3>
+        <div className="flex items-center space-x-1">
+          {collapsible && (
+            <button onClick={handleCollapse} className="p-1 rounded hover:bg-opacity-20 hover:bg-gray-700">
+              {collapsed ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
               ) : (
-                <ArrowsPointingInIcon className="w-4 h-4" />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
               )}
             </button>
           )}
           {onClose && (
-            <button 
-              onClick={onClose}
-              className={`p-1 rounded-md ${isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-200'}`}
-              title="Schließen"
-            >
-              <XMarkIcon className="w-4 h-4" />
+            <button onClick={onClose} className="p-1 rounded hover:bg-opacity-20 hover:bg-gray-700">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           )}
         </div>
       </div>
-      <div className={`json-explorer-panel-body ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+      <div className={`json-explorer-panel-body flex-1 p-3 overflow-auto ${collapsed ? 'hidden' : ''}`}>
         {children}
       </div>
     </div>
@@ -89,37 +92,37 @@ const Panel: React.FC<PanelProps> = ({
 // Large screens (lg)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const lgLayout = [
-  { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
-  { i: 'output', x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
-  { i: 'vast', x: 0, y: 11, w: 12, h: 10, minW: 4, minH: 8 },
+  { i: 'input', x: 0, y: 0, w: 4, h: 12 },  // 1/3 der Breite
+  { i: 'output', x: 4, y: 0, w: 8, h: 12 }, // 2/3 der Breite
+  { i: 'vast', x: 4, y: 0, w: 8, h: 12 },   // 2/3 der Breite, überlagert output
 ];
 
 // Medium screens (md)
 const mdLayout = [
-  { i: 'input', x: 0, y: 0, w: 6, h: 12, minW: 4, minH: 8 },
-  { i: 'output', x: 6, y: 0, w: 6, h: 12, minW: 4, minH: 8 },
-  { i: 'vast', x: 0, y: 13, w: 12, h: 12, minW: 4, minH: 8 },
+  { i: 'input', x: 0, y: 0, w: 4, h: 12 },
+  { i: 'output', x: 4, y: 0, w: 8, h: 12 },
+  { i: 'vast', x: 4, y: 0, w: 8, h: 12 },
 ];
 
 // Small screens (sm)
 const smLayout = [
-  { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
-  { i: 'output', x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
-  { i: 'vast', x: 0, y: 11, w: 12, h: 10, minW: 4, minH: 8 },
+  { i: 'input', x: 0, y: 0, w: 4, h: 12 },
+  { i: 'output', x: 4, y: 0, w: 8, h: 12 },
+  { i: 'vast', x: 4, y: 0, w: 8, h: 12 },
 ];
 
 // Extra small screens (xs)
 const xsLayout = [
-  { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 3, minH: 6 },
-  { i: 'output', x: 0, y: 10, w: 6, h: 10, minW: 3, minH: 6 },
-  { i: 'vast', x: 0, y: 20, w: 6, h: 10, minW: 3, minH: 6 },
+  { i: 'input', x: 0, y: 0, w: 12, h: 6 },  // Volle Breite, halbe Höhe
+  { i: 'output', x: 0, y: 6, w: 12, h: 6 }, // Volle Breite, halbe Höhe
+  { i: 'vast', x: 0, y: 12, w: 12, h: 6 },  // Volle Breite, halbe Höhe
 ];
 
 // Extra extra small screens (xxs)
 const xxsLayout = [
-  { i: 'input', x: 0, y: 0, w: 4, h: 8, minW: 2, minH: 4 },
-  { i: 'output', x: 0, y: 8, w: 4, h: 8, minW: 2, minH: 4 },
-  { i: 'vast', x: 0, y: 16, w: 4, h: 8, minW: 2, minH: 4 },
+  { i: 'input', x: 0, y: 0, w: 2, h: 6 },
+  { i: 'output', x: 0, y: 6, w: 2, h: 6 },
+  { i: 'vast', x: 0, y: 12, w: 2, h: 6 },
 ];
 
 // Layout presets
@@ -130,78 +133,118 @@ const layoutPresets: Record<string, {
   sm: Layout[];
   xs: Layout[];
   xxs: Layout[];
-  layouts?: Layouts;
+  layouts: Layouts;
 }> = {
   'default': {
-    name: 'Standard (Vertikal)',
-    lg: [
-      { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
-      { i: 'output', x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
-      { i: 'vast', x: 0, y: 11, w: 12, h: 10, minW: 4, minH: 8 },
-    ],
+    name: 'Standard',
+    lg: lgLayout,
     md: mdLayout,
     sm: smLayout,
     xs: xsLayout,
     xxs: xxsLayout,
     layouts: {
-      lg: [
-        { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
-        { i: 'output', x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
-        { i: 'vast', x: 0, y: 11, w: 12, h: 10, minW: 4, minH: 8 },
-      ],
+      lg: lgLayout,
       md: mdLayout,
       sm: smLayout,
       xs: xsLayout,
-      xxs: xxsLayout,
+      xxs: xxsLayout
     }
   },
+  
   'side-by-side': {
-    name: 'Nebeneinander (2 Spalten)',
+    name: 'Nebeneinander',
     lg: [
-      { i: 'input', x: 0, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
-      { i: 'output', x: 6, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
-      { i: 'vast', x: 0, y: 16, w: 12, h: 12, minW: 4, minH: 8 },
+      { i: 'input', x: 0, y: 0, w: 6, h: 12 },  // Input links, halbe Breite
+      { i: 'output', x: 6, y: 0, w: 6, h: 6 },  // Output rechts oben, halbe Breite
+      { i: 'vast', x: 6, y: 6, w: 6, h: 6 },    // VAST rechts unten, halbe Breite
     ],
     md: [
-      { i: 'input', x: 0, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
-      { i: 'output', x: 6, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
-      { i: 'vast', x: 0, y: 16, w: 12, h: 12, minW: 4, minH: 8 },
+      { i: 'input', x: 0, y: 0, w: 6, h: 12 },
+      { i: 'output', x: 6, y: 0, w: 6, h: 6 },
+      { i: 'vast', x: 6, y: 6, w: 6, h: 6 },
     ],
     sm: smLayout,
     xs: xsLayout,
     xxs: xxsLayout,
+    layouts: {
+      lg: [
+        { i: 'input', x: 0, y: 0, w: 6, h: 12 },
+        { i: 'output', x: 6, y: 0, w: 6, h: 6 },
+        { i: 'vast', x: 6, y: 6, w: 6, h: 6 },
+      ],
+      md: [
+        { i: 'input', x: 0, y: 0, w: 6, h: 12 },
+        { i: 'output', x: 6, y: 0, w: 6, h: 6 },
+        { i: 'vast', x: 6, y: 6, w: 6, h: 6 },
+      ],
+      sm: smLayout,
+      xs: xsLayout,
+      xxs: xxsLayout
+    }
   },
+  
   'three-columns': {
-    name: '3 Spalten (Breit)',
+    name: 'Drei Spalten',
     lg: [
-      { i: 'input', x: 0, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
-      { i: 'output', x: 4, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
-      { i: 'vast', x: 8, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+      { i: 'input', x: 0, y: 0, w: 4, h: 12 },   // Input links, 1/3 Breite
+      { i: 'output', x: 4, y: 0, w: 4, h: 12 },  // Output mitte, 1/3 Breite
+      { i: 'vast', x: 8, y: 0, w: 4, h: 12 },    // VAST rechts, 1/3 Breite
     ],
     md: [
-      { i: 'input', x: 0, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
-      { i: 'output', x: 4, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
-      { i: 'vast', x: 8, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+      { i: 'input', x: 0, y: 0, w: 4, h: 12 },
+      { i: 'output', x: 4, y: 0, w: 4, h: 12 },
+      { i: 'vast', x: 8, y: 0, w: 4, h: 12 },
     ],
     sm: smLayout,
     xs: xsLayout,
     xxs: xxsLayout,
+    layouts: {
+      lg: [
+        { i: 'input', x: 0, y: 0, w: 4, h: 12 },
+        { i: 'output', x: 4, y: 0, w: 4, h: 12 },
+        { i: 'vast', x: 8, y: 0, w: 4, h: 12 },
+      ],
+      md: [
+        { i: 'input', x: 0, y: 0, w: 4, h: 12 },
+        { i: 'output', x: 4, y: 0, w: 4, h: 12 },
+        { i: 'vast', x: 8, y: 0, w: 4, h: 12 },
+      ],
+      sm: smLayout,
+      xs: xsLayout,
+      xxs: xxsLayout
+    }
   },
+  
   'compact': {
     name: 'Kompakt',
     lg: [
-      { i: 'input', x: 0, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
-      { i: 'output', x: 4, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
-      { i: 'vast', x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+      { i: 'input', x: 0, y: 0, w: 12, h: 4 },  // Input oben, volle Breite
+      { i: 'output', x: 0, y: 4, w: 6, h: 8 },  // Output unten links
+      { i: 'vast', x: 6, y: 4, w: 6, h: 8 },    // VAST unten rechts
     ],
     md: [
-      { i: 'input', x: 0, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
-      { i: 'output', x: 4, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
-      { i: 'vast', x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+      { i: 'input', x: 0, y: 0, w: 12, h: 4 },
+      { i: 'output', x: 0, y: 4, w: 6, h: 8 },
+      { i: 'vast', x: 6, y: 4, w: 6, h: 8 },
     ],
     sm: smLayout,
     xs: xsLayout,
     xxs: xxsLayout,
+    layouts: {
+      lg: [
+        { i: 'input', x: 0, y: 0, w: 12, h: 4 },
+        { i: 'output', x: 0, y: 4, w: 6, h: 8 },
+        { i: 'vast', x: 6, y: 4, w: 6, h: 8 },
+      ],
+      md: [
+        { i: 'input', x: 0, y: 0, w: 12, h: 4 },
+        { i: 'output', x: 0, y: 4, w: 6, h: 8 },
+        { i: 'vast', x: 6, y: 4, w: 6, h: 8 },
+      ],
+      sm: smLayout,
+      xs: xsLayout,
+      xxs: xxsLayout
+    }
   },
 };
 
@@ -256,14 +299,14 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
       case 'side-by-side':
         newLayout = {
           lg: [
-            { i: 'input', x: 0, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
-            { i: 'output', x: 6, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
-            { i: 'vast', x: 0, y: 16, w: 12, h: 12, minW: 4, minH: 8 },
+            { i: 'input', x: 0, y: 0, w: 6, h: 12 },  // 50% der Breite
+            { i: 'output', x: 6, y: 0, w: 6, h: 12 }, // 50% der Breite
+            { i: 'vast', x: 6, y: 0, w: 6, h: 12 },   // 50% der Breite, überlagert output
           ],
           md: [
-            { i: 'input', x: 0, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
-            { i: 'output', x: 6, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
-            { i: 'vast', x: 0, y: 16, w: 12, h: 12, minW: 4, minH: 8 },
+            { i: 'input', x: 0, y: 0, w: 6, h: 12 },
+            { i: 'output', x: 6, y: 0, w: 6, h: 12 },
+            { i: 'vast', x: 6, y: 0, w: 6, h: 12 },
           ],
           sm: smLayout,
           xs: xsLayout,
@@ -273,14 +316,14 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
       case 'three-columns':
         newLayout = {
           lg: [
-            { i: 'input', x: 0, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
-            { i: 'output', x: 4, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
-            { i: 'vast', x: 8, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+            { i: 'input', x: 0, y: 0, w: 4, h: 12 },
+            { i: 'output', x: 4, y: 0, w: 4, h: 12 },
+            { i: 'vast', x: 8, y: 0, w: 4, h: 12 },
           ],
           md: [
-            { i: 'input', x: 0, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
-            { i: 'output', x: 4, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
-            { i: 'vast', x: 8, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+            { i: 'input', x: 0, y: 0, w: 4, h: 12 },
+            { i: 'output', x: 4, y: 0, w: 4, h: 12 },
+            { i: 'vast', x: 8, y: 0, w: 4, h: 12 },
           ],
           sm: smLayout,
           xs: xsLayout,
@@ -290,14 +333,14 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
       case 'compact':
         newLayout = {
           lg: [
-            { i: 'input', x: 0, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
-            { i: 'output', x: 4, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
-            { i: 'vast', x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+            { i: 'input', x: 0, y: 0, w: 12, h: 4 },  // Input oben, volle Breite
+            { i: 'output', x: 0, y: 4, w: 6, h: 8 },  // Output unten links
+            { i: 'vast', x: 6, y: 4, w: 6, h: 8 },    // VAST unten rechts
           ],
           md: [
-            { i: 'input', x: 0, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
-            { i: 'output', x: 4, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
-            { i: 'vast', x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+            { i: 'input', x: 0, y: 0, w: 12, h: 4 },
+            { i: 'output', x: 0, y: 4, w: 6, h: 8 },
+            { i: 'vast', x: 6, y: 4, w: 6, h: 8 },
           ],
           sm: smLayout,
           xs: xsLayout,
@@ -417,13 +460,14 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
           
           <button
             onClick={() => {
-              setLayouts(layoutPresets.default.layouts || {
-                lg: layoutPresets.default.lg,
-                md: layoutPresets.default.md, 
-                sm: layoutPresets.default.sm,
-                xs: layoutPresets.default.xs,
-                xxs: layoutPresets.default.xxs
-              });
+              const newLayouts: Layouts = {
+                lg: layoutPresets.default.lg || [],
+                md: layoutPresets.default.md || [], 
+                sm: layoutPresets.default.sm || [],
+                xs: layoutPresets.default.xs || [],
+                xxs: layoutPresets.default.xxs || []
+              };
+              setLayouts(newLayouts);
               setVisiblePanels(panels.filter(panel => panel.visible !== false).map(panel => panel.id));
             }}
             className={`px-3 py-1.5 rounded text-sm flex items-center ${

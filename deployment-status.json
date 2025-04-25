@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 14:51:17 CEST 2025", "commit": "Fix: Fehlende Abhängigkeiten im useMemo-Hook hinzugefügt"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 14:59:43 CEST 2025", "commit": "Fix: UI-Verbesserungen für JSON Explorer"}

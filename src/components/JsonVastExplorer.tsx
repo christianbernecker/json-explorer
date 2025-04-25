@@ -5,6 +5,8 @@ import HistoryItem from './shared/HistoryItem';
 import SearchPanel from './shared/SearchPanel';
 import JsonExplorerHeader from './JsonExplorerHeader';
 import FlexibleJsonLayout, { PanelConfig } from './FlexibleJsonLayout';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -263,173 +265,244 @@ const JsonVastExplorer = React.memo(({
     }
   }, [vastUrl, copyToClipboard]);
 
-  // Panel-Konfigurationen für das FlexibleJsonLayout
-  const panels: PanelConfig[] = useMemo(() => [
-    {
-      id: 'input',
-      title: 'JSON Input',
-      content: (
-        <div className="h-full flex flex-col">
-          <textarea
-            ref={textAreaRef}
-            value={jsonInput}
-            onChange={handleJsonInputChange}
-            placeholder="Paste your unformatted JSON here..."
-            className={`w-full p-3 border rounded-lg font-mono text-sm flex-grow outline-none transition ${
-              isDarkMode 
-                ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }`}
-          />
-          <div className="mt-2 flex gap-2">
-            {/* Format Button */}
-            <button 
-              onClick={handleFormat} 
-              className="flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium bg-blue-500 text-white hover:bg-blue-600"
-              title="Format (Ctrl+Shift+F)"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-              </svg>
-              Format
-            </button>
-            
-            {/* Clear Button */}
-            <button 
-              onClick={handleClear} 
-              className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                isDarkMode 
-                  ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-              }`}
-              title="Clear (Ctrl+Shift+L)"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Clear
-            </button>
-          </div>
-        </div>
-      ),
-      visible: true
-    },
-    {
-      id: 'output',
-      title: 'Formatted JSON',
-      content: formattedJson ? (
-        <div className="h-full flex flex-col">
-          {/* Search bar for JSON */}
-          <div className="mb-2">
-            <SearchPanel targetRef={jsonContentRef} contentType="JSON" isDarkMode={isDarkMode} />
-          </div>
-          
-          <div className={`p-2 rounded-lg border shadow-inner overflow-auto flex-grow ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-gray-50 border-gray-200'
-          }`}>
-            <div 
-              ref={jsonContentRef}
-              dangerouslySetInnerHTML={{ 
-                __html: formattedJsonHtml
-              }}
+  // Panel-Konfiguration
+  const panels = useMemo(() => {
+    return [
+      // Input-Panel (1/3 der Breite)
+      {
+        id: 'input',
+        title: 'JSON Input',
+        collapsible: true,
+        content: (
+          <div className="flex flex-col h-full">
+            <textarea
+              ref={textAreaRef}
+              value={jsonInput}
+              onChange={handleJsonInputChange}
+              className={`flex-1 p-4 font-mono text-sm resize-none outline-none rounded-md ${
+                isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-gray-50 text-gray-800'
+              } border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}
+              placeholder="Geben Sie hier Ihren JSON-Code ein..."
             />
-          </div>
-        </div>
-      ) : (
-        <div className={`flex items-center justify-center h-full ${
-          isDarkMode ? 'text-gray-400' : 'text-gray-500'
-        }`}>
-          Format JSON to see results
-        </div>
-      ),
-      visible: true
-    },
-    {
-      id: 'vast',
-      title: 'VAST Explorer',
-      content: (
-        <div className="h-full flex flex-col">
-          {/* VAST URL Output (if found) */}
-          {vastUrl && (
-            <div className="mb-4">
-              <div className="flex items-center mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleFormat}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                  isDarkMode
+                    ? 'bg-green-900 hover:bg-green-800 text-green-200'
+                    : 'bg-green-100 hover:bg-green-200 text-green-700'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
                 </svg>
-                <h3 className={`text-md font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                  VAST AdTag URL
-                </h3>
-              </div>
-              <div className={`p-2 rounded-lg border shadow-inner ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-700' 
-                  : 'bg-gray-50 border-gray-200'
-              }`}>
-                <div className={`font-mono text-sm break-all ${
-                  isDarkMode ? 'text-blue-300' : 'text-blue-700'
-                }`}>
-                  {vastUrl}
+                Format
+              </button>
+              <button
+                onClick={handleClear}
+                className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                  isDarkMode
+                    ? 'bg-red-900 hover:bg-red-800 text-red-200'
+                    : 'bg-red-100 hover:bg-red-200 text-red-700'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Clear
+              </button>
+            </div>
+          </div>
+        ),
+      },
+      
+      // Output-Panel (2/3 der Breite, enthält Formatted JSON und VAST Explorer)
+      {
+        id: 'output',
+        title: 'Output',
+        collapsible: true,
+        content: (
+          <div className="flex flex-col h-full">
+            {/* Zoom-Steuerelemente am oberen Rand des Output-Panels */}
+            <div className="flex items-center justify-end space-x-2 mb-3">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Zoom:</span>
+              <button 
+                onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.1))}
+                className={`p-1 rounded-md ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+                title="Kleiner (Ctrl+Shift+-)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                </svg>
+              </button>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{Math.round(zoomLevel * 100)}%</span>
+              <button 
+                onClick={() => setZoomLevel(Math.min(2, zoomLevel + 0.1))}
+                className={`p-1 rounded-md ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+                title="Größer (Ctrl+Shift++)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+              <button 
+                onClick={() => setZoomLevel(1)}
+                className={`p-1 rounded-md ${
+                  isDarkMode 
+                    ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
+                title="Zurücksetzen (Ctrl+Shift+0)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto" style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
+              {/* Formatted JSON-Bereich */}
+              <div className="mb-6">
+                <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Formatted JSON</h3>
+                <div className="relative">
+                  <SyntaxHighlighter
+                    language="json"
+                    style={isDarkMode ? syntaxDark : syntaxLight}
+                    customStyle={{
+                      borderRadius: '0.375rem',
+                      fontSize: '0.875rem',
+                      padding: '1rem',
+                      overflowX: 'auto',
+                    }}
+                  >
+                    {formattedJson}
+                  </SyntaxHighlighter>
+                  
+                  {/* Copy JSON Button unter dem Formatted JSON */}
+                  <div className="mt-2">
+                    <button 
+                      onClick={copyJsonToClipboard} 
+                      className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                        isDarkMode 
+                          ? 'bg-indigo-900 hover:bg-indigo-800 text-indigo-200' 
+                          : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'
+                      }`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                      </svg>
+                      Copy JSON
+                    </button>
+                  </div>
                 </div>
               </div>
+
+              {/* VAST Explorer-Bereich, nur anzeigen wenn VAST-Inhalt vorhanden */}
+              {embeddedVastContent && (
+                <div>
+                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>VAST Explorer</h3>
+                  
+                  {/* VAST AdTag URL */}
+                  <div className="mb-4">
+                    <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>VAST AdTag URL</h4>
+                    <div className={`p-3 rounded-md font-mono text-sm ${isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'} overflow-x-auto`}>
+                      {vastUrl}
+                    </div>
+                    
+                    {/* Copy URL Button unter der VAST URL */}
+                    <div className="mt-2">
+                      <button 
+                        onClick={copyVastUrlToClipboard} 
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                          isDarkMode 
+                            ? 'bg-blue-900 hover:bg-blue-800 text-blue-200' 
+                            : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+                        }`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        Copy URL
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Embedded VAST Output */}
+                  <div>
+                    <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Embedded VAST</h4>
+                    <div className={`p-3 rounded-md font-mono text-sm ${isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-700'} overflow-x-auto`}>
+                      <SyntaxHighlighter
+                        language="xml"
+                        style={isDarkMode ? syntaxDark : syntaxLight}
+                        customStyle={{
+                          borderRadius: '0.375rem',
+                          fontSize: '0.875rem',
+                          padding: '1rem',
+                          overflowX: 'auto',
+                        }}
+                      >
+                        {embeddedVastContent}
+                      </SyntaxHighlighter>
+                    </div>
+                    
+                    {/* Copy VAST Button unter dem VAST Inhalt */}
+                    <div className="mt-2">
+                      <button 
+                        onClick={copyVastToClipboard} 
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                          isDarkMode 
+                            ? 'bg-blue-900 hover:bg-blue-800 text-blue-200' 
+                            : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
+                        }`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
+                        Copy VAST
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-          
-          {/* VAST Content with Syntax Highlighting */}
-          {embeddedVastContent ? (
-            <>
-              <div className="flex items-center mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <h3 className={`text-md font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                  Embedded VAST
-                </h3>
-                <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-                  isDarkMode 
-                    ? 'bg-blue-900 text-blue-200' 
-                    : 'bg-blue-100 text-blue-800'
-                }`}>
-                  {vastPath}
-                </span>
-              </div>
-              
-              {/* Search bar for VAST */}
-              <div className="mb-2">
-                <SearchPanel targetRef={vastContentRef} contentType="VAST" isDarkMode={isDarkMode} />
-              </div>
-              
-              <div className={`p-2 rounded-lg border shadow-inner overflow-auto flex-grow ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-700' 
-                  : 'bg-gray-50 border-gray-200'
-              }`}>
-                <div 
-                  ref={vastContentRef}
-                  dangerouslySetInnerHTML={{ 
-                    __html: formattedVastHtml 
-                  }}
-                />
-              </div>
-            </>
-          ) : (
-            <div className={`flex items-center justify-center h-full ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              No VAST content found
-            </div>
-          )}
-        </div>
-      ),
-      visible: true
-    }
-  ], [
-    isDarkMode, jsonInput, handleJsonInputChange, textAreaRef,
-    formattedJson, formattedJsonHtml, jsonContentRef,
-    vastUrl, vastPath, embeddedVastContent, formattedVastHtml, vastContentRef,
-    handleClear, handleFormat
-  ]);
+          </div>
+        ),
+      }
+    ];
+  }, [jsonInput, formattedJson, embeddedVastContent, vastUrl, isDarkMode, zoomLevel, copyJsonToClipboard, 
+      copyVastToClipboard, copyVastUrlToClipboard, handleClear, handleFormat]);
+
+  // Layout Konfiguration
+  const layouts = useMemo(() => ({
+    lg: [
+      { i: 'input', x: 0, y: 0, w: 4, h: 12 },   // Input-Panel nimmt 1/3 der Breite ein
+      { i: 'output', x: 4, y: 0, w: 8, h: 12 },  // Output-Panel nimmt 2/3 der Breite ein
+    ],
+    md: [
+      { i: 'input', x: 0, y: 0, w: 4, h: 12 },
+      { i: 'output', x: 4, y: 0, w: 8, h: 12 },
+    ],
+    sm: [
+      { i: 'input', x: 0, y: 0, w: 4, h: 12 },
+      { i: 'output', x: 4, y: 0, w: 8, h: 12 },
+    ],
+    xs: [
+      { i: 'input', x: 0, y: 0, w: 12, h: 6 },   // Auf kleineren Bildschirmen übereinander
+      { i: 'output', x: 0, y: 6, w: 12, h: 12 },
+    ],
+    xxs: [
+      { i: 'input', x: 0, y: 0, w: 2, h: 6 },
+      { i: 'output', x: 0, y: 6, w: 2, h: 12 },
+    ],
+  }), []);
 
   // Return the UI
   return (
@@ -504,6 +577,7 @@ const JsonVastExplorer = React.memo(({
       {/* FlexibleJsonLayout anstelle des bisherigen Layouts */}
       <FlexibleJsonLayout 
         panels={panels}
+        layouts={layouts}
         isDarkMode={isDarkMode}
       />
     </div>
