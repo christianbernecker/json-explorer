@@ -16,33 +16,33 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
       <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Data Privacy</h1>
       <p className="mb-6 text-gray-600 dark:text-gray-200">Privacy Policy</p>
       
-      <div className="space-y-8 text-gray-700 dark:text-white">
+      <div className="space-y-8">
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">1. Data Controller</h2>
-          <p className="dark:text-gray-100">Adtech Toolbox</p>
-          <p className="dark:text-gray-100">Email: <a href="mailto:info@adtech-toolbox.com" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">info@adtech-toolbox.com</a></p>
+          <p>Adtech Toolbox</p>
+          <p>Email: <a href="mailto:info@adtech-toolbox.com" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">info@adtech-toolbox.com</a></p>
         </section>
         
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">2. Data Protection Officer</h2>
-          <p className="dark:text-gray-100">
+          <p>
             We have not appointed a Data Protection Officer as it is not required for our operations under Art. 37 GDPR. For all data protection related inquiries, please contact:
           </p>
-          <p className="mt-2 dark:text-gray-100">
+          <p className="mt-2">
             Email: <a href="mailto:info@adtech-toolbox.com" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">info@adtech-toolbox.com</a>
           </p>
         </section>
         
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">3. Data Processing and Legal Basis</h2>
-          <p className="dark:text-gray-100">
+          <p>
             JSON Tools is designed to operate primarily client-side, processing data directly in your browser. No user data is transmitted to our servers during normal operation of the core functionality.
           </p>
-          <p className="mt-2 dark:text-gray-100">
+          <p className="mt-2">
             When you use our tools to format or compare JSON or analyze VAST files, all processing happens locally on your device. The data you input is not sent to our servers.
           </p>
-          <p className="mt-4 font-medium dark:text-gray-100">Legal basis for processing:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1 dark:text-gray-100">
+          <p className="mt-4 font-medium">Legal basis for processing:</p>
+          <ul className="list-disc pl-6 mt-2 space-y-1">
             <li>For the functionality of our website: Art. 6(1)(b) GDPR - processing is necessary for the performance of a contract</li>
             <li>For analytics and improving our service: Art. 6(1)(f) GDPR - legitimate interests</li>
             <li>For marketing (if applicable): Art. 6(1)(a) GDPR - consent</li>
@@ -51,11 +51,11 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
         
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">4. Data Storage and Retention</h2>
-          <p className="dark:text-gray-100">
+          <p>
             We use local storage to save your preferences (like dark mode) and history items. This data is stored only on your device and is not accessible to us.
           </p>
-          <p className="mt-4 font-medium dark:text-gray-100">Storage duration:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1 dark:text-gray-100">
+          <p className="mt-4 font-medium">Storage duration:</p>
+          <ul className="list-disc pl-6 mt-2 space-y-1">
             <li>Local storage data: Until you clear your browser data or we update the application structure</li>
             <li>Server logs (for technical purposes): 30 days</li>
             <li>Analytics data (if applicable): 14 months in anonymized form</li>
@@ -64,38 +64,38 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
         
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">5. Cookies and Tracking</h2>
-          <p className="dark:text-gray-100">
+          <p>
             We may use cookies for essential functionality and analytics purposes. Third-party vendors, including Google, may use cookies to serve ads based on a user's prior visits to our website.
           </p>
-          <p className="mt-4 font-medium dark:text-gray-100">Types of cookies we use:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1 dark:text-gray-100">
+          <p className="mt-4 font-medium">Types of cookies we use:</p>
+          <ul className="list-disc pl-6 mt-2 space-y-1">
             <li><strong>Essential cookies:</strong> Required for the basic functionality of the website</li>
             <li><strong>Preference cookies:</strong> Allow the website to remember your preferences</li>
             <li><strong>Statistics cookies:</strong> Help us understand how visitors interact with our website</li>
             <li><strong>Marketing cookies:</strong> Used to track visitors across websites for advertising purposes</li>
           </ul>
-          <p className="mt-3 dark:text-gray-100">
+          <p className="mt-3">
             You can opt out of personalized advertising by visiting <a href="http://www.aboutads.info" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">www.aboutads.info</a>.
           </p>
         </section>
         
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">6. Third-Party Services and Data Transfer</h2>
-          <p className="dark:text-gray-100">We may use third-party services for analytics and advertising purposes:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1 dark:text-gray-100">
+          <p>We may use third-party services for analytics and advertising purposes:</p>
+          <ul className="list-disc pl-6 mt-2 space-y-1">
             <li>Google Analytics</li>
             <li>Google AdSense</li>
           </ul>
-          <p className="mt-4 font-medium dark:text-gray-100">Data transfer to third countries:</p>
-          <p className="dark:text-gray-100">
+          <p className="mt-4 font-medium">Data transfer to third countries:</p>
+          <p>
             Some of our service providers are based outside the EU/EEA. When we transfer your data to these providers, we ensure appropriate safeguards through Standard Contractual Clauses or adequacy decisions by the European Commission.
           </p>
         </section>
         
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">7. Your Rights</h2>
-          <p className="dark:text-gray-100">You have the right to:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1 dark:text-gray-100">
+          <p>You have the right to:</p>
+          <ul className="list-disc pl-6 mt-2 space-y-1">
             <li>Request information about your stored data (Art. 15 GDPR)</li>
             <li>Request the correction of incorrect data (Art. 16 GDPR)</li>
             <li>Request the deletion of your data (Art. 17 GDPR)</li>
@@ -104,24 +104,24 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
             <li>Revoke your consent for future processing (Art. 7(3) GDPR)</li>
             <li>Object to data processing based on legitimate interests (Art. 21 GDPR)</li>
           </ul>
-          <p className="mt-2 dark:text-gray-100">
+          <p className="mt-2">
             To exercise these rights, please contact us at <a href="mailto:info@adtech-toolbox.com" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">info@adtech-toolbox.com</a>.
           </p>
         </section>
         
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">8. Right to Lodge a Complaint</h2>
-          <p className="dark:text-gray-100">
+          <p>
             You have the right to lodge a complaint with a supervisory authority if you believe that the processing of your personal data violates the GDPR. The responsible supervisory authority for data protection issues is the data protection authority in your country of residence or the location of the alleged infringement.
           </p>
         </section>
         
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">9. Changes to this Privacy Policy</h2>
-          <p className="dark:text-gray-100">
+          <p>
             We may update this privacy policy from time to time to reflect changes in our practices or for legal reasons. We will notify you of any material changes by posting the new privacy policy on this page.
           </p>
-          <p className="mt-4 text-sm dark:text-gray-100">
+          <p className="mt-4 text-sm">
             Last updated: April 16, 2023
           </p>
         </section>

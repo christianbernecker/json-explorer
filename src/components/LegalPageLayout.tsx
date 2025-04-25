@@ -17,13 +17,13 @@ const LegalPageLayout: React.FC<LegalPageLayoutProps> = ({
   canonicalUrl 
 }) => {
   return (
-    <div className={`container mx-auto px-4 py-8 mb-20 ${isDarkMode ? 'bg-gray-900 text-gray-200' : 'bg-white text-gray-800'}`}>
+    <div className={`container mx-auto px-4 py-8 mb-20 ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
       <SEO 
         canonical={canonicalUrl} 
         title={title}
         description={description}
       />
-      <div className={`max-w-6xl mx-auto ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-8`}>
+      <div className={`max-w-6xl mx-auto ${isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-white text-gray-700'} rounded-lg shadow-md p-8`}>
         {/* Der spezifische Seiteninhalt wird hier gerendert */}
         {children} 
         

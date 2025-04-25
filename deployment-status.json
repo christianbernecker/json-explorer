@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 08:38:51 CEST 2025", "commit": "Standardize dark mode text color application on legal pages"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 08:42:55 CEST 2025", "commit": "Explicitly set dark mode text color on p/li in legal pages"}
