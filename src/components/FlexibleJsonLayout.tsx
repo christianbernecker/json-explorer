@@ -5,7 +5,7 @@ import 'react-resizable/css/styles.css';
 import '../gridlayout.css';
 
 // Import icons
-import { XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon, EllipsisHorizontalIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -241,14 +241,16 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
     return layoutPresetDefinitions.default.layouts;
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>('lg');
   const [visiblePanels, setVisiblePanels] = useState<string[]>(
     panels.filter(panel => panel.visible !== false).map(panel => panel.id)
   );
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [collapsedPanels, setCollapsedPanels] = useState<string[]>([]);
   
-  // Liste der vorhandenen Preset-Namen für das Dropdown
-  const presetNames = Object.keys(layoutPresetDefinitions);
+  // Nicht mehr benötigt, da wir das Dropdown direkt mit Object.entries() befüllen
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activePreset, setActivePreset] = useState<string>('default');
 
   // Effekt zum Speichern von Layout-Änderungen im localStorage
@@ -257,14 +259,6 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(layouts));
     }
   }, [layouts]);
-
-  // Funktion zum Wechseln des Layout-Presets
-  const applyPreset = (presetName: string) => {
-    if (layoutPresetDefinitions[presetName]) {
-      setLayouts(layoutPresetDefinitions[presetName].layouts);
-      setActivePreset(presetName);
-    }
-  };
       
   // Layout-Preset anwenden
   const applyLayoutPreset = useCallback((presetKey: string) => {
