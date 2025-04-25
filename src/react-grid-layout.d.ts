@@ -40,6 +40,8 @@ declare module 'react-grid-layout' {
     onLayoutChange?: (currentLayout: Layout[], allLayouts: Layouts) => void;
     onBreakpointChange?: (newBreakpoint: string, newCols: number) => void;
     onWidthChange?: (containerWidth: number, margin: [number, number], cols: number, containerPadding: [number, number]) => void;
+    children?: React.ReactNode;
+    className?: string;
   }
 
   export class Responsive extends React.Component<ResponsiveProps> {}

@@ -27,6 +27,7 @@ interface PanelProps {
   isDarkMode: boolean;
   isCollapsed?: boolean;
   onCollapse?: () => void;
+  collapsible?: boolean;
 }
 
 // Panel-Komponente mit eigener Leiste und Styling
