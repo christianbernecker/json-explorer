@@ -2,7 +2,6 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
 import HistoryItem from './shared/HistoryItem';
-import JsonExplorerHeader from './JsonExplorerHeader';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
@@ -52,8 +51,14 @@ const JsonVastExplorer = React.memo(({
   const [copyMessage, setCopyMessage] = useState('');
   const [zoomLevel, setZoomLevel] = useState(1);
   
+  // Suche-States
+  const [jsonSearchTerm, setJsonSearchTerm] = useState('');
+  const [vastSearchTerm, setVastSearchTerm] = useState('');
+  
   // Refs for search functionality
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const jsonOutputRef = useRef<HTMLDivElement>(null);
+  const vastOutputRef = useRef<HTMLDivElement>(null);
   
   // Custom hook for Syntax Highlighting
   const { formatXml } = useHighlighter();
@@ -201,6 +206,8 @@ const JsonVastExplorer = React.memo(({
     setError('');
     setCopyMessage('');
     setZoomLevel(1);
+    setJsonSearchTerm('');
+    setVastSearchTerm('');
   }, []);
 
   // Kopieren des JSON-Inhalts in die Zwischenablage
@@ -223,6 +230,57 @@ const JsonVastExplorer = React.memo(({
       copyToClipboard(vastUrl, 'URL');
     }
   }, [vastUrl, copyToClipboard]);
+
+  // Suchfunktion für JSON-Output
+  const handleJsonSearch = useCallback(() => {
+    if (!jsonOutputRef.current || !jsonSearchTerm) return;
+    
+    // Einfache Textsuche implementieren
+    const content = jsonOutputRef.current;
+    const htmlContent = content.innerHTML;
+    
+    // Alle vorherigen Highlights entfernen
+    const cleanedHtml = htmlContent.replace(/<mark class="search-highlight">([^<]+)<\/mark>/g, '$1');
+    
+    if (jsonSearchTerm) {
+      // Neue Highlights hinzufügen (case-insensitive)
+      const regex = new RegExp(`(${jsonSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      const highlightedHtml = cleanedHtml.replace(regex, '<mark class="search-highlight">$1</mark>');
+      content.innerHTML = highlightedHtml;
+    } else {
+      content.innerHTML = cleanedHtml;
+    }
+  }, [jsonSearchTerm]);
+
+  // Suchfunktion für VAST-Output
+  const handleVastSearch = useCallback(() => {
+    if (!vastOutputRef.current || !vastSearchTerm) return;
+    
+    // Einfache Textsuche implementieren
+    const content = vastOutputRef.current;
+    const htmlContent = content.innerHTML;
+    
+    // Alle vorherigen Highlights entfernen
+    const cleanedHtml = htmlContent.replace(/<mark class="search-highlight">([^<]+)<\/mark>/g, '$1');
+    
+    if (vastSearchTerm) {
+      // Neue Highlights hinzufügen (case-insensitive)
+      const regex = new RegExp(`(${vastSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      const highlightedHtml = cleanedHtml.replace(regex, '<mark class="search-highlight">$1</mark>');
+      content.innerHTML = highlightedHtml;
+    } else {
+      content.innerHTML = cleanedHtml;
+    }
+  }, [vastSearchTerm]);
+
+  // Suchfunktionen aufrufen, wenn sich die Suchbegriffe ändern
+  useEffect(() => {
+    handleJsonSearch();
+  }, [jsonSearchTerm, handleJsonSearch]);
+
+  useEffect(() => {
+    handleVastSearch();
+  }, [vastSearchTerm, handleVastSearch]);
 
   // Add keyboard shortcuts specific to this component
   useEffect(() => {
@@ -276,21 +334,6 @@ const JsonVastExplorer = React.memo(({
         </div>
       )}
       
-      {/* Header mit Status und Aktionen - immer anzeigen */}
-      <JsonExplorerHeader 
-        isDarkMode={isDarkMode}
-        hasJsonContent={!!formattedJson}
-        hasVastContent={!!embeddedVastContent}
-        characterCount={jsonInput ? jsonInput.length : 0}
-        resetFields={handleClear}
-        handleFormat={handleFormat}
-        copyJsonToClipboard={copyJsonToClipboard}
-        copyVastToClipboard={copyVastToClipboard}
-        copyVastUrlToClipboard={copyVastUrlToClipboard}
-        zoomLevel={zoomLevel}
-        setZoomLevel={setZoomLevel}
-      />
-      
       {/* Copy message notification */}
       {copyMessage && (
         <div className={`fixed top-4 right-4 px-4 py-2 rounded-lg shadow-md flex items-center z-50 ${
@@ -320,7 +363,7 @@ const JsonVastExplorer = React.memo(({
       )}
 
       {/* Main Content Area - Festes Layout mit Drei-Spalten */}
-      <div className={`mt-6 grid grid-cols-3 gap-6 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`} style={{ minHeight: '700px' }}>
+      <div className={`grid grid-cols-3 gap-6 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`} style={{ minHeight: '700px' }}>
         {/* Linke Spalte - JSON Input (immer 1/3) */}
         <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg shadow-md border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
           <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>JSON Input</h3>
@@ -334,74 +377,98 @@ const JsonVastExplorer = React.memo(({
               } border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}
               placeholder="Geben Sie hier Ihren JSON-Code ein..."
             />
-            <div className="flex gap-2 mt-3">
-              <button
-                onClick={handleFormat}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                  isDarkMode
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'
-                }`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
-                Format
-              </button>
-              <button
-                onClick={handleClear}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                  isDarkMode
-                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                }`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Clear
-              </button>
+            <div className="flex mt-3">
+              <div className="w-full flex justify-start space-x-2">
+                <button
+                  onClick={handleFormat}
+                  className={`flex items-center px-3 py-1.5 rounded text-sm font-medium ${
+                    isDarkMode
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
+                  Format
+                </button>
+                <button
+                  onClick={handleClear}
+                  className={`flex items-center px-3 py-1.5 rounded text-sm font-medium ${
+                    isDarkMode
+                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Clear
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Mittlere Spalte - Formatted JSON */}
         <div className={`${embeddedVastContent ? 'col-span-1' : 'col-span-2'} ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg shadow-md border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Formatted JSON</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Formatted JSON</h3>
+            {formattedJson && (
+              <div className="relative w-48">
+                <input
+                  type="text"
+                  placeholder="Suchen..."
+                  value={jsonSearchTerm}
+                  onChange={(e) => setJsonSearchTerm(e.target.value)}
+                  className={`w-full py-1 px-3 pr-8 rounded text-sm ${
+                    isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
+                  } border focus:outline-none focus:ring-1 ${
+                    isDarkMode ? 'focus:ring-blue-500' : 'focus:ring-blue-400'
+                  }`}
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 absolute right-2 top-1.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            )}
+          </div>
           <div className="h-full overflow-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
             {formattedJson ? (
-              <SyntaxHighlighter
-                language="json"
-                style={isDarkMode ? customJsonDarkStyle : customJsonStyle}
-                customStyle={{
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  padding: '1rem',
-                  overflowX: 'auto',
-                  backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
-                  lineHeight: '1.6',
-                  height: 'auto',
-                  minHeight: '400px'
-                }}
-                showLineNumbers={true}
-                lineNumberStyle={{
-                  color: isDarkMode ? '#6b7280' : '#9ca3af',
-                  paddingRight: '1.5em',
-                  textAlign: 'right',
-                  userSelect: 'none',
-                  borderRight: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb',
-                  marginRight: '1.5em',
-                  minWidth: '2.5em'
-                }}
-                codeTagProps={{
-                  style: {
-                    display: 'inline-block',
-                    width: '100%'
-                  }
-                }}
-              >
-                {JSON.stringify(formattedJson, null, 2)}
-              </SyntaxHighlighter>
+              <div ref={jsonOutputRef}>
+                <SyntaxHighlighter
+                  language="json"
+                  style={isDarkMode ? customJsonDarkStyle : customJsonStyle}
+                  customStyle={{
+                    borderRadius: '0.375rem',
+                    fontSize: '0.875rem',
+                    padding: '1rem',
+                    overflowX: 'auto',
+                    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
+                    lineHeight: '1.6',
+                    height: 'auto',
+                    minHeight: '400px'
+                  }}
+                  showLineNumbers={true}
+                  lineNumberStyle={{
+                    color: isDarkMode ? '#6b7280' : '#9ca3af',
+                    paddingRight: '1.5em',
+                    textAlign: 'right',
+                    userSelect: 'none',
+                    borderRight: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb',
+                    marginRight: '1.5em',
+                    minWidth: '2.5em'
+                  }}
+                  codeTagProps={{
+                    style: {
+                      display: 'inline-block',
+                      width: '100%'
+                    }
+                  }}
+                >
+                  {JSON.stringify(formattedJson, null, 2)}
+                </SyntaxHighlighter>
+              </div>
             ) : (
               <div className={`flex items-center justify-center h-64 text-center p-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 <div>
@@ -435,12 +502,30 @@ const JsonVastExplorer = React.memo(({
         {/* Rechte Spalte - VAST Explorer (nur wenn VAST gefunden wurde) */}
         {embeddedVastContent && (
           <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg shadow-md border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>VAST Explorer</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>VAST Explorer</h3>
+              <div className="relative w-48">
+                <input
+                  type="text"
+                  placeholder="Suchen..."
+                  value={vastSearchTerm}
+                  onChange={(e) => setVastSearchTerm(e.target.value)}
+                  className={`w-full py-1 px-3 pr-8 rounded text-sm ${
+                    isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
+                  } border focus:outline-none focus:ring-1 ${
+                    isDarkMode ? 'focus:ring-blue-500' : 'focus:ring-blue-400'
+                  }`}
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 absolute right-2 top-1.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
             <div className="h-full overflow-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
               {/* VAST AdTag URL */}
               <div className="mb-4">
                 <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>VAST AdTag URL</h4>
-                <div className={`p-3 rounded-md font-mono text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-700'} overflow-x-auto`}>
+                <div className={`p-3 rounded-md font-mono text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} overflow-x-auto`}>
                   {vastUrl}
                 </div>
                 
@@ -465,7 +550,7 @@ const JsonVastExplorer = React.memo(({
               {/* Embedded VAST Output */}
               <div>
                 <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Embedded VAST</h4>
-                <div className={`p-3 rounded-md font-mono text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-700'} overflow-x-auto`}>
+                <div className={`p-3 rounded-md font-mono text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} overflow-x-auto`} ref={vastOutputRef}>
                   <SyntaxHighlighter
                     language="xml"
                     style={isDarkMode ? syntaxDark : syntaxLight}
@@ -521,6 +606,16 @@ const JsonVastExplorer = React.memo(({
           </div>
         )}
       </div>
+      
+      {/* Styles für die Suchfunktion */}
+      <style jsx global>{`
+        .search-highlight {
+          background-color: ${isDarkMode ? '#ffab00' : '#ffff00'};
+          color: ${isDarkMode ? '#000000' : '#000000'};
+          border-radius: 2px;
+          padding: 0 2px;
+        }
+      `}</style>
     </div>
   );
 });
