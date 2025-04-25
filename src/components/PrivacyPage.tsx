@@ -14,7 +14,7 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
       canonicalUrl="https://www.adtech-toolbox.com/legal/privacy"
     >
       <h1 className={`text-3xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Data Privacy</h1>
-      <p className="mb-6 text-gray-600 dark:text-gray-200">Privacy Policy</p>
+      <p className={`mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Privacy Policy</p>
       
       <div className="space-y-8">
         <section>
