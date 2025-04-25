@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 08:32:44 CEST 2025", "commit": "Update keyboard shortcuts display to show only functional global shortcuts"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 08:34:30 CEST 2025", "commit": "Implement and display tab-specific keyboard shortcuts"}
