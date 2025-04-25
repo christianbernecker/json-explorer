@@ -16,7 +16,7 @@ function ImprintPage({ isDarkMode }: ImprintPageProps) {
       <h1 className={`text-3xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Imprint</h1>
       <p className={`mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Legal Information</p>
       
-      <div className={`space-y-6 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+      <div className={`space-y-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>
         <section>
           <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Information according to § 5 TMG</h2>
           <p>Christian Bernecker</p>

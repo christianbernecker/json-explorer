@@ -16,7 +16,7 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
       <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Data Privacy</h1>
       <p className="mb-6 text-gray-600 dark:text-gray-200">Privacy Policy</p>
       
-      <div className="space-y-8 text-gray-700 dark:text-gray-200">
+      <div className="space-y-8 text-gray-700 dark:text-gray-100">
         <section>
           <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">1. Data Controller</h2>
           <p>Adtech Toolbox</p>
