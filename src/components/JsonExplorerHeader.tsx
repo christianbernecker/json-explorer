@@ -47,33 +47,7 @@ const JsonExplorerHeader: React.FC<JsonExplorerHeaderProps> = ({
         </div>
         
         <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
-          {/* Format-Button */}
-          <button 
-            onClick={handleFormat} 
-            className="flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium bg-blue-500 text-white hover:bg-blue-600"
-            title="Format (Ctrl+Shift+F)"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-            Format
-          </button>
-          
-          {/* Clear-Button */}
-          <button 
-            onClick={resetFields} 
-            className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-              isDarkMode 
-                ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-            }`}
-            title="Clear (Ctrl+Shift+L)"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Clear
-          </button>
+          {/* Format- und Clear-Buttons wurden entfernt und ins Input-Panel verschoben */}
           
           {/* Copy JSON Button */}
           {hasJsonContent && (
