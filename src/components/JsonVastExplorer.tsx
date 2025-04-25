@@ -6,7 +6,7 @@ import SearchPanel from './shared/SearchPanel';
 import JsonExplorerHeader from './JsonExplorerHeader';
 import FlexibleJsonLayout, { PanelConfig } from './FlexibleJsonLayout';
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -577,7 +577,7 @@ const JsonVastExplorer = React.memo(({
       {/* FlexibleJsonLayout anstelle des bisherigen Layouts */}
       <FlexibleJsonLayout 
         panels={panels}
-        layouts={layouts}
+        initialLayouts={layouts}
         isDarkMode={isDarkMode}
       />
     </div>

@@ -251,6 +251,7 @@ const layoutPresets: Record<string, {
 interface FlexibleJsonLayoutProps {
   panels: PanelConfig[];
   isDarkMode: boolean;
+  initialLayouts?: Layouts;
   onLayoutChange?: (currentLayout: Layout[], allLayouts: Layouts) => void;
 }
 
@@ -259,29 +260,31 @@ const LOCAL_STORAGE_KEY = 'json-explorer-layout';
 const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({ 
   panels, 
   isDarkMode,
+  initialLayouts,
   onLayoutChange
 }) => {
-  // State für Layouts und sichtbare Panels
-  const [layouts, setLayouts] = useState<Layouts>(() => {
-    // Versuche, gespeicherte Layouts aus localStorage zu laden
-    if (typeof window !== 'undefined') {
-      const savedLayouts = localStorage.getItem(LOCAL_STORAGE_KEY);
-      return savedLayouts ? JSON.parse(savedLayouts) : layoutPresets.default.layouts;
-    }
-    return layoutPresets.default.layouts;
-  });
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // States
+  const [activePreset, setActivePreset] = useState<string>('default');
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>('lg');
-  const [visiblePanels, setVisiblePanels] = useState<string[]>(
-    panels.filter(panel => panel.visible !== false).map(panel => panel.id)
-  );
+  const [visiblePanels, setVisiblePanels] = useState<string[]>(['input', 'output', 'vast']);
+  const [layouts, setLayouts] = useState<Layouts>(() => {
+    // Wenn initialLayouts vorhanden ist, verwende diese, ansonsten die Standard-Layouts
+    if (initialLayouts) {
+      return initialLayouts;
+    }
+    
+    const preset = layoutPresets.default;
+    return {
+      lg: preset?.lg || [],
+      md: preset?.md || [],
+      sm: preset?.sm || [],
+      xs: preset?.xs || [],
+      xxs: preset?.xxs || [],
+    };
+  });
+  
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [collapsedPanels, setCollapsedPanels] = useState<string[]>([]);
-  
-  // Nicht mehr benötigt, da wir das Dropdown direkt mit Object.entries() befüllen
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [activePreset, setActivePreset] = useState<string>('default');
 
   // Effekt zum Speichern von Layout-Änderungen im localStorage
   useEffect(() => {
