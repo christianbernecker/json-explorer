@@ -29,23 +29,10 @@ const JsonExplorerHeader: React.FC<JsonExplorerHeaderProps> = ({
 }) => {
   // Debug-Log hinzufügen
   useEffect(() => {
-    console.log('JsonExplorerHeader geladen', { hasJsonContent, hasVastContent, isDarkMode });
+    console.log('JsonExplorerHeader WIRD JETZT GELADEN', { hasJsonContent, hasVastContent, isDarkMode });
   }, [hasJsonContent, hasVastContent, isDarkMode]);
 
-  // Render wenn keine Daten vorhanden sind
-  if (!hasJsonContent && !hasVastContent) {
-    return (
-      <div className={`w-full mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-4`}>
-        <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-          JSON Explorer
-        </h1>
-        <p className={`mt-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          Fügen Sie JSON ein oder laden Sie eine JSON-Datei hoch, um zu beginnen.
-        </p>
-      </div>
-    );
-  }
-
+  // IMMER den gleichen Inhalt anzeigen
   return (
     <div className={`w-full mb-4 px-4 py-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md`}>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
@@ -60,14 +47,10 @@ const JsonExplorerHeader: React.FC<JsonExplorerHeaderProps> = ({
         </div>
         
         <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
-          {/* Immer den Format-Button anzeigen, unabhängig vom Zustand */}
+          {/* Format-Button */}
           <button 
             onClick={handleFormat} 
-            className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-              isDarkMode 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
+            className="flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium bg-blue-500 text-white hover:bg-blue-600"
             title="Format (Ctrl+Shift+F)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,6 +59,7 @@ const JsonExplorerHeader: React.FC<JsonExplorerHeaderProps> = ({
             Format
           </button>
           
+          {/* Clear-Button */}
           <button 
             onClick={resetFields} 
             className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
@@ -91,6 +75,7 @@ const JsonExplorerHeader: React.FC<JsonExplorerHeaderProps> = ({
             Clear
           </button>
           
+          {/* Copy JSON Button */}
           {hasJsonContent && (
             <button 
               onClick={copyJsonToClipboard} 
@@ -107,6 +92,7 @@ const JsonExplorerHeader: React.FC<JsonExplorerHeaderProps> = ({
             </button>
           )}
           
+          {/* Copy VAST Button */}
           {copyVastToClipboard && hasVastContent && (
             <button 
               onClick={copyVastToClipboard} 
@@ -123,6 +109,7 @@ const JsonExplorerHeader: React.FC<JsonExplorerHeaderProps> = ({
             </button>
           )}
           
+          {/* Copy URL Button */}
           {copyVastUrlToClipboard && hasVastContent && (
             <button 
               onClick={copyVastUrlToClipboard} 
