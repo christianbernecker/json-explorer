@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 14:45:29 CEST 2025", "commit": "Fix: Format- und Clear-Buttons ins JSON Input-Panel verschoben"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 14:51:17 CEST 2025", "commit": "Fix: Fehlende Abhängigkeiten im useMemo-Hook hinzugefügt"}

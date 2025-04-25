@@ -270,7 +270,18 @@ const JsonVastExplorer = React.memo(({
       title: 'JSON Input',
       content: (
         <div className="h-full flex flex-col">
-          <div className="mb-2 flex gap-2">
+          <textarea
+            ref={textAreaRef}
+            value={jsonInput}
+            onChange={handleJsonInputChange}
+            placeholder="Paste your unformatted JSON here..."
+            className={`w-full p-3 border rounded-lg font-mono text-sm flex-grow outline-none transition ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }`}
+          />
+          <div className="mt-2 flex gap-2">
             {/* Format Button */}
             <button 
               onClick={handleFormat} 
@@ -299,17 +310,6 @@ const JsonVastExplorer = React.memo(({
               Clear
             </button>
           </div>
-          <textarea
-            ref={textAreaRef}
-            value={jsonInput}
-            onChange={handleJsonInputChange}
-            placeholder="Paste your unformatted JSON here..."
-            className={`w-full p-3 border rounded-lg font-mono text-sm flex-grow outline-none transition ${
-              isDarkMode 
-                ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }`}
-          />
         </div>
       ),
       visible: true
@@ -422,7 +422,7 @@ const JsonVastExplorer = React.memo(({
           )}
         </div>
       ),
-      visible: embeddedVastContent !== null
+      visible: true
     }
   ], [
     isDarkMode, jsonInput, handleJsonInputChange, textAreaRef,

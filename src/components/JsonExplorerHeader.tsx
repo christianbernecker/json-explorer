@@ -46,8 +46,51 @@ const JsonExplorerHeader: React.FC<JsonExplorerHeaderProps> = ({
           </div>
         </div>
         
-        <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
-          {/* Format- und Clear-Buttons wurden entfernt und ins Input-Panel verschoben */}
+        <div className="mt-4 md:mt-0 flex flex-wrap gap-2 items-center">
+          {/* Zoom Controls - direkt neben den anderen Buttons platzieren */}
+          <div className="flex items-center space-x-2 mr-4">
+            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Zoom:</span>
+            <button 
+              onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.1))}
+              className={`p-1 rounded-md ${
+                isDarkMode 
+                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
+              title="Kleiner (Ctrl+Shift+-)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+            </button>
+            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{Math.round(zoomLevel * 100)}%</span>
+            <button 
+              onClick={() => setZoomLevel(Math.min(2, zoomLevel + 0.1))}
+              className={`p-1 rounded-md ${
+                isDarkMode 
+                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
+              title="Größer (Ctrl+Shift++)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
+            <button 
+              onClick={() => setZoomLevel(1)}
+              className={`p-1 rounded-md ${
+                isDarkMode 
+                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
+              title="Zurücksetzen (Ctrl+Shift+0)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
           
           {/* Copy JSON Button */}
           {hasJsonContent && (
@@ -100,51 +143,6 @@ const JsonExplorerHeader: React.FC<JsonExplorerHeaderProps> = ({
             </button>
           )}
         </div>
-      </div>
-      
-      {/* Zoom Controls - immer anzeigen */}
-      <div className="flex items-center space-x-2">
-        <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Zoom:</span>
-        <button 
-          onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.1))}
-          className={`p-1 rounded-md ${
-            isDarkMode 
-              ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-          }`}
-          title="Kleiner (Ctrl+Shift+-)"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-          </svg>
-        </button>
-        <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{Math.round(zoomLevel * 100)}%</span>
-        <button 
-          onClick={() => setZoomLevel(Math.min(2, zoomLevel + 0.1))}
-          className={`p-1 rounded-md ${
-            isDarkMode 
-              ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-          }`}
-          title="Größer (Ctrl+Shift++)"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-        </button>
-        <button 
-          onClick={() => setZoomLevel(1)}
-          className={`p-1 rounded-md ${
-            isDarkMode 
-              ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-          }`}
-          title="Zurücksetzen (Ctrl+Shift+0)"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
       </div>
     </div>
   );
