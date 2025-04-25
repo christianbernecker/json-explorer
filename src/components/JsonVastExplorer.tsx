@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
 import HistoryItem from './shared/HistoryItem';
@@ -47,7 +47,6 @@ const JsonVastExplorer = React.memo(({
   const [jsonInput, setJsonInput] = useState('');
   const [formattedJson, setFormattedJson] = useState<any>(null);
   const [embeddedVastContent, setEmbeddedVastContent] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [vastPath, setVastPath] = useState('');
   const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
@@ -55,14 +54,10 @@ const JsonVastExplorer = React.memo(({
   const [zoomLevel, setZoomLevel] = useState(1);
   
   // Refs for search functionality
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const jsonContentRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const vastContentRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   
   // Custom hook for Syntax Highlighting
-  const { highlightJson, highlightXml, formatXml } = useHighlighter();
+  const { formatXml } = useHighlighter();
   
   // Helper function to add to history
   const addToHistoryItem = useCallback((item: HistoryItemType) => {
