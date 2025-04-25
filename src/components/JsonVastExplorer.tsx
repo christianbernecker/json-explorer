@@ -608,7 +608,7 @@ const JsonVastExplorer = React.memo(({
       </div>
       
       {/* Styles für die Suchfunktion */}
-      <style jsx global>{`
+      <style>{`
         .search-highlight {
           background-color: ${isDarkMode ? '#ffab00' : '#ffff00'};
           color: ${isDarkMode ? '#000000' : '#000000'};
