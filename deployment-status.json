@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 15:51:16 CEST 2025", "commit": "ESLint-Fehler beheben: Nicht verwendete Variablen und fehlende Dependencies"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 16:02:56 CEST 2025", "commit": "UI-Verbesserungen: Formatted JSON erst nach Format-Klick anzeigen, hellere Hintergrundfarben, abgerundete Ecken"}
