@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { Responsive, WidthProvider, Layout, Layouts } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -124,11 +124,12 @@ const xxsLayout = [
 // Layout presets
 const layoutPresets: Record<string, {
   name: string;
-  lg: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
-  md: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
-  sm: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
-  xs: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
-  xxs: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
+  lg: Layout[];
+  md: Layout[];
+  sm: Layout[];
+  xs: Layout[];
+  xxs: Layout[];
+  layouts?: Layouts;
 }> = {
   'default': {
     name: 'Standard (Vertikal)',
@@ -298,6 +299,38 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
     setLayouts(newLayout);
   }, []);
   
+  // Set initial layouts based on active preset
+  useEffect(() => {
+    const preset = layoutPresets[activePreset];
+    if (preset) {
+      const initialLayouts = preset.layouts || {
+        lg: preset.lg || [],
+        md: preset.md || [],
+        sm: preset.sm || [],
+        xs: preset.xs || [],
+        xxs: preset.xxs || [],
+      };
+      setLayouts(initialLayouts as Layouts);
+    }
+  }, [activePreset]);
+
+  const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const preset = e.target.value;
+    setActivePreset(preset);
+    const selectedPreset = layoutPresets[preset];
+    
+    if (selectedPreset) {
+      const newLayouts = selectedPreset.layouts || {
+        lg: selectedPreset.lg || [],
+        md: selectedPreset.md || [],
+        sm: selectedPreset.sm || [],
+        xs: selectedPreset.xs || [],
+        xxs: selectedPreset.xxs || [],
+      };
+      setLayouts(newLayouts as Layouts);
+    }
+  };
+  
   return (
     <div className="w-full">
       {/* Layout Controls */}
@@ -310,7 +343,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
                 ? 'bg-gray-700 border-gray-600 text-white' 
                 : 'bg-white border-gray-300 text-gray-700'
             } border`}
-            onChange={(e) => applyLayoutPreset(e.target.value)}
+            onChange={handlePresetChange}
           >
             {Object.entries(layoutPresets).map(([key, { name }]) => (
               <option key={key} value={key}>{name}</option>
