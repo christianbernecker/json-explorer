@@ -142,6 +142,17 @@ const layoutPresets: Record<string, {
     sm: smLayout,
     xs: xsLayout,
     xxs: xxsLayout,
+    layouts: {
+      lg: [
+        { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
+        { i: 'output', x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
+        { i: 'vast', x: 0, y: 11, w: 12, h: 10, minW: 4, minH: 8 },
+      ],
+      md: mdLayout,
+      sm: smLayout,
+      xs: xsLayout,
+      xxs: xxsLayout,
+    }
   },
   'side-by-side': {
     name: 'Nebeneinander (2 Spalten)',
@@ -404,7 +415,13 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
           
           <button
             onClick={() => {
-              setLayouts(layoutPresets.default.layouts);
+              setLayouts(layoutPresets.default.layouts || {
+                lg: layoutPresets.default.lg,
+                md: layoutPresets.default.md, 
+                sm: layoutPresets.default.sm,
+                xs: layoutPresets.default.xs,
+                xxs: layoutPresets.default.xxs
+              });
               setVisiblePanels(panels.filter(panel => panel.visible !== false).map(panel => panel.id));
             }}
             className={`px-3 py-1.5 rounded text-sm flex items-center ${
