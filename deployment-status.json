@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 14:59:43 CEST 2025", "commit": "Fix: UI-Verbesserungen für JSON Explorer"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 15:42:15 CEST 2025", "commit": "TypeScript-Fehler beheben: react-syntax-highlighter und FlexibleJsonLayout Props"}

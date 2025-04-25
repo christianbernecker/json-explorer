@@ -2,8 +2,10 @@ import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
 import HistoryItem from './shared/HistoryItem';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import SearchPanel from './shared/SearchPanel';
 import JsonExplorerHeader from './JsonExplorerHeader';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import FlexibleJsonLayout, { PanelConfig } from './FlexibleJsonLayout';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
@@ -26,6 +28,7 @@ const JsonVastExplorer = React.memo(({
   const [jsonInput, setJsonInput] = useState('');
   const [formattedJson, setFormattedJson] = useState<any>(null);
   const [embeddedVastContent, setEmbeddedVastContent] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [vastPath, setVastPath] = useState('');
   const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
@@ -33,7 +36,9 @@ const JsonVastExplorer = React.memo(({
   const [zoomLevel, setZoomLevel] = useState(1);
   
   // Refs for search functionality
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const jsonContentRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const vastContentRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -209,11 +214,13 @@ const JsonVastExplorer = React.memo(({
   }, [zoomLevel, isDarkMode]);
   
   // Memoization of formatted content for better performance
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formattedJsonHtml = useMemo(() => {
     if (!formattedJson) return '';
     return addLineNumbers(highlightJson(formattedJson, isDarkMode), 'json');
   }, [formattedJson, highlightJson, addLineNumbers, isDarkMode]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formattedVastHtml = useMemo(() => {
     if (!embeddedVastContent) return '';
     return addLineNumbers(highlightXml(embeddedVastContent, isDarkMode), 'vast');
@@ -478,7 +485,7 @@ const JsonVastExplorer = React.memo(({
       }
     ];
   }, [jsonInput, formattedJson, embeddedVastContent, vastUrl, isDarkMode, zoomLevel, copyJsonToClipboard, 
-      copyVastToClipboard, copyVastUrlToClipboard, handleClear, handleFormat]);
+      copyVastToClipboard, copyVastUrlToClipboard, handleClear, handleFormat, handleJsonInputChange]);
 
   // Layout Konfiguration
   const layouts = useMemo(() => ({

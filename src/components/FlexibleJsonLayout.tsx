@@ -1,11 +1,10 @@
-import React, { useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, ReactNode, useCallback } from 'react';
 import { Responsive, WidthProvider, Layout, Layouts } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import '../gridlayout.css';
 
 // Import icons
-import { XMarkIcon, ArrowsPointingOutIcon, ArrowsPointingInIcon } from '@heroicons/react/24/outline';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -265,7 +264,6 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
 }) => {
   // States
   const [activePreset, setActivePreset] = useState<string>('default');
-  const [currentBreakpoint, setCurrentBreakpoint] = useState<string>('lg');
   const [visiblePanels, setVisiblePanels] = useState<string[]>(['input', 'output', 'vast']);
   const [layouts, setLayouts] = useState<Layouts>(() => {
     // Wenn initialLayouts vorhanden ist, verwende diese, ansonsten die Standard-Layouts
@@ -499,7 +497,6 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
           containerPadding={[0, 0]}
           margin={[12, 12]}
           onLayoutChange={onLayoutChange}
-          onBreakpointChange={setCurrentBreakpoint}
           isDraggable={true}
           isResizable={true}
           draggableHandle=".json-explorer-panel-header"
