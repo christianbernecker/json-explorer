@@ -1,0 +1,167 @@
+/* react-grid-layout - Angepasst für JSON Explorer */
+.react-grid-layout {
+  position: relative;
+  transition: height 200ms ease;
+}
+
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+  background: transparent;
+  border-radius: 0.5rem;
+}
+
+.react-grid-item.cssTransforms {
+  transition-property: transform;
+}
+
+.react-grid-item.resizing {
+  z-index: 1;
+  will-change: width, height;
+}
+
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 3;
+  will-change: transform;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background: rgba(0, 120, 255, 0.2);
+  border: 1px solid rgba(0, 120, 255, 0.4);
+  border-radius: 0.5rem;
+  opacity: 0.7;
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+  z-index: 10;
+}
+
+.react-grid-item > .react-resizable-handle:after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid rgba(120, 120, 120, 0.4);
+  border-bottom: 2px solid rgba(120, 120, 120, 0.4);
+}
+
+.dark .react-grid-item > .react-resizable-handle:after {
+  border-right: 2px solid rgba(200, 200, 200, 0.4);
+  border-bottom: 2px solid rgba(200, 200, 200, 0.4);
+}
+
+/* Panel Styles */
+.json-explorer-panel {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.json-explorer-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-bottom-width: 1px;
+  cursor: move; /* zeigt an, dass es ziehbar ist */
+  user-select: none;
+}
+
+.json-explorer-panel-body {
+  flex: 1;
+  overflow: auto;
+  padding: 0.75rem;
+  height: calc(100% - 2.5rem); /* Header-Höhe abziehen */
+}
+
+/* Resizable Styles */
+.react-resizable {
+  position: relative;
+}
+
+.react-resizable-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 20px;
+  height: 20px;
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  box-sizing: border-box;
+  cursor: se-resize;
+  padding: 0 3px 3px 0;
+  background-image: url('data:image/svg+xml;utf8,<svg width="10" height="10" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h2v2H0zM0 4h2v2H0zM4 0h2v2H4zM8 0h2v2H8zM4 4h2v2H4zM8 4h2v2H8zM0 8h2v2H0zM4 8h2v2H4zM8 8h2v2H8z" fill="rgba(150,150,150,0.5)"/></svg>');
+}
+
+/* Dunkel-Modus Anpassung für das Resize-Handle */
+.dark .react-resizable-handle {
+  background-image: url('data:image/svg+xml;utf8,<svg width="10" height="10" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h2v2H0zM0 4h2v2H0zM4 0h2v2H4zM8 0h2v2H8zM4 4h2v2H4zM8 4h2v2H8zM0 8h2v2H0zM4 8h2v2H4zM8 8h2v2H8z" fill="rgba(200,200,200,0.5)"/></svg>');
+}
+
+/* Panel content styles */
+.panel-content {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.resize-handle {
+  position: absolute;
+  width: 5px;
+  height: 100%;
+  top: 0;
+  right: 0;
+  cursor: ew-resize;
+  z-index: 10;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.resize-handle:hover {
+  background-color: rgba(0, 120, 240, 0.2);
+}
+
+/* Layout Button */
+.layout-button {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  opacity: 0.8;
+  transition: all 0.2s ease-in-out;
+}
+
+.layout-button:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+/* Mobile Anpassungen */
+@media screen and (max-width: 768px) {
+  .layout-button {
+    bottom: 1rem;
+    right: 1rem;
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+} 
