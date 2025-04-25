@@ -194,15 +194,44 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
         isDarkMode={isDarkMode} 
       />
       
-      {/* Tool description for SEO */}
-      <section className={`mb-6 p-4 rounded-lg text-sm ${
-        isDarkMode ? 'bg-gray-800 bg-opacity-50 border border-gray-700' : 'bg-gray-50 bg-opacity-80 border border-gray-200'
-      }`}>
-        <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-          {activeTab === 'explorer' 
-            ? "JSON Validator and VAST Explorer allows you to validate, format, and explore JSON data or VAST XML AdTags. Paste your content, upload a file, or fetch from a URL." 
-            : "JSON Diff Comparison Tool helps you compare two JSON structures side by side, highlighting differences. Perfect for debugging API changes or config files."
-          }
+      {/* Tool description and features for SEO */}
+      <section className={`mb-6 p-6 rounded-lg text-sm ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gray-100 border border-gray-200'}`}>
+        <h2 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>JSON and VAST AdTag Tools</h2>
+        <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-4`}>
+          Validate, format, and compare JSON data or analyze VAST AdTags directly in your browser. Our free online tools provide comprehensive features for developers and AdTech specialists.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+          <div>
+            <h3 className={`font-medium mb-1 ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>JSON Explorer Features:</h3>
+            <ul className={`list-disc list-inside space-y-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <li>Validate and format JSON syntax</li>
+              <li>VAST AdTag Explorer with XML support</li>
+              <li>Automatic error detection</li>
+              <li>Syntax highlighting for better readability</li>
+            </ul>
+          </div>
+          <div>
+            <h3 className={`font-medium mb-1 ${isDarkMode ? 'text-gray-100' : 'text-gray-700'}`}>JSON Diff Features:</h3>
+            <ul className={`list-disc list-inside space-y-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <li>Compare JSON objects and highlight differences</li>
+              <li>Multiple comparison modes (structural, semantic)</li>
+              <li>Copy results with one click</li>
+              <li>History for quick access to previous comparisons</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Keyboard Shortcuts Info */}
+      <section className={`mb-6 p-4 rounded-lg text-sm ${isDarkMode ? 'bg-blue-900 bg-opacity-30 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
+        <p className={`${isDarkMode ? 'text-blue-200' : 'text-blue-800'}`}>
+          <strong>Keyboard Shortcuts:</strong> 
+          <code className="mx-1">Ctrl+Shift+F</code> (Format), 
+          <code className="mx-1">Ctrl+Shift+L</code> (Clear), 
+          <code className="mx-1">Ctrl+Shift+H</code> (History), 
+          <code className="mx-1">Ctrl+Shift+D</code> (Dark Mode), 
+          <code className="mx-1">Ctrl+Shift+C</code> (Compare), 
+          <code className="mx-1">Ctrl+Shift+1/2</code> (Switch Tabs)
         </p>
       </section>
       

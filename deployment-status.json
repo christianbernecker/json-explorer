@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu Apr 24 17:23:40 CEST 2025", "commit": "Fix PrivacyPage dark mode background"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 08:27:21 CEST 2025", "commit": "Refactor legal pages using LayoutComponent and adjust text color"}
