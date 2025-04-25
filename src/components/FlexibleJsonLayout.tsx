@@ -302,16 +302,15 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
   // Set initial layouts based on active preset
   useEffect(() => {
     const preset = layoutPresets[activePreset];
-    if (preset) {
-      const initialLayouts = preset.layouts || {
-        lg: preset.lg || [],
-        md: preset.md || [],
-        sm: preset.sm || [],
-        xs: preset.xs || [],
-        xxs: preset.xxs || [],
-      };
-      setLayouts(initialLayouts as Layouts);
-    }
+    const initialLayouts: Layouts = {
+      lg: preset?.lg || [],
+      md: preset?.md || [],
+      sm: preset?.sm || [],
+      xs: preset?.xs || [],
+      xxs: preset?.xxs || [],
+      ...preset?.layouts
+    };
+    setLayouts(initialLayouts);
   }, [activePreset]);
 
   const handlePresetChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -319,16 +318,15 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
     setActivePreset(preset);
     const selectedPreset = layoutPresets[preset];
     
-    if (selectedPreset) {
-      const newLayouts = selectedPreset.layouts || {
-        lg: selectedPreset.lg || [],
-        md: selectedPreset.md || [],
-        sm: selectedPreset.sm || [],
-        xs: selectedPreset.xs || [],
-        xxs: selectedPreset.xxs || [],
-      };
-      setLayouts(newLayouts as Layouts);
-    }
+    const newLayouts: Layouts = {
+      lg: selectedPreset?.lg || [],
+      md: selectedPreset?.md || [],
+      sm: selectedPreset?.sm || [],
+      xs: selectedPreset?.xs || [],
+      xxs: selectedPreset?.xxs || [],
+      ...selectedPreset?.layouts
+    };
+    setLayouts(newLayouts);
   };
   
   return (
