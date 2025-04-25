@@ -83,140 +83,113 @@ const Panel: React.FC<PanelProps> = ({
   );
 };
 
-// Vordefinierte Layouts für verschiedene Bildschirmgrößen
-const defaultLayouts = {
-  lg: [
-    { i: 'input', x: 0, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-    { i: 'output', x: 6, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-    { i: 'vast', x: 0, y: 12, w: 12, h: 12, minW: 3, minH: 4 },
-  ],
-  md: [
-    { i: 'input', x: 0, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-    { i: 'output', x: 6, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-    { i: 'vast', x: 0, y: 12, w: 12, h: 12, minW: 3, minH: 4 },
-  ],
-  sm: [
-    { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-    { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-    { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-  ],
-  xs: [
-    { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-    { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-    { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-  ],
-  xxs: [
-    { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-    { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-    { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-  ],
-};
+// Predefined layouts for different screen sizes
+// Format: x, y, w, h, minW, minH, maxW, maxH
 
-// Layout-Presets mit Layouts
-const layoutPresetDefinitions: Record<string, {
+// Large screens (lg)
+const lgLayout = [
+  { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
+  { i: 'output', x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
+  { i: 'vast', x: 0, y: 11, w: 12, h: 10, minW: 4, minH: 8 },
+];
+
+// Medium screens (md)
+const mdLayout = [
+  { i: 'input', x: 0, y: 0, w: 6, h: 12, minW: 4, minH: 8 },
+  { i: 'output', x: 6, y: 0, w: 6, h: 12, minW: 4, minH: 8 },
+  { i: 'vast', x: 0, y: 13, w: 12, h: 12, minW: 4, minH: 8 },
+];
+
+// Small screens (sm)
+const smLayout = [
+  { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
+  { i: 'output', x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
+  { i: 'vast', x: 0, y: 11, w: 12, h: 10, minW: 4, minH: 8 },
+];
+
+// Extra small screens (xs)
+const xsLayout = [
+  { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 3, minH: 6 },
+  { i: 'output', x: 0, y: 10, w: 6, h: 10, minW: 3, minH: 6 },
+  { i: 'vast', x: 0, y: 20, w: 6, h: 10, minW: 3, minH: 6 },
+];
+
+// Extra extra small screens (xxs)
+const xxsLayout = [
+  { i: 'input', x: 0, y: 0, w: 4, h: 8, minW: 2, minH: 4 },
+  { i: 'output', x: 0, y: 8, w: 4, h: 8, minW: 2, minH: 4 },
+  { i: 'vast', x: 0, y: 16, w: 4, h: 8, minW: 2, minH: 4 },
+];
+
+// Layout presets
+const layoutPresets: Record<string, {
   name: string;
-  layouts: {
-    lg: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
-    md: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
-    sm: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
-    xs: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
-    xxs: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
-  };
+  lg: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
+  md: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
+  sm: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
+  xs: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
+  xxs: { i: string; x: number; y: number; w: number; h: number; minW: number; minH: number; }[];
 }> = {
   'default': {
     name: 'Standard (Vertikal)',
-    layouts: defaultLayouts
+    lg: [
+      { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
+      { i: 'output', x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
+      { i: 'vast', x: 0, y: 11, w: 12, h: 10, minW: 4, minH: 8 },
+    ],
+    md: mdLayout,
+    sm: smLayout,
+    xs: xsLayout,
+    xxs: xxsLayout,
   },
   'side-by-side': {
     name: 'Nebeneinander (2 Spalten)',
-    layouts: {
-      lg: [
-        { i: 'input', x: 0, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-        { i: 'output', x: 6, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 12, w: 12, h: 12, minW: 3, minH: 4 },
-      ],
-      md: [
-        { i: 'input', x: 0, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-        { i: 'output', x: 6, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 12, w: 12, h: 12, minW: 3, minH: 4 },
-      ],
-      sm: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-      ],
-      xs: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-      ],
-      xxs: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-      ],
-    }
+    lg: [
+      { i: 'input', x: 0, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
+      { i: 'output', x: 6, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
+      { i: 'vast', x: 0, y: 16, w: 12, h: 12, minW: 4, minH: 8 },
+    ],
+    md: [
+      { i: 'input', x: 0, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
+      { i: 'output', x: 6, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
+      { i: 'vast', x: 0, y: 16, w: 12, h: 12, minW: 4, minH: 8 },
+    ],
+    sm: smLayout,
+    xs: xsLayout,
+    xxs: xxsLayout,
   },
   'three-columns': {
     name: '3 Spalten (Breit)',
-    layouts: {
-      lg: [
-        { i: 'input', x: 0, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-        { i: 'output', x: 4, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-        { i: 'vast', x: 8, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-      ],
-      md: [
-        { i: 'input', x: 0, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-        { i: 'output', x: 4, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-        { i: 'vast', x: 8, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-      ],
-      sm: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-      ],
-      xs: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-      ],
-      xxs: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-      ],
-    }
+    lg: [
+      { i: 'input', x: 0, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+      { i: 'output', x: 4, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+      { i: 'vast', x: 8, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+    ],
+    md: [
+      { i: 'input', x: 0, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+      { i: 'output', x: 4, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+      { i: 'vast', x: 8, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+    ],
+    sm: smLayout,
+    xs: xsLayout,
+    xxs: xxsLayout,
   },
   'compact': {
-    name: 'Kompakt (Gestapelt)',
-    layouts: {
-      lg: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
-      ],
-      md: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
-      ],
-      sm: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
-      ],
-      xs: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
-      ],
-      xxs: [
-        { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-        { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
-      ],
-    }
-  }
+    name: 'Kompakt',
+    lg: [
+      { i: 'input', x: 0, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+      { i: 'output', x: 4, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+      { i: 'vast', x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+    ],
+    md: [
+      { i: 'input', x: 0, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+      { i: 'output', x: 4, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+      { i: 'vast', x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+    ],
+    sm: smLayout,
+    xs: xsLayout,
+    xxs: xxsLayout,
+  },
 };
 
 interface FlexibleJsonLayoutProps {
@@ -237,9 +210,9 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
     // Versuche, gespeicherte Layouts aus localStorage zu laden
     if (typeof window !== 'undefined') {
       const savedLayouts = localStorage.getItem(LOCAL_STORAGE_KEY);
-      return savedLayouts ? JSON.parse(savedLayouts) : layoutPresetDefinitions.default.layouts;
+      return savedLayouts ? JSON.parse(savedLayouts) : layoutPresets.default.layouts;
     }
-    return layoutPresetDefinitions.default.layouts;
+    return layoutPresets.default.layouts;
   });
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -269,92 +242,56 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
       case 'side-by-side':
         newLayout = {
           lg: [
-            { i: 'input', x: 0, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-            { i: 'output', x: 6, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 12, w: 12, h: 12, minW: 3, minH: 4 },
+            { i: 'input', x: 0, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
+            { i: 'output', x: 6, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
+            { i: 'vast', x: 0, y: 16, w: 12, h: 12, minW: 4, minH: 8 },
           ],
           md: [
-            { i: 'input', x: 0, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-            { i: 'output', x: 6, y: 0, w: 6, h: 12, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 12, w: 12, h: 12, minW: 3, minH: 4 },
+            { i: 'input', x: 0, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
+            { i: 'output', x: 6, y: 0, w: 6, h: 15, minW: 4, minH: 8 },
+            { i: 'vast', x: 0, y: 16, w: 12, h: 12, minW: 4, minH: 8 },
           ],
-          sm: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-          ],
-          xs: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-          ],
-          xxs: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-          ],
+          sm: smLayout,
+          xs: xsLayout,
+          xxs: xxsLayout,
         };
         break;
       case 'three-columns':
         newLayout = {
           lg: [
-            { i: 'input', x: 0, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-            { i: 'output', x: 4, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-            { i: 'vast', x: 8, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
+            { i: 'input', x: 0, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+            { i: 'output', x: 4, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+            { i: 'vast', x: 8, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
           ],
           md: [
-            { i: 'input', x: 0, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-            { i: 'output', x: 4, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
-            { i: 'vast', x: 8, y: 0, w: 4, h: 24, minW: 3, minH: 4 },
+            { i: 'input', x: 0, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+            { i: 'output', x: 4, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
+            { i: 'vast', x: 8, y: 0, w: 4, h: 20, minW: 3, minH: 8 },
           ],
-          sm: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-          ],
-          xs: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-          ],
-          xxs: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 10, w: 12, h: 10, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 20, w: 12, h: 10, minW: 3, minH: 4 },
-          ],
+          sm: smLayout,
+          xs: xsLayout,
+          xxs: xxsLayout,
         };
         break;
       case 'compact':
         newLayout = {
           lg: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
+            { i: 'input', x: 0, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+            { i: 'output', x: 4, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+            { i: 'vast', x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
           ],
           md: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
+            { i: 'input', x: 0, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+            { i: 'output', x: 4, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
+            { i: 'vast', x: 8, y: 0, w: 4, h: 10, minW: 3, minH: 6 },
           ],
-          sm: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
-          ],
-          xs: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
-          ],
-          xxs: [
-            { i: 'input', x: 0, y: 0, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'output', x: 0, y: 8, w: 12, h: 8, minW: 3, minH: 4 },
-            { i: 'vast', x: 0, y: 16, w: 12, h: 8, minW: 3, minH: 4 },
-          ],
+          sm: smLayout,
+          xs: xsLayout,
+          xxs: xxsLayout,
         };
         break;
       default: // default layout
-        newLayout = defaultLayouts;
+        newLayout = layoutPresets.default.layouts;
         break;
     }
     
@@ -375,7 +312,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
             } border`}
             onChange={(e) => applyLayoutPreset(e.target.value)}
           >
-            {Object.entries(layoutPresetDefinitions).map(([key, { name }]) => (
+            {Object.entries(layoutPresets).map(([key, { name }]) => (
               <option key={key} value={key}>{name}</option>
             ))}
           </select>
@@ -434,7 +371,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
           
           <button
             onClick={() => {
-              setLayouts(defaultLayouts);
+              setLayouts(layoutPresets.default.layouts);
               setVisiblePanels(panels.filter(panel => panel.visible !== false).map(panel => panel.id));
             }}
             className={`px-3 py-1.5 rounded text-sm flex items-center ${

@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 13:44:10 CEST 2025", "commit": "Fix: Format-Button immer anzeigen und Flächennutzung verbessern"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 13:51:07 CEST 2025", "commit": "Fix: Format-Button IMMER anzeigen durch Entfernung der bedingten Rendering-Logik"}

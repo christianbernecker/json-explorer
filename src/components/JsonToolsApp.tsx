@@ -159,7 +159,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
   }, [activeTab, toggleDarkMode]);
 
   return (
-    <div className={`container mx-auto px-4 py-8 mb-20 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-75`}>
+    <div className={`w-full px-4 py-8 mb-20 ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-75`}>
       <SEO 
         title="JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer"
         description="Free tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required."
@@ -173,7 +173,7 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
         appVersion="v1.1.4" 
         isDarkMode={isDarkMode}
       />
-      <div className="w-full max-w-6xl mx-auto">
+      <div className="w-full">
       {/* Header */}
       <AppHeader 
         isDarkMode={isDarkMode}
