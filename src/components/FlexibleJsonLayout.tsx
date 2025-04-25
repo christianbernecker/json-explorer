@@ -478,6 +478,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
           {visiblePanels.includes('input') && (
             <div key="input">
               <Panel 
+                id="input"
                 title="JSON Input" 
                 isDarkMode={isDarkMode}
                 onClose={() => setVisiblePanels(prev => prev.filter(id => id !== 'input'))}
@@ -492,6 +493,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
           {visiblePanels.includes('output') && (
             <div key="output">
               <Panel 
+                id="output"
                 title="Formatted JSON" 
                 isDarkMode={isDarkMode}
                 onClose={() => setVisiblePanels(prev => prev.filter(id => id !== 'output'))}
@@ -506,6 +508,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
           {visiblePanels.includes('vast') && panels.find(panel => panel.id === 'vast') && (
             <div key="vast">
               <Panel 
+                id="vast"
                 title="VAST Explorer" 
                 isDarkMode={isDarkMode}
                 onClose={() => setVisiblePanels(prev => prev.filter(id => id !== 'vast'))}
@@ -519,7 +522,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
       </div>
       
       {/* Floating button to restore hidden panels */}
-      {(!visiblePanels.includes('input') || !visiblePanels.includes('output') || (!visiblePanels.includes('vast') && panels.find(panel => panel.id === 'vast')) && (
+      {(!visiblePanels.includes('input') || !visiblePanels.includes('output') || (!visiblePanels.includes('vast') && panels.find(panel => panel.id === 'vast'))) && (
         <button 
           className={`layout-button shadow-md ${
             isDarkMode 
