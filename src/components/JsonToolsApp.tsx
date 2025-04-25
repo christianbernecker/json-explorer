@@ -222,16 +222,14 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
         </div>
       </section>
 
-      {/* Keyboard Shortcuts Info */}
+      {/* Keyboard Shortcuts Info - Display only functional, global shortcuts */}
       <section className={`mb-6 p-4 rounded-lg text-sm ${isDarkMode ? 'bg-blue-900 bg-opacity-30 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
         <p className={`${isDarkMode ? 'text-blue-200' : 'text-blue-800'}`}>
           <strong>Keyboard Shortcuts:</strong> 
-          <code className="mx-1">Ctrl+Shift+F</code> (Format), 
-          <code className="mx-1">Ctrl+Shift+L</code> (Clear), 
-          <code className="mx-1">Ctrl+Shift+H</code> (History), 
-          <code className="mx-1">Ctrl+Shift+D</code> (Dark Mode), 
-          <code className="mx-1">Ctrl+Shift+C</code> (Compare), 
-          <code className="mx-1">Ctrl+Shift+1/2</code> (Switch Tabs)
+          <code className="mx-1">Ctrl+Shift+H</code> (Toggle History Panel), 
+          <code className="mx-1">Ctrl+Shift+D</code> (Toggle Dark Mode), 
+          <code className="mx-1">Ctrl+Shift+1</code> (Switch to Explorer), 
+          <code className="mx-1">Ctrl+Shift+2</code> (Switch to Comparator)
         </p>
       </section>
       
