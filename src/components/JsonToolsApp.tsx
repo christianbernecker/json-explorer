@@ -222,14 +222,28 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
         </div>
       </section>
 
-      {/* Keyboard Shortcuts Info - Display only functional, global shortcuts */}
+      {/* Keyboard Shortcuts Info - Display relevant shortcuts based on active tab */}
       <section className={`mb-6 p-4 rounded-lg text-sm ${isDarkMode ? 'bg-blue-900 bg-opacity-30 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
         <p className={`${isDarkMode ? 'text-blue-200' : 'text-blue-800'}`}>
           <strong>Keyboard Shortcuts:</strong> 
-          <code className="mx-1">Ctrl+Shift+H</code> (Toggle History Panel), 
-          <code className="mx-1">Ctrl+Shift+D</code> (Toggle Dark Mode), 
-          <code className="mx-1">Ctrl+Shift+1</code> (Switch to Explorer), 
-          <code className="mx-1">Ctrl+Shift+2</code> (Switch to Comparator)
+          {/* Global Shortcuts */} 
+          <code className="mx-1">Ctrl+Shift+H</code> (History), 
+          <code className="mx-1">Ctrl+Shift+D</code> (Dark Mode), 
+          <code className="mx-1">Ctrl+Shift+1/2</code> (Switch Tabs), 
+          
+          {/* Tab-Specific Shortcuts */} 
+          {activeTab === 'explorer' && (
+            <>
+              <code className="mx-1">Ctrl+Shift+F</code> (Format), 
+              <code className="mx-1">Ctrl+Shift+L</code> (Clear)
+            </>
+          )}
+          {activeTab === 'comparator' && (
+            <>
+              <code className="mx-1">Ctrl+Shift+C</code> (Compare), 
+              <code className="mx-1">Ctrl+Shift+L</code> (Clear)
+            </>
+          )}
         </p>
       </section>
       

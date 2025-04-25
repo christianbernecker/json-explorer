@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { 
   JsonDiffInspectorProps,
   StructuralDifference, 
@@ -248,6 +248,31 @@ const JsonDiffInspector = React.memo(({
     setComparisonResult(null);
     setError('');
   }, []);
+  
+  // Add keyboard shortcuts specific to this component
+  useEffect(() => {
+    const handleDiffKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+        switch (e.key.toLowerCase()) {
+          case 'c': // Compare JSONs
+            e.preventDefault();
+            compareJson();
+            break;
+          case 'l': // Clear Inputs & Results
+            e.preventDefault();
+            handleClear();
+            break;
+          default:
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleDiffKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleDiffKeyDown);
+    };
+  }, [compareJson, handleClear]); // Add dependencies
   
   // Render comparison results
   const renderComparisonResults = useCallback(() => {

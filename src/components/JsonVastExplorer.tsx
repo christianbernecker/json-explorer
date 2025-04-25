@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
 import { HistoryItem, SearchPanel } from './shared';
@@ -212,6 +212,31 @@ const JsonVastExplorer = React.memo(({
     if (!embeddedVastContent) return '';
     return addLineNumbers(highlightXml(embeddedVastContent, isDarkMode), 'vast');
   }, [embeddedVastContent, highlightXml, addLineNumbers, isDarkMode]);
+
+  // Add keyboard shortcuts specific to this component
+  useEffect(() => {
+    const handleExplorerKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+        switch (e.key.toLowerCase()) {
+          case 'f': // Format JSON/VAST
+            e.preventDefault();
+            handleFormat();
+            break;
+          case 'l': // Clear Input & Output
+            e.preventDefault();
+            handleClear();
+            break;
+          default:
+            break;
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleExplorerKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleExplorerKeyDown);
+    };
+  }, [handleFormat, handleClear]); // Add dependencies
 
   return (
     <div className="w-full">
