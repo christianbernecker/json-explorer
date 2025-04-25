@@ -2,8 +2,6 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
 import HistoryItem from './shared/HistoryItem';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import SearchPanel from './shared/SearchPanel';
 import JsonExplorerHeader from './JsonExplorerHeader';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
@@ -47,6 +45,7 @@ const JsonVastExplorer = React.memo(({
   const [jsonInput, setJsonInput] = useState('');
   const [formattedJson, setFormattedJson] = useState<any>(null);
   const [embeddedVastContent, setEmbeddedVastContent] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [vastPath, setVastPath] = useState('');
   const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
