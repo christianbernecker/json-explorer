@@ -20,7 +20,7 @@ export interface PanelConfig {
 
 // Props-Interface für Panel-Komponente
 interface PanelProps {
-  id: string;
+  id?: string;
   title: string;
   onClose?: () => void;
   children: ReactNode;
@@ -38,7 +38,8 @@ const Panel: React.FC<PanelProps> = ({
   children, 
   isDarkMode, 
   isCollapsed = false,
-  onCollapse 
+  onCollapse,
+  collapsible = false
 }) => {
   return (
     <div 
