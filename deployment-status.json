@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 16:45:57 CEST 2025", "commit": "ESLint-Warnungen behoben: Unbenutzte Importe und Variablen entfernt oder deaktiviert"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 16:59:27 CEST 2025", "commit": "UI-Verbesserungen: Buttons positioniert, Header entfernt, Suchfunktion hinzugefügt, Farbschema vereinheitlicht"}
