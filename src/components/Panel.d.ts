@@ -2,7 +2,7 @@
 import { ReactNode } from 'react';
 
 export interface PanelProps {
-  id?: string;
+  id: string;
   title: string;
   onClose?: () => void;
   children: ReactNode;

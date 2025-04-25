@@ -20,7 +20,7 @@ export interface PanelConfig {
 
 // Props-Interface für Panel-Komponente
 interface PanelProps {
-  id?: string;
+  id: string;
   title: string;
   onClose?: () => void;
   children: ReactNode;
@@ -296,7 +296,9 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
         break;
     }
     
-    setLayouts(newLayout);
+    if (newLayout) {
+      setLayouts(newLayout);
+    }
   }, []);
   
   // Set initial layouts based on active preset
