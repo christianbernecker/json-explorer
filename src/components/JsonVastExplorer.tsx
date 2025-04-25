@@ -49,7 +49,6 @@ const JsonVastExplorer = React.memo(({
   const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
   const [copyMessage, setCopyMessage] = useState('');
-  const [zoomLevel, setZoomLevel] = useState(1);
   
   // Suche-States
   const [jsonSearchTerm, setJsonSearchTerm] = useState('');
@@ -205,7 +204,6 @@ const JsonVastExplorer = React.memo(({
     setVastUrl('');
     setError('');
     setCopyMessage('');
-    setZoomLevel(1);
     setJsonSearchTerm('');
     setVastSearchTerm('');
   }, []);
