@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 09:42:27 CEST 2025", "commit": "Fix DataVisualizer with new Header component and TypeScript fixes"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 11:02:11 CEST 2025", "commit": "Klammerfehler im FlexibleJsonLayout behoben"}

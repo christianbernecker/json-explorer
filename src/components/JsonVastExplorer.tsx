@@ -4,6 +4,7 @@ import useHighlighter from '../utils/highlighter';
 import HistoryItem from './shared/HistoryItem';
 import SearchPanel from './shared/SearchPanel';
 import JsonExplorerHeader from './JsonExplorerHeader';
+import FlexibleJsonLayout, { PanelConfig } from './FlexibleJsonLayout';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -262,6 +263,144 @@ const JsonVastExplorer = React.memo(({
     }
   }, [vastUrl, copyToClipboard]);
 
+  // Panel-Konfigurationen für das FlexibleJsonLayout
+  const panels: PanelConfig[] = useMemo(() => [
+    {
+      id: 'input',
+      title: 'JSON Input',
+      content: (
+        <div className="h-full flex flex-col">
+          <textarea
+            ref={textAreaRef}
+            value={jsonInput}
+            onChange={handleJsonInputChange}
+            placeholder="Paste your unformatted JSON here..."
+            className={`w-full p-3 border rounded-lg font-mono text-sm flex-grow outline-none transition ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }`}
+          />
+        </div>
+      ),
+      visible: true
+    },
+    {
+      id: 'output',
+      title: 'Formatted JSON',
+      content: formattedJson ? (
+        <div className="h-full flex flex-col">
+          {/* Search bar for JSON */}
+          <div className="mb-2">
+            <SearchPanel targetRef={jsonContentRef} contentType="JSON" isDarkMode={isDarkMode} />
+          </div>
+          
+          <div className={`p-2 rounded-lg border shadow-inner overflow-auto flex-grow ${
+            isDarkMode 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-gray-50 border-gray-200'
+          }`}>
+            <div 
+              ref={jsonContentRef}
+              dangerouslySetInnerHTML={{ 
+                __html: formattedJsonHtml
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className={`flex items-center justify-center h-full ${
+          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+        }`}>
+          Format JSON to see results
+        </div>
+      ),
+      visible: true
+    },
+    {
+      id: 'vast',
+      title: 'VAST Explorer',
+      content: (
+        <div className="h-full flex flex-col">
+          {/* VAST URL Output (if found) */}
+          {vastUrl && (
+            <div className="mb-4">
+              <div className="flex items-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <h3 className={`text-md font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                  VAST AdTag URL
+                </h3>
+              </div>
+              <div className={`p-2 rounded-lg border shadow-inner ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-gray-50 border-gray-200'
+              }`}>
+                <div className={`font-mono text-sm break-all ${
+                  isDarkMode ? 'text-blue-300' : 'text-blue-700'
+                }`}>
+                  {vastUrl}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* VAST Content with Syntax Highlighting */}
+          {embeddedVastContent ? (
+            <>
+              <div className="flex items-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <h3 className={`text-md font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                  Embedded VAST
+                </h3>
+                <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
+                  isDarkMode 
+                    ? 'bg-blue-900 text-blue-200' 
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {vastPath}
+                </span>
+              </div>
+              
+              {/* Search bar for VAST */}
+              <div className="mb-2">
+                <SearchPanel targetRef={vastContentRef} contentType="VAST" isDarkMode={isDarkMode} />
+              </div>
+              
+              <div className={`p-2 rounded-lg border shadow-inner overflow-auto flex-grow ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-gray-50 border-gray-200'
+              }`}>
+                <div 
+                  ref={vastContentRef}
+                  dangerouslySetInnerHTML={{ 
+                    __html: formattedVastHtml 
+                  }}
+                />
+              </div>
+            </>
+          ) : (
+            <div className={`flex items-center justify-center h-full ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>
+              No VAST content found
+            </div>
+          )}
+        </div>
+      ),
+      visible: embeddedVastContent !== null
+    }
+  ], [
+    isDarkMode, jsonInput, handleJsonInputChange, textAreaRef,
+    formattedJson, formattedJsonHtml, jsonContentRef,
+    vastUrl, vastPath, embeddedVastContent, formattedVastHtml, vastContentRef
+  ]);
+
   return (
     <div className={`px-4 py-4 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} min-h-screen transition-colors`}>
       {showHistory && (
@@ -303,21 +442,6 @@ const JsonVastExplorer = React.memo(({
         setZoomLevel={setZoomLevel}
       />
       
-      {/* Input */}
-      <div className="mb-4">
-        <textarea
-          ref={textAreaRef}
-          value={jsonInput}
-          onChange={handleJsonInputChange}
-          placeholder="Paste your unformatted JSON here..."
-          className={`w-full h-32 p-3 border rounded-lg font-mono text-sm mb-3 outline-none transition ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-              : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-          }`}
-        />
-      </div>
-
       {/* Copy message notification */}
       {copyMessage && (
         <div className={`fixed top-4 right-4 px-4 py-2 rounded-lg shadow-md flex items-center z-50 ${
@@ -345,96 +469,12 @@ const JsonVastExplorer = React.memo(({
           <span>{error}</span>
         </div>
       )}
-      
-      {/* JSON Output with Syntax Highlighting */}
-      {formattedJson && (
-        <div className="mt-6">
-          <div className="flex items-center mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-            <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h2>
-          </div>
-          
-          {/* Search bar for JSON */}
-          <div className="mb-2">
-            <SearchPanel targetRef={jsonContentRef} contentType="JSON" isDarkMode={isDarkMode} />
-          </div>
-          
-          <div className={`p-4 rounded-lg border shadow-inner overflow-auto ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-gray-50 border-gray-200'
-          }`}>
-            <div 
-              ref={jsonContentRef}
-              dangerouslySetInnerHTML={{ 
-                __html: formattedJsonHtml
-              }}
-            />
-          </div>
-        </div>
-      )}
-      
-      {/* VAST URL Output (if found) */}
-      {vastUrl && (
-        <div className="mt-6">
-          <div className="flex items-center mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-            </svg>
-            <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST AdTag URL</h2>
-          </div>
-          <div className={`p-4 rounded-lg border shadow-inner ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-gray-50 border-gray-200'
-          }`}>
-            <div className={`font-mono text-sm break-all ${
-              isDarkMode ? 'text-blue-300' : 'text-blue-700'
-            }`}>
-              {vastUrl}
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* VAST Output with Syntax Highlighting */}
-      {embeddedVastContent && (
-        <div className="mt-6">
-          <div className="flex items-center mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Embedded VAST</h2>
-            <span className={`ml-2 px-2 py-1 text-xs rounded-full ${
-              isDarkMode 
-                ? 'bg-blue-900 text-blue-200' 
-                : 'bg-blue-100 text-blue-800'
-            }`}>
-              {vastPath}
-            </span>
-          </div>
-          
-          {/* Search bar for VAST */}
-          <div className="mb-2">
-            <SearchPanel targetRef={vastContentRef} contentType="VAST" isDarkMode={isDarkMode} />
-          </div>
-          
-          <div className={`p-4 rounded-lg border shadow-inner overflow-auto ${
-            isDarkMode 
-              ? 'bg-gray-800 border-gray-700' 
-              : 'bg-gray-50 border-gray-200'
-          }`}>
-            <div 
-              ref={vastContentRef}
-              dangerouslySetInnerHTML={{ 
-                __html: formattedVastHtml 
-              }}
-            />
-          </div>
-        </div>
-      )}
+
+      {/* FlexibleJsonLayout anstelle des bisherigen Layouts */}
+      <FlexibleJsonLayout 
+        panels={panels}
+        isDarkMode={isDarkMode}
+      />
     </div>
   );
 });
