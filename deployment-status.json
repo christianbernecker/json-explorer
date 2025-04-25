@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 16:31:58 CEST 2025", "commit": "Layout-Struktur zurück zum Original: Festes Drei-Spalten-Layout statt FlexibleJsonLayout"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 16:45:57 CEST 2025", "commit": "ESLint-Warnungen behoben: Unbenutzte Importe und Variablen entfernt oder deaktiviert"}
