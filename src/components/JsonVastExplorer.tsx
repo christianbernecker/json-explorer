@@ -10,6 +10,27 @@ import FlexibleJsonLayout, { PanelConfig } from './FlexibleJsonLayout';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
+// Benutzerdefiniertes Farbschema für JSON-Highlighting, das dem Original entspricht
+const customJsonStyle = {
+  ...syntaxLight,
+  "punctuation": { "color": "#24292e" },
+  "property": { "color": "#005cc5" },
+  "string": { "color": "#22863a" },
+  "number": { "color": "#e36209" },
+  "boolean": { "color": "#005cc5" },
+  "null": { "color": "#005cc5" }
+};
+
+const customJsonDarkStyle = {
+  ...syntaxDark,
+  "punctuation": { "color": "#e1e4e8" },
+  "property": { "color": "#79b8ff" },
+  "string": { "color": "#85e89d" },
+  "number": { "color": "#f97583" },
+  "boolean": { "color": "#79b8ff" },
+  "null": { "color": "#79b8ff" }
+};
+
 // VastInfo type for internal use
 interface VastInfo {
   path: string;
@@ -383,23 +404,32 @@ const JsonVastExplorer = React.memo(({
                   <div className="relative">
                     <SyntaxHighlighter
                       language="json"
-                      style={isDarkMode ? syntaxDark : syntaxLight}
+                      style={isDarkMode ? customJsonDarkStyle : customJsonStyle}
                       customStyle={{
                         borderRadius: '0.375rem',
                         fontSize: '0.875rem',
                         padding: '1rem',
                         overflowX: 'auto',
                         backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
-                        lineHeight: '1.5',
+                        lineHeight: '1.6',
+                        height: 'auto',
+                        maxHeight: '70vh'
                       }}
                       showLineNumbers={true}
                       lineNumberStyle={{
                         color: isDarkMode ? '#6b7280' : '#9ca3af',
-                        paddingRight: '1em',
+                        paddingRight: '1.5em',
                         textAlign: 'right',
                         userSelect: 'none',
                         borderRight: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb',
-                        marginRight: '1em',
+                        marginRight: '1.5em',
+                        minWidth: '2.5em'
+                      }}
+                      codeTagProps={{
+                        style: {
+                          display: 'inline-block',
+                          width: '100%'
+                        }
                       }}
                     >
                       {JSON.stringify(formattedJson, null, 2)}
@@ -477,16 +507,25 @@ const JsonVastExplorer = React.memo(({
                           padding: '1rem',
                           overflowX: 'auto',
                           backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
-                          lineHeight: '1.5',
+                          lineHeight: '1.6',
+                          height: 'auto',
+                          maxHeight: '70vh'
                         }}
                         showLineNumbers={true}
                         lineNumberStyle={{
                           color: isDarkMode ? '#6b7280' : '#9ca3af',
-                          paddingRight: '1em',
+                          paddingRight: '1.5em',
                           textAlign: 'right',
                           userSelect: 'none',
                           borderRight: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb',
-                          marginRight: '1em',
+                          marginRight: '1.5em',
+                          minWidth: '2.5em'
+                        }}
+                        codeTagProps={{
+                          style: {
+                            display: 'inline-block',
+                            width: '100%'
+                          }
                         }}
                       >
                         {embeddedVastContent}
@@ -523,32 +562,32 @@ const JsonVastExplorer = React.memo(({
   // Layout Konfiguration
   const layouts = useMemo(() => ({
     lg: [
-      { i: 'input', x: 0, y: 0, w: 4, h: 12 },   // Input-Panel nimmt 1/3 der Breite ein
-      { i: 'output', x: 4, y: 0, w: 8, h: 12 },  // Output-Panel nimmt 2/3 der Breite ein
+      { i: 'input', x: 0, y: 0, w: 4, h: 16 },   // Input-Panel mit mehr Höhe
+      { i: 'output', x: 4, y: 0, w: 8, h: 16 },  // Output-Panel mit mehr Höhe
     ],
     md: [
-      { i: 'input', x: 0, y: 0, w: 4, h: 12 },
-      { i: 'output', x: 4, y: 0, w: 8, h: 12 },
+      { i: 'input', x: 0, y: 0, w: 4, h: 16 },
+      { i: 'output', x: 4, y: 0, w: 8, h: 16 },
     ],
     sm: [
-      { i: 'input', x: 0, y: 0, w: 4, h: 12 },
-      { i: 'output', x: 4, y: 0, w: 8, h: 12 },
+      { i: 'input', x: 0, y: 0, w: 4, h: 16 },
+      { i: 'output', x: 4, y: 0, w: 8, h: 16 },
     ],
     xs: [
-      { i: 'input', x: 0, y: 0, w: 12, h: 6 },   // Auf kleineren Bildschirmen übereinander
-      { i: 'output', x: 0, y: 6, w: 12, h: 12 },
+      { i: 'input', x: 0, y: 0, w: 12, h: 8 },   // Auf kleineren Bildschirmen übereinander
+      { i: 'output', x: 0, y: 8, w: 12, h: 16 },
     ],
     xxs: [
-      { i: 'input', x: 0, y: 0, w: 2, h: 6 },
-      { i: 'output', x: 0, y: 6, w: 2, h: 12 },
+      { i: 'input', x: 0, y: 0, w: 2, h: 8 },
+      { i: 'output', x: 0, y: 8, w: 2, h: 16 },
     ],
   }), []);
 
   // Return the UI
   return (
-    <div className={`px-4 py-4 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} min-h-screen transition-colors`}>
+    <div className={`px-6 py-6 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} min-h-screen transition-colors`}>
       {showHistory && (
-        <div className={`mb-6 p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <div className={`mb-8 p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center justify-between mb-3">
             <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatting History</h2>
           </div>
@@ -615,7 +654,7 @@ const JsonVastExplorer = React.memo(({
       )}
 
       {/* FlexibleJsonLayout anstelle des bisherigen Layouts */}
-      <div className={`rounded-lg overflow-hidden ${isDarkMode ? 'shadow-md border border-gray-700' : 'shadow-sm border border-gray-200'}`}>
+      <div className={`rounded-lg overflow-hidden mt-6 ${isDarkMode ? 'shadow-md border border-gray-700' : 'shadow-sm border border-gray-200'}`} style={{ marginBottom: '2rem' }}>
         <FlexibleJsonLayout 
           panels={panels}
           initialLayouts={layouts}

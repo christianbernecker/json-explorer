@@ -487,7 +487,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
       </div>
       
       {/* Grid Layout */}
-      <div style={{ height: 'calc(100vh - 300px)', minHeight: '500px' }}>
+      <div style={{ height: 'calc(100vh - 240px)', minHeight: '700px' }}>
         <ResponsiveGridLayout
           className="layout"
           layouts={layouts}
@@ -495,7 +495,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
           cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
           rowHeight={30}
           containerPadding={[0, 0]}
-          margin={[12, 12]}
+          margin={[16, 16]}
           onLayoutChange={onLayoutChange}
           isDraggable={true}
           isResizable={true}
