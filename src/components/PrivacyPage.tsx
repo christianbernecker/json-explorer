@@ -13,18 +13,18 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
       description="Privacy Policy for the AdTech Toolbox web application."
       canonicalUrl="https://www.adtech-toolbox.com/legal/privacy"
     >
-      <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Data Privacy</h1>
+      <h1 className={`text-3xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Data Privacy</h1>
       <p className="mb-6 text-gray-600 dark:text-gray-200">Privacy Policy</p>
       
       <div className="space-y-8">
         <section>
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">1. Data Controller</h2>
+          <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>1. Data Controller</h2>
           <p>Adtech Toolbox</p>
           <p>Email: <a href="mailto:info@adtech-toolbox.com" className="text-blue-600 hover:text-blue-800 dark:text-blue-400">info@adtech-toolbox.com</a></p>
         </section>
         
         <section>
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">2. Data Protection Officer</h2>
+          <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>2. Data Protection Officer</h2>
           <p>
             We have not appointed a Data Protection Officer as it is not required for our operations under Art. 37 GDPR. For all data protection related inquiries, please contact:
           </p>
@@ -34,7 +34,7 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
         </section>
         
         <section>
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">3. Data Processing and Legal Basis</h2>
+          <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>3. Data Processing and Legal Basis</h2>
           <p>
             JSON Tools is designed to operate primarily client-side, processing data directly in your browser. No user data is transmitted to our servers during normal operation of the core functionality.
           </p>
@@ -50,7 +50,7 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
         </section>
         
         <section>
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">4. Data Storage and Retention</h2>
+          <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>4. Data Storage and Retention</h2>
           <p>
             We use local storage to save your preferences (like dark mode) and history items. This data is stored only on your device and is not accessible to us.
           </p>
@@ -63,7 +63,7 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
         </section>
         
         <section>
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">5. Cookies and Tracking</h2>
+          <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>5. Cookies and Tracking</h2>
           <p>
             We may use cookies for essential functionality and analytics purposes. Third-party vendors, including Google, may use cookies to serve ads based on a user's prior visits to our website.
           </p>
@@ -80,7 +80,7 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
         </section>
         
         <section>
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">6. Third-Party Services and Data Transfer</h2>
+          <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>6. Third-Party Services and Data Transfer</h2>
           <p>We may use third-party services for analytics and advertising purposes:</p>
           <ul className="list-disc pl-6 mt-2 space-y-1">
             <li>Google Analytics</li>
@@ -93,7 +93,7 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
         </section>
         
         <section>
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">7. Your Rights</h2>
+          <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>7. Your Rights</h2>
           <p>You have the right to:</p>
           <ul className="list-disc pl-6 mt-2 space-y-1">
             <li>Request information about your stored data (Art. 15 GDPR)</li>
@@ -110,14 +110,14 @@ function PrivacyPage({ isDarkMode }: PrivacyPageProps) {
         </section>
         
         <section>
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">8. Right to Lodge a Complaint</h2>
+          <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>8. Right to Lodge a Complaint</h2>
           <p>
             You have the right to lodge a complaint with a supervisory authority if you believe that the processing of your personal data violates the GDPR. The responsible supervisory authority for data protection issues is the data protection authority in your country of residence or the location of the alleged infringement.
           </p>
         </section>
         
         <section>
-          <h2 className="text-xl font-semibold mb-3 text-gray-800 dark:text-white">9. Changes to this Privacy Policy</h2>
+          <h2 className={`text-xl font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>9. Changes to this Privacy Policy</h2>
           <p>
             We may update this privacy policy from time to time to reflect changes in our practices or for legal reasons. We will notify you of any material changes by posting the new privacy policy on this page.
           </p>
