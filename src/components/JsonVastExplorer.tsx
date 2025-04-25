@@ -287,8 +287,8 @@ const JsonVastExplorer = React.memo(({
               value={jsonInput}
               onChange={handleJsonInputChange}
               className={`flex-1 p-4 font-mono text-sm resize-none outline-none rounded-md ${
-                isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-gray-50 text-gray-800'
-              } border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}
+                isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-800'
+              } border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}
               placeholder="Geben Sie hier Ihren JSON-Code ein..."
             />
             <div className="flex gap-2 mt-3">
@@ -376,41 +376,53 @@ const JsonVastExplorer = React.memo(({
             </div>
 
             <div className="flex-1 overflow-auto" style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
-              {/* Formatted JSON-Bereich */}
-              <div className="mb-6">
-                <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Formatted JSON</h3>
-                <div className="relative">
-                  <SyntaxHighlighter
-                    language="json"
-                    style={isDarkMode ? syntaxDark : syntaxLight}
-                    customStyle={{
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      padding: '1rem',
-                      overflowX: 'auto',
-                    }}
-                  >
-                    {formattedJson}
-                  </SyntaxHighlighter>
-                  
-                  {/* Copy JSON Button unter dem Formatted JSON */}
-                  <div className="mt-2">
-                    <button 
-                      onClick={copyJsonToClipboard} 
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                        isDarkMode 
-                          ? 'bg-indigo-900 hover:bg-indigo-800 text-indigo-200' 
-                          : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'
-                      }`}
+              {/* Formatted JSON-Bereich - nur anzeigen, wenn formattedJson existiert */}
+              {formattedJson ? (
+                <div className="mb-6">
+                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Formatted JSON</h3>
+                  <div className="relative">
+                    <SyntaxHighlighter
+                      language="json"
+                      style={isDarkMode ? syntaxDark : syntaxLight}
+                      customStyle={{
+                        borderRadius: '0.375rem',
+                        fontSize: '0.875rem',
+                        padding: '1rem',
+                        overflowX: 'auto',
+                        backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
+                      }}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                      </svg>
-                      Copy JSON
-                    </button>
+                      {JSON.stringify(formattedJson, null, 2)}
+                    </SyntaxHighlighter>
+                    
+                    {/* Copy JSON Button unter dem Formatted JSON */}
+                    <div className="mt-2">
+                      <button 
+                        onClick={copyJsonToClipboard} 
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
+                          isDarkMode 
+                            ? 'bg-indigo-900 hover:bg-indigo-800 text-indigo-200' 
+                            : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'
+                        }`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
+                        Copy JSON
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className={`flex items-center justify-center h-full text-center p-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <p className="text-lg">Klicken Sie auf "Format", um JSON zu formatieren und anzuzeigen</p>
+                  </div>
+                </div>
+              )}
 
               {/* VAST Explorer-Bereich, nur anzeigen wenn VAST-Inhalt vorhanden */}
               {embeddedVastContent && (
@@ -454,6 +466,7 @@ const JsonVastExplorer = React.memo(({
                           fontSize: '0.875rem',
                           padding: '1rem',
                           overflowX: 'auto',
+                          backgroundColor: isDarkMode ? '#1e293b' : '#f8fafc',
                         }}
                       >
                         {embeddedVastContent}
@@ -513,7 +526,7 @@ const JsonVastExplorer = React.memo(({
 
   // Return the UI
   return (
-    <div className={`px-4 py-4 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} min-h-screen transition-colors`}>
+    <div className={`px-4 py-4 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} min-h-screen transition-colors`}>
       {showHistory && (
         <div className={`mb-6 p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center justify-between mb-3">
@@ -582,11 +595,13 @@ const JsonVastExplorer = React.memo(({
       )}
 
       {/* FlexibleJsonLayout anstelle des bisherigen Layouts */}
-      <FlexibleJsonLayout 
-        panels={panels}
-        initialLayouts={layouts}
-        isDarkMode={isDarkMode}
-      />
+      <div className="rounded-lg overflow-hidden shadow-md border border-gray-200">
+        <FlexibleJsonLayout 
+          panels={panels}
+          initialLayouts={layouts}
+          isDarkMode={isDarkMode}
+        />
+      </div>
     </div>
   );
 });
