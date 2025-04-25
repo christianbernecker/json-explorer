@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 08:56:56 CEST 2025", "commit": "Fix subtitle color on PrivacyPage and ensure consistency"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 09:01:59 CEST 2025", "commit": "feat: Add visual check reminder to staging deploy script"}

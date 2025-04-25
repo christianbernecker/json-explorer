@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, GridApi } from 'ag-grid-community';
+import { ColDef, GridApi, ColumnApi } from 'ag-grid-community';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer,
@@ -12,6 +12,8 @@ import * as XLSX from 'xlsx';
 import { SEO } from './seo';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import DataVisualizerHeader from './DataVisualizerHeader';
 
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
@@ -389,16 +391,14 @@ const generateColumnDefs = (data: DataRow[], nonEmptyColumns: string[]): ColDef[
 function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   // State for file upload
   const [isLoading, setIsLoading] = useState(false);
-  const [fileName, setFileName] = useState('');
+  const [fileName, setFileName] = useState<string>('');
   const [fileError, setFileError] = useState<string | null>(null);
   
   // Data states
   const [rawData, setRawData] = useState<DataRow[]>([]);
   const [columnDefs, setColumnDefs] = useState<ColDef[]>([]);
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   const [dimensions, setDimensions] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<string[]>([]);
-  /* eslint-enable @typescript-eslint/no-unused-vars */
   
   // UI states
   const [activeTab, setActiveTab] = useState<'dashboard' | 'data' | 'visualize' | 'analytics'>('dashboard');
@@ -408,9 +408,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   const [selectedDimension, setSelectedDimension] = useState<string>('');
   const [selectedMetric, setSelectedMetric] = useState<string>('');
   const [aggregationType, setAggregationType] = useState<'sum' | 'average'>('sum');
-
-  // AG-Grid states
-  const [gridApi, setGridApi] = useState<GridApi | null>(null);
+  const gridRef = useRef<{ api: GridApi, columnApi: ColumnApi }>(null);
   
   // Calculate chart data 
   const chartData = useMemo(() => {
@@ -1132,6 +1130,21 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       
       {/* Full width container */}
       <div className={`px-4 py-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        {/* Data Visualizer Header */}
+        <DataVisualizerHeader 
+          isDarkMode={isDarkMode}
+          fileName={fileName}
+          rowCount={rawData.length}
+          columnCount={columnDefs.length}
+          exportToCsv={exportToCsv}
+          exportToJson={exportToJson}
+          exportToExcel={exportToExcel}
+          exportToPdf={exportToPdf}
+          exportChartAsPng={activeTab === 'visualize' ? exportChartAsPng : undefined}
+          onUploadNewData={() => setRawData([])}
+          activeTab={activeTab}
+        />
+      
         {/* No data state - show uploader */}
         {rawData.length === 0 ? (
           <div className={`max-w-4xl mx-auto ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-8`}>
