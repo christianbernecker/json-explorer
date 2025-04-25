@@ -401,6 +401,7 @@ const JsonVastExplorer = React.memo(({
     vastUrl, vastPath, embeddedVastContent, formattedVastHtml, vastContentRef
   ]);
 
+  // Return the UI
   return (
     <div className={`px-4 py-4 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} min-h-screen transition-colors`}>
       {showHistory && (
@@ -427,7 +428,7 @@ const JsonVastExplorer = React.memo(({
         </div>
       )}
       
-      {/* Header mit Status und Aktionen */}
+      {/* Header mit Status und Aktionen - immer anzeigen */}
       <JsonExplorerHeader 
         isDarkMode={isDarkMode}
         hasJsonContent={!!formattedJson}

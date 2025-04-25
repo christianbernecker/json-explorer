@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 13:25:59 CEST 2025", "commit": "TypeScript-Fix: id-Prop in PanelProps optional gemacht"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 13:36:31 CEST 2025", "commit": "Erneutes Deployment zur Fehlerbehebung: Fehlender Format-Button"}
