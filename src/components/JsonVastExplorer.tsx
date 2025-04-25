@@ -427,7 +427,8 @@ const JsonVastExplorer = React.memo(({
   ], [
     isDarkMode, jsonInput, handleJsonInputChange, textAreaRef,
     formattedJson, formattedJsonHtml, jsonContentRef,
-    vastUrl, vastPath, embeddedVastContent, formattedVastHtml, vastContentRef
+    vastUrl, vastPath, embeddedVastContent, formattedVastHtml, vastContentRef,
+    handleClear, handleFormat
   ]);
 
   // Return the UI
