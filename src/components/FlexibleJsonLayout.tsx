@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, ReactNode, useCallback } from 'react';
 import { Responsive, WidthProvider, Layout, Layouts } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -87,6 +87,7 @@ const Panel: React.FC<PanelProps> = ({
 // Format: x, y, w, h, minW, minH, maxW, maxH
 
 // Large screens (lg)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const lgLayout = [
   { i: 'input', x: 0, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
   { i: 'output', x: 6, y: 0, w: 6, h: 10, minW: 4, minH: 8 },
@@ -247,6 +248,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
   }, [layouts]);
       
   // Layout-Preset anwenden
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const applyLayoutPreset = useCallback((presetKey: string) => {
     let newLayout;
     
