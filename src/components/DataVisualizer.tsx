@@ -12,12 +12,11 @@ import * as XLSX from 'xlsx';
 import { SEO } from './seo';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import DataVisualizerHeader from './DataVisualizerHeader';
 
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-// We'll handle dark mode without importing the dark theme CSS
-// and use the provided classes instead
 
 // Types
 interface DataRow {
@@ -395,10 +394,8 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   // Data states
   const [rawData, setRawData] = useState<DataRow[]>([]);
   const [columnDefs, setColumnDefs] = useState<ColDef[]>([]);
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   const [dimensions, setDimensions] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<string[]>([]);
-  /* eslint-enable @typescript-eslint/no-unused-vars */
   
   // UI states
   const [activeTab, setActiveTab] = useState<'dashboard' | 'data' | 'visualize' | 'analytics'>('dashboard');
@@ -838,41 +835,39 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
 
   // Export as PDF
   const exportToPdf = useCallback(() => {
-    const chartElement = document.getElementById('chart-container');
-    const tableElement = document.getElementById('data-grid-container');
+    // Einfachere Implementierung ohne jspdf-autotable
+    const pdf = new jsPDF();
+    pdf.text(`Data Export: ${fileName}`, 14, 16);
     
-    const pdf = new jsPDF('landscape', 'pt', 'a4');
-    
-    // Add title
-    pdf.setFontSize(18);
-    pdf.text(`Data Export: ${fileName}`, 40, 40);
-    
-    if (chartElement) {
-      html2canvas(chartElement).then(chartCanvas => {
-        const chartImgData = chartCanvas.toDataURL('image/png');
-        pdf.addImage(chartImgData, 'PNG', 40, 60, 500, 300);
-        
-        if (tableElement) {
-          html2canvas(tableElement).then(tableCanvas => {
-            const tableImgData = tableCanvas.toDataURL('image/png');
-            pdf.addPage();
-            pdf.text('Data Table', 40, 40);
-            pdf.addImage(tableImgData, 'PNG', 40, 60, 750, 450);
-            pdf.save(`${fileName.split('.')[0] || 'data'}_export.pdf`);
-          });
-        } else {
-          pdf.save(`${fileName.split('.')[0] || 'data'}_export.pdf`);
-        }
+    if (rawData.length > 0) {
+      // Füge eine einfache Tabelle hinzu
+      const startY = 25;
+      const rowHeight = 8;
+      const headers = Object.keys(rawData[0]);
+      
+      // Basische Implementierung ohne autotable
+      pdf.setFontSize(10);
+      
+      // Zeichne Header
+      headers.forEach((header, i) => {
+        pdf.text(header, 14 + i * 30, startY);
       });
-    } else if (tableElement) {
-      html2canvas(tableElement).then(tableCanvas => {
-        const tableImgData = tableCanvas.toDataURL('image/png');
-        pdf.text('Data Table', 40, 40);
-        pdf.addImage(tableImgData, 'PNG', 40, 60, 750, 450);
-        pdf.save(`${fileName.split('.')[0] || 'data'}_export.pdf`);
-      });
+      
+      // Zeichne Daten (nur die ersten 10 Zeilen)
+      const maxRows = Math.min(10, rawData.length);
+      for (let i = 0; i < maxRows; i++) {
+        const y = startY + (i + 1) * rowHeight;
+        headers.forEach((header, j) => {
+          const value = String(rawData[i][header] || '');
+          // Kürze zu lange Werte
+          const displayValue = value.length > 15 ? value.substring(0, 12) + '...' : value;
+          pdf.text(displayValue, 14 + j * 30, y);
+        });
+      }
     }
-  }, [fileName]);
+    
+    pdf.save(`${fileName.split('.')[0] || 'data'}_export.pdf`);
+  }, [fileName, rawData]);
 
   // AG-Grid onGridReady handler
   const onGridReady = useCallback((params: { api: GridApi }) => {
@@ -1132,145 +1127,32 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       
       {/* Full width container */}
       <div className={`px-4 py-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        {/* No data state - show uploader */}
-        {rawData.length === 0 ? (
-          <div className={`max-w-4xl mx-auto ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-lg p-8`}>
-            <h1 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-              Data Visualizer
-            </h1>
-            {renderUploadForm()}
-            
-            {/* Example Data Preview */}
-            <div className="mt-12">
-              <h3 className={`text-lg font-medium mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                Example Data Format
-              </h3>
-              <div className="overflow-x-auto">
-                <table className={`min-w-full divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  <thead className={isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}>
-                    <tr>
-                      <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Date</th>
-                      <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Campaign</th>
-                      <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Ad Format</th>
-                      <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Impressions</th>
-                      <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Clicks</th>
-                      <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Conversions</th>
-                      <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>Spend</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'}`}>
-                    <tr>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>2023-04-01</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Summer Sale</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Display</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>12500</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>250</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>15</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>750.00</td>
-                    </tr>
-                    <tr>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>2023-04-01</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Product Launch</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Video</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>8000</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>320</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>12</td>
-                      <td className={`px-4 py-2 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>620.00</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <p className={`mt-3 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                The tool will automatically identify dimensions (non-numeric columns like Campaign, Ad Format) 
-                and metrics (numeric columns like Impressions, Clicks) for visualization.
-              </p>
+        {/* DataVisualizerHeader für konsistenten Stil */}
+        <DataVisualizerHeader 
+          isDarkMode={isDarkMode}
+          fileName={fileName}
+          rowCount={rawData.length}
+          columnCount={columnDefs.length}
+          exportToCsv={exportToCsv}
+          exportToJson={exportToJson}
+          exportToExcel={exportToExcel}
+          exportToPdf={exportToPdf}
+          exportChartAsPng={activeTab === 'visualize' ? exportChartAsPng : undefined}
+          onUploadNewData={() => setRawData([])}
+          activeTab={activeTab}
+        />
+        
+        {/* Main Content Area */}
+        <div className={`max-w-7xl mx-auto mt-6 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          {/* Render content based on state */}
+          {rawData.length === 0 ? (
+            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 mb-6`}>
+              {renderUploadForm()}
             </div>
-          </div>
-        ) : (
-          // Data loaded state - show full dashboard 
-          <div className="flex flex-col">
-            {/* Header with file info and tabs */}
-            <div className={`w-full mb-4 px-4 py-3 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md`}>
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-                <div>
-                  <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                    Data Visualizer
-                  </h1>
-                  <div className={`flex flex-wrap gap-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    <span><strong>File:</strong> {fileName}</span>
-                    <span><strong>Rows:</strong> {rawData.length}</span>
-                    <span><strong>Columns:</strong> {columnDefs.length}</span>
-                  </div>
-                </div>
-                
-                <div className="mt-4 md:mt-0 flex flex-wrap gap-2">
-                  <button 
-                    onClick={exportToCsv} 
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                      isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                    }`}
-                  >
-                    CSV Export
-                  </button>
-                  <button 
-                    onClick={exportToJson} 
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                      isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                    }`}
-                  >
-                    JSON Export
-                  </button>
-                  <button 
-                    onClick={exportToExcel} 
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                      isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                    }`}
-                  >
-                    Excel Export
-                  </button>
-                  {activeTab === 'visualize' && (
-                    <button 
-                      onClick={exportChartAsPng} 
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                        isDarkMode 
-                          ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                      }`}
-                    >
-                      PNG Export
-                    </button>
-                  )}
-                  <button 
-                    onClick={exportToPdf} 
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                      isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                    }`}
-                  >
-                    PDF Export
-                  </button>
-                  <button 
-                    onClick={() => setRawData([])} 
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                      isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                        : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                    }`}
-                  >
-                    Upload New Data
-                  </button>
-                </div>
-              </div>
-              
-              {/* Navigation Tabs */}
-              <div className="flex border-b border-gray-200 dark:border-gray-700">
+          ) : (
+            <div>
+              {/* Tab Buttons */}
+              <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
                 {tabs.map(tab => (
                   <button
                     key={tab.id}
@@ -1292,287 +1174,83 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                   </button>
                 ))}
               </div>
-            </div>
-            
-            {/* Dashboard Content */}
-            {activeTab === 'dashboard' && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                {/* KPI Cards */}
-                <div className="md:col-span-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  {metrics.slice(0, 4).map((metric, index) => {
-                    const sum = rawData.reduce((acc, row) => acc + (Number(row[metric]) || 0), 0);
-                    const avg = sum / rawData.length;
-                    const formatValue = (val: number) => val >= 1000 ? `${(val / 1000).toFixed(1)}k` : val.toFixed(1);
+              
+              {/* Content based on active tab */}
+              <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md`}>
+                {activeTab === 'dashboard' && (
+                  <div className="p-6">
+                    <h2 className="text-xl font-bold mb-4">Data Overview</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                        <p className="text-sm font-medium opacity-70">Rows</p>
+                        <p className="text-2xl font-bold">{rawData.length}</p>
+                      </div>
+                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                        <p className="text-sm font-medium opacity-70">Columns</p>
+                        <p className="text-2xl font-bold">{columnDefs.length}</p>
+                      </div>
+                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                        <p className="text-sm font-medium opacity-70">Dimensions</p>
+                        <p className="text-2xl font-bold">{dimensions.length}</p>
+                      </div>
+                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
+                        <p className="text-sm font-medium opacity-70">Metrics</p>
+                        <p className="text-2xl font-bold">{metrics.length}</p>
+                      </div>
+                    </div>
                     
-                    return (
-                      <div 
-                        key={metric}
-                        className={`p-4 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
-                      >
-                        <div className={`text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          {metric}
-                        </div>
-                        <div className="flex items-end justify-between">
-                          <div className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                            {formatValue(sum)}
-                          </div>
-                          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            Avg: {formatValue(avg)}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {/* Main Charts Section */}
-                <div className="md:col-span-8">
-                  <div className={`p-4 rounded-lg shadow mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                        {selectedMetric} by {selectedDimension}
-                      </h3>
-                      <div className="flex gap-2">
-                        <select
-                          value={chartType}
-                          onChange={(e) => setChartType(e.target.value as ChartType)}
-                          className={`px-2 py-1 text-sm rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white'
-                              : 'bg-white border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          <option value="bar">Bar Chart</option>
-                          <option value="line">Line Chart</option>
-                          <option value="pie">Pie Chart</option>
-                          <option value="radar">Radar Chart</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div id="chart-container">
-                      {renderChart()}
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Sidebar Controls and Stats */}
-                <div className="md:col-span-4">
-                  {/* Chart Controls */}
-                  <div className={`p-4 rounded-lg shadow mb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                    <h3 className={`font-medium mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                      Chart Settings
-                    </h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Dimension
-                        </label>
-                        <select
-                          value={selectedDimension}
-                          onChange={(e) => setSelectedDimension(e.target.value)}
-                          className={`w-full px-3 py-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white'
-                              : 'bg-white border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          {dimensions.length === 0 ? (
-                            <option value="">No dimensions available</option>
+                    <div className="flex flex-col lg:flex-row gap-6">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold mb-3">Detected Dimensions</h3>
+                        <div className={`max-h-60 overflow-y-auto p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          {dimensions.length > 0 ? (
+                            <ul className="space-y-1">
+                              {dimensions.map((dim, index) => (
+                                <li key={index} className="py-1 px-2 rounded hover:bg-opacity-50 hover:bg-gray-500">{dim}</li>
+                              ))}
+                            </ul>
                           ) : (
-                            dimensions.map(dim => (
-                              <option key={dim} value={dim}>{dim}</option>
-                            ))
+                            <p className="text-gray-500 dark:text-gray-400">No dimensions detected</p>
                           )}
-                        </select>
-                        {!selectedDimension && dimensions.length > 0 && (
-                          <p className="text-red-500 text-xs mt-1">
-                            Please select a dimension
-                          </p>
-                        )}
+                        </div>
                       </div>
-                      
-                      <div>
-                        <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Metric
-                        </label>
-                        <select
-                          value={selectedMetric}
-                          onChange={(e) => setSelectedMetric(e.target.value)}
-                          className={`w-full px-3 py-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white'
-                              : 'bg-white border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          {metrics.map(met => (
-                            <option key={met} value={met}>{met}</option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      <div>
-                        <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Aggregation
-                        </label>
-                        <select
-                          value={aggregationType}
-                          onChange={(e) => setAggregationType(e.target.value as 'sum' | 'average')}
-                          className={`w-full px-3 py-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white'
-                              : 'bg-white border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          <option value="sum">Sum</option>
-                          <option value="average">Average</option>
-                        </select>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold mb-3">Detected Metrics</h3>
+                        <div className={`max-h-60 overflow-y-auto p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                          {metrics.length > 0 ? (
+                            <ul className="space-y-1">
+                              {metrics.map((metric, index) => (
+                                <li key={index} className="py-1 px-2 rounded hover:bg-opacity-50 hover:bg-gray-500">{metric}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-gray-500 dark:text-gray-400">No metrics detected</p>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Stats Summary */}
-                  <div className={`p-4 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                    <h3 className={`font-medium mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                      Data Summary
-                    </h3>
-                    <div className="space-y-2">
-                      {metrics.slice(0, 3).map(metric => {
-                        const values = rawData.map(row => Number(row[metric]) || 0);
-                        const sum = values.reduce((a, b) => a + b, 0);
-                        const avg = sum / values.length;
-                        const max = Math.max(...values);
-                        const min = Math.min(...values);
-                        
-                        return (
-                          <div key={metric} className="mb-3">
-                            <div className={`font-medium mb-1 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
-                              {metric}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Sum:</span>{' '}
-                                <span className={isDarkMode ? 'text-white' : 'text-gray-800'}>
-                                  {sum.toLocaleString()}
-                                </span>
-                              </div>
-                              <div>
-                                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Avg:</span>{' '}
-                                <span className={isDarkMode ? 'text-white' : 'text-gray-800'}>
-                                  {avg.toLocaleString(undefined, {maximumFractionDigits: 2})}
-                                </span>
-                              </div>
-                              <div>
-                                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Max:</span>{' '}
-                                <span className={isDarkMode ? 'text-white' : 'text-gray-800'}>
-                                  {max.toLocaleString()}
-                                </span>
-                              </div>
-                              <div>
-                                <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Min:</span>{' '}
-                                <span className={isDarkMode ? 'text-white' : 'text-gray-800'}>
-                                  {min.toLocaleString()}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
+                )}
                 
-                {/* Data Table */}
-                <div className="md:col-span-12">
-                  <div className={`p-4 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                    <h3 className={`font-medium mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                      Data Preview
-                    </h3>
-                    <div id="data-grid-container"
-                      className={`w-full h-[300px] ${gridThemeClass}`}
-                    >
+                {activeTab === 'data' && (
+                  <div className="p-6">
+                    <div style={{ height: 600 }} className={gridThemeClass}>
                       <AgGridReact
                         rowData={rawData}
                         columnDefs={columnDefs}
-                        onGridReady={onGridReady}
                         pagination={true}
-                        paginationPageSize={10}
-                        defaultColDef={{
-                          flex: 1,
-                          minWidth: 100,
-                          sortable: true, 
-                          filter: true
-                        }}
+                        paginationPageSize={20}
+                        onGridReady={onGridReady}
                       />
                     </div>
                   </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Data Table Tab */}
-            {activeTab === 'data' && (
-              <div className={`p-4 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                    Data Table
-                  </h3>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={exportToCsv} 
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                        isDarkMode 
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                          : 'bg-blue-500 hover:bg-blue-600 text-white'
-                      }`}
-                    >
-                      CSV
-                    </button>
-                    <button 
-                      onClick={exportToExcel} 
-                      className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                        isDarkMode 
-                          ? 'bg-green-700 hover:bg-green-600 text-white' 
-                          : 'bg-green-600 hover:bg-green-700 text-white'
-                      }`}
-                    >
-                      Excel
-                    </button>
-                  </div>
-                </div>
-                <div id="data-table-container"
-                  className={`w-full h-[700px] ${gridThemeClass}`}
-                >
-                  <AgGridReact
-                    rowData={rawData}
-                    columnDefs={columnDefs}
-                    onGridReady={onGridReady}
-                    pagination={true}
-                    paginationPageSize={25}
-                    defaultColDef={{
-                      flex: 1,
-                      minWidth: 100,
-                      sortable: true, 
-                      filter: true,
-                      resizable: true,
-                      floatingFilter: true
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-            
-            {/* Visualization Tab */}
-            {activeTab === 'visualize' && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                {/* Chart Settings */}
-                <div className="md:col-span-3">
-                  <div className={`p-4 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                    <h3 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                      Visualization Settings
-                    </h3>
-                    <div className="space-y-4">
+                )}
+                
+                {activeTab === 'visualize' && (
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                       <div>
-                        <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                           Chart Type
                         </label>
                         <select
@@ -1580,7 +1258,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                           onChange={(e) => setChartType(e.target.value as ChartType)}
                           className={`w-full px-3 py-2 rounded border ${
                             isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white'
+                              ? 'bg-gray-700 border-gray-600 text-white' 
                               : 'bg-white border-gray-300 text-gray-700'
                           }`}
                         >
@@ -1590,55 +1268,54 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                           <option value="radar">Radar Chart</option>
                         </select>
                       </div>
-                      
                       <div>
-                        <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Dimension (X-Axis)
+                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Dimension
                         </label>
                         <select
                           value={selectedDimension}
                           onChange={(e) => setSelectedDimension(e.target.value)}
                           className={`w-full px-3 py-2 rounded border ${
                             isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white'
+                              ? 'bg-gray-700 border-gray-600 text-white' 
                               : 'bg-white border-gray-300 text-gray-700'
                           }`}
                         >
+                          <option value="" disabled>Select dimension...</option>
                           {dimensions.map(dim => (
                             <option key={dim} value={dim}>{dim}</option>
                           ))}
                         </select>
                       </div>
-                      
                       <div>
-                        <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Metric (Y-Axis)
+                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Metric
                         </label>
                         <select
                           value={selectedMetric}
                           onChange={(e) => setSelectedMetric(e.target.value)}
                           className={`w-full px-3 py-2 rounded border ${
                             isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white'
+                              ? 'bg-gray-700 border-gray-600 text-white' 
                               : 'bg-white border-gray-300 text-gray-700'
                           }`}
                         >
+                          <option value="" disabled>Select metric...</option>
                           {metrics.map(met => (
                             <option key={met} value={met}>{met}</option>
                           ))}
                         </select>
                       </div>
-                      
                       <div>
-                        <label className={`block text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                          Aggregation Method
+                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                          Aggregation
                         </label>
                         <select
                           value={aggregationType}
                           onChange={(e) => setAggregationType(e.target.value as 'sum' | 'average')}
                           className={`w-full px-3 py-2 rounded border ${
                             isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white'
+                              ? 'bg-gray-700 border-gray-600 text-white' 
                               : 'bg-white border-gray-300 text-gray-700'
                           }`}
                         >
@@ -1647,120 +1324,68 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                         </select>
                       </div>
                     </div>
-                  </div>
-                </div>
-                
-                {/* Chart Area */}
-                <div className="md:col-span-9">
-                  <div className={`p-4 rounded-lg shadow h-full ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                    <h3 className={`font-medium mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                      {selectedMetric} by {selectedDimension} ({aggregationType})
-                    </h3>
-                    <div className="h-[600px]">
+                    
+                    <div id="chart-container" className={`p-4 rounded-lg mb-6 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
                       {renderChart()}
                     </div>
+                    
+                    {chartData.length > 0 && (
+                      <div>
+                        <h3 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                          Data Preview
+                        </h3>
+                        <div className={`overflow-x-auto rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>
+                          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className={isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}>
+                              <tr>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                  {selectedDimension}
+                                </th>
+                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                  {selectedMetric} ({aggregationType})
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                              {chartData.map((item, index) => (
+                                <tr key={index} className={index % 2 === 0 ? 'bg-transparent' : isDarkMode ? 'bg-gray-800 bg-opacity-50' : 'bg-gray-50'}>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">{item.name}</td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm">{item.value}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
                 
-                {/* Data Preview in Visualize Tab */}
-                <div className="md:col-span-12">
-                  <div className={`p-4 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                    <h3 className={`font-medium mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                      Aggregated Data
-                    </h3>
-                    <div className="overflow-x-auto">
-                      <table className={`min-w-full divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                        <thead className={isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}>
-                          <tr>
-                            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-                              {selectedDimension}
-                            </th>
-                            <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>
-                              {selectedMetric} ({aggregationType})
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                          {chartData.map((item, index) => (
-                            <tr key={index} className={index % 2 === 0 ? isDarkMode ? 'bg-gray-800' : 'bg-white' : isDarkMode ? 'bg-gray-850' : 'bg-gray-50'}>
-                              <td className={`px-6 py-4 text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                {item.name}
-                              </td>
-                              <td className={`px-6 py-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                                {item.value.toLocaleString(undefined, {
-                                  maximumFractionDigits: 2
-                                })}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                {activeTab === 'analytics' && (
+                  <div className="p-6">
+                    <div className="text-center py-10">
+                      <h2 className="text-xl font-bold mb-4">Advanced Analytics (Coming Soon)</h2>
+                      <p className="max-w-2xl mx-auto mb-6">
+                        Machine learning-based insights, trend analysis, and predictive analytics 
+                        features are under development. Stay tuned for updates!
+                      </p>
+                      <button 
+                        className={`px-4 py-2 rounded ${
+                          isDarkMode 
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                            : 'bg-blue-500 hover:bg-blue-600 text-white'
+                        }`}
+                        onClick={() => setActiveTab('visualize')}
+                      >
+                        Go back to Visualization
+                      </button>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
-            )}
-            
-            {/* Analytics Tab */}
-            {activeTab === 'analytics' && (
-              <div className={`p-6 rounded-lg shadow ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-                <div className="text-center py-8">
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className={`h-16 w-16 mx-auto ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" 
-                    />
-                  </svg>
-                  <h2 className={`text-xl font-semibold mt-4 mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                    Advanced Analytics Coming Soon
-                  </h2>
-                  <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} max-w-xl mx-auto`}>
-                    In future updates, this section will include advanced statistical analysis, 
-                    descriptive statistics, correlation matrices, and more insights from your data.
-                  </p>
-                  
-                  {/* Preview of upcoming analytics */}
-                  <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-                    <div className={`p-6 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                      <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                        Correlation Analysis
-                      </h3>
-                      <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        Discover relationships between different metrics to identify which factors influence others.
-                      </p>
-                    </div>
-                    
-                    <div className={`p-6 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                      <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                        Trend Detection
-                      </h3>
-                      <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        Automatically identify trends and patterns in your time-series data.
-                      </p>
-                    </div>
-                    
-                    <div className={`p-6 rounded-lg shadow-sm ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                      <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                        Performance Forecasting
-                      </h3>
-                      <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        Use machine learning to predict future performance based on historical data patterns.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
