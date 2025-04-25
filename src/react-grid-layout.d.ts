@@ -19,7 +19,7 @@ declare module 'react-grid-layout' {
   export type Layouts = { [key: string]: Layout[] };
 
   export interface ResponsiveProps {
-    width: number;
+    width?: number;
     layouts: Layouts;
     breakpoints?: { [key: string]: number };
     cols?: { [key: string]: number };
