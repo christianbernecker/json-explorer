@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Sat Apr 26 16:29:46 CEST 2025", "commit": "Tabellen-Layout optimiert: Unendliche Breite in JsonDiffInspector behoben, table-layout: fixed eingeführt, Überlauf kontrolliert"}
+{"deployment": "staging", "timestamp": "Sat Apr 26 16:38:57 CEST 2025", "commit": "Unendliche Breite in JsonVastExplorer behoben: wrapLongLines aktiviert, overflow-Eigenschaften und tableLayout hinzugefügt"}
