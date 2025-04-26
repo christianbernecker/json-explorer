@@ -4,6 +4,10 @@ import useHighlighter from '../utils/highlighter';
 import HistoryItem from './shared/HistoryItem';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
+import { Box, Button, Typography } from '@mui/material';
+import { FormatAlignLeftIcon, ClearIcon, SearchIcon, ContentCopyIcon } from '@mui/icons-material';
+import TextareaAutosize from 'react-textarea-autosize';
+import KeyboardShortcutsBox from './shared/KeyboardShortcutsBox';
 
 // Benutzerdefiniertes Farbschema für JSON-Highlighting, das dem Original entspricht
 const customJsonStyle = {
@@ -305,343 +309,265 @@ const JsonVastExplorer = React.memo(({
     };
   }, [handleFormat, handleClear]);
 
+  // SearchPanel einbinden und stylen analog zum JsonDiffInspector
+  const [showSearch, setShowSearch] = useState(false);
+
+  const handleSearch = useCallback(() => {
+    setShowSearch(!showSearch);
+  }, [showSearch]);
+
+  // Anpassung der Farben und Typografie ähnlich wie im JsonDiffInspector
+  const customStyle = {
+    'hljs-attr': { color: isDarkMode ? '#6fb3d2' : '#2d5b7a' },
+    'hljs-string': { color: isDarkMode ? '#ce9178' : '#a31515' },
+    'hljs-number': { color: isDarkMode ? '#b5cea8' : '#098658' },
+    'hljs-boolean': { color: isDarkMode ? '#569cd6' : '#0000ff' },
+    'hljs-null': { color: isDarkMode ? '#569cd6' : '#0000ff' },
+    'hljs': {
+      background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
+      color: isDarkMode ? '#d4d4d4' : '#000000',
+      padding: '18px',
+      borderRadius: '4px',
+      overflowX: 'auto',
+      fontSize: '14px',
+      lineHeight: '1.4',
+    },
+  };
+
   // Return the UI - Festes Layout mit Drei-Spalten
   return (
-    <div className={`px-4 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} min-h-screen transition-colors`}>
-      {showHistory && (
-        <div className={`mb-8 p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatting History</h2>
-          </div>
-          
-          {history.length === 0 ? (
-            <div className={`text-center p-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>No history entries</div>
-          ) : (
-            <div className="max-h-80 overflow-y-auto">
-              {history.map((item, index) => (
-                <HistoryItem 
-                  key={index}
-                  item={item}
-                  index={index}
-                  onRestore={restoreFromHistory}
-                  isDarkMode={isDarkMode}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* Copy message notification */}
-      {copyMessage && (
-        <div className={`fixed top-4 right-4 px-4 py-2 rounded-lg shadow-md flex items-center z-50 ${
-          isDarkMode 
-            ? 'bg-green-800 text-green-100' 
-            : 'bg-green-100 text-green-800'
-        }`}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-          {copyMessage}
-        </div>
+    <Box
+      sx={{
+        fontFamily: "'Inter', sans-serif",
+        p: 2,
+        background: isDarkMode ? '#121212' : '#ffffff',
+        color: isDarkMode ? '#ffffff' : '#000000',
+        height: '100vh',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <JsonExplorerHeader
+        title="JSON/VAST Explorer"
+        description="Formatiere JSON, extrahiere und untersuche VAST-Inhalte"
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
+      />
+
+      <Box sx={{ display: 'flex', mb: 2, mt: 1 }}>
+        <Button
+          startIcon={<FormatAlignLeftIcon />}
+          variant="contained"
+          color="primary"
+          onClick={handleFormat}
+          sx={{ mr: 1, backgroundColor: isDarkMode ? '#333' : '#f0f0f0', color: isDarkMode ? '#fff' : '#000' }}
+          disabled={jsonInput.trim() === ''}
+        >
+          Format
+        </Button>
+        <Button
+          startIcon={<ClearIcon />}
+          variant="outlined"
+          onClick={handleClear}
+          sx={{ mr: 1, borderColor: isDarkMode ? '#555' : '#ccc', color: isDarkMode ? '#fff' : '#000' }}
+        >
+          Löschen
+        </Button>
+        <Button
+          startIcon={<SearchIcon />}
+          variant={showSearch ? "contained" : "outlined"}
+          onClick={handleSearch}
+          sx={{ 
+            mr: 1, 
+            backgroundColor: showSearch ? (isDarkMode ? '#333' : '#f0f0f0') : 'transparent',
+            borderColor: isDarkMode ? '#555' : '#ccc', 
+            color: isDarkMode ? '#fff' : '#000'
+          }}
+        >
+          Suchen
+        </Button>
+        <Box sx={{ flexGrow: 1 }} />
+        <Button
+          startIcon={<ContentCopyIcon />}
+          variant="outlined"
+          onClick={copyJsonToClipboard}
+          sx={{ mr: 1, borderColor: isDarkMode ? '#555' : '#ccc', color: isDarkMode ? '#fff' : '#000' }}
+          disabled={!formattedJson}
+        >
+          JSON kopieren
+        </Button>
+        <Button
+          startIcon={<ContentCopyIcon />}
+          variant="outlined"
+          onClick={copyVastToClipboard}
+          sx={{ borderColor: isDarkMode ? '#555' : '#ccc', color: isDarkMode ? '#fff' : '#000' }}
+          disabled={!embeddedVastContent}
+        >
+          VAST kopieren
+        </Button>
+      </Box>
+
+      {showSearch && (
+        <SearchPanel 
+          onSearch={handleJsonSearch} 
+          isDarkMode={isDarkMode} 
+          sx={{ mb: 2, p: 2, borderRadius: '4px', bgcolor: isDarkMode ? '#1e1e1e' : '#f8f8f8' }}
+        />
       )}
 
-      {/* Error message */}
-      {error && (
-        <div className={`p-4 mb-4 rounded-lg flex items-center ${
-          isDarkMode 
-            ? 'bg-red-900 text-red-200 border-l-4 border-red-600' 
-            : 'bg-red-50 text-red-600 border-l-4 border-red-500'
-        }`}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Main Content Area - Festes Layout mit Drei-Spalten */}
-      <div className={`grid grid-cols-3 gap-6 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`} style={{ minHeight: '700px' }}>
-        {/* Linke Spalte - JSON Input (immer 1/3) */}
-        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg shadow-md border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>JSON Input</h3>
-          <div className="flex flex-col h-full">
-            <textarea
+      <Box sx={{ display: 'flex', flexGrow: 1, gap: 2, height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
+        {/* Input Panel - 1/3 Breite */}
+        <Box sx={{ width: '33%', display: 'flex', flexDirection: 'column' }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: isDarkMode ? '#aaa' : '#555' }}>
+            JSON-Eingabe
+          </Typography>
+          <Box 
+            sx={{ 
+              flexGrow: 1, 
+              position: 'relative',
+              border: `1px solid ${isDarkMode ? '#333' : '#e0e0e0'}`,
+              borderRadius: '4px',
+              backgroundColor: isDarkMode ? '#1e1e1e' : '#f8f8f8',
+            }}
+          >
+            <TextareaAutosize
               ref={textAreaRef}
               value={jsonInput}
               onChange={handleJsonInputChange}
-              className={`flex-1 p-4 font-mono text-sm resize-none outline-none rounded-md ${
-                isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-white text-gray-800'
-              } border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}
-              placeholder="Geben Sie hier Ihren JSON-Code ein..."
+              placeholder="JSON hier einfügen..."
+              style={{
+                width: '100%',
+                height: '100%',
+                padding: '18px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: isDarkMode ? '#d4d4d4' : '#000000',
+                resize: 'none',
+                fontFamily: 'monospace',
+                fontSize: '14px',
+                outline: 'none',
+                boxSizing: 'border-box',
+                lineHeight: '1.4',
+              }}
+              onKeyDown={handleKeyDown}
             />
-            <div className="flex mt-3">
-              <div className="flex justify-start space-x-2 py-2">
-                <button
-                  onClick={handleFormat}
-                  className={`flex items-center px-4 py-2 rounded text-sm font-medium ${
-                    isDarkMode
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                  </svg>
-                  Format
-                </button>
-                <button
-                  onClick={handleClear}
-                  className={`flex items-center px-4 py-2 rounded text-sm font-medium ${
-                    isDarkMode
-                      ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                  }`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Clear
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+            <KeyboardShortcutsBox isDarkMode={isDarkMode} />
+          </Box>
+        </Box>
 
-        {/* Mittlere Spalte - Formatted JSON */}
-        <div className={`${embeddedVastContent ? 'col-span-1' : 'col-span-2'} ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg shadow-md border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className={`text-lg font-semibold flex items-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-              <span className="text-blue-500 mr-2 font-mono">&lt;/&gt;</span>
-              Formatted JSON
-            </h3>
-            {formattedJson && (
-              <div className="flex items-center">
-                <div className="relative mr-2">
-                  <input
-                    type="text"
-                    placeholder="Search in JSON..."
-                    value={jsonSearchTerm}
-                    onChange={(e) => setJsonSearchTerm(e.target.value)}
-                    className={`w-48 py-1 px-3 pr-8 rounded text-sm ${
-                      isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
-                    } border focus:outline-none focus:ring-1 ${
-                      isDarkMode ? 'focus:ring-blue-500' : 'focus:ring-blue-400'
-                    }`}
-                  />
-                </div>
-                <button
-                  onClick={handleJsonSearch}
-                  className={`flex items-center px-3 py-1 rounded text-sm font-medium ${
-                    isDarkMode
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  }`}
-                >
-                  <span>Find</span>
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="h-full overflow-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
-            {formattedJson ? (
-              <div ref={jsonOutputRef} className={isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}>
+        {/* Output Panel - 2/3 Breite, aufgeteilt in JSON und VAST wenn VAST vorhanden */}
+        <Box sx={{ width: '67%', display: 'flex', gap: 2 }}>
+          {/* Formatted JSON Panel */}
+          <Box 
+            sx={{ 
+              width: embeddedVastContent ? '50%' : '100%', 
+              display: 'flex', 
+              flexDirection: 'column',
+              transition: 'width 0.3s ease'
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, color: isDarkMode ? '#aaa' : '#555' }}>
+                Formatiertes JSON
+              </Typography>
+              {error && (
+                <Typography variant="caption" sx={{ ml: 2, color: 'error.main' }}>
+                  {error}
+                </Typography>
+              )}
+            </Box>
+            <Box 
+              sx={{ 
+                flexGrow: 1, 
+                border: `1px solid ${isDarkMode ? '#333' : '#e0e0e0'}`,
+                borderRadius: '4px',
+                overflow: 'auto',
+              }}
+            >
+              {formattedJson ? (
                 <SyntaxHighlighter
                   language="json"
-                  style={isDarkMode ? customJsonDarkStyle : customJsonStyle}
-                  customStyle={{
-                    borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
-                    padding: '1rem',
-                    overflowX: 'auto',
-                    backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
-                    lineHeight: '1.8',
-                    height: 'auto',
-                    minHeight: '400px'
-                  }}
-                  showLineNumbers={true}
+                  style={customStyle}
+                  showLineNumbers
                   lineNumberStyle={{
-                    color: isDarkMode ? '#6b7280' : '#9ca3af',
-                    paddingRight: '1.5em',
+                    minWidth: '40px',
                     textAlign: 'right',
+                    marginRight: '12px',
+                    color: isDarkMode ? '#6e6e6e' : '#a0a0a0',
+                    paddingRight: '12px',
+                    borderRight: `1px solid ${isDarkMode ? '#333' : '#eee'}`,
                     userSelect: 'none',
-                    borderRight: isDarkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
-                    marginRight: '1.5em',
-                    minWidth: '2.5em'
                   }}
-                  codeTagProps={{
-                    style: {
-                      display: 'inline-block',
-                      width: '100%'
-                    }
+                  wrapLongLines={false}
+                  customStyle={{
+                    margin: 0,
+                    height: '100%',
+                    background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
                   }}
                 >
-                  {JSON.stringify(formattedJson, null, 2)}
+                  {formattedJson}
                 </SyntaxHighlighter>
-              </div>
-            ) : (
-              <div className={`flex items-center justify-center h-64 text-center p-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                <div>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                  <p className="text-lg">Klicken Sie auf "Format", um JSON zu formatieren und anzuzeigen</p>
-                </div>
-              </div>
-            )}
-            {formattedJson && (
-              <div className="mt-4">
-                <button 
-                  onClick={copyJsonToClipboard} 
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                    isDarkMode 
-                      ? 'bg-indigo-900 hover:bg-indigo-800 text-indigo-200' 
-                      : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'
-                  }`}
+              ) : (
+                <Box 
+                  sx={{ 
+                    p: 2, 
+                    height: '100%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    color: isDarkMode ? '#888' : '#999',
+                    backgroundColor: isDarkMode ? '#1e1e1e' : '#f8f8f8'
+                  }}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                  </svg>
-                  Copy JSON
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+                  <Typography variant="body2">Formatiertes JSON wird hier angezeigt</Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
 
-        {/* Rechte Spalte - VAST Explorer (nur wenn VAST gefunden wurde) */}
-        {embeddedVastContent && (
-          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-4 rounded-lg shadow-md border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className={`text-lg font-semibold flex items-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                <svg className="h-5 w-5 text-blue-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-                Embedded VAST
-                <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">bids.0.ad</span>
-              </h3>
-              <div className="flex items-center">
-                <div className="relative mr-2">
-                  <input
-                    type="text"
-                    placeholder="Search in VAST..."
-                    value={vastSearchTerm}
-                    onChange={(e) => setVastSearchTerm(e.target.value)}
-                    className={`w-48 py-1 px-3 pr-8 rounded text-sm ${
-                      isDarkMode ? 'bg-gray-700 text-gray-200 border-gray-600' : 'bg-white text-gray-800 border-gray-300'
-                    } border focus:outline-none focus:ring-1 ${
-                      isDarkMode ? 'focus:ring-blue-500' : 'focus:ring-blue-400'
-                    }`}
-                  />
-                </div>
-                <button
-                  onClick={handleVastSearch}
-                  className={`flex items-center px-3 py-1 rounded text-sm font-medium ${
-                    isDarkMode
-                      ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
-                  }`}
+          {/* VAST Content Panel - nur anzeigen, wenn VAST vorhanden */}
+          {embeddedVastContent && (
+            <Box sx={{ width: '50%', display: 'flex', flexDirection: 'column' }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: isDarkMode ? '#aaa' : '#555' }}>
+                VAST-Inhalt
+              </Typography>
+              <Box 
+                sx={{ 
+                  flexGrow: 1, 
+                  border: `1px solid ${isDarkMode ? '#333' : '#e0e0e0'}`,
+                  borderRadius: '4px',
+                  overflow: 'auto',
+                }}
+              >
+                <SyntaxHighlighter
+                  language="xml"
+                  style={customStyle}
+                  showLineNumbers
+                  lineNumberStyle={{
+                    minWidth: '40px',
+                    textAlign: 'right',
+                    marginRight: '12px',
+                    color: isDarkMode ? '#6e6e6e' : '#a0a0a0',
+                    paddingRight: '12px',
+                    borderRight: `1px solid ${isDarkMode ? '#333' : '#eee'}`,
+                    userSelect: 'none',
+                  }}
+                  wrapLongLines={false}
+                  customStyle={{
+                    margin: 0,
+                    height: '100%',
+                    background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
+                  }}
                 >
-                  <span>Find</span>
-                </button>
-              </div>
-            </div>
-            <div className="h-full overflow-auto" style={{ maxHeight: 'calc(100vh - 250px)' }}>
-              {/* VAST AdTag URL */}
-              <div className="mb-4">
-                <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>VAST AdTag URL</h4>
-                <div className={`p-3 rounded-md font-mono text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} overflow-x-auto`}>
-                  {vastUrl}
-                </div>
-                
-                {/* Copy URL Button unter der VAST URL */}
-                <div className="mt-2">
-                  <button 
-                    onClick={copyVastUrlToClipboard} 
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                      isDarkMode 
-                        ? 'bg-blue-900 hover:bg-blue-800 text-blue-200' 
-                        : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
-                    }`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                    Copy URL
-                  </button>
-                </div>
-              </div>
-              
-              {/* Embedded VAST Output */}
-              <div>
-                <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Embedded VAST</h4>
-                <div className={`p-3 rounded-md font-mono text-sm ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'} overflow-x-auto`} ref={vastOutputRef}>
-                  <SyntaxHighlighter
-                    language="xml"
-                    style={isDarkMode ? syntaxDark : syntaxLight}
-                    customStyle={{
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      padding: '1rem',
-                      overflowX: 'auto',
-                      backgroundColor: isDarkMode ? '#374151' : '#f3f4f6',
-                      lineHeight: '1.8',
-                      height: 'auto',
-                      minHeight: '300px'
-                    }}
-                    showLineNumbers={true}
-                    lineNumberStyle={{
-                      color: isDarkMode ? '#6b7280' : '#9ca3af',
-                      paddingRight: '1.5em',
-                      textAlign: 'right',
-                      userSelect: 'none',
-                      borderRight: isDarkMode ? '1px solid #4b5563' : '1px solid #d1d5db',
-                      marginRight: '1.5em',
-                      minWidth: '2.5em'
-                    }}
-                    codeTagProps={{
-                      style: {
-                        display: 'inline-block',
-                        width: '100%'
-                      }
-                    }}
-                  >
-                    {embeddedVastContent}
-                  </SyntaxHighlighter>
-                </div>
-                
-                {/* Copy VAST Button unter dem VAST Inhalt */}
-                <div className="mt-4">
-                  <button 
-                    onClick={copyVastToClipboard} 
-                    className={`flex items-center gap-1 px-3 py-1.5 rounded text-sm font-medium ${
-                      isDarkMode 
-                        ? 'bg-blue-900 hover:bg-blue-800 text-blue-200' 
-                        : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
-                    }`}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                    </svg>
-                    Copy
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      {/* Styles für die Suchfunktion */}
-      <style>{`
-        .search-highlight {
-          background-color: ${isDarkMode ? '#ffab00' : '#ffff00'};
-          color: ${isDarkMode ? '#000000' : '#000000'};
-          border-radius: 2px;
-          padding: 0 2px;
-        }
-      `}</style>
-    </div>
+                  {embeddedVastContent}
+                </SyntaxHighlighter>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 });
 
