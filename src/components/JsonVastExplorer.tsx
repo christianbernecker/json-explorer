@@ -5,7 +5,7 @@ import HistoryItem from './shared/HistoryItem';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { Box, Button, Typography } from '@mui/material';
-import { FormatAlignLeftIcon, ClearIcon, SearchIcon, ContentCopyIcon } from '@mui/icons-material';
+import { FormatAlignLeft, Clear, Search, ContentCopy } from '@mui/icons-material';
 import TextareaAutosize from 'react-textarea-autosize';
 import { KeyboardShortcutsBox } from './shared';
 
@@ -357,7 +357,7 @@ const JsonVastExplorer = React.memo(({
 
       <Box sx={{ display: 'flex', mb: 2, mt: 1 }}>
         <Button
-          startIcon={<FormatAlignLeftIcon />}
+          startIcon={<FormatAlignLeft />}
           variant="contained"
           color="primary"
           onClick={handleFormat}
@@ -367,7 +367,7 @@ const JsonVastExplorer = React.memo(({
           Format
         </Button>
         <Button
-          startIcon={<ClearIcon />}
+          startIcon={<Clear />}
           variant="outlined"
           onClick={handleClear}
           sx={{ mr: 1, borderColor: isDarkMode ? '#555' : '#ccc', color: isDarkMode ? '#fff' : '#000' }}
@@ -375,7 +375,7 @@ const JsonVastExplorer = React.memo(({
           Löschen
         </Button>
         <Button
-          startIcon={<SearchIcon />}
+          startIcon={<Search />}
           variant={showSearch ? "contained" : "outlined"}
           onClick={handleSearch}
           sx={{ 
@@ -389,7 +389,7 @@ const JsonVastExplorer = React.memo(({
         </Button>
         <Box sx={{ flexGrow: 1 }} />
         <Button
-          startIcon={<ContentCopyIcon />}
+          startIcon={<ContentCopy />}
           variant="outlined"
           onClick={copyJsonToClipboard}
           sx={{ mr: 1, borderColor: isDarkMode ? '#555' : '#ccc', color: isDarkMode ? '#fff' : '#000' }}
@@ -398,7 +398,7 @@ const JsonVastExplorer = React.memo(({
           JSON kopieren
         </Button>
         <Button
-          startIcon={<ContentCopyIcon />}
+          startIcon={<ContentCopy />}
           variant="outlined"
           onClick={copyVastToClipboard}
           sx={{ borderColor: isDarkMode ? '#555' : '#ccc', color: isDarkMode ? '#fff' : '#000' }}
