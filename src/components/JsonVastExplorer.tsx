@@ -379,8 +379,7 @@ const JsonVastExplorer = React.memo(({
                 isDarkMode 
                   ? 'bg-gray-800 text-gray-100 border-gray-700' 
                   : 'bg-white text-gray-800 border-gray-300'
-              } font-mono text-sm outline-none flex-grow`}
-              style={{ minHeight: '500px' }}
+              } font-mono text-sm outline-none flex-grow min-h-[500px]`}
               placeholder="Paste JSON here..."
             />
             
@@ -451,8 +450,7 @@ const JsonVastExplorer = React.memo(({
               isDarkMode
                 ? 'bg-gray-900 border-gray-700'
                 : 'bg-gray-50 border-gray-300'
-            }`}
-            style={{ height: '500px' }}
+            } h-[500px]`}
           >
             {formattedJson && (
               <Box p={0} sx={{ height: '100%' }}>
@@ -531,8 +529,7 @@ const JsonVastExplorer = React.memo(({
                 isDarkMode
                   ? 'bg-gray-900 border-gray-700'
                   : 'bg-gray-50 border-gray-300'
-              }`}
-              style={{ height: '500px' }}
+              } h-[500px]`}
             >
               {embeddedVastContent && (
                 <Box p={0} sx={{ height: '100%' }}>
