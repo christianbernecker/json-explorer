@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 17:10:50 CEST 2025", "commit": "UI-Verbesserungen: Format/Clear Button repositioniert, Suchfunktion mit 'Find'-Button, einheitlicher grauer Hintergrund für JSON/VAST, Icons bei Überschriften"}
+{"deployment": "staging", "timestamp": "Sat Apr 26 12:38:32 CEST 2025", "commit": "UI-Anpassung: JSON-Input-Box mit Keyboard-Shortcuts-Box ausgerichtet"}
