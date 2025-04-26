@@ -307,7 +307,7 @@ const JsonVastExplorer = React.memo(({
 
   // Return the UI - Festes Layout mit Drei-Spalten
   return (
-    <div className={`px-6 py-6 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} min-h-screen transition-colors`}>
+    <div className={`px-4 ${isDarkMode ? 'bg-gray-900' : 'bg-white'} min-h-screen transition-colors`}>
       {showHistory && (
         <div className={`mb-8 p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           <div className="flex items-center justify-between mb-3">
