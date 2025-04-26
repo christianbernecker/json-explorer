@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Sat Apr 26 14:07:18 CEST 2025", "commit": "ESLint-Fehler für ungenutzte Variablen behoben"}
+{"deployment": "staging", "timestamp": "Sat Apr 26 16:16:43 CEST 2025", "commit": "Fix für Format-Button: JSON wird korrekt als formatierter String dargestellt"}

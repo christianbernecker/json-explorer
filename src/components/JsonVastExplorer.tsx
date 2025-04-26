@@ -324,6 +324,7 @@ const JsonVastExplorer = React.memo(({
   }, [showSearch]);
 
   // Anpassung der Farben und Typografie ähnlich wie im JsonDiffInspector
+  // Adjusting colors and typography similar to JsonDiffInspector
   const customStyle = {
     'hljs-attr': { color: isDarkMode ? '#e1e4e8' : '#000000' },  // Keys - Light gray in dark mode, black in light mode
     'hljs-string': { color: isDarkMode ? '#85e89d' : '#22863a' }, // Strings - Green in both modes
@@ -342,6 +343,7 @@ const JsonVastExplorer = React.memo(({
   };
 
   // Return the UI - Festes Layout mit Drei-Spalten
+  // Return the UI - Fixed layout with three columns
   return (
     <Box
       sx={{
@@ -386,7 +388,7 @@ const JsonVastExplorer = React.memo(({
           onClick={handleClear}
           sx={{ mr: 1, borderColor: isDarkMode ? '#555' : '#ccc', color: isDarkMode ? '#fff' : '#000' }}
         >
-          Löschen
+          Clear
         </Button>
         <Button
           startIcon={<Search />}
@@ -399,7 +401,7 @@ const JsonVastExplorer = React.memo(({
             color: isDarkMode ? '#fff' : '#000'
           }}
         >
-          Suchen
+          Find
         </Button>
         <Box sx={{ flexGrow: 1 }} />
         <Button
@@ -409,7 +411,7 @@ const JsonVastExplorer = React.memo(({
           sx={{ mr: 1, borderColor: isDarkMode ? '#555' : '#ccc', color: isDarkMode ? '#fff' : '#000' }}
           disabled={!formattedJson}
         >
-          JSON kopieren
+          Copy JSON
         </Button>
         <Button
           startIcon={<ContentCopy />}
@@ -418,7 +420,7 @@ const JsonVastExplorer = React.memo(({
           sx={{ borderColor: isDarkMode ? '#555' : '#ccc', color: isDarkMode ? '#fff' : '#000' }}
           disabled={!embeddedVastContent}
         >
-          VAST kopieren
+          Copy VAST
         </Button>
       </Box>
 
@@ -434,7 +436,7 @@ const JsonVastExplorer = React.memo(({
         {/* Input Panel - 1/3 Breite */}
         <Box sx={{ width: '33%', display: 'flex', flexDirection: 'column' }}>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: isDarkMode ? '#aaa' : '#555' }}>
-            JSON-Eingabe
+            JSON Input
           </Typography>
           <Box 
             sx={{ 
@@ -449,7 +451,7 @@ const JsonVastExplorer = React.memo(({
               ref={textAreaRef}
               value={jsonInput}
               onChange={handleJsonInputChange}
-              placeholder="JSON hier einfügen..."
+              placeholder="Paste JSON here..."
               style={{
                 width: '100%',
                 padding: '18px',
@@ -481,7 +483,7 @@ const JsonVastExplorer = React.memo(({
           >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <Typography variant="subtitle2" sx={{ fontWeight: 600, color: isDarkMode ? '#aaa' : '#555' }}>
-                Formatiertes JSON
+                Formatted JSON
               </Typography>
               {error && (
                 <Typography variant="caption" sx={{ ml: 2, color: 'error.main' }}>
@@ -532,7 +534,7 @@ const JsonVastExplorer = React.memo(({
                     backgroundColor: isDarkMode ? '#1e1e1e' : '#f8f8f8'
                   }}
                 >
-                  <Typography variant="body2">Formatiertes JSON wird hier angezeigt</Typography>
+                  <Typography variant="body2">Formatted JSON will be displayed here</Typography>
                 </Box>
               )}
             </Box>
@@ -542,7 +544,7 @@ const JsonVastExplorer = React.memo(({
           {embeddedVastContent && (
             <Box sx={{ width: '50%', display: 'flex', flexDirection: 'column' }}>
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: isDarkMode ? '#aaa' : '#555' }}>
-                VAST-Inhalt
+                VAST Content
               </Typography>
               <Box 
                 sx={{ 
