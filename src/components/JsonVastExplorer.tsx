@@ -434,7 +434,7 @@ const JsonVastExplorer = React.memo(({
 
       <Box sx={{ display: 'flex', flexGrow: 1, gap: 2, height: 'calc(100vh - 200px)', overflow: 'hidden' }}>
         {/* Input Panel - 1/3 Breite */}
-        <Box sx={{ width: '33%', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ width: '33%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: isDarkMode ? '#aaa' : '#555' }}>
             JSON Input
           </Typography>
@@ -445,6 +445,7 @@ const JsonVastExplorer = React.memo(({
               border: `1px solid ${isDarkMode ? '#333' : '#e0e0e0'}`,
               borderRadius: '4px',
               backgroundColor: isDarkMode ? '#1e1e1e' : '#f8f8f8',
+              overflow: 'hidden',
             }}
           >
             <TextareaAutosize
@@ -471,14 +472,15 @@ const JsonVastExplorer = React.memo(({
         </Box>
 
         {/* Output Panel - 2/3 Breite, aufgeteilt in JSON und VAST wenn VAST vorhanden */}
-        <Box sx={{ width: '67%', display: 'flex', gap: 2 }}>
+        <Box sx={{ width: '67%', display: 'flex', gap: 2, overflow: 'hidden' }}>
           {/* Formatted JSON Panel */}
           <Box 
             sx={{ 
               width: embeddedVastContent ? '50%' : '100%', 
               display: 'flex', 
               flexDirection: 'column',
-              transition: 'width 0.3s ease'
+              transition: 'width 0.3s ease',
+              overflow: 'hidden',
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -497,7 +499,9 @@ const JsonVastExplorer = React.memo(({
                 border: `1px solid ${isDarkMode ? '#333' : '#e0e0e0'}`,
                 borderRadius: '4px',
                 overflow: 'auto',
+                maxWidth: '100%',
               }}
+              ref={jsonOutputRef}
             >
               {formattedJson ? (
                 <SyntaxHighlighter
@@ -513,11 +517,14 @@ const JsonVastExplorer = React.memo(({
                     borderRight: `1px solid ${isDarkMode ? '#333' : '#eee'}`,
                     userSelect: 'none',
                   }}
-                  wrapLongLines={false}
+                  wrapLongLines={true}
                   customStyle={{
                     margin: 0,
                     height: '100%',
                     background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
+                    maxWidth: '100%',
+                    overflow: 'auto',
+                    tableLayout: 'fixed',
                   }}
                 >
                   {formattedJson}
@@ -542,7 +549,7 @@ const JsonVastExplorer = React.memo(({
 
           {/* VAST Content Panel - nur anzeigen, wenn VAST vorhanden */}
           {embeddedVastContent && (
-            <Box sx={{ width: '50%', display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ width: '50%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: isDarkMode ? '#aaa' : '#555' }}>
                 VAST Content
               </Typography>
@@ -552,7 +559,9 @@ const JsonVastExplorer = React.memo(({
                   border: `1px solid ${isDarkMode ? '#333' : '#e0e0e0'}`,
                   borderRadius: '4px',
                   overflow: 'auto',
+                  maxWidth: '100%',
                 }}
+                ref={vastOutputRef}
               >
                 <SyntaxHighlighter
                   language="xml"
@@ -567,11 +576,14 @@ const JsonVastExplorer = React.memo(({
                     borderRight: `1px solid ${isDarkMode ? '#333' : '#eee'}`,
                     userSelect: 'none',
                   }}
-                  wrapLongLines={false}
+                  wrapLongLines={true}
                   customStyle={{
                     margin: 0,
                     height: '100%',
                     background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
+                    maxWidth: '100%',
+                    overflow: 'auto',
+                    tableLayout: 'fixed',
                   }}
                 >
                   {embeddedVastContent}
