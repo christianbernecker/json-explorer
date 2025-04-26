@@ -324,7 +324,7 @@ const JsonVastExplorer = React.memo(({
   }, [handleFormat, handleClear]);
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full overflow-hidden">
       <JsonExplorerHeader 
         isDarkMode={isDarkMode}
         hasJsonContent={!!formattedJson}
@@ -339,35 +339,13 @@ const JsonVastExplorer = React.memo(({
         setZoomLevel={() => {}}
       />
       
-      <div className="w-full flex mt-4 min-h-[700px] h-[calc(100vh-220px)]">
+      <div className="w-full flex mt-4 min-h-[700px] h-[calc(100vh-220px)] overflow-hidden">
         {/* Left Panel - JSON Input (1/3 width) */}
         <div className="w-1/3 px-4 flex flex-col h-full">
           <div className={`flex justify-between items-center mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
             <Typography variant="subtitle1" className="font-semibold">
               JSON Input
             </Typography>
-            <div className="flex space-x-2">
-              <Button
-                size="small"
-                variant="contained"
-                color="primary"
-                startIcon={<FormatAlignLeft />}
-                onClick={handleFormat}
-                className="text-xs"
-              >
-                Format
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<Clear />}
-                onClick={handleClear}
-                className="text-xs"
-                color={isDarkMode ? "inherit" : "primary"}
-              >
-                Clear
-              </Button>
-            </div>
           </div>
           
           <div className="relative flex-grow mb-4 overflow-hidden flex flex-col">
@@ -388,6 +366,32 @@ const JsonVastExplorer = React.memo(({
                 {error}
               </div>
             )}
+          </div>
+          
+          {/* Format und Clear Buttons unter dem Input-Feld */}
+          <div className="flex space-x-2 mb-2">
+            <Button
+              fullWidth
+              size="small"
+              variant="contained"
+              color="primary"
+              startIcon={<FormatAlignLeft />}
+              onClick={handleFormat}
+              className="text-xs"
+            >
+              Format
+            </Button>
+            <Button
+              fullWidth
+              size="small"
+              variant="outlined"
+              startIcon={<Clear />}
+              onClick={handleClear}
+              className="text-xs"
+              color={isDarkMode ? "inherit" : "primary"}
+            >
+              Clear
+            </Button>
           </div>
           
           <div className="mt-auto">
