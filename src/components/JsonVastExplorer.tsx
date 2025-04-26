@@ -504,31 +504,43 @@ const JsonVastExplorer = React.memo(({
               ref={jsonOutputRef}
             >
               {formattedJson ? (
-                <SyntaxHighlighter
-                  language="json"
-                  style={customStyle}
-                  showLineNumbers
-                  lineNumberStyle={{
-                    minWidth: '40px',
-                    textAlign: 'right',
-                    marginRight: '12px',
-                    color: isDarkMode ? '#6e6e6e' : '#a0a0a0',
-                    paddingRight: '12px',
-                    borderRight: `1px solid ${isDarkMode ? '#333' : '#eee'}`,
-                    userSelect: 'none',
-                  }}
-                  wrapLongLines={true}
-                  customStyle={{
-                    margin: 0,
-                    height: '100%',
-                    background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
-                    maxWidth: '100%',
-                    overflow: 'auto',
-                    tableLayout: 'fixed',
-                  }}
-                >
-                  {formattedJson}
-                </SyntaxHighlighter>
+                <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+                  <SyntaxHighlighter
+                    language="json"
+                    style={customStyle}
+                    showLineNumbers
+                    lineNumberStyle={{
+                      minWidth: '40px',
+                      textAlign: 'right',
+                      marginRight: '12px',
+                      color: isDarkMode ? '#6e6e6e' : '#a0a0a0',
+                      paddingRight: '12px',
+                      borderRight: `1px solid ${isDarkMode ? '#333' : '#eee'}`,
+                      userSelect: 'none',
+                    }}
+                    wrapLongLines={true}
+                    customStyle={{
+                      margin: 0,
+                      height: '100%',
+                      background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
+                      maxWidth: '100%',
+                      overflow: 'auto',
+                      wordBreak: 'break-all',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                    codeTagProps={{
+                      style: {
+                        wordBreak: 'break-all',
+                        whiteSpace: 'pre-wrap',
+                        overflowWrap: 'break-word',
+                        display: 'block',
+                        width: '100%'
+                      }
+                    }}
+                  >
+                    {formattedJson}
+                  </SyntaxHighlighter>
+                </div>
               ) : (
                 <Box 
                   sx={{ 
@@ -563,31 +575,43 @@ const JsonVastExplorer = React.memo(({
                 }}
                 ref={vastOutputRef}
               >
-                <SyntaxHighlighter
-                  language="xml"
-                  style={customStyle}
-                  showLineNumbers
-                  lineNumberStyle={{
-                    minWidth: '40px',
-                    textAlign: 'right',
-                    marginRight: '12px',
-                    color: isDarkMode ? '#6e6e6e' : '#a0a0a0',
-                    paddingRight: '12px',
-                    borderRight: `1px solid ${isDarkMode ? '#333' : '#eee'}`,
-                    userSelect: 'none',
-                  }}
-                  wrapLongLines={true}
-                  customStyle={{
-                    margin: 0,
-                    height: '100%',
-                    background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
-                    maxWidth: '100%',
-                    overflow: 'auto',
-                    tableLayout: 'fixed',
-                  }}
-                >
-                  {embeddedVastContent}
-                </SyntaxHighlighter>
+                <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+                  <SyntaxHighlighter
+                    language="xml"
+                    style={customStyle}
+                    showLineNumbers
+                    lineNumberStyle={{
+                      minWidth: '40px',
+                      textAlign: 'right',
+                      marginRight: '12px',
+                      color: isDarkMode ? '#6e6e6e' : '#a0a0a0',
+                      paddingRight: '12px',
+                      borderRight: `1px solid ${isDarkMode ? '#333' : '#eee'}`,
+                      userSelect: 'none',
+                    }}
+                    wrapLongLines={true}
+                    customStyle={{
+                      margin: 0,
+                      height: '100%',
+                      background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
+                      maxWidth: '100%',
+                      overflow: 'auto',
+                      wordBreak: 'break-all',
+                      whiteSpace: 'pre-wrap',
+                    }}
+                    codeTagProps={{
+                      style: {
+                        wordBreak: 'break-all',
+                        whiteSpace: 'pre-wrap',
+                        overflowWrap: 'break-word',
+                        display: 'block',
+                        width: '100%'
+                      }
+                    }}
+                  >
+                    {embeddedVastContent}
+                  </SyntaxHighlighter>
+                </div>
               </Box>
             </Box>
           )}
