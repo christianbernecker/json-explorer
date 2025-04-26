@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { SearchPanelProps, SearchResult } from '../../types';
 
-const SearchPanel = React.memo(({ targetRef, contentType, isDarkMode }: SearchPanelProps) => {
+const SearchPanel = React.memo(({ targetRef, contentType, isDarkMode, onSearch }: SearchPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [matches, setMatches] = useState<SearchResult[]>([]);
@@ -10,6 +10,11 @@ const SearchPanel = React.memo(({ targetRef, contentType, isDarkMode }: SearchPa
     if (!searchTerm.trim() || !targetRef.current) {
       setMatches([]);
       return;
+    }
+    
+    // Rufe den optionalen onSearch-Callback auf, wenn er existiert
+    if (onSearch) {
+      onSearch(searchTerm);
     }
     
     const container = targetRef.current;
@@ -39,7 +44,7 @@ const SearchPanel = React.memo(({ targetRef, contentType, isDarkMode }: SearchPa
         results[0].element.style.backgroundColor = '#FEF08A';
       }
     }
-  }, [searchTerm, targetRef, isDarkMode]);
+  }, [searchTerm, targetRef, isDarkMode, onSearch]);
   
   const clearHighlights = useCallback(() => {
     matches.forEach(match => {

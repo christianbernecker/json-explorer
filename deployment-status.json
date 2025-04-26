@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Sat Apr 26 16:38:57 CEST 2025", "commit": "Unendliche Breite in JsonVastExplorer behoben: wrapLongLines aktiviert, overflow-Eigenschaften und tableLayout hinzugefügt"}
+{"deployment": "staging", "timestamp": "Sat Apr 26 16:46:01 CEST 2025", "commit": "Textumbruch-Problem im JSON Explorer behoben: Umfassende Wortumbruch-Eigenschaften und zusätzliche Container hinzugefügt"}

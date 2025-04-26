@@ -22,6 +22,7 @@ export interface SearchPanelProps {
   targetRef: React.RefObject<HTMLDivElement | null>;
   contentType: string;
   isDarkMode: boolean;
+  onSearch?: (term: string) => void;
 }
 
 export interface SearchResult {
