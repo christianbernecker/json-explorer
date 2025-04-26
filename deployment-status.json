@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri Apr 25 17:01:19 CEST 2025", "commit": "Fix: Unbenutzte zoomLevel-Variable entfernt"}
+{"deployment": "staging", "timestamp": "Fri Apr 25 17:10:50 CEST 2025", "commit": "UI-Verbesserungen: Format/Clear Button repositioniert, Suchfunktion mit 'Find'-Button, einheitlicher grauer Hintergrund für JSON/VAST, Icons bei Überschriften"}
