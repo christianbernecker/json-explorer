@@ -37,7 +37,7 @@ const JsonDiffInspector = React.memo(({
     if (!html) return '';
     
     const lines = html.split('\n');
-    let result = '<table cellpadding="0" cellspacing="0" border="0" style="width: 100%; border-collapse: collapse;">';
+    let result = '<table cellpadding="0" cellspacing="0" border="0" style="width: 100%; table-layout: fixed; border-collapse: collapse;">';
     
     // Calculate font size based on zoom level
     const fontSize = Math.round(12 * zoomLevel);
@@ -46,7 +46,7 @@ const JsonDiffInspector = React.memo(({
       result += `
         <tr>
           <td style="width: 30px; text-align: right; color: ${isDarkMode ? '#9ca3af' : '#999'}; user-select: none; padding-right: 8px; font-size: ${fontSize}px; border-right: 1px solid ${isDarkMode ? '#4b5563' : '#ddd'}; vertical-align: top;">${index + 1}</td>
-          <td style="padding-left: 8px; white-space: pre; font-family: monospace; font-size: ${fontSize}px;">${line}</td>
+          <td style="padding-left: 8px; white-space: pre; font-family: monospace; font-size: ${fontSize}px; overflow-wrap: break-word; word-wrap: break-word; max-width: calc(100% - 38px);">${line}</td>
         </tr>
       `;
     });
@@ -348,13 +348,13 @@ const JsonDiffInspector = React.memo(({
             <div className={`border rounded-lg overflow-hidden ${
               isDarkMode ? 'border-gray-700' : 'border-gray-200'
             }`}>
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead className={`${
                   isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-600'
                 }`}>
                   <tr>
-                    <th className="px-4 py-2 text-left">Path</th>
-                    <th className="px-4 py-2 text-left">Issue</th>
+                    <th className="px-4 py-2 text-left w-2/5">Path</th>
+                    <th className="px-4 py-2 text-left w-3/5">Issue</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${
@@ -367,8 +367,8 @@ const JsonDiffInspector = React.memo(({
                       ? isDarkMode ? 'bg-red-900 bg-opacity-20' : 'bg-red-50' 
                       : isDarkMode ? 'bg-blue-900 bg-opacity-20' : 'bg-blue-50'
                     }`}>
-                      <td className="px-4 py-3 font-mono text-sm">{diff.path}</td>
-                      <td className="px-4 py-3">{diff.description}</td>
+                      <td className="px-4 py-3 font-mono text-sm break-all w-2/5 overflow-hidden text-ellipsis">{diff.path}</td>
+                      <td className="px-4 py-3 break-words w-3/5">{diff.description}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -385,14 +385,14 @@ const JsonDiffInspector = React.memo(({
             <div className={`border rounded-lg overflow-hidden ${
               isDarkMode ? 'border-gray-700' : 'border-gray-200'
             }`}>
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead className={`${
                   isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-600'
                 }`}>
                   <tr>
-                    <th className="px-4 py-2 text-left">Path</th>
-                    <th className="px-4 py-2 text-left">Left Value</th>
-                    <th className="px-4 py-2 text-left">Right Value</th>
+                    <th className="px-4 py-2 text-left w-1/4">Path</th>
+                    <th className="px-4 py-2 text-left w-[37.5%]">Left Value</th>
+                    <th className="px-4 py-2 text-left w-[37.5%]">Right Value</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${
@@ -402,13 +402,13 @@ const JsonDiffInspector = React.memo(({
                     <tr key={`value-${index}`} className={`${
                       isDarkMode ? 'bg-gray-800' : 'bg-white'
                     }`}>
-                      <td className="px-4 py-3 font-mono text-sm align-top">{diff.path}</td>
-                      <td className={`px-4 py-3 font-mono text-sm whitespace-pre-wrap align-top ${
+                      <td className="px-4 py-3 font-mono text-sm break-all w-1/4 overflow-hidden text-ellipsis align-top">{diff.path}</td>
+                      <td className={`px-4 py-3 font-mono text-sm whitespace-pre-wrap break-all align-top w-[37.5%] overflow-hidden ${
                         isDarkMode ? 'text-red-300' : 'text-red-600'
                       }`}>
                         {formatDiffValue(diff.leftValue)}
                       </td>
-                      <td className={`px-4 py-3 font-mono text-sm whitespace-pre-wrap align-top ${
+                      <td className={`px-4 py-3 font-mono text-sm whitespace-pre-wrap break-all align-top w-[37.5%] overflow-hidden ${
                         isDarkMode ? 'text-green-300' : 'text-green-600'
                       }`}>
                         {formatDiffValue(diff.rightValue)}
@@ -426,36 +426,36 @@ const JsonDiffInspector = React.memo(({
           <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
             Side-by-Side View
           </h3>
-          <div className="flex flex-row gap-4">
-            <div className="w-1/2 min-w-0">
+          <div className="flex flex-row gap-4 overflow-hidden">
+            <div className="w-1/2 min-w-0 overflow-hidden">
               <div className={`p-2 rounded-lg font-semibold text-center ${
                 isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'
               }`}>
                 Left JSON
               </div>
-              <div className={`mt-2 p-4 rounded-lg border shadow-inner overflow-auto max-h-96 ${
+              <div className={`mt-2 p-4 rounded-lg border shadow-inner overflow-auto max-h-96 max-w-full ${
                 isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
               }`}>
                 {leftJsonInput ? 
                   <div dangerouslySetInnerHTML={{ 
                     __html: addLineNumbers(highlightJson(JSON.parse(leftJsonInput), isDarkMode), 'json') 
-                  }} />
+                  }} className="overflow-x-auto whitespace-pre break-words w-full" style={{ maxWidth: "100%" }} />
                 : ''}
               </div>
             </div>
-            <div className="w-1/2 min-w-0">
+            <div className="w-1/2 min-w-0 overflow-hidden">
               <div className={`p-2 rounded-lg font-semibold text-center ${
                 isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'
               }`}>
                 Right JSON
               </div>
-              <div className={`mt-2 p-4 rounded-lg border shadow-inner overflow-auto max-h-96 ${
+              <div className={`mt-2 p-4 rounded-lg border shadow-inner overflow-auto max-h-96 max-w-full ${
                 isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
               }`}>
                 {rightJsonInput ? 
                   <div dangerouslySetInnerHTML={{ 
                     __html: addLineNumbers(highlightJson(JSON.parse(rightJsonInput), isDarkMode), 'json') 
-                  }} />
+                  }} className="overflow-x-auto whitespace-pre break-words w-full" style={{ maxWidth: "100%" }} />
                 : ''}
               </div>
             </div>
