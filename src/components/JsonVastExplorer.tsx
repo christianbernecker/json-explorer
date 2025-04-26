@@ -357,8 +357,13 @@ const JsonVastExplorer = React.memo(({
                 isDarkMode 
                   ? 'bg-gray-800 text-gray-100 border-gray-700' 
                   : 'bg-white text-gray-800 border-gray-300'
-              } font-mono text-sm outline-none flex-grow min-h-[500px]`}
+              } font-mono text-sm outline-none flex-grow min-h-[500px] whitespace-pre-wrap break-all`}
               placeholder="Paste JSON here..."
+              style={{
+                wordWrap: 'break-word',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}
             />
             
             {error && (
