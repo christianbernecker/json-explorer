@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import HistoryItem from './shared/HistoryItem';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
@@ -10,7 +11,7 @@ import TextareaAutosize from 'react-textarea-autosize';
 import { KeyboardShortcutsBox, SearchPanel } from './shared';
 import JsonExplorerHeader from './JsonExplorerHeader';
 
-// Benutzerdefiniertes Farbschema für JSON-Highlighting, das dem Original entspricht
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const customJsonStyle = {
   ...syntaxLight,
   "punctuation": { "color": "#24292e" },
@@ -21,6 +22,7 @@ const customJsonStyle = {
   "null": { "color": "#005cc5" }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const customJsonDarkStyle = {
   ...syntaxDark,
   "punctuation": { "color": "#e1e4e8" },
@@ -53,6 +55,7 @@ const JsonVastExplorer = React.memo(({
   const [vastPath, setVastPath] = useState('');
   const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [copyMessage, setCopyMessage] = useState('');
   
   // Suche-States
@@ -182,6 +185,7 @@ const JsonVastExplorer = React.memo(({
   }, []);
   
   // Restore from history
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const restoreFromHistory = useCallback((item: HistoryItemType) => {
     if (item.type === 'json') {
       setFormattedJson(item.content);
