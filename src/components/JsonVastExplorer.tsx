@@ -319,17 +319,17 @@ const JsonVastExplorer = React.memo(({
 
   // Anpassung der Farben und Typografie ähnlich wie im JsonDiffInspector
   const customStyle = {
-    'hljs-attr': { color: isDarkMode ? '#6fb3d2' : '#2d5b7a' },
-    'hljs-string': { color: isDarkMode ? '#ce9178' : '#a31515' },
-    'hljs-number': { color: isDarkMode ? '#b5cea8' : '#098658' },
-    'hljs-boolean': { color: isDarkMode ? '#569cd6' : '#0000ff' },
-    'hljs-null': { color: isDarkMode ? '#569cd6' : '#0000ff' },
+    'hljs-attr': { color: isDarkMode ? '#e1e4e8' : '#000000' },  // Keys - Light gray in dark mode, black in light mode
+    'hljs-string': { color: isDarkMode ? '#85e89d' : '#22863a' }, // Strings - Green in both modes
+    'hljs-number': { color: isDarkMode ? '#79b8ff' : '#005cc5' }, // Numbers - Blue in both modes
+    'hljs-boolean': { color: isDarkMode ? '#c678dd' : '#6f42c1' }, // Booleans - Purple in both modes
+    'hljs-null': { color: isDarkMode ? '#9ca3af' : '#6a737d' }, // Null - Gray in both modes
     'hljs': {
       background: isDarkMode ? '#1e1e1e' : '#f8f8f8',
       color: isDarkMode ? '#d4d4d4' : '#000000',
       padding: '18px',
       borderRadius: '4px',
-      overflowX: 'auto',
+      overflow: 'auto',
       fontSize: '14px',
       lineHeight: '1.4',
     },
@@ -451,7 +451,6 @@ const JsonVastExplorer = React.memo(({
                 boxSizing: 'border-box',
                 lineHeight: '1.4',
               }}
-              onKeyDown={handleKeyDown}
             />
             <KeyboardShortcutsBox isDarkMode={isDarkMode} />
           </Box>
