@@ -350,10 +350,17 @@ const JsonVastExplorer = React.memo(({
       }}
     >
       <JsonExplorerHeader
-        title="JSON/VAST Explorer"
-        description="Formatiere JSON, extrahiere und untersuche VAST-Inhalte"
         isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
+        hasJsonContent={!!formattedJson}
+        hasVastContent={!!embeddedVastContent}
+        characterCount={jsonInput.length}
+        resetFields={handleClear}
+        handleFormat={handleFormat}
+        copyJsonToClipboard={copyJsonToClipboard}
+        copyVastToClipboard={copyVastToClipboard}
+        copyVastUrlToClipboard={copyVastUrlToClipboard}
+        zoomLevel={1}
+        setZoomLevel={() => {}}
       />
 
       <Box sx={{ display: 'flex', mb: 2, mt: 1 }}>
@@ -411,9 +418,9 @@ const JsonVastExplorer = React.memo(({
 
       {showSearch && (
         <SearchPanel 
-          onSearch={handleJsonSearch} 
-          isDarkMode={isDarkMode} 
-          sx={{ mb: 2, p: 2, borderRadius: '4px', bgcolor: isDarkMode ? '#1e1e1e' : '#f8f8f8' }}
+          targetRef={jsonOutputRef}
+          contentType="JSON"
+          isDarkMode={isDarkMode}
         />
       )}
 
