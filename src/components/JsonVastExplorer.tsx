@@ -446,7 +446,6 @@ const JsonVastExplorer = React.memo(({
               placeholder="JSON hier einfügen..."
               style={{
                 width: '100%',
-                height: '100%',
                 padding: '18px',
                 border: 'none',
                 backgroundColor: 'transparent',
