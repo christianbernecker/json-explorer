@@ -7,7 +7,7 @@ import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-sy
 import { Box, Button, Typography } from '@mui/material';
 import { FormatAlignLeftIcon, ClearIcon, SearchIcon, ContentCopyIcon } from '@mui/icons-material';
 import TextareaAutosize from 'react-textarea-autosize';
-import KeyboardShortcutsBox from './shared/KeyboardShortcutsBox';
+import { KeyboardShortcutsBox } from './shared';
 
 // Benutzerdefiniertes Farbschema für JSON-Highlighting, das dem Original entspricht
 const customJsonStyle = {
