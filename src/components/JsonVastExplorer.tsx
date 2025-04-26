@@ -118,7 +118,9 @@ const JsonVastExplorer = React.memo(({
         return;
       }
       
+      // Parse JSON, then stringify it with proper formatting
       const parsedJson = JSON.parse(inputStr);
+      const formattedJsonString = JSON.stringify(parsedJson, null, 2);
       
       // Search for VAST content
       const vastInfo = findVastContent(parsedJson);
@@ -126,7 +128,7 @@ const JsonVastExplorer = React.memo(({
         const formattedVast = formatXml(vastInfo.content);
         const url = extractVastUrl(vastInfo.content);
         
-        setFormattedJson(parsedJson);
+        setFormattedJson(formattedJsonString);
         setEmbeddedVastContent(formattedVast);
         setVastPath(vastInfo.path);
         setVastUrl(url || '');
@@ -144,7 +146,7 @@ const JsonVastExplorer = React.memo(({
         
         addToHistoryItem(newHistoryItem);
       } else {
-        setFormattedJson(parsedJson);
+        setFormattedJson(formattedJsonString);
         setEmbeddedVastContent(null);
         setVastPath('');
         setVastUrl('');
