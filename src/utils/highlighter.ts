@@ -32,6 +32,7 @@ const useHighlighter = () => {
     if (!xml) return '';
     xml = xml.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // Tags und Attribute
+    // eslint-disable-next-line no-useless-escape
     let highlighted = xml.replace(/&lt;(\/?)?([-\w:]+)([^&]*?)(\/?)\&gt;/g, 
       (match, slash, tag, attrs, endSlash) => {
         let attrsHighlighted = attrs;
