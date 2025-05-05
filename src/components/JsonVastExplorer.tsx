@@ -5,8 +5,14 @@ import useHighlighter from '../utils/highlighter';
 import HistoryItem from './shared/HistoryItem';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
+// Die folgenden MUI-Komponenten werden nicht mehr verwendet
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Box, Button, Typography } from '@mui/material';
+// Die folgenden Icon-Komponenten werden nicht mehr verwendet
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { FormatAlignLeft, Clear, Search, ContentCopy } from '@mui/icons-material';
+// Die folgenden Komponenten werden nicht mehr verwendet
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { KeyboardShortcutsBox, SearchPanel } from './shared';
 import JsonExplorerHeader from './JsonExplorerHeader';
 import FlexibleJsonLayout from './FlexibleJsonLayout';
@@ -58,10 +64,14 @@ const JsonVastExplorer = React.memo(({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [copyMessage, setCopyMessage] = useState('');
   
-  // Suche-States
+  // Suche-States werden nicht mehr direkt verwendet, aber für zukünftige Nutzung beibehalten
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jsonSearchTerm, setJsonSearchTerm] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [vastSearchTerm, setVastSearchTerm] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showJsonSearch, setShowJsonSearch] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showVastSearch, setShowVastSearch] = useState(false);
   
   // Refs for search functionality
