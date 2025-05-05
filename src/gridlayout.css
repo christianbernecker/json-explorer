@@ -2,6 +2,8 @@
 .react-grid-layout {
   position: relative;
   transition: height 200ms ease;
+  width: 100%;
+  height: 100%;
 }
 
 .react-grid-item {
@@ -164,4 +166,9 @@
     width: 2.25rem;
     height: 2.25rem;
   }
+}
+
+/* Anpassungen für Vollbild-Nutzung */
+.react-grid-layout > div {
+  height: 100% !important;
 } 

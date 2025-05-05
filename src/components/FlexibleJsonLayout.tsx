@@ -487,7 +487,7 @@ const FlexibleJsonLayout: React.FC<FlexibleJsonLayoutProps> = ({
       </div>
       
       {/* Grid Layout */}
-      <div style={{ height: 'calc(100vh - 240px)', minHeight: '700px' }}>
+      <div style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
         <ResponsiveGridLayout
           className="layout"
           layouts={layouts}
