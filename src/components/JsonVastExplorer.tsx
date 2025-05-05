@@ -11,24 +11,25 @@ interface VastInfo {
   content: string;
 }
 
-// Definiere addLineNumbers hier, da es nicht vom Hook kommt
-const addLineNumbersGlobal = (html: string, language: string, isDarkMode: boolean) => {
-  if (!html) return '';
-  const lines = html.split('\n');
-  // Angepasste Zoom-Logik (hier fix auf 100%)
-  const zoomLevel = 1;
-  const fontSize = Math.round(12 * zoomLevel);
-  let result = '<table cellpadding="0" cellspacing="0" border="0" style="width: 100%; table-layout: fixed; border-collapse: collapse;">';
-  lines.forEach((line, index) => {
-    result += `
-      <tr>
-        <td style="width: 30px; text-align: right; color: ${isDarkMode ? '#9ca3af' : '#999'}; user-select: none; padding-right: 8px; font-size: ${fontSize}px; border-right: 1px solid ${isDarkMode ? '#4b5563' : '#ddd'}; vertical-align: top;">${index + 1}</td>
-        <td style="padding-left: 8px; white-space: pre-wrap; font-family: monospace; font-size: ${fontSize}px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-all; max-width: calc(100% - 38px);">${line}</td>
-      </tr>
-    `;
-  });
-  result += '</table>';
-  return result;
+// Definiere addLineNumbersGlobal als useCallback, um ESLint-Warnung zu vermeiden
+const useAddLineNumbers = (isDarkMode: boolean) => {
+  return useCallback((html: string, language: string) => { // language wird nicht verwendet, kann entfernt werden
+    if (!html) return '';
+    const lines = html.split('\n');
+    const zoomLevel = 1; 
+    const fontSize = Math.round(12 * zoomLevel);
+    let result = '<table cellpadding="0" cellspacing="0" border="0" style="width: 100%; table-layout: fixed; border-collapse: collapse;">';
+    lines.forEach((line, index) => {
+      result += `
+        <tr>
+          <td style="width: 30px; text-align: right; color: ${isDarkMode ? '#9ca3af' : '#999'}; user-select: none; padding-right: 8px; font-size: ${fontSize}px; border-right: 1px solid ${isDarkMode ? '#4b5563' : '#ddd'}; vertical-align: top;">${index + 1}</td>
+          <td style="padding-left: 8px; white-space: pre-wrap; font-family: monospace; font-size: ${fontSize}px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-all; max-width: calc(100% - 38px);">${line}</td>
+        </tr>
+      `;
+    });
+    result += '</table>';
+    return result;
+  }, [isDarkMode]); // Abhängigkeit von isDarkMode
 };
 
 // Component Start
@@ -42,7 +43,7 @@ const JsonVastExplorer = React.memo(({
   // Explorer state
   const [jsonInput, setJsonInput] = useState('');
   const [parsedJson, setParsedJson] = useState<any>(null);
-  const [formattedVast, setFormattedVast] = useState<string | null>(null);
+  const [rawVastContent, setRawVastContent] = useState<string | null>(null);
   const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
   const [copyMessage, setCopyMessage] = useState('');
@@ -59,7 +60,10 @@ const JsonVastExplorer = React.memo(({
   const vastOutputRef = useRef<HTMLDivElement>(null);
   
   // Custom hook for Syntax Highlighting
-  const { highlightJson, formatXml } = useHighlighter();
+  const { highlightJson, highlightXml, formatXml } = useHighlighter();
+  
+  // Hook für Zeilennummern aufrufen
+  const addLineNumbersGlobal = useAddLineNumbers(isDarkMode);
   
   // Helper function to add to history
   const addToHistoryItem = useCallback((item: HistoryItemType) => {
@@ -115,23 +119,22 @@ const JsonVastExplorer = React.memo(({
       
       const vastInfo = findVastContent(currentParsedJson);
       if (vastInfo) {
-        const currentFormattedVast = formatXml(vastInfo.content);
+        setRawVastContent(vastInfo.content);
         const url = extractVastUrl(vastInfo.content);
         
-        setFormattedVast(currentFormattedVast);
         setVastUrl(url || '');
         
         const newHistoryItem: HistoryItemType = {
           type: 'json_vast',
           jsonContent: currentParsedJson,
-          vastContent: currentFormattedVast,
+          vastContent: vastInfo.content,
           vastUrl: url || '',
           timestamp: Date.now()
         };
         
         addToHistoryItem(newHistoryItem);
       } else {
-        setFormattedVast(null);
+        setRawVastContent(null);
         setVastUrl('');
         
         const newHistoryItem: HistoryItemType = {
@@ -145,10 +148,10 @@ const JsonVastExplorer = React.memo(({
     } catch (err: any) {
       setError(`Parsing error: ${err.message}`);
       setParsedJson(null);
-      setFormattedVast(null);
+      setRawVastContent(null);
       setVastUrl('');
     }
-  }, [jsonInput, findVastContent, formatXml, extractVastUrl, addToHistoryItem]);
+  }, [jsonInput, findVastContent, extractVastUrl, addToHistoryItem]);
   
   // Copy content to clipboard - Optimized with useCallback
   const copyToClipboard = useCallback((text: string, type: string) => {
@@ -172,13 +175,13 @@ const JsonVastExplorer = React.memo(({
     if (item.type === 'json') {
       setJsonInput(JSON.stringify(item.content, null, 2));
       setParsedJson(item.content);
-      setFormattedVast(null);
+      setRawVastContent(null);
       setVastUrl('');
       setError('');
     } else {
       setJsonInput(JSON.stringify(item.jsonContent, null, 2));
       setParsedJson(item.jsonContent);
-      setFormattedVast(item.vastContent || null);
+      setRawVastContent(item.vastContent || null);
       setVastUrl(item.vastUrl || '');
       setError('');
     }
@@ -189,7 +192,7 @@ const JsonVastExplorer = React.memo(({
   const handleClear = useCallback(() => {
     setJsonInput('');
     setParsedJson(null);
-    setFormattedVast(null);
+    setRawVastContent(null);
     setVastUrl('');
     setError('');
     setCopyMessage('');
@@ -208,10 +211,11 @@ const JsonVastExplorer = React.memo(({
 
   // Kopieren des VAST-Inhalts in die Zwischenablage
   const copyVastToClipboard = useCallback(() => {
-    if (formattedVast) {
-      copyToClipboard(formattedVast, 'VAST');
+    if (rawVastContent) {
+      const formattedForCopy = formatXml(rawVastContent);
+      copyToClipboard(formattedForCopy, 'VAST');
     }
-  }, [formattedVast, copyToClipboard]);
+  }, [rawVastContent, copyToClipboard, formatXml]);
 
   // Kopieren der VAST-URL in die Zwischenablage
   const copyVastUrlToClipboard = useCallback(() => {
@@ -245,7 +249,7 @@ const JsonVastExplorer = React.memo(({
 
   useEffect(() => {
     applySearchHighlight(vastOutputRef, vastSearchTerm);
-  }, [vastSearchTerm, formattedVast, applySearchHighlight]);
+  }, [vastSearchTerm, rawVastContent, applySearchHighlight]);
 
   // Keyboard shortcuts (isInputActive entfernt)
   useEffect(() => {
@@ -276,18 +280,16 @@ const JsonVastExplorer = React.memo(({
     if (language === 'json') {
       highlightedHtml = highlightJson(content, isDarkMode);
     } else if (language === 'xml') {
-      highlightedHtml = content; // formatXml hat bereits <pre> etc.
+      highlightedHtml = highlightXml(content as string, isDarkMode);
     }
-    
-    // Verwende die hier definierte Funktion
-    const contentWithLines = addLineNumbersGlobal(highlightedHtml, language, isDarkMode); 
-
+    // Verwende den Hook hier
+    const contentWithLines = addLineNumbersGlobal(highlightedHtml, language);
     return (
       <div 
         ref={ref}
         dangerouslySetInnerHTML={{ __html: contentWithLines }}
         className="overflow-x-auto whitespace-pre break-words w-full"
-        style={{ maxWidth: "100%" }} // Stellt sicher, dass die Tabelle nicht überläuft
+        style={{ maxWidth: "100%" }}
       />
     );
   };
@@ -357,13 +359,13 @@ const JsonVastExplorer = React.memo(({
         </div>
       )}
       
-      {(parsedJson || formattedVast) && (
+      {(parsedJson || rawVastContent) && (
         <div className="mt-6 flex flex-col flex-grow min-h-0">
-           <h2 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Output</h2>
+           <h2 className={`text-base font-semibold mb-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Output</h2>
            <div className="flex flex-row space-x-4 flex-grow min-h-0">
              {parsedJson && (
-                <div className={`${formattedVast ? 'w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
-                  <div className={`p-2 rounded-t-lg font-semibold text-center ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>Formatted JSON</div>
+                <div className={`${rawVastContent ? 'w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
+                  <div className={`p-2 rounded-t-lg text-sm font-medium text-center ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>Formatted JSON</div>
                    <div className={`p-4 rounded-b-lg border border-t-0 shadow-inner overflow-auto flex-grow ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex justify-end space-x-2 mb-2">
                          <button 
@@ -397,9 +399,9 @@ const JsonVastExplorer = React.memo(({
                    </div>
                </div>
              )}
-             {formattedVast && (
+             {rawVastContent && (
                <div className="w-1/2 min-w-0 flex flex-col">
-                 <div className={`p-2 rounded-t-lg font-semibold text-center ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>VAST Explorer</div>
+                 <div className={`p-2 rounded-t-lg text-sm font-medium text-center ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>VAST Explorer</div>
                  {vastUrl && (
                     <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 border-t-0 flex items-center justify-between`}>
                       <span className={`truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>URL:</span>
@@ -446,7 +448,7 @@ const JsonVastExplorer = React.memo(({
                          isDarkMode={isDarkMode}
                        />
                      )}
-                     {renderHighlightedOutput(formattedVast, 'xml', vastOutputRef)}
+                     {renderHighlightedOutput(rawVastContent, 'xml', vastOutputRef)}
                  </div>
                </div>
              )}

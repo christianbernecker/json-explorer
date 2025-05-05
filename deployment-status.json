@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May  5 17:58:48 CEST 2025", "commit": "Refactor: Code bereinigt, VAST URL-Anzeige verbessert"}
+{"deployment": "staging", "timestamp": "Mon May  5 21:12:36 CEST 2025", "commit": "Fix: ESLint errors for Vercel build"}
