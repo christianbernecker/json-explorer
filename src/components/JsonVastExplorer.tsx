@@ -349,20 +349,27 @@ const JsonVastExplorer = React.memo(({
           </div>
           
           <div className="relative flex-grow mb-4 overflow-hidden flex flex-col">
-            <TextareaAutosize
+            <textarea
               ref={textAreaRef}
               value={jsonInput}
               onChange={handleJsonInputChange}
+              wrap="soft"
               className={`w-full h-full p-3 resize-none rounded border ${
                 isDarkMode 
                   ? 'bg-gray-800 text-gray-100 border-gray-700' 
                   : 'bg-white text-gray-800 border-gray-300'
-              } font-mono text-sm outline-none flex-grow min-h-[500px] whitespace-pre-wrap break-all`}
+              } font-mono text-sm outline-none flex-grow min-h-[500px]`}
               placeholder="Paste JSON here..."
               style={{
-                wordWrap: 'break-word',
+                width: '100%',
+                height: '100%',
+                minHeight: 500,
+                resize: 'none',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
                 overflowWrap: 'break-word',
-                whiteSpace: 'pre-wrap'
+                boxSizing: 'border-box',
+                display: 'block',
               }}
             />
             

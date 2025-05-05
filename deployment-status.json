@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Sat Apr 26 17:17:39 CEST 2025", "commit": "Buttons unter Eingabe platziert, Overflow-Problem behoben"}
+{"deployment": "staging", "timestamp": "Sat Apr 26 17:23:30 CEST 2025", "commit": "Textwrapping für JSON-Input verbessert"}
