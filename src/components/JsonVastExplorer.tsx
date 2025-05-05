@@ -345,21 +345,22 @@ const JsonVastExplorer = React.memo(({
             </Typography>
           </div>
           
-          <div className="relative flex-grow mb-4 overflow-hidden flex flex-col">
+          {/* Container für Textarea - Höhe anpassen und Scrolling hinzufügen */}
+          <div className="relative flex-grow mb-2 overflow-y-auto flex flex-col border rounded" style={{ height: 'calc(100% - 100px)' }}> 
             <textarea
               ref={textAreaRef}
               value={jsonInput}
               onChange={handleJsonInputChange}
               wrap="soft"
-              className={`w-full h-full p-3 resize-none rounded border ${
+              className={`w-full h-full p-3 resize-none rounded border-none ${
                 isDarkMode 
-                  ? 'bg-gray-800 text-gray-100 border-gray-700' 
-                  : 'bg-white text-gray-800 border-gray-300'
+                  ? 'bg-gray-800 text-gray-100' 
+                  : 'bg-white text-gray-800'
               } font-mono text-sm outline-none flex-grow`}
               placeholder="Paste JSON here..."
               style={{
-                width: '100%',
-                height: '100%',
+                // height: '100%', // Entfernt, da h-full Klasse verwendet wird
+                // width: '100%', // Entfernt, da w-full Klasse verwendet wird
                 resize: 'none',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
@@ -369,16 +370,16 @@ const JsonVastExplorer = React.memo(({
                 maxWidth: '100%'
               }}
             />
-            
-            {error && (
-              <div className="mt-2 p-2 text-sm text-white bg-red-500 rounded">
-                {error}
-              </div>
-            )}
           </div>
           
+          {error && (
+            <div className="mt-2 p-2 text-sm text-white bg-red-500 rounded">
+              {error}
+            </div>
+          )}
+          
           {/* Format und Clear Buttons unter dem Input-Feld */}
-          <div className="flex space-x-2 mb-2">
+          <div className="flex space-x-2 mt-2 mb-2">
             <Button
               fullWidth
               size="small"
@@ -403,6 +404,7 @@ const JsonVastExplorer = React.memo(({
             </Button>
           </div>
           
+          {/* Keyboard shortcuts am unteren Rand platzieren */}
           <div className="mt-auto">
             <KeyboardShortcutsBox 
               isDarkMode={isDarkMode}

@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May  5 13:44:19 CEST 2025", "commit": "Verbesserte Raumnutzung: Volle Bildschirmhöhe und Breite ohne FlexibleJsonLayout"}
+{"deployment": "staging", "timestamp": "Mon May  5 17:31:49 CEST 2025", "commit": "Fix: Build-Fehler behoben und word-break für JSON-Anzeige hinzugefügt"}
