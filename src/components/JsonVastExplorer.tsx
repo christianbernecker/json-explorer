@@ -45,6 +45,7 @@ const JsonVastExplorer = React.memo(({
   const [formattedVast, setFormattedVast] = useState<string | null>(null);
   const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
+  const [copyMessage, setCopyMessage] = useState('');
   
   // Suche-States
   const [jsonSearchTerm, setJsonSearchTerm] = useState('');
@@ -153,7 +154,8 @@ const JsonVastExplorer = React.memo(({
   const copyToClipboard = useCallback((text: string, type: string) => {
     navigator.clipboard.writeText(text).then(
       () => {
-        console.log(`${type} copied!`);
+        setCopyMessage(`${type} copied!`);
+        setTimeout(() => setCopyMessage(''), 2000);
       },
       (err) => console.error('Error copying: ', err)
     );
@@ -190,6 +192,7 @@ const JsonVastExplorer = React.memo(({
     setFormattedVast(null);
     setVastUrl('');
     setError('');
+    setCopyMessage('');
     setJsonSearchTerm('');
     setVastSearchTerm('');
     setShowJsonSearch(false);
@@ -217,81 +220,57 @@ const JsonVastExplorer = React.memo(({
     }
   }, [vastUrl, copyToClipboard]);
 
-  // Suchfunktion für JSON-Output
-  const handleJsonSearch = useCallback(() => {
-    if (!jsonOutputRef.current || !jsonSearchTerm) return;
-    
-    // Einfache Textsuche implementieren
-    const content = jsonOutputRef.current;
-    const htmlContent = content.innerHTML;
-    
-    // Alle vorherigen Highlights entfernen
-    const cleanedHtml = htmlContent.replace(/<mark class="search-highlight">([^<]+)<\/mark>/g, '$1');
-    
-    if (jsonSearchTerm) {
-      // Neue Highlights hinzufügen (case-insensitive)
-      const regex = new RegExp(`(${jsonSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      const highlightedHtml = cleanedHtml.replace(regex, '<mark class="search-highlight">$1</mark>');
-      content.innerHTML = highlightedHtml;
-    } else {
-      content.innerHTML = cleanedHtml;
+  // Implementiere Suchlogik
+  const applySearchHighlight = (targetRef: React.RefObject<HTMLDivElement>, searchTerm: string) => {
+    if (!targetRef.current || !searchTerm) {
+       // Entferne Highlights, wenn Suche leer ist oder Ref nicht existiert
+       if (targetRef.current) {
+           const cleanedHtml = targetRef.current.innerHTML.replace(/<mark class="search-highlight">([^<]+)<\/mark>/gi, '$1');
+           targetRef.current.innerHTML = cleanedHtml;
+       }
+       return;
     }
-  }, [jsonSearchTerm]);
+    
+    const content = targetRef.current;
+    // Wichtig: Arbeite auf dem Original-HTML oder einer sauberen Version,
+    // nicht auf einer bereits gehighlighteten Version, um verschachtelte Marks zu vermeiden.
+    // Idealerweise wird das Highlighting nur beim Rendern angewendet.
+    // Da wir dangerouslySetInnerHTML nutzen, müssen wir das HTML hier manipulieren.
+    
+    // Entferne zuerst alle alten Highlights
+    let htmlContent = content.innerHTML.replace(/<mark class="search-highlight">([^<]+)<\/mark>/gi, '$1');
 
-  // Suchfunktion für VAST-Output
-  const handleVastSearch = useCallback(() => {
-    if (!vastOutputRef.current || !vastSearchTerm) return;
-    
-    // Einfache Textsuche implementieren
-    const content = vastOutputRef.current;
-    const htmlContent = content.innerHTML;
-    
-    // Alle vorherigen Highlights entfernen
-    const cleanedHtml = htmlContent.replace(/<mark class="search-highlight">([^<]+)<\/mark>/g, '$1');
-    
-    if (vastSearchTerm) {
-      // Neue Highlights hinzufügen (case-insensitive)
-      const regex = new RegExp(`(${vastSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      const highlightedHtml = cleanedHtml.replace(regex, '<mark class="search-highlight">$1</mark>');
-      content.innerHTML = highlightedHtml;
-    } else {
-      content.innerHTML = cleanedHtml;
-    }
-  }, [vastSearchTerm]);
+    // Füge neue Highlights hinzu (case-insensitive)
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    htmlContent = htmlContent.replace(regex, '<mark class="search-highlight">$1</mark>');
+    content.innerHTML = htmlContent;
+  };
 
-  // Suchfunktionen aufrufen, wenn sich die Suchbegriffe ändern
+  // Rufe Suchfunktion auf, wenn Term sich ändert
   useEffect(() => {
-    handleJsonSearch();
-  }, [jsonSearchTerm, handleJsonSearch]);
+    applySearchHighlight(jsonOutputRef, jsonSearchTerm);
+  }, [jsonSearchTerm, parsedJson, applySearchHighlight]);
 
   useEffect(() => {
-    handleVastSearch();
-  }, [vastSearchTerm, handleVastSearch]);
+    applySearchHighlight(vastOutputRef, vastSearchTerm);
+  }, [vastSearchTerm, formattedVast, applySearchHighlight]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleExplorerKeyDown = (e: KeyboardEvent) => {
-      // Only handle keyboard shortcuts when not in input fields (except for specific ones)
-      const isInputActive = document.activeElement?.tagName === 'INPUT' || 
-                            document.activeElement?.tagName === 'TEXTAREA';
-                            
-      // Format JSON with Ctrl+Enter or Cmd+Enter (always allow, even in text area)
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      const activeElement = document.activeElement as HTMLElement;
+      const isInputActive = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         handleFormat();
         return;
       }
-      
-      // Don't handle other shortcuts if in input fields
-      if (isInputActive) return;
-      
-      // Clear with Escape
-      if (e.key === 'Escape') {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'l') {
         e.preventDefault();
         handleClear();
+        return;
       }
     };
-    
     document.addEventListener('keydown', handleExplorerKeyDown);
     return () => document.removeEventListener('keydown', handleExplorerKeyDown);
   }, [handleFormat, handleClear]);
@@ -320,7 +299,7 @@ const JsonVastExplorer = React.memo(({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col" style={{ height: 'calc(100vh - 150px)' }}>
       <div className="mb-4">
         <div className="flex flex-row space-x-4">
           <div className="flex-1">
@@ -385,13 +364,13 @@ const JsonVastExplorer = React.memo(({
       )}
       
       {(parsedJson || formattedVast) && (
-        <div className="mt-6">
+        <div className="mt-6 flex flex-col flex-grow min-h-0">
            <h2 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Output</h2>
-           <div className="flex flex-row space-x-4">
+           <div className="flex flex-row space-x-4 flex-grow min-h-0">
              {parsedJson && (
-                <div className={`${formattedVast ? 'w-1/2' : 'w-full'} min-w-0`}>
-                  <div className={`p-2 rounded-lg font-semibold text-center mb-2 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>Formatted JSON</div>
-                   <div className={`p-4 rounded-lg border shadow-inner overflow-auto max-h-96 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                <div className={`${formattedVast ? 'w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
+                  <div className={`p-2 rounded-t-lg font-semibold text-center ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>Formatted JSON</div>
+                   <div className={`p-4 rounded-b-lg border border-t-0 shadow-inner overflow-auto flex-grow ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex justify-end space-x-2 mb-2">
                          <button 
                            onClick={() => setShowJsonSearch(!showJsonSearch)} 
@@ -425,9 +404,26 @@ const JsonVastExplorer = React.memo(({
                </div>
              )}
              {formattedVast && (
-               <div className="w-1/2 min-w-0">
-                 <div className={`p-2 rounded-lg font-semibold text-center mb-2 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>VAST Explorer</div>
-                 <div className={`p-4 rounded-lg border shadow-inner overflow-auto max-h-96 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+               <div className="w-1/2 min-w-0 flex flex-col">
+                 <div className={`p-2 rounded-t-lg font-semibold text-center ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>VAST Explorer</div>
+                 {vastUrl && (
+                    <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 border-t-0 flex items-center justify-between`}>
+                      <span className={`truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>URL:</span>
+                      <div className="flex items-center ml-2 flex-grow min-w-0">
+                        <span className={`truncate flex-grow mr-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} title={vastUrl}>{vastUrl}</span>
+                        <button 
+                          onClick={copyVastUrlToClipboard} 
+                          className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-600'}`}
+                          title="Copy VAST URL"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                             <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                       </button>
+                      </div>
+                   </div>
+                 )}
+                 <div className={`p-4 ${vastUrl ? 'rounded-b-lg' : 'rounded-lg'} border shadow-inner overflow-auto flex-grow ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'border-t-0' : ''}`}> 
                     <div className="flex justify-end space-x-2 mb-2">
                        <button 
                          onClick={() => setShowVastSearch(!showVastSearch)} 
@@ -457,12 +453,6 @@ const JsonVastExplorer = React.memo(({
                        />
                      )}
                      {renderHighlightedOutput(formattedVast, 'xml', vastOutputRef)}
-                     {vastUrl && (
-                       <div className={`mt-2 p-2 text-xs rounded flex justify-between items-center ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
-                         <span className="truncate flex-grow mr-2" title={vastUrl}>{vastUrl}</span>
-                         <button onClick={copyVastUrlToClipboard} className={`px-2 py-0.5 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Copy URL</button>
-                       </div>
-                     )}
                  </div>
                </div>
              )}
@@ -470,15 +460,27 @@ const JsonVastExplorer = React.memo(({
         </div>
       )}
       
-      <div className="mt-6 relative">
-           <KeyboardShortcutsBox
-             isDarkMode={isDarkMode}
-             keyboardShortcuts={[
-               { key: 'Ctrl+Shift+F', description: 'Format JSON' },
-               { key: 'Ctrl+Shift+L', description: 'Clear Input' }
-             ]}
-           />
+      <div className="mt-auto pt-4 relative">
+         <KeyboardShortcutsBox
+           isDarkMode={isDarkMode}
+           keyboardShortcuts={[
+             { key: 'Ctrl+Shift+F', description: 'Format JSON' },
+             { key: 'Ctrl+Shift+L', description: 'Clear Input' }
+           ]}
+         />
       </div>
+      
+      {copyMessage && (
+        <div 
+          className={`fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg text-sm font-medium z-50 animate-fade-out ${ 
+            isDarkMode 
+            ? 'bg-green-800 text-green-100' 
+            : 'bg-green-100 text-green-800' 
+          }`}
+        >
+          {copyMessage}
+        </div>
+      )}
       
     </div>
   );
