@@ -3,38 +3,33 @@ import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types'
 import useHighlighter from '../utils/highlighter';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import HistoryItem from './shared/HistoryItem';
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
-import { Box, Button, Typography } from '@mui/material';
-import { FormatAlignLeft, Clear, Search, ContentCopy } from '@mui/icons-material';
 import { KeyboardShortcutsBox, SearchPanel } from './shared';
-import JsonExplorerHeader from './JsonExplorerHeader';
-
-const customJsonStyle = {
-  ...syntaxLight,
-  "punctuation": { "color": "#24292e" },
-  "property": { "color": "#005cc5" },
-  "string": { "color": "#22863a" },
-  "number": { "color": "#e36209" },
-  "boolean": { "color": "#005cc5" },
-  "null": { "color": "#005cc5" }
-};
-
-const customJsonDarkStyle = {
-  ...syntaxDark,
-  "punctuation": { "color": "#e1e4e8" },
-  "property": { "color": "#79b8ff" },
-  "string": { "color": "#85e89d" },
-  "number": { "color": "#f97583" },
-  "boolean": { "color": "#79b8ff" },
-  "null": { "color": "#79b8ff" }
-};
 
 // VastInfo type for internal use
 interface VastInfo {
   path: string;
   content: string;
 }
+
+// Definiere addLineNumbers hier, da es nicht vom Hook kommt
+const addLineNumbersGlobal = (html: string, language: string, isDarkMode: boolean) => {
+  if (!html) return '';
+  const lines = html.split('\n');
+  // Angepasste Zoom-Logik (hier fix auf 100%)
+  const zoomLevel = 1;
+  const fontSize = Math.round(12 * zoomLevel);
+  let result = '<table cellpadding="0" cellspacing="0" border="0" style="width: 100%; table-layout: fixed; border-collapse: collapse;">';
+  lines.forEach((line, index) => {
+    result += `
+      <tr>
+        <td style="width: 30px; text-align: right; color: ${isDarkMode ? '#9ca3af' : '#999'}; user-select: none; padding-right: 8px; font-size: ${fontSize}px; border-right: 1px solid ${isDarkMode ? '#4b5563' : '#ddd'}; vertical-align: top;">${index + 1}</td>
+        <td style="padding-left: 8px; white-space: pre-wrap; font-family: monospace; font-size: ${fontSize}px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-all; max-width: calc(100% - 38px);">${line}</td>
+      </tr>
+    `;
+  });
+  result += '</table>';
+  return result;
+};
 
 // Component Start
 const JsonVastExplorer = React.memo(({ 
@@ -46,13 +41,11 @@ const JsonVastExplorer = React.memo(({
 }: JsonVastExplorerProps) => {
   // Explorer state
   const [jsonInput, setJsonInput] = useState('');
-  const [formattedJson, setFormattedJson] = useState<any>(null);
-  const [embeddedVastContent, setEmbeddedVastContent] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [parsedJson, setParsedJson] = useState<any>(null);
+  const [formattedVast, setFormattedVast] = useState<string | null>(null);
   const [vastPath, setVastPath] = useState('');
   const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [copyMessage, setCopyMessage] = useState('');
   
   // Suche-States
@@ -67,7 +60,7 @@ const JsonVastExplorer = React.memo(({
   const vastOutputRef = useRef<HTMLDivElement>(null);
   
   // Custom hook for Syntax Highlighting
-  const { formatXml } = useHighlighter();
+  const { highlightJson, formatXml } = useHighlighter();
   
   // Helper function to add to history
   const addToHistoryItem = useCallback((item: HistoryItemType) => {
@@ -117,53 +110,46 @@ const JsonVastExplorer = React.memo(({
         return;
       }
       
-      // Parse JSON, then stringify it with proper formatting
-      const parsedJson = JSON.parse(inputStr);
-      const formattedJsonString = JSON.stringify(parsedJson, null, 2);
+      const currentParsedJson = JSON.parse(inputStr);
+      setParsedJson(currentParsedJson);
+      setError('');
       
-      // Search for VAST content
-      const vastInfo = findVastContent(parsedJson);
+      const vastInfo = findVastContent(currentParsedJson);
       if (vastInfo) {
-        const formattedVast = formatXml(vastInfo.content);
+        const currentFormattedVast = formatXml(vastInfo.content);
         const url = extractVastUrl(vastInfo.content);
         
-        setFormattedJson(formattedJsonString);
-        setEmbeddedVastContent(formattedVast);
+        setFormattedVast(currentFormattedVast);
         setVastPath(vastInfo.path);
         setVastUrl(url || '');
-        setError('');
         
-        // Add to history as JSON & VAST
-        const newHistoryItem = {
-          type: 'json_vast' as const,
-          jsonContent: parsedJson,
-          vastContent: formattedVast,
+        const newHistoryItem: HistoryItemType = {
+          type: 'json_vast',
+          jsonContent: currentParsedJson,
+          vastContent: currentFormattedVast,
           vastPath: vastInfo.path,
           vastUrl: url || '',
-          timestamp: new Date().getTime()
+          timestamp: Date.now()
         };
         
         addToHistoryItem(newHistoryItem);
       } else {
-        setFormattedJson(formattedJsonString);
-        setEmbeddedVastContent(null);
+        setFormattedVast(null);
         setVastPath('');
         setVastUrl('');
-        setError('');
         
-        // Add only JSON to history
-        const newHistoryItem = {
-          type: 'json' as const,
-          content: parsedJson,
-          timestamp: new Date().getTime()
+        const newHistoryItem: HistoryItemType = {
+          type: 'json',
+          content: currentParsedJson,
+          timestamp: Date.now()
         };
         
         addToHistoryItem(newHistoryItem);
       }
     } catch (err: any) {
       setError(`Parsing error: ${err.message}`);
-      setFormattedJson(null);
-      setEmbeddedVastContent(null);
+      setParsedJson(null);
+      setFormattedVast(null);
       setVastPath('');
       setVastUrl('');
     }
@@ -189,27 +175,28 @@ const JsonVastExplorer = React.memo(({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const restoreFromHistory = useCallback((item: HistoryItemType) => {
     if (item.type === 'json') {
-      setFormattedJson(item.content);
       setJsonInput(JSON.stringify(item.content, null, 2));
-      setEmbeddedVastContent(null);
+      setParsedJson(item.content);
+      setFormattedVast(null);
       setVastPath('');
       setVastUrl('');
-      setShowHistory(false);
+      setError('');
     } else {
-      setFormattedJson(item.jsonContent);
       setJsonInput(JSON.stringify(item.jsonContent, null, 2));
-      setEmbeddedVastContent(item.vastContent || null);
+      setParsedJson(item.jsonContent);
+      setFormattedVast(item.vastContent || null);
       setVastPath(item.vastPath || '');
       setVastUrl(item.vastUrl || '');
-      setShowHistory(false);
+      setError('');
     }
+    setShowHistory(false);
   }, [setShowHistory]);
   
   // Clear all fields
   const handleClear = useCallback(() => {
     setJsonInput('');
-    setFormattedJson(null);
-    setEmbeddedVastContent(null);
+    setParsedJson(null);
+    setFormattedVast(null);
     setVastPath('');
     setVastUrl('');
     setError('');
@@ -222,17 +209,17 @@ const JsonVastExplorer = React.memo(({
 
   // Kopieren des JSON-Inhalts in die Zwischenablage
   const copyJsonToClipboard = useCallback(() => {
-    if (formattedJson) {
-      copyToClipboard(formattedJson, 'JSON');
+    if (parsedJson) {
+      copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
     }
-  }, [formattedJson, copyToClipboard]);
+  }, [parsedJson, copyToClipboard]);
 
   // Kopieren des VAST-Inhalts in die Zwischenablage
   const copyVastToClipboard = useCallback(() => {
-    if (embeddedVastContent) {
-      copyToClipboard(embeddedVastContent, 'VAST');
+    if (formattedVast) {
+      copyToClipboard(formattedVast, 'VAST');
     }
-  }, [embeddedVastContent, copyToClipboard]);
+  }, [formattedVast, copyToClipboard]);
 
   // Kopieren der VAST-URL in die Zwischenablage
   const copyVastUrlToClipboard = useCallback(() => {
@@ -320,301 +307,146 @@ const JsonVastExplorer = React.memo(({
     return () => document.removeEventListener('keydown', handleExplorerKeyDown);
   }, [handleFormat, handleClear]);
 
-  return (
-    <div className="w-full h-full overflow-hidden">
-      <JsonExplorerHeader 
-        isDarkMode={isDarkMode}
-        hasJsonContent={!!formattedJson}
-        hasVastContent={!!embeddedVastContent}
-        characterCount={jsonInput.length}
-        resetFields={handleClear}
-        handleFormat={handleFormat}
-        copyJsonToClipboard={copyJsonToClipboard}
-        copyVastToClipboard={copyVastToClipboard}
-        copyVastUrlToClipboard={copyVastUrlToClipboard}
-        zoomLevel={1}
-        setZoomLevel={() => {}}
+  // Helfer zum Rendern des Highlighting-Outputs
+  const renderHighlightedOutput = (content: any, language: 'json' | 'xml', ref: React.RefObject<HTMLDivElement>) => {
+    if (!content) return null;
+    let highlightedHtml = '';
+    if (language === 'json') {
+      highlightedHtml = highlightJson(content, isDarkMode);
+    } else if (language === 'xml') {
+      highlightedHtml = content; // formatXml hat bereits <pre> etc.
+    }
+    
+    // Verwende die hier definierte Funktion
+    const contentWithLines = addLineNumbersGlobal(highlightedHtml, language, isDarkMode); 
+
+    return (
+      <div 
+        ref={ref}
+        dangerouslySetInnerHTML={{ __html: contentWithLines }}
+        className="overflow-x-auto whitespace-pre break-words w-full"
+        style={{ maxWidth: "100%" }} // Stellt sicher, dass die Tabelle nicht überläuft
       />
-      
-      <div className="w-full h-[calc(100vh-200px)] flex mt-4 overflow-hidden">
-        {/* Left Panel - JSON Input (1/3 width) */}
-        <div className="w-1/3 px-4 flex flex-col h-full">
-          <div className={`flex justify-between items-center mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-            <Typography variant="subtitle1" className="font-semibold">
-              JSON Input
-            </Typography>
-          </div>
-          
-          {/* Container für Textarea - Höhe anpassen und Scrolling hinzufügen */}
-          <div className="relative flex-grow mb-2 overflow-y-auto flex flex-col border rounded" style={{ height: 'calc(100% - 100px)' }}> 
+    );
+  };
+
+  return (
+    <div className="w-full">
+      <div className="mb-4">
+        <div className="flex flex-row space-x-4">
+          <div className="flex-1">
+            <h3 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>JSON Input</h3>
             <textarea
               ref={textAreaRef}
               value={jsonInput}
               onChange={handleJsonInputChange}
-              wrap="soft"
-              className={`w-full h-full p-3 resize-none rounded border-none ${
+              placeholder="Paste your JSON here..."
+              className={`w-full h-64 p-3 border rounded-lg font-mono text-sm mb-2 outline-none transition ${
                 isDarkMode 
-                  ? 'bg-gray-800 text-gray-100' 
-                  : 'bg-white text-gray-800'
-              } font-mono text-sm outline-none flex-grow`}
-              placeholder="Paste JSON here..."
-              style={{
-                // height: '100%', // Entfernt, da h-full Klasse verwendet wird
-                // width: '100%', // Entfernt, da w-full Klasse verwendet wird
-                resize: 'none',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word',
-                boxSizing: 'border-box',
-                display: 'block',
-                maxWidth: '100%'
-              }}
-            />
-          </div>
-          
-          {error && (
-            <div className="mt-2 p-2 text-sm text-white bg-red-500 rounded">
-              {error}
-            </div>
-          )}
-          
-          {/* Format und Clear Buttons unter dem Input-Feld */}
-          <div className="flex space-x-2 mt-2 mb-2">
-            <Button
-              fullWidth
-              size="small"
-              variant="contained"
-              color="primary"
-              startIcon={<FormatAlignLeft />}
-              onClick={handleFormat}
-              className="text-xs"
-            >
-              Format
-            </Button>
-            <Button
-              fullWidth
-              size="small"
-              variant="outlined"
-              startIcon={<Clear />}
-              onClick={handleClear}
-              className="text-xs"
-              color={isDarkMode ? "inherit" : "primary"}
-            >
-              Clear
-            </Button>
-          </div>
-          
-          {/* Keyboard shortcuts am unteren Rand platzieren */}
-          <div className="mt-auto">
-            <KeyboardShortcutsBox 
-              isDarkMode={isDarkMode}
-              keyboardShortcuts={[
-                { key: 'Ctrl/Cmd + Enter', description: 'Format JSON' },
-                { key: 'Esc', description: 'Clear all' }
-              ]}
+                  ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                  : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              }`}
             />
           </div>
         </div>
         
-        {/* Middle Panel - Formatted JSON (1/3 width, or 2/3 if no VAST) */}
-        <div className={`${embeddedVastContent ? 'w-1/3' : 'w-2/3'} px-4 flex flex-col h-full relative`}>
-          <div className={`flex justify-between items-center mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-            <Typography variant="subtitle1" className="font-semibold">
-              Formatted JSON
-            </Typography>
-            <div className="flex space-x-2">
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<Search />}
-                onClick={() => setShowJsonSearch(!showJsonSearch)}
-                className="text-xs"
-                color={isDarkMode ? "inherit" : "primary"}
-              >
-                Find
-              </Button>
-              {formattedJson && (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<ContentCopy />}
-                  onClick={copyJsonToClipboard}
-                  className="text-xs"
-                  color={isDarkMode ? "inherit" : "primary"}
-                >
-                  Copy
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {showJsonSearch && (
-            <SearchPanel
-              contentType="JSON"
-              onSearch={(term) => {
-                setJsonSearchTerm(term);
-              }}
-              targetRef={jsonOutputRef}
-              isDarkMode={isDarkMode}
-            />
-          )}
-          
-          <div
-            ref={jsonOutputRef}
-            className={`flex-grow overflow-auto border rounded ${
+        <div className="flex space-x-3 mt-4">
+          <button
+            onClick={handleFormat}
+            className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
               isDarkMode
-                ? 'bg-gray-900 border-gray-700'
-                : 'bg-gray-50 border-gray-300'
-            } h-full max-w-full`}
-            style={{ maxWidth: '100%', overflowX: 'auto' }}
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+            title="Format JSON (Ctrl+Shift+F)"
           >
-            {formattedJson && (
-              <Box p={0} sx={{ height: '100%', maxWidth: '100%', overflow: 'auto' }}>
-                <SyntaxHighlighter
-                  language="json"
-                  style={isDarkMode ? customJsonDarkStyle : customJsonStyle}
-                  customStyle={{
-                    margin: 0,
-                    padding: '16px',
-                    height: '100%',
-                    fontSize: '13px',
-                    backgroundColor: 'transparent',
-                    borderRadius: '4px',
-                    maxWidth: '100%',
-                    overflowX: 'auto',
-                    overflowY: 'auto',
-                    wordWrap: 'break-word',
-                    whiteSpace: 'pre-wrap',
-                    wordBreak: 'break-all' // <-- Fix hinzugefügt
-                  }}
-                  showLineNumbers={true}
-                  lineNumberStyle={{
-                    minWidth: '3em',
-                    paddingRight: '1em',
-                    color: isDarkMode ? '#606366' : '#A9A9A9',
-                    textAlign: 'right',
-                    userSelect: 'none',
-                  }}
-                  wrapLongLines={true}
-                >
-                  {formattedJson}
-                </SyntaxHighlighter>
-              </Box>
-            )}
-          </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" /> 
+            </svg>
+            Format
+          </button>
+          <button
+            onClick={handleClear}
+            className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
+              isDarkMode
+                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-600'
+                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+            title="Clear Input (Ctrl+Shift+L)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear
+          </button>
         </div>
-        
-        {/* Right Panel - VAST Content (1/3 width) - Only shown if VAST content exists */}
-        {embeddedVastContent && (
-          <div className="w-1/3 px-4 flex flex-col h-full relative">
-            <div className={`flex justify-between items-center mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-              <Typography variant="subtitle1" className="font-semibold">
-                VAST Explorer
-              </Typography>
-              <div className="flex space-x-2">
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<Search />}
-                  onClick={() => setShowVastSearch(!showVastSearch)}
-                  className="text-xs"
-                  color={isDarkMode ? "inherit" : "primary"}
-                >
-                  Find
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  startIcon={<ContentCopy />}
-                  onClick={copyVastToClipboard}
-                  className="text-xs"
-                  color={isDarkMode ? "inherit" : "primary"}
-                >
-                  Copy
-                </Button>
-              </div>
-            </div>
-            
-            {showVastSearch && (
-              <SearchPanel
-                contentType="VAST"
-                onSearch={(term) => {
-                  setVastSearchTerm(term);
-                }}
-                targetRef={vastOutputRef}
-                isDarkMode={isDarkMode}
-              />
-            )}
-            
-            <div
-              ref={vastOutputRef}
-              className={`flex-grow overflow-auto border rounded ${
-                isDarkMode
-                  ? 'bg-gray-900 border-gray-700'
-                  : 'bg-gray-50 border-gray-300'
-              } h-full max-w-full`}
-              style={{ maxWidth: '100%', overflowX: 'auto' }}
-            >
-              {embeddedVastContent && (
-                <Box p={0} sx={{ height: '100%', maxWidth: '100%', overflow: 'auto' }}>
-                  <SyntaxHighlighter
-                    language="xml"
-                    style={isDarkMode ? syntaxDark : syntaxLight}
-                    customStyle={{
-                      margin: 0,
-                      padding: '16px',
-                      height: '100%',
-                      fontSize: '13px',
-                      backgroundColor: 'transparent',
-                      borderRadius: '4px',
-                      maxWidth: '100%',
-                      overflowX: 'auto',
-                      overflowY: 'auto',
-                      wordWrap: 'break-word',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-all' // <-- Fix hinzugefügt
-                    }}
-                    showLineNumbers={true}
-                    lineNumberStyle={{
-                      minWidth: '3em',
-                      paddingRight: '1em',
-                      color: isDarkMode ? '#606366' : '#A9A9A9',
-                      textAlign: 'right',
-                      userSelect: 'none',
-                    }}
-                    wrapLongLines={true}
-                  >
-                    {embeddedVastContent}
-                  </SyntaxHighlighter>
-                </Box>
-              )}
-            </div>
-            
-            {vastUrl && (
-              <div className={`mt-2 p-2 text-sm rounded flex justify-between items-center ${
-                isDarkMode ? 'bg-gray-800 text-gray-200' : 'bg-gray-100 text-gray-700'
-              }`}>
-                <Typography variant="caption" className="truncate flex-grow" title={vastUrl} style={{ maxWidth: '200px' }}>
-                  {vastUrl}
-                </Typography>
-                <Button
-                  size="small"
-                  variant="text"
-                  onClick={copyVastUrlToClipboard}
-                  className="text-xs"
-                >
-                  Copy URL
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
+
+      {error && (
+        <div className={`p-4 mb-4 rounded-lg flex items-center ${
+          isDarkMode 
+            ? 'bg-red-900 text-red-200 border-l-4 border-red-600' 
+            : 'bg-red-50 text-red-600 border-l-4 border-red-500'
+        }`}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>{error}</span>
+        </div>
+      )}
+      
+      {(parsedJson || formattedVast) && (
+        <div className="mt-6">
+           <h2 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Output</h2>
+           <div className="flex flex-row space-x-4">
+             {parsedJson && (
+                <div className={`${formattedVast ? 'w-1/2' : 'w-full'} min-w-0`}>
+                  <div className={`p-2 rounded-lg font-semibold text-center mb-2 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>Formatted JSON</div>
+                   <div className={`p-4 rounded-lg border shadow-inner overflow-auto max-h-96 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                      <div className="flex justify-end space-x-2 mb-2">
+                         <button onClick={() => setShowJsonSearch(!showJsonSearch)} className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Find</button>
+                         <button onClick={copyJsonToClipboard} className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Copy</button>
+                      </div>
+                      {renderHighlightedOutput(parsedJson, 'json', jsonOutputRef)}
+                   </div>
+               </div>
+             )}
+             {formattedVast && (
+               <div className="w-1/2 min-w-0">
+                 <div className={`p-2 rounded-lg font-semibold text-center mb-2 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>VAST Explorer</div>
+                 <div className={`p-4 rounded-lg border shadow-inner overflow-auto max-h-96 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="flex justify-end space-x-2 mb-2">
+                        <button onClick={() => setShowVastSearch(!showVastSearch)} className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Find</button>
+                        <button onClick={copyVastToClipboard} className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Copy</button>
+                     </div>
+                     {renderHighlightedOutput(formattedVast, 'xml', vastOutputRef)}
+                     {vastUrl && (
+                       <div className={`mt-2 p-2 text-xs rounded flex justify-between items-center ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
+                         <span className="truncate flex-grow mr-2" title={vastUrl}>{vastUrl}</span>
+                         <button onClick={copyVastUrlToClipboard} className={`px-2 py-0.5 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Copy URL</button>
+                       </div>
+                     )}
+                 </div>
+               </div>
+             )}
+           </div>
+        </div>
+      )}
+      
+      <div className="mt-6 relative">
+           <KeyboardShortcutsBox
+             isDarkMode={isDarkMode}
+             keyboardShortcuts={[
+               { key: 'Ctrl+Shift+F', description: 'Format JSON' },
+               { key: 'Ctrl+Shift+L', description: 'Clear Input' }
+             ]}
+           />
+      </div>
+      
     </div>
   );
 });
 
 export default JsonVastExplorer;
 
-// Leere Export-Anweisung hinzufügen, um TS2306-Fehler zu beheben
 export {};

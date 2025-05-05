@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May  5 17:31:49 CEST 2025", "commit": "Fix: Build-Fehler behoben und word-break für JSON-Anzeige hinzugefügt"}
+{"deployment": "staging", "timestamp": "Mon May  5 17:36:36 CEST 2025", "commit": "Feat: Eingabefeld Höhe angepasst, Buttons immer sichtbar"}
