@@ -220,46 +220,40 @@ const JsonVastExplorer = React.memo(({
     }
   }, [vastUrl, copyToClipboard]);
 
-  // Implementiere Suchlogik
-  const applySearchHighlight = (targetRef: React.RefObject<HTMLDivElement>, searchTerm: string) => {
-    if (!targetRef.current || !searchTerm) {
-       // Entferne Highlights, wenn Suche leer ist oder Ref nicht existiert
-       if (targetRef.current) {
-           const cleanedHtml = targetRef.current.innerHTML.replace(/<mark class="search-highlight">([^<]+)<\/mark>/gi, '$1');
-           targetRef.current.innerHTML = cleanedHtml;
-       }
-       return;
+  // Implementiere Suchlogik mit useCallback
+  const applySearchHighlight = useCallback((targetRef: React.RefObject<HTMLDivElement>, searchTerm: string) => {
+    if (!targetRef.current) { return; } // Frühzeitiger Ausstieg, wenn Ref nicht existiert
+
+    // Immer mit sauberem HTML starten (ohne Marks)
+    let htmlContent = targetRef.current.innerHTML.replace(/<mark class="search-highlight">([^<]+)<\/mark>/gi, '$1');
+
+    if (searchTerm) {
+        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        htmlContent = htmlContent.replace(regex, '<mark class="search-highlight">$1</mark>');
     }
     
-    const content = targetRef.current;
-    // Wichtig: Arbeite auf dem Original-HTML oder einer sauberen Version,
-    // nicht auf einer bereits gehighlighteten Version, um verschachtelte Marks zu vermeiden.
-    // Idealerweise wird das Highlighting nur beim Rendern angewendet.
-    // Da wir dangerouslySetInnerHTML nutzen, müssen wir das HTML hier manipulieren.
-    
-    // Entferne zuerst alle alten Highlights
-    let htmlContent = content.innerHTML.replace(/<mark class="search-highlight">([^<]+)<\/mark>/gi, '$1');
+    // Nur schreiben, wenn sich was geändert hat, um unnötige DOM-Operationen zu vermeiden
+    if (targetRef.current.innerHTML !== htmlContent) {
+       targetRef.current.innerHTML = htmlContent;
+    }
+  }, []); // Leeres Dependency Array, da keine externen States/Props verwendet werden
 
-    // Füge neue Highlights hinzu (case-insensitive)
-    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    htmlContent = htmlContent.replace(regex, '<mark class="search-highlight">$1</mark>');
-    content.innerHTML = htmlContent;
-  };
-
-  // Rufe Suchfunktion auf, wenn Term sich ändert
+  // Such-Effekte (jetzt mit applySearchHighlight in Dependencies)
   useEffect(() => {
     applySearchHighlight(jsonOutputRef, jsonSearchTerm);
-  }, [jsonSearchTerm, parsedJson, applySearchHighlight]);
+  }, [jsonSearchTerm, parsedJson, applySearchHighlight]); 
 
   useEffect(() => {
     applySearchHighlight(vastOutputRef, vastSearchTerm);
   }, [vastSearchTerm, formattedVast, applySearchHighlight]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts (isInputActive entfernt)
   useEffect(() => {
     const handleExplorerKeyDown = (e: KeyboardEvent) => {
-      const activeElement = document.activeElement as HTMLElement;
-      const isInputActive = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
+      // Entferne ungenutzte Variable
+      // const activeElement = document.activeElement as HTMLElement;
+      // const isInputActive = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
+      
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
         handleFormat();
