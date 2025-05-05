@@ -3,7 +3,7 @@ import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types'
 import useHighlighter from '../utils/highlighter';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import HistoryItem from './shared/HistoryItem';
-import { KeyboardShortcutsBox, SearchPanel } from './shared';
+import { SearchPanel } from './shared';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -251,55 +251,12 @@ const JsonVastExplorer = React.memo(({
     applySearchHighlight(vastOutputRef, vastSearchTerm);
   }, [vastSearchTerm, rawVastContent, applySearchHighlight]);
 
-  // Keyboard shortcuts (isInputActive entfernt)
-  useEffect(() => {
-    const handleExplorerKeyDown = (e: KeyboardEvent) => {
-      // Entferne ungenutzte Variable
-      // const activeElement = document.activeElement as HTMLElement;
-      // const isInputActive = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
-      
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
-        e.preventDefault();
-        handleFormat();
-        return;
-      }
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'l') {
-        e.preventDefault();
-        handleClear();
-        return;
-      }
-    };
-    document.addEventListener('keydown', handleExplorerKeyDown);
-    return () => document.removeEventListener('keydown', handleExplorerKeyDown);
-  }, [handleFormat, handleClear]);
-
-  // Helfer zum Rendern des Highlighting-Outputs
-  const renderHighlightedOutput = (content: any, language: 'json' | 'xml', ref: React.RefObject<HTMLDivElement>) => {
-    if (!content) return null;
-    let highlightedHtml = '';
-    if (language === 'json') {
-      highlightedHtml = highlightJson(content, isDarkMode);
-    } else if (language === 'xml') {
-      highlightedHtml = highlightXml(content as string, isDarkMode);
-    }
-    // Verwende den Hook hier
-    const contentWithLines = addLineNumbersGlobal(highlightedHtml, language);
-    return (
-      <div 
-        ref={ref}
-        dangerouslySetInnerHTML={{ __html: contentWithLines }}
-        className="overflow-x-auto whitespace-pre break-words w-full"
-        style={{ maxWidth: "100%" }}
-      />
-    );
-  };
-
   return (
     <div className="w-full flex flex-col" style={{ height: 'calc(100vh - 150px)' }}>
       <div className="mb-4">
         <div className="flex flex-row space-x-4">
           <div className="flex-1">
-            <h3 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>JSON Input</h3>
+            <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>JSON Input</h3>
             <textarea
               ref={textAreaRef}
               value={jsonInput}
@@ -360,50 +317,56 @@ const JsonVastExplorer = React.memo(({
       )}
       
       {(parsedJson || rawVastContent) && (
-        <div className="mt-6 flex flex-col flex-grow min-h-0">
-           <h2 className={`text-base font-semibold mb-3 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Output</h2>
+        <div className="mt-4 flex flex-col flex-grow min-h-0"> 
            <div className="flex flex-row space-x-4 flex-grow min-h-0">
              {parsedJson && (
                 <div className={`${rawVastContent ? 'w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
-                  <div className={`p-2 rounded-t-lg text-sm font-medium text-center ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>Formatted JSON</div>
-                   <div className={`p-4 rounded-b-lg border border-t-0 shadow-inner overflow-auto flex-grow ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                      <div className="flex justify-end space-x-2 mb-2">
-                         <button 
-                           onClick={() => setShowJsonSearch(!showJsonSearch)} 
-                           className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                           title="Find in JSON"
-                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                         </button>
-                         <button 
-                           onClick={copyJsonToClipboard} 
-                           className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                           title="Copy JSON"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                         </button>
-                      </div>
-                      {showJsonSearch && (
-                        <SearchPanel
-                          contentType="JSON"
-                          onSearch={setJsonSearchTerm}
-                          targetRef={jsonOutputRef}
-                          isDarkMode={isDarkMode}
-                        />
-                      )}
-                      {renderHighlightedOutput(parsedJson, 'json', jsonOutputRef)}
+                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h3>
+                   <div 
+                     ref={jsonOutputRef}
+                     className={`p-4 rounded-lg border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
+                   >
+                     <div className="flex justify-end space-x-2 mb-2">
+                       <button 
+                         onClick={() => setShowJsonSearch(!showJsonSearch)} 
+                         className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                         title="Find in JSON"
+                       >
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                         </svg>
+                       </button>
+                       <button 
+                         onClick={copyJsonToClipboard} 
+                         className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                         title="Copy JSON"
+                       >
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                         </svg>
+                       </button>
+                     </div>
+                     {showJsonSearch && (
+                       <SearchPanel
+                         contentType="JSON"
+                         onSearch={setJsonSearchTerm}
+                         targetRef={jsonOutputRef}
+                         isDarkMode={isDarkMode}
+                       />
+                     )}
+                     <div 
+                       dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
+                       className="overflow-x-auto whitespace-pre break-words w-full"
+                       style={{ maxWidth: "100%" }}
+                     />
                    </div>
-               </div>
+                </div>
              )}
              {rawVastContent && (
                <div className="w-1/2 min-w-0 flex flex-col">
-                 <div className={`p-2 rounded-t-lg text-sm font-medium text-center ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-700'}`}>VAST Explorer</div>
+                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Explorer</h3>
                  {vastUrl && (
-                    <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 border-t-0 flex items-center justify-between`}>
+                    <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 rounded-t-lg flex items-center justify-between`}>
                       <span className={`truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>URL:</span>
                       <div className="flex items-center ml-2 flex-grow min-w-0">
                         <span className={`truncate flex-grow mr-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} title={vastUrl}>{vastUrl}</span>
@@ -419,25 +382,27 @@ const JsonVastExplorer = React.memo(({
                       </div>
                    </div>
                  )}
-                 <div className={`p-4 ${vastUrl ? 'rounded-b-lg' : 'rounded-lg'} border shadow-inner overflow-auto flex-grow ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'border-t-0' : ''}`}> 
-                    <div className="flex justify-end space-x-2 mb-2">
+                 <div 
+                   ref={vastOutputRef} 
+                   className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg border-t-0' : 'rounded-lg'}`}>
+                     <div className="flex justify-end space-x-2 mb-2">
                        <button 
                          onClick={() => setShowVastSearch(!showVastSearch)} 
                          className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                          title="Find in VAST"
                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                         </svg>
                        </button>
                        <button 
                          onClick={copyVastToClipboard} 
                          className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                          title="Copy VAST"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
+                       >
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                         </svg>
                        </button>
                      </div>
                      {showVastSearch && (
@@ -448,23 +413,17 @@ const JsonVastExplorer = React.memo(({
                          isDarkMode={isDarkMode}
                        />
                      )}
-                     {renderHighlightedOutput(rawVastContent, 'xml', vastOutputRef)}
-                 </div>
+                     <div 
+                       dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
+                       className="overflow-x-auto whitespace-pre break-words w-full"
+                       style={{ maxWidth: "100%" }}
+                     />
+                  </div>
                </div>
              )}
            </div>
         </div>
       )}
-      
-      <div className="mt-auto pt-4 relative">
-         <KeyboardShortcutsBox
-           isDarkMode={isDarkMode}
-           keyboardShortcuts={[
-             { key: 'Ctrl+Shift+F', description: 'Format JSON' },
-             { key: 'Ctrl+Shift+L', description: 'Clear Input' }
-           ]}
-         />
-      </div>
       
       {copyMessage && (
         <div 

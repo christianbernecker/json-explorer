@@ -33,7 +33,7 @@ const useHighlighter = () => {
     xml = xml.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // Tags und Attribute
     // eslint-disable-next-line no-useless-escape
-    let highlighted = xml.replace(/&lt;(\/?)?([-\w:]+)([^&]*?)(\/?)\&gt;/g, 
+    let highlighted = xml.replace(/&lt;(\/?)?([-\w:]+)([^&]*?)(\/?)&gt;/g, 
       (match, slash, tag, attrs, endSlash) => {
         let attrsHighlighted = attrs;
         // Attribute
@@ -57,7 +57,7 @@ const useHighlighter = () => {
          return `<span class="${isDarkMode ? 'text-gray-500' : 'text-gray-400'}">${start}${content}${end}</span>`;
        }
      );
-    return `<pre><code class="language-xml">${highlighted}</code></pre>`; // Wrap in pre/code
+    return highlighted; // Return raw highlighted HTML
   }, []);
 
   // Formatierungsfunktion bleibt gleich
