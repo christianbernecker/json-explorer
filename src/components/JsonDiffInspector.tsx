@@ -46,7 +46,7 @@ const JsonDiffInspector = React.memo(({
       result += `
         <tr>
           <td style="width: 30px; text-align: right; color: ${isDarkMode ? '#9ca3af' : '#999'}; user-select: none; padding-right: 8px; font-size: ${fontSize}px; border-right: 1px solid ${isDarkMode ? '#4b5563' : '#ddd'}; vertical-align: top;">${index + 1}</td>
-          <td style="padding-left: 8px; white-space: pre; font-family: monospace; font-size: ${fontSize}px; overflow-wrap: break-word; word-wrap: break-word; max-width: calc(100% - 38px);">${line}</td>
+          <td style="padding-left: 8px; white-space: pre-wrap; font-family: monospace; font-size: ${fontSize}px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-all; max-width: calc(100% - 38px);">${line}</td>
         </tr>
       `;
     });
@@ -421,7 +421,7 @@ const JsonDiffInspector = React.memo(({
           </div>
         )}
         
-        {/* Simple JSON Side-by-Side View */}
+        {/* Side-by-Side View */}
         <div>
           <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
             Side-by-Side View

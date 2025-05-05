@@ -10,7 +10,6 @@ import { FormatAlignLeft, Clear, Search, ContentCopy } from '@mui/icons-material
 import { KeyboardShortcutsBox, SearchPanel } from './shared';
 import JsonExplorerHeader from './JsonExplorerHeader';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const customJsonStyle = {
   ...syntaxLight,
   "punctuation": { "color": "#24292e" },
@@ -21,7 +20,6 @@ const customJsonStyle = {
   "null": { "color": "#005cc5" }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const customJsonDarkStyle = {
   ...syntaxDark,
   "punctuation": { "color": "#e1e4e8" },
@@ -338,7 +336,7 @@ const JsonVastExplorer = React.memo(({
         setZoomLevel={() => {}}
       />
       
-      <div className="w-full h-[calc(100vh-150px)] flex mt-4 overflow-hidden">
+      <div className="w-full h-[calc(100vh-200px)] flex mt-4 overflow-hidden">
         {/* Left Panel - JSON Input (1/3 width) */}
         <div className="w-1/3 px-4 flex flex-col h-full">
           <div className={`flex justify-between items-center mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
@@ -368,6 +366,7 @@ const JsonVastExplorer = React.memo(({
                 overflowWrap: 'break-word',
                 boxSizing: 'border-box',
                 display: 'block',
+                maxWidth: '100%'
               }}
             />
             
@@ -464,10 +463,11 @@ const JsonVastExplorer = React.memo(({
               isDarkMode
                 ? 'bg-gray-900 border-gray-700'
                 : 'bg-gray-50 border-gray-300'
-            } h-full`}
+            } h-full max-w-full`}
+            style={{ maxWidth: '100%', overflowX: 'auto' }}
           >
             {formattedJson && (
-              <Box p={0} sx={{ height: '100%' }}>
+              <Box p={0} sx={{ height: '100%', maxWidth: '100%', overflow: 'auto' }}>
                 <SyntaxHighlighter
                   language="json"
                   style={isDarkMode ? customJsonDarkStyle : customJsonStyle}
@@ -478,6 +478,12 @@ const JsonVastExplorer = React.memo(({
                     fontSize: '13px',
                     backgroundColor: 'transparent',
                     borderRadius: '4px',
+                    maxWidth: '100%',
+                    overflowX: 'auto',
+                    overflowY: 'auto',
+                    wordWrap: 'break-word',
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-all' // <-- Fix hinzugefügt
                   }}
                   showLineNumbers={true}
                   lineNumberStyle={{
@@ -487,6 +493,7 @@ const JsonVastExplorer = React.memo(({
                     textAlign: 'right',
                     userSelect: 'none',
                   }}
+                  wrapLongLines={true}
                 >
                   {formattedJson}
                 </SyntaxHighlighter>
@@ -543,10 +550,11 @@ const JsonVastExplorer = React.memo(({
                 isDarkMode
                   ? 'bg-gray-900 border-gray-700'
                   : 'bg-gray-50 border-gray-300'
-              } h-full`}
+              } h-full max-w-full`}
+              style={{ maxWidth: '100%', overflowX: 'auto' }}
             >
               {embeddedVastContent && (
-                <Box p={0} sx={{ height: '100%' }}>
+                <Box p={0} sx={{ height: '100%', maxWidth: '100%', overflow: 'auto' }}>
                   <SyntaxHighlighter
                     language="xml"
                     style={isDarkMode ? syntaxDark : syntaxLight}
@@ -557,6 +565,12 @@ const JsonVastExplorer = React.memo(({
                       fontSize: '13px',
                       backgroundColor: 'transparent',
                       borderRadius: '4px',
+                      maxWidth: '100%',
+                      overflowX: 'auto',
+                      overflowY: 'auto',
+                      wordWrap: 'break-word',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-all' // <-- Fix hinzugefügt
                     }}
                     showLineNumbers={true}
                     lineNumberStyle={{
@@ -566,6 +580,7 @@ const JsonVastExplorer = React.memo(({
                       textAlign: 'right',
                       userSelect: 'none',
                     }}
+                    wrapLongLines={true}
                   >
                     {embeddedVastContent}
                   </SyntaxHighlighter>
@@ -598,3 +613,6 @@ const JsonVastExplorer = React.memo(({
 });
 
 export default JsonVastExplorer;
+
+// Leere Export-Anweisung hinzufügen, um TS2306-Fehler zu beheben
+export {};
