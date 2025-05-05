@@ -3,7 +3,7 @@ import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types'
 import useHighlighter from '../utils/highlighter';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import HistoryItem from './shared/HistoryItem';
-import { KeyboardShortcutsBox } from './shared';
+import { KeyboardShortcutsBox, SearchPanel } from './shared';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -393,9 +393,33 @@ const JsonVastExplorer = React.memo(({
                   <div className={`p-2 rounded-lg font-semibold text-center mb-2 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>Formatted JSON</div>
                    <div className={`p-4 rounded-lg border shadow-inner overflow-auto max-h-96 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                       <div className="flex justify-end space-x-2 mb-2">
-                         <button onClick={() => setShowJsonSearch(!showJsonSearch)} className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Find</button>
-                         <button onClick={copyJsonToClipboard} className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Copy</button>
+                         <button 
+                           onClick={() => setShowJsonSearch(!showJsonSearch)} 
+                           className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                           title="Find in JSON"
+                         >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                         </button>
+                         <button 
+                           onClick={copyJsonToClipboard} 
+                           className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                           title="Copy JSON"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                         </button>
                       </div>
+                      {showJsonSearch && (
+                        <SearchPanel
+                          contentType="JSON"
+                          onSearch={setJsonSearchTerm}
+                          targetRef={jsonOutputRef}
+                          isDarkMode={isDarkMode}
+                        />
+                      )}
                       {renderHighlightedOutput(parsedJson, 'json', jsonOutputRef)}
                    </div>
                </div>
@@ -405,9 +429,33 @@ const JsonVastExplorer = React.memo(({
                  <div className={`p-2 rounded-lg font-semibold text-center mb-2 ${isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'}`}>VAST Explorer</div>
                  <div className={`p-4 rounded-lg border shadow-inner overflow-auto max-h-96 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                     <div className="flex justify-end space-x-2 mb-2">
-                        <button onClick={() => setShowVastSearch(!showVastSearch)} className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Find</button>
-                        <button onClick={copyVastToClipboard} className={`text-xs px-2 py-1 rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}>Copy</button>
+                       <button 
+                         onClick={() => setShowVastSearch(!showVastSearch)} 
+                         className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                         title="Find in VAST"
+                       >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                       </button>
+                       <button 
+                         onClick={copyVastToClipboard} 
+                         className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                         title="Copy VAST"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                       </button>
                      </div>
+                     {showVastSearch && (
+                       <SearchPanel
+                         contentType="VAST"
+                         onSearch={setVastSearchTerm}
+                         targetRef={vastOutputRef}
+                         isDarkMode={isDarkMode}
+                       />
+                     )}
                      {renderHighlightedOutput(formattedVast, 'xml', vastOutputRef)}
                      {vastUrl && (
                        <div className={`mt-2 p-2 text-xs rounded flex justify-between items-center ${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-700'}`}>
