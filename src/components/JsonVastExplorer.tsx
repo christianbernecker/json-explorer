@@ -3,7 +3,7 @@ import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types'
 import useHighlighter from '../utils/highlighter';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import HistoryItem from './shared/HistoryItem';
-import { KeyboardShortcutsBox, SearchPanel } from './shared';
+import { KeyboardShortcutsBox } from './shared';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -43,10 +43,8 @@ const JsonVastExplorer = React.memo(({
   const [jsonInput, setJsonInput] = useState('');
   const [parsedJson, setParsedJson] = useState<any>(null);
   const [formattedVast, setFormattedVast] = useState<string | null>(null);
-  const [vastPath, setVastPath] = useState('');
   const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
-  const [copyMessage, setCopyMessage] = useState('');
   
   // Suche-States
   const [jsonSearchTerm, setJsonSearchTerm] = useState('');
@@ -120,14 +118,12 @@ const JsonVastExplorer = React.memo(({
         const url = extractVastUrl(vastInfo.content);
         
         setFormattedVast(currentFormattedVast);
-        setVastPath(vastInfo.path);
         setVastUrl(url || '');
         
         const newHistoryItem: HistoryItemType = {
           type: 'json_vast',
           jsonContent: currentParsedJson,
           vastContent: currentFormattedVast,
-          vastPath: vastInfo.path,
           vastUrl: url || '',
           timestamp: Date.now()
         };
@@ -135,7 +131,6 @@ const JsonVastExplorer = React.memo(({
         addToHistoryItem(newHistoryItem);
       } else {
         setFormattedVast(null);
-        setVastPath('');
         setVastUrl('');
         
         const newHistoryItem: HistoryItemType = {
@@ -150,7 +145,6 @@ const JsonVastExplorer = React.memo(({
       setError(`Parsing error: ${err.message}`);
       setParsedJson(null);
       setFormattedVast(null);
-      setVastPath('');
       setVastUrl('');
     }
   }, [jsonInput, findVastContent, formatXml, extractVastUrl, addToHistoryItem]);
@@ -159,8 +153,7 @@ const JsonVastExplorer = React.memo(({
   const copyToClipboard = useCallback((text: string, type: string) => {
     navigator.clipboard.writeText(text).then(
       () => {
-        setCopyMessage(`${type} copied!`);
-        setTimeout(() => setCopyMessage(''), 2000);
+        console.log(`${type} copied!`);
       },
       (err) => console.error('Error copying: ', err)
     );
@@ -178,14 +171,12 @@ const JsonVastExplorer = React.memo(({
       setJsonInput(JSON.stringify(item.content, null, 2));
       setParsedJson(item.content);
       setFormattedVast(null);
-      setVastPath('');
       setVastUrl('');
       setError('');
     } else {
       setJsonInput(JSON.stringify(item.jsonContent, null, 2));
       setParsedJson(item.jsonContent);
       setFormattedVast(item.vastContent || null);
-      setVastPath(item.vastPath || '');
       setVastUrl(item.vastUrl || '');
       setError('');
     }
@@ -197,10 +188,8 @@ const JsonVastExplorer = React.memo(({
     setJsonInput('');
     setParsedJson(null);
     setFormattedVast(null);
-    setVastPath('');
     setVastUrl('');
     setError('');
-    setCopyMessage('');
     setJsonSearchTerm('');
     setVastSearchTerm('');
     setShowJsonSearch(false);
