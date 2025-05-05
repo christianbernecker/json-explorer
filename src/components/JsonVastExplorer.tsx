@@ -7,7 +7,6 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import { atomOneDark as syntaxDark, atomOneLight as syntaxLight } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { Box, Button, Typography } from '@mui/material';
 import { FormatAlignLeft, Clear, Search, ContentCopy } from '@mui/icons-material';
-import TextareaAutosize from 'react-textarea-autosize';
 import { KeyboardShortcutsBox, SearchPanel } from './shared';
 import JsonExplorerHeader from './JsonExplorerHeader';
 
