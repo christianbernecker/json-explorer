@@ -60,6 +60,10 @@ const JsonVastExplorer = React.memo(({
   // Direkt unter showJsonSearch
   const [showVastSearch, setShowVastSearch] = useState(false);
   
+  // State für VAST-Tabs
+  type VastTab = 'initial' | 'fetched';
+  const [activeVastTab, setActiveVastTab] = useState<VastTab>('initial');
+  
   // Refs for search functionality
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const jsonOutputRef = useRef<HTMLDivElement>(null);
@@ -150,6 +154,7 @@ const JsonVastExplorer = React.memo(({
     setFetchedVastContent(null);
     setFetchError(null);
     setIsFetchingVast(false);
+    setActiveVastTab('initial'); // Reset Tab
     
     try {
       const inputStr = jsonInput.trim();
@@ -196,6 +201,7 @@ const JsonVastExplorer = React.memo(({
         setFetchedVastContent(null);
         setFetchError(null);
         setIsFetchingVast(false);
+        setActiveVastTab('initial'); // Reset Tab
         
         const newHistoryItem: HistoryItemType = {
           type: 'json',
@@ -215,6 +221,7 @@ const JsonVastExplorer = React.memo(({
       setFetchedVastContent(null);
       setFetchError(null);
       setIsFetchingVast(false);
+      setActiveVastTab('initial'); // Reset Tab
     }
   }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastFromUri, addToHistoryItem]);
   
@@ -267,6 +274,7 @@ const JsonVastExplorer = React.memo(({
     setFetchedVastContent(null);
     setFetchError(null);
     setIsFetchingVast(false);
+    setActiveVastTab('initial'); // Reset Tab
   }, []);
 
   // Kopieren des JSON-Inhalts in die Zwischenablage
@@ -410,76 +418,119 @@ const JsonVastExplorer = React.memo(({
              )}
              {rawVastContent && (
                <div className="w-1/2 min-w-0 flex flex-col flex-1">
-                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Explorer</h3>
-                 {vastUrl && (
-                    <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 rounded-t-lg flex items-center justify-between`}>
-                      <span className={`truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>URL:</span>
-                      <div className="flex items-center ml-2 flex-grow min-w-0">
-                        <span className={`truncate flex-grow mr-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} title={vastUrl}>{vastUrl}</span>
-                        <button 
-                          onClick={copyVastUrlToClipboard} 
-                          className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-600'}`}
-                          title="Copy VAST URL"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                             <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
+                 {/* Tab Navigation */} 
+                 <div className="flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-2">
+                    <button 
+                      onClick={() => setActiveVastTab('initial')}
+                      className={`py-2 px-4 text-sm font-medium focus:outline-none ${ 
+                        activeVastTab === 'initial' 
+                        ? (isDarkMode ? 'border-blue-400 text-blue-300' : 'border-blue-500 text-blue-600') + ' border-b-2'
+                        : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
+                      }`}
+                    >
+                       Initial VAST
+                    </button>
+                    {/* Show Fetched VAST tab only if URI or content exists */}
+                    {(vastAdTagUri || fetchedVastContent || isFetchingVast || fetchError) && (
+                       <button 
+                         onClick={() => setActiveVastTab('fetched')}
+                         className={`py-2 px-4 text-sm font-medium focus:outline-none ${ 
+                          activeVastTab === 'fetched' 
+                          ? (isDarkMode ? 'border-blue-400 text-blue-300' : 'border-blue-500 text-blue-600') + ' border-b-2'
+                          : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
+                         }`}
+                       >
+                         Fetched VAST
                        </button>
-                      </div>
-                   </div>
-                 )}
-                 {vastAdTagUri && (
-                   <div className="mt-0 pt-4 border-t border-dashed border-gray-600 dark:border-gray-400">
-                     {isFetchingVast && (
-                        <div className={`flex items-center justify-center p-4 rounded-lg text-sm ${isDarkMode ? 'text-blue-200 bg-gray-700' : 'text-blue-700 bg-blue-50'}`}>
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Fetching VAST from URI...
-                        </div>
-                     )}
-                     {fetchError && (
-                       <div className={`p-4 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-red-900 text-red-200 border-l-4 border-red-600' : 'bg-red-50 text-red-600 border-l-4 border-red-500'}`}>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                          <span>{fetchError}</span>
-                        </div>
-                     )}
-                     {fetchedVastContent && (
-                        <div className="flex flex-col flex-1 min-h-0">
-                           <h4 className={`text-md font-semibold mb-2 flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}> 
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                               <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                             </svg>
-                             Fetched VAST from URI:
-                           </h4>
-                           <div className={`text-xs mb-2 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} title={vastAdTagUri!}>{vastAdTagUri}</div>
-                           <div 
-                             ref={vastOutputRef}
-                             className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg border-t-0' : 'rounded-lg'} ${vastAdTagUri ? 'rounded-b-none' : ''}`}>
-                               <div className="flex justify-end space-x-2 mb-2">
-                                 <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
-                                 <button onClick={() => setShowVastSearch(true)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
-                                 <button onClick={() => copyToClipboard(formatXml(rawVastContent), 'VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
-                               </div>
-                               {showVastSearch && (
-                                 <SearchPanel
-                                   contentType="VAST"
-                                   targetRef={vastOutputRef}
-                                   isDarkMode={isDarkMode}
-                                 />
-                               )}
-                               <div
-                                 dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
-                                 className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
-                                 style={{ maxWidth: "100%" }}
-                               />
+                    )}
+                 </div>
+
+                 {/* Conditional Content based on Active Tab */}                 
+                 {activeVastTab === 'initial' && (
+                    <div className="flex flex-col flex-1 min-h-0">
+                       <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Initial VAST Content</h3>
+                        {vastUrl && (
+                          <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 rounded-t-lg flex items-center justify-between`}>
+                            <span className={`truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>URL:</span>
+                            <div className="flex items-center ml-2 flex-grow min-w-0">
+                              <span className={`truncate flex-grow mr-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} title={vastUrl}>{vastUrl}</span>
+                              <button 
+                                onClick={copyVastUrlToClipboard} 
+                                className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-600'}`}
+                                title="Copy VAST URL"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                             </button>
                             </div>
                          </div>
-                     )}
-                   </div>
+                       )}
+                       <div 
+                         ref={vastOutputRef} 
+                         className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'}`}>
+                         <div className="flex justify-end space-x-2 mb-2">
+                           {/* Buttons für den ursprünglichen VAST */}                      
+                           <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
+                           <button onClick={() => setShowVastSearch(true)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
+                           <button onClick={() => copyToClipboard(formatXml(rawVastContent!), 'VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
+                          </div>
+                          {showVastSearch && (
+                            <SearchPanel
+                              contentType="VAST"
+                              targetRef={vastOutputRef}
+                              isDarkMode={isDarkMode}
+                            />
+                          )}
+                          <div 
+                            dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
+                            className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                            style={{ maxWidth: "100%" }}
+                          />
+                      </div>
+                    </div>
+                 )}
+                 
+                 {activeVastTab === 'fetched' && (
+                    <div className="flex flex-col flex-1 min-h-0">
+                       <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Fetched VAST Content</h3>
+                        {isFetchingVast && (
+                           <div className={`flex items-center justify-center p-4 rounded-lg text-sm ${isDarkMode ? 'text-blue-200 bg-gray-700' : 'text-blue-700 bg-blue-50'}`}>
+                             <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                             </svg>
+                             Fetching VAST from URI...
+                           </div>
+                        )}
+                        {fetchError && (
+                          <div className={`p-4 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-red-900 text-red-200' : 'bg-red-50 text-red-600'} border-l-4 ${isDarkMode ? 'border-red-600' : 'border-red-500'}`}>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span>{fetchError}</span>
+                          </div>
+                        )}
+                        {fetchedVastContent && (
+                           <div className="flex flex-col flex-1 min-h-0">
+                              <div className={`text-xs mb-2 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} title={vastAdTagUri!}>Source: {vastAdTagUri}</div>
+                              <div 
+                                 className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                                  <div className="flex justify-end space-x-2 mb-2">
+                                    {/* Buttons für Fetched VAST */}                                 
+                                    <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
+                                    <button onClick={() => alert('Search in fetched VAST not implemented yet')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in Fetched VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
+                                    <button onClick={() => copyToClipboard(formatXml(fetchedVastContent), 'Fetched VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy Fetched VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
+                                  </div>
+                                  <div 
+                                    dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(fetchedVastContent), isDarkMode), 'xml') }}
+                                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                                    style={{ maxWidth: "100%" }}
+                                  />
+                               </div>
+                            </div>
+                        )}
+                    </div>
                  )}
                </div>
              )}
