@@ -23,7 +23,7 @@ const useAddLineNumbers = (isDarkMode: boolean) => {
       result += `
         <tr>
           <td style="width: 30px; text-align: right; color: ${isDarkMode ? '#9ca3af' : '#999'}; user-select: none; padding-right: 8px; font-size: ${fontSize}px; border-right: 1px solid ${isDarkMode ? '#4b5563' : '#ddd'}; vertical-align: top;">${index + 1}</td>
-          <td style="padding-left: 8px; white-space: pre; font-family: monospace; font-size: ${fontSize}px;">${line || '&nbsp;'}</td>
+          <td style="padding-left: 8px; font-family: monospace; font-size: ${fontSize}px;">${line || '&nbsp;'}</td>
         </tr>
       `;
     });
@@ -53,6 +53,7 @@ const JsonVastExplorer = React.memo(({
   const [vastSearchTerm, setVastSearchTerm] = useState('');
   const [showJsonSearch, setShowJsonSearch] = useState(false);
   const [showVastSearch, setShowVastSearch] = useState(false);
+  const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
   
   // Refs for search functionality
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -328,6 +329,18 @@ const JsonVastExplorer = React.memo(({
                    >
                      <div className="flex justify-end space-x-2 mb-2">
                        <button 
+                         onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)}
+                         className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                         title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}
+                       >
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           {isWordWrapEnabled 
+                             ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                             : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                           }
+                         </svg>
+                       </button>
+                       <button 
                          onClick={() => setShowJsonSearch(!showJsonSearch)} 
                          className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                          title="Find in JSON"
@@ -356,7 +369,7 @@ const JsonVastExplorer = React.memo(({
                      )}
                      <div 
                        dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
-                       className="overflow-x-auto whitespace-pre break-words w-full"
+                       className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
                        style={{ maxWidth: "100%" }}
                      />
                    </div>
@@ -387,6 +400,18 @@ const JsonVastExplorer = React.memo(({
                    className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg border-t-0' : 'rounded-lg'}`}>
                      <div className="flex justify-end space-x-2 mb-2">
                        <button 
+                         onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)}
+                         className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                         title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}
+                       >
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                           {isWordWrapEnabled 
+                             ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                             : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                           }
+                         </svg>
+                       </button>
+                       <button 
                          onClick={() => setShowVastSearch(!showVastSearch)} 
                          className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                          title="Find in VAST"
@@ -415,7 +440,7 @@ const JsonVastExplorer = React.memo(({
                      )}
                      <div 
                        dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
-                       className="overflow-x-auto whitespace-pre break-words w-full"
+                       className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
                        style={{ maxWidth: "100%" }}
                      />
                   </div>
