@@ -313,7 +313,7 @@ const JsonVastExplorer = React.memo(({
               value={jsonInput}
               onChange={handleJsonInputChange}
               placeholder="Paste your JSON here..."
-              className={`w-full h-64 p-3 border rounded-lg font-mono text-sm mb-2 outline-none transition ${
+              className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
                 isDarkMode 
                   ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
                   : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'

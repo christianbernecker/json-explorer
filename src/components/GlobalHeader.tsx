@@ -12,7 +12,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({ isDarkMode, toggleDarkMode 
   const isJSONExplorer = location.pathname.includes('/apps/json-explorer');
 
   return (
-    <header className={`w-full fixed top-0 left-0 right-0 z-50 ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'} shadow-md`}>
+    <header className={`w-full fixed top-0 left-0 right-0 z-40 ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'} shadow-md`}>
       <div className="relative">
         {/* Top header strip - gradient highlight for branding */}
         <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 to-indigo-600"></div>
