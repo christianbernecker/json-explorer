@@ -10,7 +10,6 @@ interface GlobalHeaderProps {
 const GlobalHeader: React.FC<GlobalHeaderProps> = ({ isDarkMode, toggleDarkMode }) => {
   const location = useLocation();
   const isJSONExplorer = location.pathname.includes('/apps/json-explorer');
-  const isDataVisualizer = location.pathname.includes('/apps/data-visualizer');
 
   return (
     <header className={`w-full fixed top-0 left-0 right-0 z-50 ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'} shadow-md`}>
