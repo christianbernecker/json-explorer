@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import InfoPanel from './InfoPanel';
+import GlobalHeader from './GlobalHeader';
 
 interface ApplicationHeaderProps {
   isDarkMode: boolean;
@@ -23,65 +24,42 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
 }) => {
   const [showInfo, setShowInfo] = useState(false);
 
-  const headerBgColor = isDarkMode ? 'bg-slate-700' : 'bg-white';
-  const textColor = isDarkMode ? 'text-slate-100' : 'text-slate-800';
-  const subTextColor = isDarkMode ? 'text-slate-400' : 'text-slate-500';
-  const buttonBgColor = isDarkMode ? 'bg-slate-600 hover:bg-slate-500' : 'bg-slate-100 hover:bg-slate-200';
-  const buttonActiveBgColor = isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white';
-
   return (
     <>
-      <header className={`flex justify-between items-center p-4 ${headerBgColor} ${textColor} shadow-md mb-4`}>
-        <div>
-          <h1 className="text-xl font-semibold">{title}</h1>
-          <p className={`text-sm ${subTextColor}`}>{subtitle}</p>
-        </div>
+      <GlobalHeader 
+        isDarkMode={isDarkMode} 
+        toggleDarkMode={toggleDarkMode} 
+      />
+      
+      <div className="h-28"></div>
+      
+      <div className={`mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+          <div className="hidden">
+            <h1 className="text-xl font-semibold">{title}</h1>
+            <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{subtitle}</p>
+          </div>
 
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={toggleDarkMode}
-            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${buttonBgColor}`}
-            title={`Switch to ${isDarkMode ? 'Light' : 'Dark'} Mode (Ctrl+Shift+D)`}
-          >
-            {isDarkMode ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
+          <div className="flex items-center space-x-3 mt-4 md:mt-0">
+            {setShowHistory && typeof historyLength !== 'undefined' && (
+              <button
+                onClick={() => setShowHistory(prev => !prev)}
+                className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                  showHistory 
+                    ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white' 
+                    : isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+                title="Toggle History (Ctrl+Shift+H)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="ml-2">History ({historyLength})</span>
+              </button>
             )}
-            <span className="ml-2 hidden sm:inline">{isDarkMode ? 'Light' : 'Dark'}</span>
-          </button>
-
-          {setShowHistory && typeof historyLength !== 'undefined' && (
-            <button
-              onClick={() => setShowHistory(prev => !prev)}
-              className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                showHistory ? buttonActiveBgColor : buttonBgColor
-              }`}
-              title="Toggle History (Ctrl+Shift+H)"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="ml-2 hidden sm:inline">History ({historyLength})</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => setShowInfo(true)}
-            className={`flex items-center px-3 py-2 rounded-lg transition-colors ${buttonBgColor}`}
-            title="Information about the tool"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="ml-2 hidden sm:inline">Info</span>
-          </button>
+          </div>
         </div>
-      </header>
+      </div>
 
       <InfoPanel 
         isVisible={showInfo} 

@@ -1,76 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { 
   HistoryItem as HistoryItemType, 
-  TabNavigationProps,
   JsonToolsAppProps
 } from '../types';
 import JsonVastExplorer from './JsonVastExplorer';
 import JsonDiffInspector from './JsonDiffInspector';
 import { SEO, StructuredData } from './seo';
 import ApplicationHeader from './ApplicationHeader';
-
-// App Tab Navigation
-const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationProps) => {
-  return (
-    <nav className={`flex border-b ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`} aria-label="JSON Tools Navigation">
-      <button
-        className={`py-3 px-6 focus:outline-none ${
-          activeTab === 'explorer'
-            ? isDarkMode 
-              ? 'border-b-2 border-blue-500 text-blue-400 font-medium' 
-              : 'border-b-2 border-blue-600 text-blue-600 font-medium'
-            : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'
-        } transition-colors duration-200`}
-        onClick={() => setActiveTab('explorer')}
-        aria-pressed={activeTab === 'explorer'}
-        aria-label="JSON Validator and VAST AdTag Explorer"
-      >
-        <div className="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          <span>JSON Validator &amp; VAST Explorer</span>
-        </div>
-      </button>
-      <button
-        className={`py-3 px-6 focus:outline-none ${
-          activeTab === 'comparator'
-            ? isDarkMode 
-              ? 'border-b-2 border-blue-500 text-blue-400 font-medium' 
-              : 'border-b-2 border-blue-600 text-blue-600 font-medium'
-            : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'
-        } transition-colors duration-200`}
-        onClick={() => setActiveTab('comparator')}
-        aria-pressed={activeTab === 'comparator'}
-        aria-label="JSON Comparison Tool"
-      >
-        <div className="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-          </svg>
-          <span>JSON Diff Comparison Tool</span>
-        </div>
-      </button>
-    </nav>
-  );
-};
+import { useLocation } from 'react-router-dom';
 
 // Main Application Component
 function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
-  const [activeTab, setActiveTab] = useState('explorer');
+  const location = useLocation();
+  // activeTab wird jetzt aus der URL abgeleitet
+  const [activeTab, setActiveTab] = useState(() => {
+    // Default ist 'explorer', aber wir prüfen die URL für das richtige Tab
+    return location.pathname.includes('/diff') ? 'comparator' : 'explorer';
+  });
+  
+  // URL-Änderungen überwachen
+  useEffect(() => {
+    if (location.pathname.includes('/diff')) {
+      setActiveTab('comparator');
+    } else {
+      setActiveTab('explorer');
+    }
+  }, [location.pathname]);
   
   // Interne isDarkMode State wird direkt von parentIsDarkMode abgeleitet
-  // Kein eigener lokaler DarkMode State oder localStorage mehr hier, das wird global in App.tsx gehandhabt
   const isDarkMode = parentIsDarkMode;
   
-  // Keyboard shortcut handler verwendet jetzt die toggleDarkMode Prop von App.tsx
+  // Keyboard shortcut handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
         switch (e.key.toLowerCase()) {
           case 'd': 
             e.preventDefault();
-            if (toggleDarkMode) toggleDarkMode(); // toggleDarkMode von App.tsx aufrufen
+            if (toggleDarkMode) toggleDarkMode();
             break;
           case 'h': 
             e.preventDefault();
@@ -79,14 +46,6 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
             } else if (activeTab === 'comparator') {
               setShowDiffInspectorHistory((prev: boolean) => !prev);
             }
-            break;
-          case '1':
-            e.preventDefault();
-            setActiveTab('explorer');
-            break;
-          case '2':
-            e.preventDefault();
-            setActiveTab('comparator');
             break;
           default:
             break;
@@ -98,10 +57,9 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  // toggleDarkMode als Abhängigkeit hinzugefügt
   }, [activeTab, toggleDarkMode]);
 
-  // History-States bleiben gleich
+  // History-States
   const [vastExplorerHistory, setVastExplorerHistory] = useState<HistoryItemType[]>(() => {
     const savedHistory = localStorage.getItem('jsonTools_vastExplorerHistory');
     return savedHistory ? JSON.parse(savedHistory) : [];
@@ -127,8 +85,6 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
   const activeShowHistory = activeTab === 'explorer' ? showVastExplorerHistory : showDiffInspectorHistory;
   const activeSetShowHistory = activeTab === 'explorer' ? setShowVastExplorerHistory : setShowDiffInspectorHistory;
 
-  // Der äußere Container bekommt keinen eigenen Hintergrund oder Textfarbe mehr,
-  // da dies vom übergeordneten Layout in App.tsx und den Body-Styles gesteuert wird.
   return (
     <div className="w-full h-full flex flex-col p-0">
       <SEO 
@@ -142,31 +98,24 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
       />
       <StructuredData 
         appVersion="v1.1.4" 
-        isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
+        isDarkMode={isDarkMode}
       />
       
-      {/* ApplicationHeader mit toggleDarkMode von App.tsx */}
       <ApplicationHeader 
-        isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
-        toggleDarkMode={toggleDarkMode} // toggleDarkMode von App.tsx
+        isDarkMode={isDarkMode}
+        toggleDarkMode={toggleDarkMode}
         activeTab={activeTab}
         showHistory={activeShowHistory}
         setShowHistory={activeSetShowHistory}
         historyLength={activeHistory.length}
-        title="JSON Toolkit" // Beispiel für einen spezifischeren Titel
-        subtitle="Validate, Compare & Explore VAST/JSON" // Beispiel für einen spezifischeren Untertitel
+        title="JSON Toolkit"
+        subtitle="Validate, Compare & Explore VAST/JSON"
       />
       
-      <TabNavigation 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
-      />
-      
-      <div className="flex-grow mt-0 min-h-0 overflow-y-auto"> {/* min-h-0 für korrekte Scrollbarkeit innerhalb des flex-grow Bereichs */}
+      <div className="flex-grow mt-0 min-h-0 overflow-y-auto">
         {activeTab === 'explorer' ? (
           <JsonVastExplorer 
-            isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
+            isDarkMode={isDarkMode}
             history={vastExplorerHistory}
             setHistory={setVastExplorerHistory}
             showHistory={showVastExplorerHistory}
@@ -174,7 +123,7 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
           />
         ) : (
           <JsonDiffInspector 
-            isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
+            isDarkMode={isDarkMode}
             history={diffInspectorHistory}
             setHistory={setDiffInspectorHistory}
             showHistory={showDiffInspectorHistory}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
@@ -8,6 +8,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
   const location = useLocation();
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
   
   // Navigation Items mit Icons und Text
   const navItems = [
@@ -60,12 +61,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
 
   // Farbschema basierend auf dem Dark Mode
   const bgColor = isDarkMode ? 'bg-slate-800' : 'bg-slate-100';
-  const textColor = isDarkMode ? 'text-slate-300 hover:text-slate-100' : 'text-slate-600 hover:text-slate-900';
+  const textColor = isDarkMode ? 'text-slate-200 hover:text-white' : 'text-slate-700 hover:text-slate-900';
   const activeItemBg = isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white';
   const hoverBgGeneral = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-200';
 
+  const handleMouseEnter = (itemName: string) => {
+    setExpandedItem(itemName);
+  };
+
+  const handleMouseLeave = () => {
+    setExpandedItem(null);
+  };
+
   return (
-    <div className={`w-20 ${bgColor} flex flex-col items-center py-4 shadow-lg`}>
+    <div className={`w-20 ${bgColor} flex flex-col items-center py-4 shadow-lg relative`}>
       {/* Logo */}
       <div className="mb-6 mt-2">
         <Link to="/" className="inline-block">
@@ -86,21 +95,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
           const isActive = location.pathname === item.path || 
                           (item.path !== '/' && location.pathname.startsWith(item.path) && item.path.length > 1) ||
                           (item.path === '/' && location.pathname === '/');
+          const isExpanded = expandedItem === item.name;
           
           return (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`flex flex-col items-center justify-center w-full h-14 rounded-md transition-all duration-200 ease-in-out group 
-                ${isActive 
-                  ? `${activeItemBg} shadow-md scale-105` 
-                  : `${textColor} ${hoverBgGeneral} hover:shadow-sm hover:scale-105`
-                }`}
-              title={item.name}
-            >
-              <div className={`transition-transform duration-200 ease-in-out ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>{item.icon}</div>
-              <span className={`text-xs mt-1 text-center truncate w-full ${isActive ? 'font-semibold' : 'font-normal'}`}>{item.name}</span>
-            </Link>
+            <div key={item.name} className="relative w-full group" onMouseEnter={() => handleMouseEnter(item.name)} onMouseLeave={handleMouseLeave}>
+              <Link
+                to={item.path}
+                className={`flex flex-col items-center justify-center w-full h-14 rounded-md transition-all duration-200 ease-in-out 
+                  ${isActive 
+                    ? `${activeItemBg} shadow-md scale-105` 
+                    : `${textColor} ${hoverBgGeneral} hover:shadow-sm hover:scale-105`
+                  }`}
+                aria-label={item.name}
+              >
+                <div className={`transition-transform duration-200 ease-in-out ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>{item.icon}</div>
+                <span className={`text-xs mt-1 text-center truncate w-full ${isActive ? 'font-semibold' : 'font-normal'}`}>{item.name}</span>
+              </Link>
+              
+              {/* Erweiterter Tooltip - erscheint rechts von der Sidebar */}
+              {isExpanded && !isActive && (
+                <div className={`absolute left-full top-0 ml-2 px-3 py-2 ${isDarkMode ? 'bg-slate-700' : 'bg-white'} ${textColor} rounded-md shadow-md z-10 whitespace-nowrap text-sm font-medium`}>
+                  {item.name}
+                  <div className="absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-45 w-2 h-2 bg-inherit"></div>
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>

@@ -44,11 +44,13 @@ function App() {
       <div className={`flex min-h-screen ${isDarkMode ? 'dark bg-slate-900' : 'bg-slate-50'}`}>
         <Sidebar isDarkMode={isDarkMode} />
         <div className="flex-1 flex flex-col ml-20 overflow-x-hidden">
-          <main className={`flex-grow p-6 overflow-auto`}>
+          <main className={`flex-grow overflow-auto`}>
             <Routes>
               <Route path="/" element={<Homepage isDarkMode={isDarkMode} />} />
               <Route path="/apps" element={<AppOverview isDarkMode={isDarkMode} />} />
               <Route path="/apps/json-explorer" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
+              <Route path="/apps/json-explorer/validator" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
+              <Route path="/apps/json-explorer/diff" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
               <Route path="/apps/data-visualizer" element={<DataVisualizer isDarkMode={isDarkMode} />} />
               <Route path="/legal/privacy" element={<PrivacyPage isDarkMode={isDarkMode} />} />
               <Route path="/legal/imprint" element={<ImprintPage isDarkMode={isDarkMode} />} />
