@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 10:26:49 CEST 2025", "commit": "Fix: Korrigiere JSX-Struktur für VAST-Anzeige (manuell)"}
+{"deployment": "staging", "timestamp": "Tue May  6 10:52:24 CEST 2025", "commit": "feat: Implement VAST Ad Tag URI fetching and tabbed display"}

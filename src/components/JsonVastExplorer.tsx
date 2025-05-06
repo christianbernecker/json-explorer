@@ -419,7 +419,7 @@ const JsonVastExplorer = React.memo(({
              {rawVastContent && (
                <div className="w-1/2 min-w-0 flex flex-col flex-1">
                  {/* Tab Navigation */} 
-                 <div className="flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-2">
+                 <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-2`}>
                     <button 
                       onClick={() => setActiveVastTab('initial')}
                       className={`py-2 px-4 text-sm font-medium focus:outline-none ${ 
