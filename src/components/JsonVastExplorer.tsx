@@ -49,8 +49,6 @@ const JsonVastExplorer = React.memo(({
   const [copyMessage, setCopyMessage] = useState('');
   
   // Suche-States
-  const [jsonSearchTerm, setJsonSearchTerm] = useState('');
-  const [vastSearchTerm, setVastSearchTerm] = useState('');
   const [showJsonSearch, setShowJsonSearch] = useState(false);
   const [showVastSearch, setShowVastSearch] = useState(false);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
@@ -197,8 +195,6 @@ const JsonVastExplorer = React.memo(({
     setVastUrl('');
     setError('');
     setCopyMessage('');
-    setJsonSearchTerm('');
-    setVastSearchTerm('');
     setShowJsonSearch(false);
     setShowVastSearch(false);
   }, []);
@@ -224,33 +220,6 @@ const JsonVastExplorer = React.memo(({
       copyToClipboard(vastUrl, 'URL');
     }
   }, [vastUrl, copyToClipboard]);
-
-  // Implementiere Suchlogik mit useCallback
-  const applySearchHighlight = useCallback((targetRef: React.RefObject<HTMLDivElement>, searchTerm: string) => {
-    if (!targetRef.current) { return; } // Frühzeitiger Ausstieg, wenn Ref nicht existiert
-
-    // Immer mit sauberem HTML starten (ohne Marks)
-    let htmlContent = targetRef.current.innerHTML.replace(/<mark class="search-highlight">([^<]+)<\/mark>/gi, '$1');
-
-    if (searchTerm) {
-        const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        htmlContent = htmlContent.replace(regex, '<mark class="search-highlight">$1</mark>');
-    }
-    
-    // Nur schreiben, wenn sich was geändert hat, um unnötige DOM-Operationen zu vermeiden
-    if (targetRef.current.innerHTML !== htmlContent) {
-       targetRef.current.innerHTML = htmlContent;
-    }
-  }, []); // Leeres Dependency Array, da keine externen States/Props verwendet werden
-
-  // Such-Effekte (jetzt mit applySearchHighlight in Dependencies)
-  useEffect(() => {
-    applySearchHighlight(jsonOutputRef, jsonSearchTerm);
-  }, [jsonSearchTerm, parsedJson, applySearchHighlight]); 
-
-  useEffect(() => {
-    applySearchHighlight(vastOutputRef, vastSearchTerm);
-  }, [vastSearchTerm, rawVastContent, applySearchHighlight]);
 
   return (
     <div className="w-full flex flex-col" style={{ height: 'calc(100vh - 150px)' }}>
@@ -318,14 +287,14 @@ const JsonVastExplorer = React.memo(({
       )}
       
       {(parsedJson || rawVastContent) && (
-        <div className="mt-4 flex flex-col flex-grow min-h-0"> 
-           <div className="flex flex-row space-x-4 flex-grow min-h-0">
+        <div className="mt-4 flex flex-col flex-1 min-h-0"> 
+           <div className="flex flex-row space-x-4 flex-1 min-h-0">
              {parsedJson && (
-                <div className={`${rawVastContent ? 'w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
+                <div className={`${rawVastContent ? 'w-1/2' : 'w-full'} min-w-0 flex flex-col flex-1`}>
                   <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h3>
                    <div 
                      ref={jsonOutputRef}
-                     className={`p-4 rounded-lg border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
+                     className={`p-4 rounded-lg border shadow-inner overflow-auto min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
                    >
                      <div className="flex justify-end space-x-2 mb-2">
                        <button 
@@ -365,7 +334,6 @@ const JsonVastExplorer = React.memo(({
                      {showJsonSearch && (
                        <SearchPanel
                          contentType="JSON"
-                         onSearch={setJsonSearchTerm}
                          targetRef={jsonOutputRef}
                          isDarkMode={isDarkMode}
                        />
@@ -379,7 +347,7 @@ const JsonVastExplorer = React.memo(({
                 </div>
              )}
              {rawVastContent && (
-               <div className="w-1/2 min-w-0 flex flex-col">
+               <div className="w-1/2 min-w-0 flex flex-col flex-1">
                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Explorer</h3>
                  {vastUrl && (
                     <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 rounded-t-lg flex items-center justify-between`}>
@@ -400,7 +368,7 @@ const JsonVastExplorer = React.memo(({
                  )}
                  <div 
                    ref={vastOutputRef} 
-                   className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg border-t-0' : 'rounded-lg'}`}>
+                   className={`p-4 border shadow-inner overflow-auto min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg border-t-0' : 'rounded-lg'}`}>
                      <div className="flex justify-end space-x-2 mb-2">
                        <button 
                          onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)}
@@ -439,7 +407,6 @@ const JsonVastExplorer = React.memo(({
                      {showVastSearch && (
                        <SearchPanel
                          contentType="VAST"
-                         onSearch={setVastSearchTerm}
                          targetRef={vastOutputRef}
                          isDarkMode={isDarkMode}
                        />
