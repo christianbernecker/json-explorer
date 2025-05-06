@@ -12,14 +12,14 @@ import ApplicationHeader from './ApplicationHeader';
 // App Tab Navigation
 const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationProps) => {
   return (
-    <nav className={`flex border-b mb-6 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`} aria-label="JSON Tools Navigation">
+    <nav className={`flex border-b ${isDarkMode ? 'border-slate-700' : 'border-slate-200'}`} aria-label="JSON Tools Navigation">
       <button
         className={`py-3 px-6 focus:outline-none ${
           activeTab === 'explorer'
             ? isDarkMode 
-              ? 'border-b-2 border-blue-500 text-blue-500 font-medium' 
+              ? 'border-b-2 border-blue-500 text-blue-400 font-medium' 
               : 'border-b-2 border-blue-600 text-blue-600 font-medium'
-            : isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+            : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'
         } transition-colors duration-200`}
         onClick={() => setActiveTab('explorer')}
         aria-pressed={activeTab === 'explorer'}
@@ -36,9 +36,9 @@ const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationPro
         className={`py-3 px-6 focus:outline-none ${
           activeTab === 'comparator'
             ? isDarkMode 
-              ? 'border-b-2 border-blue-500 text-blue-500 font-medium' 
+              ? 'border-b-2 border-blue-500 text-blue-400 font-medium' 
               : 'border-b-2 border-blue-600 text-blue-600 font-medium'
-            : isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'
+            : isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-700'
         } transition-colors duration-200`}
         onClick={() => setActiveTab('comparator')}
         aria-pressed={activeTab === 'comparator'}
@@ -130,7 +130,7 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
   // Der äußere Container bekommt keinen eigenen Hintergrund oder Textfarbe mehr,
   // da dies vom übergeordneten Layout in App.tsx und den Body-Styles gesteuert wird.
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col p-0">
       <SEO 
         title="JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer"
         description="Free tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required."
@@ -153,9 +153,8 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
         showHistory={activeShowHistory}
         setShowHistory={activeSetShowHistory}
         historyLength={activeHistory.length}
-        // Title und Subtitle könnten hier spezifisch gesetzt werden, wenn nötig
-        // title="JSON Tools"
-        // subtitle="Validate, Compare, and Explore"
+        title="JSON Toolkit" // Beispiel für einen spezifischeren Titel
+        subtitle="Validate, Compare & Explore VAST/JSON" // Beispiel für einen spezifischeren Untertitel
       />
       
       <TabNavigation 
@@ -164,7 +163,7 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
         isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
       />
       
-      <div className="flex-grow mt-6 min-h-0"> {/* min-h-0 für korrekte Scrollbarkeit innerhalb des flex-grow Bereichs */}
+      <div className="flex-grow mt-0 min-h-0 overflow-y-auto"> {/* min-h-0 für korrekte Scrollbarkeit innerhalb des flex-grow Bereichs */}
         {activeTab === 'explorer' ? (
           <JsonVastExplorer 
             isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode

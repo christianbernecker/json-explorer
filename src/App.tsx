@@ -8,7 +8,6 @@ import PrivacyPage from './components/PrivacyPage';
 import ImprintPage from './components/ImprintPage';
 import NotFound from './components/NotFound';
 import Sidebar from './components/Sidebar';
-import GlobalHeader from './components/GlobalHeader';
 import { Footer } from './components/shared';
 
 function App() {
@@ -40,29 +39,23 @@ function App() {
     }
   }, [isDarkMode]);
 
-  // Geschätzte Höhe des GlobalHeaders, dynamische Berechnung wäre besser, aber für jetzt:
-  const globalHeaderHeight = "76px"; 
-
   return (
     <Router>
-      <div className={`flex flex-col min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
-        <GlobalHeader isDarkMode={isDarkMode} />
-        <div className="flex flex-1" style={{ paddingTop: globalHeaderHeight }}>
-          <Sidebar isDarkMode={isDarkMode} />
-          <div className="flex-1 flex flex-col ml-20">
-            <main className={`flex-grow p-6 overflow-auto ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-              <Routes>
-                <Route path="/" element={<Homepage isDarkMode={isDarkMode} />} />
-                <Route path="/apps" element={<AppOverview isDarkMode={isDarkMode} />} />
-                <Route path="/apps/json-explorer" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
-                <Route path="/apps/data-visualizer" element={<DataVisualizer isDarkMode={isDarkMode} />} />
-                <Route path="/legal/privacy" element={<PrivacyPage isDarkMode={isDarkMode} />} />
-                <Route path="/legal/imprint" element={<ImprintPage isDarkMode={isDarkMode} />} />
-                <Route path="*" element={<NotFound isDarkMode={isDarkMode} />} />
-              </Routes>
-            </main>
-            <Footer isDarkMode={isDarkMode} />
-          </div>
+      <div className={`flex min-h-screen ${isDarkMode ? 'dark bg-slate-900' : 'bg-slate-50'}`}>
+        <Sidebar isDarkMode={isDarkMode} />
+        <div className="flex-1 flex flex-col ml-20 overflow-x-hidden">
+          <main className={`flex-grow p-6 overflow-auto`}>
+            <Routes>
+              <Route path="/" element={<Homepage isDarkMode={isDarkMode} />} />
+              <Route path="/apps" element={<AppOverview isDarkMode={isDarkMode} />} />
+              <Route path="/apps/json-explorer" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
+              <Route path="/apps/data-visualizer" element={<DataVisualizer isDarkMode={isDarkMode} />} />
+              <Route path="/legal/privacy" element={<PrivacyPage isDarkMode={isDarkMode} />} />
+              <Route path="/legal/imprint" element={<ImprintPage isDarkMode={isDarkMode} />} />
+              <Route path="*" element={<NotFound isDarkMode={isDarkMode} />} />
+            </Routes>
+          </main>
+          <Footer isDarkMode={isDarkMode} />
         </div>
       </div>
     </Router>

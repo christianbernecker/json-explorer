@@ -23,24 +23,21 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
 }) => {
   const [showInfo, setShowInfo] = useState(false);
 
-  const headerBgColor = isDarkMode ? 'bg-gray-700' : 'bg-white';
-  const textColor = isDarkMode ? 'text-gray-100' : 'text-gray-800';
-  const subTextColor = isDarkMode ? 'text-gray-400' : 'text-gray-500';
-  const buttonBgColor = isDarkMode ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-100 hover:bg-gray-200';
+  const headerBgColor = isDarkMode ? 'bg-slate-700' : 'bg-white';
+  const textColor = isDarkMode ? 'text-slate-100' : 'text-slate-800';
+  const subTextColor = isDarkMode ? 'text-slate-400' : 'text-slate-500';
+  const buttonBgColor = isDarkMode ? 'bg-slate-600 hover:bg-slate-500' : 'bg-slate-100 hover:bg-slate-200';
   const buttonActiveBgColor = isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white';
 
   return (
     <>
-      <header className={`flex justify-between items-center p-4 ${headerBgColor} ${textColor} shadow-sm`}>
-        {/* Left Side - Title and Subtitle (Logo entfernt) */}
+      <header className={`flex justify-between items-center p-4 ${headerBgColor} ${textColor} shadow-md mb-4`}>
         <div>
           <h1 className="text-xl font-semibold">{title}</h1>
           <p className={`text-sm ${subTextColor}`}>{subtitle}</p>
         </div>
 
-        {/* Right Side - Actions */}
         <div className="flex items-center space-x-3">
-          {/* Dark Mode Toggle */}
           <button
             onClick={toggleDarkMode}
             className={`flex items-center px-3 py-2 rounded-lg transition-colors ${buttonBgColor}`}
@@ -58,7 +55,6 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
             <span className="ml-2 hidden sm:inline">{isDarkMode ? 'Light' : 'Dark'}</span>
           </button>
 
-          {/* History Toggle (nur anzeigen, wenn setShowHistory und historyLength vorhanden) */}
           {setShowHistory && typeof historyLength !== 'undefined' && (
             <button
               onClick={() => setShowHistory(prev => !prev)}
@@ -74,7 +70,6 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
             </button>
           )}
 
-          {/* Info Button */}
           <button
             onClick={() => setShowInfo(true)}
             className={`flex items-center px-3 py-2 rounded-lg transition-colors ${buttonBgColor}`}

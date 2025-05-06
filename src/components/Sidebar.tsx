@@ -59,14 +59,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
   ];
 
   // Farbschema basierend auf dem Dark Mode
-  const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-gray-100';
-  const textColor = isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900';
+  const bgColor = isDarkMode ? 'bg-slate-800' : 'bg-slate-100';
+  const textColor = isDarkMode ? 'text-slate-300 hover:text-slate-100' : 'text-slate-600 hover:text-slate-900';
   const activeItemBg = isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white';
-  const hoverBg = isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200';
-  const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
+  const hoverBgGeneral = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-200';
 
   return (
-    <div className={`fixed left-0 h-full w-20 ${bgColor} border-r ${borderColor} flex flex-col items-center py-4 z-40 shadow-md`}>
+    <div className={`w-20 ${bgColor} flex flex-col items-center py-4 shadow-lg`}>
       {/* Logo */}
       <div className="mb-6 mt-2">
         <Link to="/" className="inline-block">
@@ -94,8 +93,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
               to={item.path}
               className={`flex flex-col items-center justify-center w-full h-14 rounded-md transition-all duration-200 ease-in-out group 
                 ${isActive 
-                  ? `${activeItemBg} shadow-lg scale-105` 
-                  : `${textColor} ${hoverBg} hover:shadow-md hover:scale-105`
+                  ? `${activeItemBg} shadow-md scale-105` 
+                  : `${textColor} ${hoverBgGeneral} hover:shadow-sm hover:scale-105`
                 }`}
               title={item.name}
             >
