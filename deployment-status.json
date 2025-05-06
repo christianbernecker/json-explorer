@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 22:04:53 CEST 2025", "commit": "Fix: Entfernen nicht funktionierender Header-Icons, History oberhalb des Inputs und Ausblenden des Apps-Elements in der Sidebar, DataVisualizer mit GlobalHeader"}
+{"deployment": "staging", "timestamp": "Tue May  6 22:10:06 CEST 2025", "commit": "Fix: Header-Icons für History und Info mit Funktionalität versehen"}
