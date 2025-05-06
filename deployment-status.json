@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 10:56:40 CEST 2025", "commit": "fix: Correct template literal syntax in tab buttons"}
+{"deployment": "staging", "timestamp": "Tue May  6 11:04:35 CEST 2025", "commit": "refactor: Improve VAST tab wording, source URL position and output height"}

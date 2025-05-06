@@ -50,19 +50,21 @@ const JsonVastExplorer = React.memo(({
   
   // Suche-States
   const [showJsonSearch, setShowJsonSearch] = useState(false);
-  const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
-  // Neue States für VAST Ad Tag URI Fetching
-  const [vastAdTagUri, setVastAdTagUri] = useState<string | null>(null);
-  const [fetchedVastContent, setFetchedVastContent] = useState<string | null>(null);
-  const [isFetchingVast, setIsFetchingVast] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  
-  // Direkt unter showJsonSearch
   const [showVastSearch, setShowVastSearch] = useState(false);
+  const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
   
-  // State für VAST-Tabs
-  type VastTab = 'initial' | 'fetched';
-  const [activeVastTab, setActiveVastTab] = useState<VastTab>('initial');
+  // State für die VAST Kette (Wrapper)
+  interface VastChainItem {
+    uri: string;
+    content: string | null;
+    isLoading: boolean;
+    error: string | null;
+  }
+  const [vastChain, setVastChain] = useState<VastChainItem[]>([]);
+  const MAX_VAST_WRAPPER = 5; // Limit für Rekursion
+  
+  // State für aktiven Tab (0 = Embedded, 1 = Chain Item 0, 2 = Chain Item 1, ...)
+  const [activeVastTabIndex, setActiveVastTabIndex] = useState<number>(0);
   
   // Refs for search functionality
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -116,92 +118,105 @@ const JsonVastExplorer = React.memo(({
   // Extract VAST URL from VASTAdTagURI tag - More specific than the previous one
   const extractAdTagUri = useCallback((content: string | null): string | null => {
     if (!content) return null;
-    // Regex to find VASTAdTagURI and extract URL, handles CDATA
-    const match = content.match(/<VASTAdTagURI.*?>(?:<!\[CDATA\[)?(https?:\/\/[^<\]]+)(?:\]\]>)?<\/VASTAdTagURI>/i);
+    // Regex to find VASTAdTagURI and extract URL, handles CDATA and trims whitespace
+    const match = content.match(/<VASTAdTagURI(?:\s[^>]*)?>(?:<!\[CDATA\[)?\s*(https?:\/\/[^<\s\]]+)\s*(?:\]\]>)?<\/VASTAdTagURI>/i);
     return match ? match[1].trim() : null; // Return the captured group (the URL)
   }, []);
 
-  // Async function to fetch VAST from URI
-  const fetchVastFromUri = useCallback(async (uri: string) => {
-    setIsFetchingVast(true);
-    setFetchedVastContent(null);
-    setFetchError(null);
-    try {
-        // NOTE: This fetch might fail due to CORS restrictions in the browser.
-        // A CORS proxy would be needed for a general solution.
-        const response = await fetch(uri);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const text = await response.text();
-        // Basic check if it looks like XML
-        if (!text.trim().startsWith('<')) { 
-            throw new Error('Response does not look like XML.');
-        }
-        setFetchedVastContent(text);
-    } catch (err: any) {
-        console.error("Error fetching VAST URI:", err);
-        setFetchError(`Failed to fetch VAST from URI: ${err.message}. Possible CORS issue or invalid URL/content.`);
-    } finally {
-        setIsFetchingVast(false);
+  // Recursive function to fetch VAST chain
+  const fetchVastChainRecursive = useCallback(async (uri: string, currentChain: VastChainItem[] = []) => {
+    if (currentChain.length >= MAX_VAST_WRAPPER) {
+      console.warn(`VAST wrapper limit (${MAX_VAST_WRAPPER}) reached. Stopping fetch for URI: ${uri}`);
+      setVastChain(prev => [...prev, { uri, content: null, isLoading: false, error: `Wrapper limit (${MAX_VAST_WRAPPER}) reached.` }]);
+      return;
     }
-  }, []); // Keine Abhängigkeiten, da fetch global ist
-  
-  // Format JSON and find VAST content - Optimized with useCallback
+    
+    const chainIndex = currentChain.length;
+    const newItem: VastChainItem = { uri, content: null, isLoading: true, error: null };
+    setVastChain(prev => [...prev, newItem]);
+
+    try {
+      // NOTE: CORS restrictions might apply.
+      const response = await fetch(uri);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const text = await response.text();
+      if (!text.trim().startsWith('<')) { 
+        throw new Error('Response does not look like XML.');
+      }
+
+      setVastChain(prev => prev.map((item, index) => 
+        index === chainIndex ? { ...item, content: text, isLoading: false } : item
+      ));
+
+      // Check for next VASTAdTagURI in the fetched content
+      const nextUri = extractAdTagUri(text);
+      if (nextUri) {
+        await fetchVastChainRecursive(nextUri, [...currentChain, { ...newItem, content: text, isLoading: false }]); // Pass updated chain
+      } else {
+          // No more wrappers found in this VAST
+      }
+
+    } catch (err: any) {
+      console.error(`Error fetching VAST URI at index ${chainIndex}:`, err);
+      const errorMessage = `Failed to fetch VAST from URI: ${err.message}. Possible CORS issue or invalid URL/content.`;
+      setVastChain(prev => prev.map((item, index) => 
+        index === chainIndex ? { ...item, isLoading: false, error: errorMessage } : item
+      ));
+    }
+  }, [extractAdTagUri]);
+
+  // Format JSON and initiate VAST chain fetching
   const handleFormat = useCallback(() => {
     // Reset fetch states on new format
-    setVastAdTagUri(null);
-    setFetchedVastContent(null);
-    setFetchError(null);
-    setIsFetchingVast(false);
-    setActiveVastTab('initial'); // Reset Tab
+    setVastChain([]); // Clear the previous chain
+    setActiveVastTabIndex(0); // Reset to embedded VAST tab
     
     try {
       const inputStr = jsonInput.trim();
       
       if (!inputStr) {
         setError('Please enter JSON.');
+        setParsedJson(null); // Ensure parsedJson is also reset
+        setRawVastContent(null);
         return;
       }
       
       const currentParsedJson = JSON.parse(inputStr);
       setParsedJson(currentParsedJson);
       setError('');
-      
+      setRawVastContent(null); // Reset raw VAST initially
+
       const vastInfo = findVastContent(currentParsedJson);
       if (vastInfo) {
         const currentRawVast = vastInfo.content;
         setRawVastContent(currentRawVast);
         
         // Extract original VAST URL (for display above VAST box, might be different from AdTagURI)
-        const originalVastUrl = extractVastUrl(currentRawVast);
-        setVastUrl(originalVastUrl || ''); // Display this one
+        const displayUrl = extractVastUrl(currentRawVast);
+        setVastUrl(displayUrl || ''); // Display this URL above the initial VAST
 
         // Now try to extract and fetch the AdTagURI from the raw VAST content
-        const adTagUri = extractAdTagUri(currentRawVast);
-        setVastAdTagUri(adTagUri);
-        if (adTagUri) {
-            fetchVastFromUri(adTagUri);
+        const firstAdTagUri = extractAdTagUri(currentRawVast);
+        if (firstAdTagUri) {
+            fetchVastChainRecursive(firstAdTagUri); // Start recursive fetch
         }
         
         const newHistoryItem: HistoryItemType = {
           type: 'json_vast',
           jsonContent: currentParsedJson,
           vastContent: currentRawVast,
-          vastUrl: originalVastUrl || '',
+          vastUrl: displayUrl || '', // Use the extracted display URL
           timestamp: Date.now()
         };
         
         addToHistoryItem(newHistoryItem);
       } else {
-        setRawVastContent(null);
+        setRawVastContent(null); // Already reset above, but good to be explicit
         setVastUrl('');
-        // Reset fetch states if no VAST found
-        setVastAdTagUri(null);
-        setFetchedVastContent(null);
-        setFetchError(null);
-        setIsFetchingVast(false);
-        setActiveVastTab('initial'); // Reset Tab
+        setVastChain([]); // Ensure chain is clear if no VAST found
+        setActiveVastTabIndex(0); // Reset tab
         
         const newHistoryItem: HistoryItemType = {
           type: 'json',
@@ -217,13 +232,11 @@ const JsonVastExplorer = React.memo(({
       setRawVastContent(null);
       setVastUrl('');
       // Reset fetch states on error
-      setVastAdTagUri(null);
-      setFetchedVastContent(null);
-      setFetchError(null);
-      setIsFetchingVast(false);
-      setActiveVastTab('initial'); // Reset Tab
+      setVastChain([]);
+      setActiveVastTabIndex(0);
+      setShowVastSearch(false); // Also hide VAST search on error
     }
-  }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastFromUri, addToHistoryItem]);
+  }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastChainRecursive, addToHistoryItem]);
   
   // Copy content to clipboard - Optimized with useCallback
   const copyToClipboard = useCallback((text: string, type: string) => {
@@ -270,11 +283,9 @@ const JsonVastExplorer = React.memo(({
     setCopyMessage('');
     setShowJsonSearch(false);
     // Reset fetch states on clear
-    setVastAdTagUri(null);
-    setFetchedVastContent(null);
-    setFetchError(null);
-    setIsFetchingVast(false);
-    setActiveVastTab('initial'); // Reset Tab
+    setVastChain([]);
+    setActiveVastTabIndex(0);
+    setShowVastSearch(false); // Also hide VAST search on clear
   }, []);
 
   // Kopieren des JSON-Inhalts in die Zwischenablage
@@ -418,38 +429,53 @@ const JsonVastExplorer = React.memo(({
              )}
              {rawVastContent && (
                <div className="w-1/2 min-w-0 flex flex-col flex-1">
-                 {/* Tab Navigation */} 
-                 <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-2`}>
+                 {/* Tab Navigation - Dynamic */} 
+                 <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800`}>
+                    {/* Embedded VAST Tab (Index 0) */}                 
                     <button 
-                      onClick={() => setActiveVastTab('initial')}
-                      className={`py-2 px-4 text-sm font-medium focus:outline-none ${ 
-                        activeVastTab === 'initial' 
-                          ? (isDarkMode ? 'border-blue-400 text-blue-300' : 'border-blue-500 text-blue-600') + ' border-b-2'
-                          : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
+                       onClick={() => setActiveVastTabIndex(0)}
+                       className={`py-2 px-4 text-sm font-medium focus:outline-none whitespace-nowrap ${
+                         activeVastTabIndex === 0 
+                           ? (isDarkMode ? 'border-blue-400 text-blue-300' : 'border-blue-500 text-blue-600') + ' border-b-2'
+                           : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
                       }`}
                     >
-                       Ursprünglicher VAST
+                       Embedded VAST
                     </button>
-                    {/* Show Fetched VAST tab only if URI or content exists */}
-                    {(vastAdTagUri || fetchedVastContent || isFetchingVast || fetchError) && (
+                    
+                    {/* Dynamic VAST Chain Tabs (Index 1+) */}                    
+                    {vastChain.map((item, index) => (
                        <button 
-                         onClick={() => setActiveVastTab('fetched')}
-                         className={`py-2 px-4 text-sm font-medium focus:outline-none ${ 
-                          activeVastTab === 'fetched' 
+                         key={index + 1}
+                         onClick={() => setActiveVastTabIndex(index + 1)}
+                         className={`py-2 px-4 text-sm font-medium focus:outline-none whitespace-nowrap ${
+                          activeVastTabIndex === index + 1 
                           ? (isDarkMode ? 'border-blue-400 text-blue-300' : 'border-blue-500 text-blue-600') + ' border-b-2'
                           : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
                          }`}
                        >
-                         Nachgeladener VAST
+                         VASTAdTagURI ({index + 1})
+                         {item.isLoading && (
+                            <svg className="animate-spin ml-2 h-4 w-4 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                         )}
+                         {item.error && !item.isLoading && (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="ml-2 h-4 w-4 inline-block text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} >
+                               <title>{item.error}</title>
+                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                         )}
                        </button>
-                    )}
+                    ))}
                  </div>
 
-                 {/* Conditional Content based on Active Tab */}                 
-                 {activeVastTab === 'initial' && (
+                 {/* Conditional Content based on Active Tab Index */}                 
+                 {activeVastTabIndex === 0 && rawVastContent && (
                     <div className="flex flex-col flex-1 min-h-0">
-                       <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Initial VAST Content</h3>
-                        {vastUrl && (
+                       <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Embedded VAST Content</h3>
+                       {vastUrl && (
                           <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 rounded-t-lg flex items-center justify-between`}>
                             <span className={`truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>URL:</span>
                             <div className="flex items-center ml-2 flex-grow min-w-0">
@@ -491,10 +517,12 @@ const JsonVastExplorer = React.memo(({
                     </div>
                  )}
                  
-                 {activeVastTab === 'fetched' && (
+                 {activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1] && (
                     <div className="flex flex-col flex-1 min-h-0">
-                       <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Fetched VAST Content</h3>
-                        {isFetchingVast && (
+                       {/* Use the index for the title */}                      
+                       <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VASTAdTagURI ({activeVastTabIndex}) Content</h3>
+                       {/* Display Loading state for this specific tab */}                      
+                       {vastChain[activeVastTabIndex - 1].isLoading && (
                            <div className={`flex items-center justify-center p-4 rounded-lg text-sm ${isDarkMode ? 'text-blue-200 bg-gray-700' : 'text-blue-700 bg-blue-50'}`}>
                              <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -502,34 +530,39 @@ const JsonVastExplorer = React.memo(({
                              </svg>
                              Fetching VAST from URI...
                            </div>
-                        )}
-                        {fetchError && (
+                       )}
+                       {/* Display Error state for this specific tab */}                       
+                       {vastChain[activeVastTabIndex - 1].error && !vastChain[activeVastTabIndex - 1].isLoading && (
                           <div className={`p-4 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-red-900 text-red-200' : 'bg-red-50 text-red-600'} border-l-4 ${isDarkMode ? 'border-red-600' : 'border-red-500'}`}>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
-                            <span>{fetchError}</span>
+                            <span>{vastChain[activeVastTabIndex - 1].error}</span>
                           </div>
-                        )}
-                        {fetchedVastContent && (
+                       )}
+                       {/* Display VAST content for this specific tab */}                       
+                       {vastChain[activeVastTabIndex - 1].content && !vastChain[activeVastTabIndex - 1].isLoading && (
                            <div className="flex flex-col flex-1 min-h-0">
                               <div 
-                                 className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} flex flex-col h-full`}>
-                                  <div className="flex justify-end space-x-2 mb-2 flex-shrink-0">
+                                 className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} flex flex-col h-full`}>                                 
+                                   <div className="flex justify-end space-x-2 mb-2 flex-shrink-0">                                   
                                     {/* Buttons für Fetched VAST */}                                 
                                     <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
-                                    <button onClick={() => alert('Search in fetched VAST not implemented yet')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in Fetched VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
-                                    <button onClick={() => copyToClipboard(formatXml(fetchedVastContent), 'Fetched VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy Fetched VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
+                                    {/* TODO: Implement search for this specific VAST Chain item */}                                    
+                                    <button onClick={() => alert(`Search in VASTAdTagURI (${activeVastTabIndex}) not implemented yet`)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={`Find in VASTAdTagURI (${activeVastTabIndex})`}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
+                                    <button onClick={() => copyToClipboard(formatXml(vastChain[activeVastTabIndex - 1].content!), `VASTAdTagURI (${activeVastTabIndex})`)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={`Copy VASTAdTagURI (${activeVastTabIndex})`}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
                                   </div>
+                                  {/* TODO: Implement SearchPanel instance for this specific VAST Chain item */}                                  
+                                  {/* {showVastSearch && activeVastTabIndex > 0 && ( <SearchPanel ... /> )} */}                                  
                                   <div 
-                                    dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(fetchedVastContent), isDarkMode), 'xml') }}
-                                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
+                                    dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(vastChain[activeVastTabIndex - 1].content as string), isDarkMode), 'xml') }}
+                                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}                                    
                                     style={{ maxWidth: "100%" }}
                                   />
                                </div>
                                <div className={`mt-2 text-xs flex items-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>                                 
                                  <span className="flex-shrink-0 mr-1">Source:</span>                                 
-                                 <span className="truncate" title={vastAdTagUri!}>{vastAdTagUri}</span>                               
+                                 <span className="truncate" title={vastChain[activeVastTabIndex - 1].uri}>{vastChain[activeVastTabIndex - 1].uri}</span>                               
                                </div>
                             </div>
                         )}
