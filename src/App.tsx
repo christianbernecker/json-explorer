@@ -43,7 +43,7 @@ function App() {
     <Router>
       <div className={`flex min-h-screen ${isDarkMode ? 'dark bg-slate-900' : 'bg-slate-50'}`}>
         <Sidebar isDarkMode={isDarkMode} />
-        <div className="flex-1 flex flex-col ml-28 pr-8 overflow-x-hidden">
+        <div className="flex-1 flex flex-col ml-28 pl-6 pr-8 overflow-x-hidden">
           <main className={`flex-grow overflow-auto`}>
             <Routes>
               <Route path="/" element={<Homepage isDarkMode={isDarkMode} />} />
