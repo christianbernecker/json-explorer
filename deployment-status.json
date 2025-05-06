@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 09:13:13 CEST 2025", "commit": "Fix: Behebe ESLint-Fehler (no-useless-concat) in formatXml"}
+{"deployment": "staging", "timestamp": "Tue May  6 09:18:43 CEST 2025", "commit": "Style: Versuche Einrückung für umgebrochene Zeilen zu verbessern"}
