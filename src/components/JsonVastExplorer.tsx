@@ -446,7 +446,7 @@ const JsonVastExplorer = React.memo(({
              {rawVastContent && (
                <div className="w-1/2 min-w-0 flex flex-col flex-1">
                  {/* General Headline */}                 
-                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST-Antworten</h3>
+                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                  
                  {/* Tab Navigation - Dynamic */} 
                  <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800`}>
@@ -494,33 +494,24 @@ const JsonVastExplorer = React.memo(({
                  {activeVastTabIndex === 0 && rawVastContent && ( /* Show only if rawVastContent exists */
                     <div className="flex flex-col flex-1 min-h-0">
                        {/* Removed specific headline from here */}                       
-                       {vastUrl && (
-                          <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 rounded-t-lg flex items-center justify-between`}>
-                            <span className={`truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>URL:</span>
-                            <div className="flex items-center ml-2 flex-grow min-w-0">
-                              <span className={`truncate flex-grow mr-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`} title={vastUrl}>{vastUrl}</span>
-                              <button 
-                                onClick={copyVastUrlToClipboard} 
-                                className={`p-1 rounded-md ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-600'}`}
-                                title="Copy VAST URL"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                             </button>
-                            </div>
-                         </div>
-                       )}
                        <div 
                          ref={embeddedVastOutputRef} /* Assign specific ref */
-                         className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'} flex flex-col h-full`}> 
+                         className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} rounded-lg flex flex-col h-full`}> { /* Removed conditional border-radius/border-top */ }
                          <div className="flex justify-end space-x-2 mb-2 flex-shrink-0"> 
                            {/* Buttons für den ursprünglichen VAST */}                      
                            <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
                            <button onClick={() => setShowVastSearch(!showVastSearch)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
                            <button onClick={() => copyToClipboard(formatXml(rawVastContent!), 'VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
                           </div>
-                          {/* SearchPanel is now rendered below, outside the conditional tab content */}                         
+                          {/* Render Search Panel IN the box if active and index is 0 */}                          
+                          {showVastSearch && activeVastTabIndex === 0 && (                          
+                            <SearchPanel                          
+                                key={0} // Static key for embedded                          
+                                contentType="VAST"                          
+                                targetRef={embeddedVastOutputRef}                          
+                                isDarkMode={isDarkMode}                          
+                            />                          
+                          )}                          
                           <div 
                             dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
                             className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`} 
@@ -563,11 +554,24 @@ const JsonVastExplorer = React.memo(({
                                     <button onClick={() => setShowVastSearch(!showVastSearch)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={`Find in VASTAdTagURI (${activeVastTabIndex})`}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
                                     <button onClick={() => copyToClipboard(formatXml(vastChain[activeVastTabIndex - 1].content!), `VASTAdTagURI (${activeVastTabIndex})`)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={`Copy VASTAdTagURI (${activeVastTabIndex})`}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
                                   </div>
-                                  {/* SearchPanel is now rendered below, outside the conditional tab content */}                                  
+                                  {/* Render Search Panel IN the box if active and index > 0 */}                                  
+                                  {showVastSearch && activeVastTabIndex > 0 && (                                  
+                                     <SearchPanel                                  
+                                        key={activeVastTabIndex} // Force re-mount on tab change                                  
+                                        contentType="VAST"                                  
+                                        targetRef={getFetchedVastRef(activeVastTabIndex)}                                  
+                                        isDarkMode={isDarkMode}                                  
+                                     />                                  
+                                  )}                                  
                                   <div 
                                     dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(vastChain[activeVastTabIndex - 1].content as string), isDarkMode), 'xml') }}
                                     className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}                                    
                                   />
+                               </div>
+                               {/* Re-add Source URL line below content */}                              
+                               <div className={`mt-2 text-xs flex items-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>                                 
+                                 <span className="flex-shrink-0 mr-1">Source:</span>                                 
+                                 <span className="truncate" title={vastChain[activeVastTabIndex - 1].uri}>{vastChain[activeVastTabIndex - 1].uri}</span>                               
                                </div>
                             </div>
                         )}
@@ -590,30 +594,6 @@ const JsonVastExplorer = React.memo(({
           {copyMessage}
         </div>
       )}
-      
-      {/* Render Search Panel Conditionally for VAST */}            
-      {rawVastContent && showVastSearch && (            
-         (() => {            
-            const currentTargetRef = activeVastTabIndex === 0            
-                ? embeddedVastOutputRef            
-                : getFetchedVastRef(activeVastTabIndex); // Get the ref for the current dynamic tab            
-        
-            // Ensure the ref exists and has a current value before rendering SearchPanel            
-            if (!currentTargetRef) {            
-               console.warn("SearchPanel targetRef is missing for index:", activeVastTabIndex);            
-               return null;            
-            }            
-        
-            return (            
-               <SearchPanel            
-                  key={activeVastTabIndex} // Force re-mount on tab change            
-                  contentType="VAST"            
-                  targetRef={currentTargetRef}            
-                  isDarkMode={isDarkMode}            
-               />            
-            );            
-         })()            
-      )}            
     </div>
   );
 });
