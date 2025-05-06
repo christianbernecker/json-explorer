@@ -424,11 +424,11 @@ const JsonVastExplorer = React.memo(({
                       onClick={() => setActiveVastTab('initial')}
                       className={`py-2 px-4 text-sm font-medium focus:outline-none ${ 
                         activeVastTab === 'initial' 
-                        ? (isDarkMode ? 'border-blue-400 text-blue-300' : 'border-blue-500 text-blue-600') + ' border-b-2'
-                        : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
+                          ? (isDarkMode ? 'border-blue-400 text-blue-300' : 'border-blue-500 text-blue-600') + ' border-b-2'
+                          : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
                       }`}
                     >
-                       Initial VAST
+                       Ursprünglicher VAST
                     </button>
                     {/* Show Fetched VAST tab only if URI or content exists */}
                     {(vastAdTagUri || fetchedVastContent || isFetchingVast || fetchError) && (
@@ -440,7 +440,7 @@ const JsonVastExplorer = React.memo(({
                           : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
                          }`}
                        >
-                         Fetched VAST
+                         Nachgeladener VAST
                        </button>
                     )}
                  </div>
@@ -468,8 +468,8 @@ const JsonVastExplorer = React.memo(({
                        )}
                        <div 
                          ref={vastOutputRef} 
-                         className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'}`}>
-                         <div className="flex justify-end space-x-2 mb-2">
+                         className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'} flex flex-col h-full`}>
+                         <div className="flex justify-end space-x-2 mb-2 flex-shrink-0">
                            {/* Buttons für den ursprünglichen VAST */}                      
                            <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
                            <button onClick={() => setShowVastSearch(true)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
@@ -484,7 +484,7 @@ const JsonVastExplorer = React.memo(({
                           )}
                           <div 
                             dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
-                            className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                            className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
                             style={{ maxWidth: "100%" }}
                           />
                       </div>
@@ -513,10 +513,9 @@ const JsonVastExplorer = React.memo(({
                         )}
                         {fetchedVastContent && (
                            <div className="flex flex-col flex-1 min-h-0">
-                              <div className={`text-xs mb-2 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} title={vastAdTagUri!}>Source: {vastAdTagUri}</div>
                               <div 
-                                 className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                                  <div className="flex justify-end space-x-2 mb-2">
+                                 className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} flex flex-col h-full`}>
+                                  <div className="flex justify-end space-x-2 mb-2 flex-shrink-0">
                                     {/* Buttons für Fetched VAST */}                                 
                                     <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
                                     <button onClick={() => alert('Search in fetched VAST not implemented yet')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in Fetched VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
@@ -524,9 +523,13 @@ const JsonVastExplorer = React.memo(({
                                   </div>
                                   <div 
                                     dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(fetchedVastContent), isDarkMode), 'xml') }}
-                                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
                                     style={{ maxWidth: "100%" }}
                                   />
+                               </div>
+                               <div className={`mt-2 text-xs flex items-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>                                 
+                                 <span className="flex-shrink-0 mr-1">Source:</span>                                 
+                                 <span className="truncate" title={vastAdTagUri!}>{vastAdTagUri}</span>                               
                                </div>
                             </div>
                         )}

@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 10:52:24 CEST 2025", "commit": "feat: Implement VAST Ad Tag URI fetching and tabbed display"}
+{"deployment": "staging", "timestamp": "Tue May  6 10:56:40 CEST 2025", "commit": "fix: Correct template literal syntax in tab buttons"}
