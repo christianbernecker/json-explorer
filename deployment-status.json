@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 13:20:59 CEST 2025", "commit": "fix: Re-add flex-grow to VAST output boxes to fill height"}
+{"deployment": "staging", "timestamp": "Tue May  6 13:23:34 CEST 2025", "commit": "fix: Try h-full on inner VAST content div for height issues"}

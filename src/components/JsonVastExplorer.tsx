@@ -498,7 +498,7 @@ const JsonVastExplorer = React.memo(({
                           )}                          
                           <div 
                             dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
-                            className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} min-h-0 overflow-auto h-full`}
+                            className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
                           />
                        </div>
                     </div>
@@ -549,7 +549,7 @@ const JsonVastExplorer = React.memo(({
                                   )}                                  
                                   <div 
                                     dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(vastChain[activeVastTabIndex - 1].content as string), isDarkMode), 'xml') }}
-                                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} min-h-0 overflow-auto h-full`}
+                                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
                                   />
                                </div>
                                {/* Re-add Source URL line below content with word break */}                              
