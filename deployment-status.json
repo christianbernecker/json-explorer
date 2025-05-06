@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 09:49:11 CEST 2025", "commit": "Fix: Optimiere Scroll-Verhalten bei Such-Navigation"}
+{"deployment": "staging", "timestamp": "Tue May  6 09:54:55 CEST 2025", "commit": "Feat: Implementiere Fetch & Anzeige von VASTAdTagURI"}
