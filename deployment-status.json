@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 12:06:27 CEST 2025", "commit": "fix: Remove unused copyVastUrlToClipboard function"}
+{"deployment": "staging", "timestamp": "Tue May  6 12:54:51 CEST 2025", "commit": "fix: Remove unused vastUrl state variable and update docs"}
