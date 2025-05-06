@@ -327,8 +327,8 @@ const JsonVastExplorer = React.memo(({
             onClick={handleFormat}
             className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
               isDarkMode
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white'
+                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white'
             }`}
             title="Format JSON (Ctrl+Shift+F)"
           >

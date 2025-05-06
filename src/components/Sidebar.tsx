@@ -63,7 +63,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
   // Farbschema basierend auf dem Dark Mode
   const bgColor = isDarkMode ? 'bg-slate-800' : 'bg-slate-100';
   const textColor = isDarkMode ? 'text-slate-200 hover:text-white' : 'text-slate-700 hover:text-slate-900';
-  const activeItemBg = isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white';
+  const activeItemBg = isDarkMode 
+    ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white' 
+    : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white';
   const hoverBgGeneral = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-200';
 
   const handleMouseEnter = (itemName: string) => {

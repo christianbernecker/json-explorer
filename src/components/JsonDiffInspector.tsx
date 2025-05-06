@@ -534,7 +534,7 @@ const JsonDiffInspector = React.memo(({
           <div className="mt-2 flex flex-wrap gap-2">
             <label className={`flex items-center cursor-pointer ${
               comparisonMode === 'both' 
-                ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white' 
+                ? isDarkMode ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white' : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white' 
                 : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
             } px-3 py-1 rounded-lg`}>
               <input 
@@ -549,7 +549,7 @@ const JsonDiffInspector = React.memo(({
             </label>
             <label className={`flex items-center cursor-pointer ${
               comparisonMode === 'structure' 
-                ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white' 
+                ? isDarkMode ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white' : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white' 
                 : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
             } px-3 py-1 rounded-lg`}>
               <input 
@@ -564,7 +564,7 @@ const JsonDiffInspector = React.memo(({
             </label>
             <label className={`flex items-center cursor-pointer ${
               comparisonMode === 'values' 
-                ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white' 
+                ? isDarkMode ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white' : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white' 
                 : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
             } px-3 py-1 rounded-lg`}>
               <input 
@@ -615,8 +615,8 @@ const JsonDiffInspector = React.memo(({
             onClick={compareJson}
             className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
               isDarkMode
-                ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
+                ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white'
+                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white'
             }`}
             title="Compare (Ctrl+Shift+C)"
           >
