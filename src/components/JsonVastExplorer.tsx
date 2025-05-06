@@ -478,27 +478,20 @@ const JsonVastExplorer = React.memo(({
                  {activeVastTabIndex === 0 && rawVastContent && ( /* Show only if rawVastContent exists */
                     <div 
                       ref={embeddedVastOutputRef} /* Assign specific ref */
-                      className={`p-4 border shadow-inner min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} rounded-lg flex flex-col flex-grow`}> 
+                      className={`p-4 border shadow-inner min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} rounded-lg flex-grow grid grid-rows-[auto_auto_1fr]`}>
+                      {/* Grid Row 1: Buttons */}                         
                       <div className="flex justify-end space-x-2 mb-2 flex-shrink-0"> 
                         {/* Buttons für den ursprünglichen VAST */}                      
                         <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
                         <button onClick={() => setShowVastSearch(!showVastSearch)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
                         <button onClick={() => copyToClipboard(formatXml(rawVastContent!), 'VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
                       </div>
-                      {/* Render Search Panel IN the box if active and index is 0 */}                          
-                      {showVastSearch && activeVastTabIndex === 0 && (                          
-                        <SearchPanel                          
-                            key={0} // Static key for embedded                          
-                            contentType="VAST"                          
-                            targetRef={embeddedVastOutputRef}                          
-                            isDarkMode={isDarkMode}                          
-                        />                          
-                      )}                          
+                      {/* Grid Row 3: Content */}                         
                       <div 
                         dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
-                        className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
+                        className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} min-h-0 overflow-auto`} 
                       />
-                   </div>
+                    </div>
                  )}
                  
                  {activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1] && ( /* Check if the chain item exists */
@@ -525,7 +518,8 @@ const JsonVastExplorer = React.memo(({
                     vastChain[activeVastTabIndex - 1].content ? (
                         <div 
                            ref={getFetchedVastRef(activeVastTabIndex)} /* Assign dynamic ref */
-                           className={`p-4 border shadow-inner min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} flex flex-col flex-grow`}> 
+                           className={`p-4 border shadow-inner min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} flex-grow grid grid-rows-[auto_auto_1fr]`}> 
+                             {/* Grid Row 1: Buttons */}                                   
                              <div className="flex justify-end space-x-2 mb-2 flex-shrink-0">                                   
                               {/* Buttons für Fetched VAST */}                                 
                               <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
@@ -546,7 +540,7 @@ const JsonVastExplorer = React.memo(({
                               dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(vastChain[activeVastTabIndex - 1].content as string), isDarkMode), 'xml') }}
                               className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
                             />
-                         {/* Source URL might need adjusting if PaddedBox is the main growing element now */}
+                         {/* Source URL below the grid box */}                              
                          <div className={`mt-2 text-xs flex items-start ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} flex-shrink-0`}> { /* Added flex-shrink-0 */}                                 
                            <span className="flex-shrink-0 mr-1">Source:</span>                                 
                            <span className="break-all" title={vastChain[activeVastTabIndex - 1].uri}>{vastChain[activeVastTabIndex - 1].uri}</span> 

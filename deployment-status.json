@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 13:32:16 CEST 2025", "commit": "fix: Remove overflow-auto from VAST output boxes, keep on inner content"}
+{"deployment": "staging", "timestamp": "Tue May  6 13:38:21 CEST 2025", "commit": "refactor: Simplify VAST content rendering structure to fix height issues"}
