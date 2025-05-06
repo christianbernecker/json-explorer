@@ -13,6 +13,7 @@ import { SEO } from './seo';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import DataVisualizerHeader from './DataVisualizerHeader';
+import GlobalHeader from './GlobalHeader';
 
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
@@ -1124,6 +1125,14 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         title="Data Visualizer | AdTech Toolbox"
         description="Upload, analyze and visualize your AdTech reporting data with interactive dashboards, charts and tables."
       />
+      
+      {/* Global Header */}
+      <GlobalHeader 
+        isDarkMode={isDarkMode}
+      />
+      
+      {/* Spacer for fixed header */}
+      <div className="h-36"></div>
       
       {/* Full width container */}
       <div className={`px-4 py-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>

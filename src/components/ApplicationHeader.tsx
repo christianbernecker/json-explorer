@@ -39,25 +39,6 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
             <h1 className="text-xl font-semibold">{title}</h1>
             <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{subtitle}</p>
           </div>
-
-          <div className="flex items-center space-x-3 mt-4 md:mt-0">
-            {setShowHistory && typeof historyLength !== 'undefined' && (
-              <button
-                onClick={() => setShowHistory(prev => !prev)}
-                className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
-                  showHistory 
-                    ? isDarkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white' 
-                    : isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-slate-200' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                }`}
-                title="Toggle History (Ctrl+Shift+H)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="ml-2">History ({historyLength})</span>
-              </button>
-            )}
-          </div>
         </div>
       </div>
 

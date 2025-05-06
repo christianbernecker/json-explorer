@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 21:47:57 CEST 2025", "commit": "UI Optimierungen: Sidebar über Header positioniert, Eingabefelder verkleinert"}
+{"deployment": "staging", "timestamp": "Tue May  6 21:54:29 CEST 2025", "commit": "Fix: Sidebar über Header positioniert mit korrekten z-index-Werten"}
