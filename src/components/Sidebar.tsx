@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
   };
 
   return (
-    <div className={`w-20 ${bgColor} flex flex-col items-center py-4 shadow-lg relative`}>
+    <div className={`w-28 ${bgColor} flex flex-col items-center py-4 shadow-lg relative`}>
       {/* Logo */}
       <div className="mb-6 mt-2">
         <Link to="/" className="inline-block">

@@ -21,6 +21,23 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({ isDarkMode, toggleDarkMode 
         <div className="container mx-auto py-3 px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              {/* AdTech Toolbox Logo und Brand */}
+              <div className="flex items-center mr-6">
+                <div className="h-10 w-10 relative mr-3">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-lg"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" className="w-6 h-6">
+                      <path d="M3 6.25A2.25 2.25 0 015.25 4h13.5A2.25 2.25 0 0121 6.25v3.5A2.25 2.25 0 0118.75 12H5.25A2.25 2.25 0 013 9.75v-3.5zM5.25 7.5a.75.75 0 01.75-.75h3a.75.75 0 010 1.5h-3a.75.75 0 01-.75-.75zM3 15.25A2.25 2.25 0 015.25 13h13.5A2.25 2.25 0 0121 15.25v3.5A2.25 2.25 0 0118.75 21H5.25A2.25 2.25 0 013 18.75v-3.5zM5.25 16.5a.75.75 0 01.75-.75h3a.75.75 0 010 1.5h-3a.75.75 0 01-.75-.75z" />
+                    </svg>
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold">
+                    <span className={isDarkMode ? 'text-white' : 'text-slate-800'}>AdTech Toolbox</span>
+                  </h1>
+                </div>
+              </div>
+              <div className="h-8 border-l border-gray-300 dark:border-gray-600 mx-2"></div>
               <h1 className="text-xl font-bold">
                 <span className={`bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600`}>
                   JSON Toolkit

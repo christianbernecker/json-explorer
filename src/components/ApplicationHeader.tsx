@@ -31,7 +31,7 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
         toggleDarkMode={toggleDarkMode} 
       />
       
-      <div className="h-28"></div>
+      <div className="h-36"></div>
       
       <div className={`mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
