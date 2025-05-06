@@ -52,6 +52,11 @@ const JsonVastExplorer = React.memo(({
   const [showJsonSearch, setShowJsonSearch] = useState(false);
   const [showVastSearch, setShowVastSearch] = useState(false);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
+  // Neue States für VAST Ad Tag URI Fetching
+  const [vastAdTagUri, setVastAdTagUri] = useState<string | null>(null);
+  const [fetchedVastContent, setFetchedVastContent] = useState<string | null>(null);
+  const [isFetchingVast, setIsFetchingVast] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   
   // Refs for search functionality
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -101,9 +106,49 @@ const JsonVastExplorer = React.memo(({
     const match = content.match(/https?:\/\/[^\s"'<>]+vast[^\s"'<>]*/i);
     return match ? match[0] : null;
   }, []);
+
+  // Extract VAST URL from VASTAdTagURI tag - More specific than the previous one
+  const extractAdTagUri = useCallback((content: string | null): string | null => {
+    if (!content) return null;
+    // Regex to find VASTAdTagURI and extract URL, handles CDATA
+    const match = content.match(/<VASTAdTagURI.*?>(?:<!\[CDATA\[)?(https?:\/\/[^<\]]+)(?:\]\]>)?<\/VASTAdTagURI>/i);
+    return match ? match[1].trim() : null; // Return the captured group (the URL)
+  }, []);
+
+  // Async function to fetch VAST from URI
+  const fetchVastFromUri = useCallback(async (uri: string) => {
+    setIsFetchingVast(true);
+    setFetchedVastContent(null);
+    setFetchError(null);
+    try {
+        // NOTE: This fetch might fail due to CORS restrictions in the browser.
+        // A CORS proxy would be needed for a general solution.
+        const response = await fetch(uri);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const text = await response.text();
+        // Basic check if it looks like XML
+        if (!text.trim().startsWith('<')) { 
+            throw new Error('Response does not look like XML.');
+        }
+        setFetchedVastContent(text);
+    } catch (err: any) {
+        console.error("Error fetching VAST URI:", err);
+        setFetchError(`Failed to fetch VAST from URI: ${err.message}. Possible CORS issue or invalid URL/content.`);
+    } finally {
+        setIsFetchingVast(false);
+    }
+  }, []); // Keine Abhängigkeiten, da fetch global ist
   
   // Format JSON and find VAST content - Optimized with useCallback
   const handleFormat = useCallback(() => {
+    // Reset fetch states on new format
+    setVastAdTagUri(null);
+    setFetchedVastContent(null);
+    setFetchError(null);
+    setIsFetchingVast(false);
+    
     try {
       const inputStr = jsonInput.trim();
       
@@ -118,16 +163,25 @@ const JsonVastExplorer = React.memo(({
       
       const vastInfo = findVastContent(currentParsedJson);
       if (vastInfo) {
-        setRawVastContent(vastInfo.content);
-        const url = extractVastUrl(vastInfo.content);
+        const currentRawVast = vastInfo.content;
+        setRawVastContent(currentRawVast);
         
-        setVastUrl(url || '');
+        // Extract original VAST URL (for display above VAST box, might be different from AdTagURI)
+        const originalVastUrl = extractVastUrl(currentRawVast);
+        setVastUrl(originalVastUrl || ''); // Display this one
+
+        // Now try to extract and fetch the AdTagURI from the raw VAST content
+        const adTagUri = extractAdTagUri(currentRawVast);
+        setVastAdTagUri(adTagUri);
+        if (adTagUri) {
+            fetchVastFromUri(adTagUri);
+        }
         
         const newHistoryItem: HistoryItemType = {
           type: 'json_vast',
           jsonContent: currentParsedJson,
-          vastContent: vastInfo.content,
-          vastUrl: url || '',
+          vastContent: currentRawVast,
+          vastUrl: originalVastUrl || '',
           timestamp: Date.now()
         };
         
@@ -135,6 +189,11 @@ const JsonVastExplorer = React.memo(({
       } else {
         setRawVastContent(null);
         setVastUrl('');
+        // Reset fetch states if no VAST found
+        setVastAdTagUri(null);
+        setFetchedVastContent(null);
+        setFetchError(null);
+        setIsFetchingVast(false);
         
         const newHistoryItem: HistoryItemType = {
           type: 'json',
@@ -149,8 +208,13 @@ const JsonVastExplorer = React.memo(({
       setParsedJson(null);
       setRawVastContent(null);
       setVastUrl('');
+      // Reset fetch states on error
+      setVastAdTagUri(null);
+      setFetchedVastContent(null);
+      setFetchError(null);
+      setIsFetchingVast(false);
     }
-  }, [jsonInput, findVastContent, extractVastUrl, addToHistoryItem]);
+  }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastFromUri, addToHistoryItem]);
   
   // Copy content to clipboard - Optimized with useCallback
   const copyToClipboard = useCallback((text: string, type: string) => {
@@ -197,6 +261,11 @@ const JsonVastExplorer = React.memo(({
     setCopyMessage('');
     setShowJsonSearch(false);
     setShowVastSearch(false);
+    // Reset fetch states on clear
+    setVastAdTagUri(null);
+    setFetchedVastContent(null);
+    setFetchError(null);
+    setIsFetchingVast(false);
   }, []);
 
   // Kopieren des JSON-Inhalts in die Zwischenablage
@@ -366,57 +435,51 @@ const JsonVastExplorer = React.memo(({
                       </div>
                    </div>
                  )}
-                 <div 
-                   ref={vastOutputRef} 
-                   className={`p-4 border shadow-inner overflow-auto min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg border-t-0' : 'rounded-lg'}`}>
-                     <div className="flex justify-end space-x-2 mb-2">
-                       <button 
-                         onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)}
-                         className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                         title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}
-                       >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                           {isWordWrapEnabled 
-                             ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                             : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                           }
-                         </svg>
-                         <span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span>
-                       </button>
-                       <button 
-                         onClick={() => setShowVastSearch(!showVastSearch)} 
-                         className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                         title="Find in VAST"
-                       >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                         </svg>
-                         <span className="ml-1.5">Find</span>
-                       </button>
-                       <button 
-                         onClick={copyVastToClipboard} 
-                         className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                         title="Copy VAST"
-                       >
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                           <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                         </svg>
-                         <span className="ml-1.5">Copy</span>
-                       </button>
-                     </div>
-                     {showVastSearch && (
-                       <SearchPanel
-                         contentType="VAST"
-                         targetRef={vastOutputRef}
-                         isDarkMode={isDarkMode}
-                       />
+                 {vastAdTagUri && (
+                   <div className="mt-4 pt-4 border-t border-dashed border-gray-600 dark:border-gray-400">
+                     {isFetchingVast && (
+                        <div className={`flex items-center justify-center p-4 rounded-lg text-sm ${isDarkMode ? 'text-blue-200 bg-gray-700' : 'text-blue-700 bg-blue-50'}`}>
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Fetching VAST from URI...
+                        </div>
                      )}
-                     <div 
-                       dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
-                       className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
-                       style={{ maxWidth: "100%" }}
-                     />
-                  </div>
+                     {fetchError && (
+                       <div className={`p-4 rounded-lg flex items-center text-sm ${isDarkMode ? 'bg-red-900 text-red-200 border-l-4 border-red-600' : 'bg-red-50 text-red-600 border-l-4 border-red-500'}`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <span>{fetchError}</span>
+                        </div>
+                     )}
+                     {fetchedVastContent && (
+                        <div className="flex flex-col flex-1 min-h-0">
+                           <h4 className={`text-md font-semibold mb-2 flex items-center ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}> 
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                               <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                             </svg>
+                             Fetched VAST from URI:
+                           </h4>
+                           <div className={`text-xs mb-2 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} title={vastAdTagUri!}>{vastAdTagUri}</div>
+                           <div 
+                             className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                               <div className="flex justify-end space-x-2 mb-2">
+                                 <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
+                                 <button onClick={() => alert('Search in fetched VAST not implemented yet')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in Fetched VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
+                                 <button onClick={() => copyToClipboard(formatXml(fetchedVastContent), 'Fetched VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy Fetched VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
+                               </div>
+                               <div 
+                                 dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(fetchedVastContent), isDarkMode), 'xml') }}
+                                 className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                                 style={{ maxWidth: "100%" }}
+                               />
+                            </div>
+                         </div>
+                     )}
+                   </div>
+                 )}
                </div>
              )}
            </div>
