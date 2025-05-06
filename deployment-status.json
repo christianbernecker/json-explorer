@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 13:11:19 CEST 2025", "commit": "fix: Adjust VAST output styling for height and width issues"}
+{"deployment": "staging", "timestamp": "Tue May  6 13:13:17 CEST 2025", "commit": "fix: Further adjustments to VAST output height and source URL wrapping"}
