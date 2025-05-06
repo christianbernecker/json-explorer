@@ -14,7 +14,7 @@ const useHighlighter = () => {
       let cls = isDarkMode ? 'text-green-400' : 'text-green-600'; // string
       if (/^"/.test(match)) {
         if (/:$/.test(match)) {
-          cls = isDarkMode ? 'text-blue-300' : 'text-indigo-600 font-semibold'; // key (angepasst für besseren Kontrast im Light Mode)
+          cls = isDarkMode ? 'text-blue-300' : 'text-indigo-600'; // key (entfernt font-semibold)
         }
       } else if (/true|false/.test(match)) {
         cls = isDarkMode ? 'text-purple-400' : 'text-purple-600'; // boolean

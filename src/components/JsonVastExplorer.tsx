@@ -17,7 +17,7 @@ const useAddLineNumbers = (isDarkMode: boolean) => {
     if (!html) return '';
     const lines = html.split('\n');
     const zoomLevel = 1; 
-    const fontSize = Math.round(12 * zoomLevel);
+    const fontSize = Math.round(12 * zoomLevel); // 12px ist die Standardgröße für text-sm
     let result = '<table cellpadding="0" cellspacing="0" border="0" style="width: 100%; table-layout: fixed; border-collapse: collapse;">';
     lines.forEach((line, index) => {
       result += `
@@ -369,9 +369,9 @@ const JsonVastExplorer = React.memo(({
       
       {(parsedJson || rawVastContent) && (
         <div className="mt-4 flex flex-col flex-1 min-h-0"> 
-           <div className="flex flex-row space-x-4 flex-1 min-h-0">
+           <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 flex-1 min-h-0">
              {parsedJson && (
-                <div className={`${rawVastContent ? 'w-1/2' : 'w-full'} min-w-0 flex flex-col flex-1`}>
+                <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col flex-1`}>
                   <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h3>
                    <div 
                      ref={jsonOutputRef}
@@ -428,7 +428,7 @@ const JsonVastExplorer = React.memo(({
                 </div>
              )}
              {rawVastContent && (
-               <div className="w-1/2 min-w-0 flex flex-col flex-1">
+               <div className="w-full md:w-1/2 min-w-0 flex flex-col flex-1">
                  {/* General Headline */}                 
                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                  

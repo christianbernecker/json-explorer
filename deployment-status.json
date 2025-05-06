@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 14:03:02 CEST 2025", "commit": "Fix: Layout-Optimierung des VAST-Ausgabebereichs zur Reduzierung des grauen Leerraums"}
+{"deployment": "staging", "timestamp": "Tue May  6 15:34:20 CEST 2025", "commit": "Fix: Verbesserte Höhenkontrolle für VAST-Container zur Reduzierung des grauen Leerraums"}
