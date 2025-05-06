@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   HistoryItem as HistoryItemType, 
-  TabNavigationProps
+  TabNavigationProps,
+  JsonToolsAppProps
 } from '../types';
 import JsonVastExplorer from './JsonVastExplorer';
 import JsonDiffInspector from './JsonDiffInspector';
 import { SEO, StructuredData } from './seo';
-import GlobalHeader from './GlobalHeader';
 import ApplicationHeader from './ApplicationHeader';
 
 // App Tab Navigation
@@ -56,82 +56,23 @@ const TabNavigation = ({ activeTab, setActiveTab, isDarkMode }: TabNavigationPro
 };
 
 // Main Application Component
-interface JsonToolsAppProps {
-  parentIsDarkMode?: boolean;
-  setParentIsDarkMode?: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppProps) {
-  // Shared state between tools
+function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
   const [activeTab, setActiveTab] = useState('explorer');
   
-  // Refactor dark mode state management to avoid flickering
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Use parent dark mode state if available, otherwise use local storage
-    if (parentIsDarkMode !== undefined) {
-      return parentIsDarkMode;
-    }
-    const savedDarkMode = localStorage.getItem('jsonTools_darkMode');
-    return savedDarkMode ? JSON.parse(savedDarkMode) : false;
-  });
+  // Interne isDarkMode State wird direkt von parentIsDarkMode abgeleitet
+  // Kein eigener lokaler DarkMode State oder localStorage mehr hier, das wird global in App.tsx gehandhabt
+  const isDarkMode = parentIsDarkMode;
   
-  // Create a memoized toggle function to reduce renders
-  const toggleDarkMode = useCallback(() => {
-    const newDarkMode = !isDarkMode;
-    setIsDarkMode(newDarkMode);
-    
-    // Synchronize with parent if available
-    if (setParentIsDarkMode) {
-      setParentIsDarkMode(newDarkMode);
-    }
-    
-    // Save to localStorage
-    localStorage.setItem('jsonTools_darkMode', JSON.stringify(newDarkMode));
-  }, [isDarkMode, setParentIsDarkMode]);
-  
-  // Sync with parent changes (one-way from parent to local)
-  useEffect(() => {
-    if (parentIsDarkMode !== undefined && parentIsDarkMode !== isDarkMode) {
-      setIsDarkMode(parentIsDarkMode);
-      localStorage.setItem('jsonTools_darkMode', JSON.stringify(parentIsDarkMode));
-    }
-  }, [parentIsDarkMode, isDarkMode]);
-  
-  // Split histories for both tools
-  const [vastExplorerHistory, setVastExplorerHistory] = useState<HistoryItemType[]>(() => {
-    const savedHistory = localStorage.getItem('jsonTools_vastExplorerHistory');
-    return savedHistory ? JSON.parse(savedHistory) : [];
-  });
-  
-  const [diffInspectorHistory, setDiffInspectorHistory] = useState<HistoryItemType[]>(() => {
-    const savedHistory = localStorage.getItem('jsonTools_diffInspectorHistory');
-    return savedHistory ? JSON.parse(savedHistory) : [];
-  });
-  
-  const [showVastExplorerHistory, setShowVastExplorerHistory] = useState(false);
-  const [showDiffInspectorHistory, setShowDiffInspectorHistory] = useState(false);
-
-  // Save vast explorer history to localStorage
-  useEffect(() => {
-    localStorage.setItem('jsonTools_vastExplorerHistory', JSON.stringify(vastExplorerHistory));
-  }, [vastExplorerHistory]);
-  
-  // Save diff inspector history to localStorage
-  useEffect(() => {
-    localStorage.setItem('jsonTools_diffInspectorHistory', JSON.stringify(diffInspectorHistory));
-  }, [diffInspectorHistory]);
-
-  // Keyboard shortcut handler
+  // Keyboard shortcut handler verwendet jetzt die toggleDarkMode Prop von App.tsx
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl (or Cmd) + Shift + Key combination
       if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
         switch (e.key.toLowerCase()) {
-          case 'd': // Toggle Dark Mode
+          case 'd': 
             e.preventDefault();
-            toggleDarkMode();
+            if (toggleDarkMode) toggleDarkMode(); // toggleDarkMode von App.tsx aufrufen
             break;
-          case 'h': // Show/hide history for active tab
+          case 'h': 
             e.preventDefault();
             if (activeTab === 'explorer') {
               setShowVastExplorerHistory((prev: boolean) => !prev);
@@ -139,11 +80,11 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
               setShowDiffInspectorHistory((prev: boolean) => !prev);
             }
             break;
-          case '1': // Switch to Explorer tab
+          case '1':
             e.preventDefault();
             setActiveTab('explorer');
             break;
-          case '2': // Switch to Comparator tab
+          case '2':
             e.preventDefault();
             setActiveTab('comparator');
             break;
@@ -157,15 +98,39 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
+  // toggleDarkMode als Abhängigkeit hinzugefügt
   }, [activeTab, toggleDarkMode]);
 
-  // Bestimme die aktive History basierend auf dem aktiven Tab
+  // History-States bleiben gleich
+  const [vastExplorerHistory, setVastExplorerHistory] = useState<HistoryItemType[]>(() => {
+    const savedHistory = localStorage.getItem('jsonTools_vastExplorerHistory');
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
+  
+  const [diffInspectorHistory, setDiffInspectorHistory] = useState<HistoryItemType[]>(() => {
+    const savedHistory = localStorage.getItem('jsonTools_diffInspectorHistory');
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
+  
+  const [showVastExplorerHistory, setShowVastExplorerHistory] = useState(false);
+  const [showDiffInspectorHistory, setShowDiffInspectorHistory] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('jsonTools_vastExplorerHistory', JSON.stringify(vastExplorerHistory));
+  }, [vastExplorerHistory]);
+  
+  useEffect(() => {
+    localStorage.setItem('jsonTools_diffInspectorHistory', JSON.stringify(diffInspectorHistory));
+  }, [diffInspectorHistory]);
+
   const activeHistory = activeTab === 'explorer' ? vastExplorerHistory : diffInspectorHistory;
   const activeShowHistory = activeTab === 'explorer' ? showVastExplorerHistory : showDiffInspectorHistory;
   const activeSetShowHistory = activeTab === 'explorer' ? setShowVastExplorerHistory : setShowDiffInspectorHistory;
 
+  // Der äußere Container bekommt keinen eigenen Hintergrund oder Textfarbe mehr,
+  // da dies vom übergeordneten Layout in App.tsx und den Body-Styles gesteuert wird.
   return (
-    <div className={`w-full ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-white'} transition-colors duration-75`}>
+    <div className="w-full h-full flex flex-col">
       <SEO 
         title="JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer"
         description="Free tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required."
@@ -177,50 +142,46 @@ function JsonToolsApp({ parentIsDarkMode, setParentIsDarkMode }: JsonToolsAppPro
       />
       <StructuredData 
         appVersion="v1.1.4" 
-        isDarkMode={isDarkMode}
+        isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
       />
       
-      {/* Global Header */}
-      <GlobalHeader isDarkMode={isDarkMode} />
+      {/* ApplicationHeader mit toggleDarkMode von App.tsx */}
+      <ApplicationHeader 
+        isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
+        toggleDarkMode={toggleDarkMode} // toggleDarkMode von App.tsx
+        activeTab={activeTab}
+        showHistory={activeShowHistory}
+        setShowHistory={activeSetShowHistory}
+        historyLength={activeHistory.length}
+        // Title und Subtitle könnten hier spezifisch gesetzt werden, wenn nötig
+        // title="JSON Tools"
+        // subtitle="Validate, Compare, and Explore"
+      />
       
-      <div className="w-full px-4 py-8 mb-20">
-        {/* Application Header */}
-        <ApplicationHeader 
-          isDarkMode={isDarkMode}
-          toggleDarkMode={toggleDarkMode}
-          activeTab={activeTab}
-          showHistory={activeShowHistory}
-          setShowHistory={activeSetShowHistory}
-          historyLength={activeHistory.length}
-        />
-        
-        {/* Tab Navigation */}
-        <TabNavigation 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          isDarkMode={isDarkMode} 
-        />
-        
-        {/* Main content area */}
-        <div className="mt-6">
-          {activeTab === 'explorer' ? (
-            <JsonVastExplorer 
-              isDarkMode={isDarkMode}
-              history={vastExplorerHistory}
-              setHistory={setVastExplorerHistory}
-              showHistory={showVastExplorerHistory}
-              setShowHistory={setShowVastExplorerHistory}
-            />
-          ) : (
-            <JsonDiffInspector 
-              isDarkMode={isDarkMode}
-              history={diffInspectorHistory}
-              setHistory={setDiffInspectorHistory}
-              showHistory={showDiffInspectorHistory}
-              setShowHistory={setShowDiffInspectorHistory}
-            />
-          )}
-        </div>
+      <TabNavigation 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
+      />
+      
+      <div className="flex-grow mt-6 min-h-0"> {/* min-h-0 für korrekte Scrollbarkeit innerhalb des flex-grow Bereichs */}
+        {activeTab === 'explorer' ? (
+          <JsonVastExplorer 
+            isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
+            history={vastExplorerHistory}
+            setHistory={setVastExplorerHistory}
+            showHistory={showVastExplorerHistory}
+            setShowHistory={setShowVastExplorerHistory}
+          />
+        ) : (
+          <JsonDiffInspector 
+            isDarkMode={isDarkMode} // isDarkMode von parentIsDarkMode
+            history={diffInspectorHistory}
+            setHistory={setDiffInspectorHistory}
+            showHistory={showDiffInspectorHistory}
+            setShowHistory={setShowDiffInspectorHistory}
+          />
+        )}
       </div>
     </div>
   );

@@ -64,4 +64,9 @@ export interface ValueDifference {
   leftValue: any;
   rightValue: any;
   description: string;
+}
+
+export interface JsonToolsAppProps {
+  parentIsDarkMode: boolean;
+  toggleDarkMode: () => void;
 } 
