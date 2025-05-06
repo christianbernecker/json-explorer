@@ -110,7 +110,7 @@ const useHighlighter = () => {
                }
 
                if (hasElementChild) {
-                  result += nodeContent + '\n' + `${indent}</${tagName}>`;
+                  result += `${nodeContent}\n${indent}</${tagName}>`;
                } else {
                   // Keine Element-Kinder, füge Inhalt direkt an und schließe Tag in derselben Zeile (ggf. anpassen)
                   result += nodeContent + `</${tagName}>`;
