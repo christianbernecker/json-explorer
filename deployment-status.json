@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 21:54:29 CEST 2025", "commit": "Fix: Sidebar über Header positioniert mit korrekten z-index-Werten"}
+{"deployment": "staging", "timestamp": "Tue May  6 22:04:53 CEST 2025", "commit": "Fix: Entfernen nicht funktionierender Header-Icons, History oberhalb des Inputs und Ausblenden des Apps-Elements in der Sidebar, DataVisualizer mit GlobalHeader"}

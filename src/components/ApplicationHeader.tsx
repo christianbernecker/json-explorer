@@ -28,7 +28,9 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
     <>
       <GlobalHeader 
         isDarkMode={isDarkMode} 
-        toggleDarkMode={toggleDarkMode} 
+        toggleDarkMode={toggleDarkMode}
+        showHistory={showHistory}
+        setShowHistory={setShowHistory}
       />
       
       <div className="h-36"></div>
