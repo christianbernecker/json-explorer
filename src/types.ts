@@ -69,4 +69,16 @@ export interface ValueDifference {
 export interface JsonToolsAppProps {
   parentIsDarkMode: boolean;
   toggleDarkMode: () => void;
-} 
+}
+
+// DataVisualizer Typen
+export interface DataRow {
+  [key: string]: any;
+}
+
+export interface AggregatedData {
+  name: string;
+  value: number;
+}
+
+export type ChartType = 'bar' | 'line' | 'pie' | 'radar' | 'area'; 
