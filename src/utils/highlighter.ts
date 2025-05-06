@@ -69,19 +69,24 @@ const useHighlighter = () => {
        let pad = 0;
        xml.split('\r\n').forEach(node => {
          let indent = 0;
-         if (node.match( /.+<\/\w[^>]*>$/ )) {
-           indent = 0;
-         } else if (node.match( /^<\/\w/ )) {
-           if (pad !== 0) {
+         const trimmedNode = node.trim(); // Get trimmed node for checks
+
+         // Decrease indent ONLY if line IS a closing tag
+         if (trimmedNode.match(/^<\/\w[^>]*>$/)) { 
+           if (pad > 0) {
              pad -= 1;
            }
-         } else if (node.match( /^<\w[^>]*[^\/]>.*$/ )) {
+           indent = 0; // No indent increase after closing tag
+         // Increase indent if line STARTS with an opening tag (and is not self-closing)
+         } else if (trimmedNode.match(/^<\w[^>]*[^\/]>.*$/) && !trimmedNode.match(/<\/\w[^>]*>$/)) {
            indent = 1;
+         // No indent change for other lines (text, self-closing, comments, CDATA, etc.)
          } else {
            indent = 0;
          }
+
          const padding = '  '.repeat(pad);
-         formatted += padding + node + '\r\n';
+         formatted += padding + node + '\r\n'; // Use original node for output
          pad += indent;
        });
        return formatted.trim();
