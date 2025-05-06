@@ -69,7 +69,23 @@ const JsonVastExplorer = React.memo(({
   // Refs for search functionality
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const jsonOutputRef = useRef<HTMLDivElement>(null);
-  const vastOutputRef = useRef<HTMLDivElement>(null);
+  
+  // Ref for Embedded VAST output
+  const embeddedVastOutputRef = useRef<HTMLDivElement>(null);
+  // Refs for Fetched VAST outputs (dynamic)
+  const fetchedVastOutputRefs = useRef<Map<number, React.RefObject<HTMLDivElement>>>(new Map());
+  
+  // Helper function to get or create ref for fetched VAST tabs
+  const getFetchedVastRef = (index: number): React.RefObject<HTMLDivElement> => {
+    if (!fetchedVastOutputRefs.current.has(index)) {
+        // Create refs on demand. Use React.createRef inside the render or a helper like this.
+        // Note: Refs created this way might behave differently if the component re-renders often
+        // For stability, especially if search state depends heavily on it, managing refs 
+        // creation more tied to the vastChain state changes might be better, but let's try this first.
+        fetchedVastOutputRefs.current.set(index, React.createRef<HTMLDivElement>());
+    }
+    return fetchedVastOutputRefs.current.get(index)!;
+  };
   
   // Custom hook for Syntax Highlighting
   const { highlightJson, highlightXml, formatXml } = useHighlighter();
@@ -496,27 +512,20 @@ const JsonVastExplorer = React.memo(({
                          </div>
                        )}
                        <div 
-                         ref={vastOutputRef} 
-                         className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'} flex flex-col h-full`}>
-                         <div className="flex justify-end space-x-2 mb-2 flex-shrink-0">
+                         ref={embeddedVastOutputRef} /* Assign specific ref */
+                         className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg rounded-t-none border-t-0' : 'rounded-lg'} flex flex-col h-full`}> 
+                         <div className="flex justify-end space-x-2 mb-2 flex-shrink-0"> 
                            {/* Buttons für den ursprünglichen VAST */}                      
                            <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
-                           <button onClick={() => setShowVastSearch(true)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
+                           <button onClick={() => setShowVastSearch(!showVastSearch)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
                            <button onClick={() => copyToClipboard(formatXml(rawVastContent!), 'VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
                           </div>
-                          {showVastSearch && (
-                            <SearchPanel
-                              contentType="VAST"
-                              targetRef={vastOutputRef}
-                              isDarkMode={isDarkMode}
-                            />
-                          )}
+                          {/* SearchPanel is now rendered below, outside the conditional tab content */}                         
                           <div 
                             dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
-                            className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
-                            style={{ maxWidth: "100%" }}
+                            className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`} 
                           />
-                      </div>
+                       </div>
                     </div>
                  )}
                  
@@ -545,20 +554,19 @@ const JsonVastExplorer = React.memo(({
                        {vastChain[activeVastTabIndex - 1].content && !vastChain[activeVastTabIndex - 1].isLoading && (
                            <div className="flex flex-col flex-1 min-h-0">
                               <div 
+                                 ref={getFetchedVastRef(activeVastTabIndex)} /* Assign dynamic ref */
                                  className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} flex flex-col h-full`}>                                 
                                    <div className="flex justify-end space-x-2 mb-2 flex-shrink-0">                                   
                                     {/* Buttons für Fetched VAST */}                                 
                                     <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
-                                    {/* TODO: Implement search for this specific VAST Chain item */}                                    
-                                    <button onClick={() => alert(`Search in VASTAdTagURI (${activeVastTabIndex}) not implemented yet`)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={`Find in VASTAdTagURI (${activeVastTabIndex})`}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
+                                    {/* Updated Find Button */}                                    
+                                    <button onClick={() => setShowVastSearch(!showVastSearch)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={`Find in VASTAdTagURI (${activeVastTabIndex})`}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
                                     <button onClick={() => copyToClipboard(formatXml(vastChain[activeVastTabIndex - 1].content!), `VASTAdTagURI (${activeVastTabIndex})`)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={`Copy VASTAdTagURI (${activeVastTabIndex})`}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
                                   </div>
-                                  {/* TODO: Implement SearchPanel instance for this specific VAST Chain item */}                                  
-                                  {/* {showVastSearch && activeVastTabIndex > 0 && ( <SearchPanel ... /> )} */}                                  
+                                  {/* SearchPanel is now rendered below, outside the conditional tab content */}                                  
                                   <div 
                                     dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(vastChain[activeVastTabIndex - 1].content as string), isDarkMode), 'xml') }}
                                     className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}                                    
-                                    style={{ maxWidth: "100%" }}
                                   />
                                </div>
                             </div>
@@ -583,6 +591,29 @@ const JsonVastExplorer = React.memo(({
         </div>
       )}
       
+      {/* Render Search Panel Conditionally for VAST */}            
+      {rawVastContent && showVastSearch && (            
+         (() => {            
+            const currentTargetRef = activeVastTabIndex === 0            
+                ? embeddedVastOutputRef            
+                : getFetchedVastRef(activeVastTabIndex); // Get the ref for the current dynamic tab            
+        
+            // Ensure the ref exists and has a current value before rendering SearchPanel            
+            if (!currentTargetRef) {            
+               console.warn("SearchPanel targetRef is missing for index:", activeVastTabIndex);            
+               return null;            
+            }            
+        
+            return (            
+               <SearchPanel            
+                  key={activeVastTabIndex} // Force re-mount on tab change            
+                  contentType="VAST"            
+                  targetRef={currentTargetRef}            
+                  isDarkMode={isDarkMode}            
+               />            
+            );            
+         })()            
+      )}            
     </div>
   );
 });
