@@ -37,7 +37,7 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-sm mb-4 md:mb-0">
-              © {currentYear} AdTech Toolbox | JSON Explorer | 
+              © {currentYear} AdTech Toolbox Test-Deploy | JSON Explorer | 
               {/* Zeige Preview-Version, wenn Hostname passt, sonst normale Version */}
               {isPreview ? (
                 <span> Version v1.1.5-preview</span> 
