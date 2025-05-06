@@ -429,6 +429,9 @@ const JsonVastExplorer = React.memo(({
              )}
              {rawVastContent && (
                <div className="w-1/2 min-w-0 flex flex-col flex-1">
+                 {/* General Headline */}                 
+                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST-Antworten</h3>
+                 
                  {/* Tab Navigation - Dynamic */} 
                  <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800`}>
                     {/* Embedded VAST Tab (Index 0) */}                 
@@ -472,9 +475,9 @@ const JsonVastExplorer = React.memo(({
                  </div>
 
                  {/* Conditional Content based on Active Tab Index */}                 
-                 {activeVastTabIndex === 0 && rawVastContent && (
+                 {activeVastTabIndex === 0 && rawVastContent && ( /* Show only if rawVastContent exists */
                     <div className="flex flex-col flex-1 min-h-0">
-                       <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Embedded VAST Content</h3>
+                       {/* Removed specific headline from here */}                       
                        {vastUrl && (
                           <div className={`px-4 pt-2 pb-1 text-xs ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border border-b-0 rounded-t-lg flex items-center justify-between`}>
                             <span className={`truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>URL:</span>
@@ -517,11 +520,9 @@ const JsonVastExplorer = React.memo(({
                     </div>
                  )}
                  
-                 {activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1] && (
+                 {activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1] && ( /* Check if the chain item exists */
                     <div className="flex flex-col flex-1 min-h-0">
-                       {/* Use the index for the title */}                      
-                       <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VASTAdTagURI ({activeVastTabIndex}) Content</h3>
-                       {/* Display Loading state for this specific tab */}                      
+                       {/* Removed specific headline from here */}                       
                        {vastChain[activeVastTabIndex - 1].isLoading && (
                            <div className={`flex items-center justify-center p-4 rounded-lg text-sm ${isDarkMode ? 'text-blue-200 bg-gray-700' : 'text-blue-700 bg-blue-50'}`}>
                              <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -559,10 +560,6 @@ const JsonVastExplorer = React.memo(({
                                     className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}                                    
                                     style={{ maxWidth: "100%" }}
                                   />
-                               </div>
-                               <div className={`mt-2 text-xs flex items-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>                                 
-                                 <span className="flex-shrink-0 mr-1">Source:</span>                                 
-                                 <span className="truncate" title={vastChain[activeVastTabIndex - 1].uri}>{vastChain[activeVastTabIndex - 1].uri}</span>                               
                                </div>
                             </div>
                         )}
