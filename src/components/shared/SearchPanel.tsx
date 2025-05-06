@@ -103,7 +103,17 @@ const SearchPanel = React.memo(({ targetRef, contentType, isDarkMode, onSearch }
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              handleSearch();
+              if (matches.length > 0) {
+                e.preventDefault(); // Verhindere Standardverhalten
+                if (e.shiftKey) {
+                  navigateMatch('prev');
+                } else {
+                  navigateMatch('next');
+                }
+              } else {
+                // Nur Suche auslösen, wenn noch keine Treffer da sind
+                handleSearch();
+              }
             }
           }}
           placeholder={`Search in ${contentType}...`}
