@@ -44,7 +44,6 @@ const JsonVastExplorer = React.memo(({
   const [jsonInput, setJsonInput] = useState('');
   const [parsedJson, setParsedJson] = useState<any>(null);
   const [rawVastContent, setRawVastContent] = useState<string | null>(null);
-  const [vastUrl, setVastUrl] = useState('');
   const [error, setError] = useState('');
   const [copyMessage, setCopyMessage] = useState('');
   
@@ -209,10 +208,6 @@ const JsonVastExplorer = React.memo(({
         const currentRawVast = vastInfo.content;
         setRawVastContent(currentRawVast);
         
-        // Extract original VAST URL (for display above VAST box, might be different from AdTagURI)
-        const displayUrl = extractVastUrl(currentRawVast);
-        setVastUrl(displayUrl || ''); // Display this URL above the initial VAST
-
         // Now try to extract and fetch the AdTagURI from the raw VAST content
         const firstAdTagUri = extractAdTagUri(currentRawVast);
         if (firstAdTagUri) {
@@ -223,14 +218,13 @@ const JsonVastExplorer = React.memo(({
           type: 'json_vast',
           jsonContent: currentParsedJson,
           vastContent: currentRawVast,
-          vastUrl: displayUrl || '', // Use the extracted display URL
+          vastUrl: extractVastUrl(currentRawVast) || '', // Still store in history if needed, but not in state
           timestamp: Date.now()
         };
         
         addToHistoryItem(newHistoryItem);
       } else {
         setRawVastContent(null); // Already reset above, but good to be explicit
-        setVastUrl('');
         setVastChain([]); // Ensure chain is clear if no VAST found
         setActiveVastTabIndex(0); // Reset tab
         
@@ -246,8 +240,6 @@ const JsonVastExplorer = React.memo(({
       setError(`Parsing error: ${err.message}`);
       setParsedJson(null);
       setRawVastContent(null);
-      setVastUrl('');
-      // Reset fetch states on error
       setVastChain([]);
       setActiveVastTabIndex(0);
       setShowVastSearch(false); // Also hide VAST search on error
@@ -277,14 +269,14 @@ const JsonVastExplorer = React.memo(({
       setJsonInput(JSON.stringify(item.content, null, 2));
       setParsedJson(item.content);
       setRawVastContent(null);
-      setVastUrl('');
       setError('');
     } else {
       setJsonInput(JSON.stringify(item.jsonContent, null, 2));
       setParsedJson(item.jsonContent);
       setRawVastContent(item.vastContent || null);
-      setVastUrl(item.vastUrl || '');
       setError('');
+      // Restore VAST chain potentially? For now, just clear it.
+      setVastChain([]);
     }
     setShowHistory(false);
   }, [setShowHistory]);
@@ -294,7 +286,6 @@ const JsonVastExplorer = React.memo(({
     setJsonInput('');
     setParsedJson(null);
     setRawVastContent(null);
-    setVastUrl('');
     setError('');
     setCopyMessage('');
     setShowJsonSearch(false);
