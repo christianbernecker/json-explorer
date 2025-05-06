@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 10:04:40 CEST 2025", "commit": "Fix: Stelle sicher, dass ungenutzte Vars/Funcs entfernt sind"}
+{"deployment": "staging", "timestamp": "Tue May  6 10:17:16 CEST 2025", "commit": "Fix: Stelle Anzeige für ursprüngliches VAST wieder her"}

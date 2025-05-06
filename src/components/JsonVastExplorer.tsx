@@ -429,7 +429,7 @@ const JsonVastExplorer = React.memo(({
                    </div>
                  )}
                  {vastAdTagUri && (
-                   <div className="mt-4 pt-4 border-t border-dashed border-gray-600 dark:border-gray-400">
+                   <div className="mt-0 pt-4 border-t border-dashed border-gray-600 dark:border-gray-400">
                      {isFetchingVast && (
                         <div className={`flex items-center justify-center p-4 rounded-lg text-sm ${isDarkMode ? 'text-blue-200 bg-gray-700' : 'text-blue-700 bg-blue-50'}`}>
                           <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -458,11 +458,11 @@ const JsonVastExplorer = React.memo(({
                            <div className={`text-xs mb-2 truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} title={vastAdTagUri!}>{vastAdTagUri}</div>
                            <div 
                              ref={vastOutputRef}
-                             className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg border-t-0' : 'rounded-lg'}`}>
+                             className={`p-4 border shadow-inner overflow-auto flex-grow min-h-0 rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} ${vastUrl ? 'rounded-b-lg border-t-0' : 'rounded-lg'} ${vastAdTagUri ? 'rounded-b-none' : ''}`}>
                                <div className="flex justify-end space-x-2 mb-2">
                                  <button onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>{isWordWrapEnabled ? <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />}</svg><span className="ml-1.5">{isWordWrapEnabled ? "NoWrap" : "Wrap"}</span></button>
                                  <button onClick={() => setShowVastSearch(true)} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Find in VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><span className="ml-1.5">Find</span></button>
-                                 <button onClick={() => copyToClipboard(formatXml(fetchedVastContent), 'Fetched VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy Fetched VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
+                                 <button onClick={() => copyToClipboard(formatXml(rawVastContent), 'VAST')} className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`} title="Copy VAST"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><span className="ml-1.5">Copy</span></button>
                                </div>
                                {showVastSearch && (
                                  <SearchPanel
