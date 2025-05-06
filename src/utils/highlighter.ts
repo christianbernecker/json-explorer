@@ -60,39 +60,105 @@ const useHighlighter = () => {
     return highlighted; // Return raw highlighted HTML
   }, []);
 
-  // Formatierungsfunktion bleibt gleich
+  // Formatierungsfunktion mit DOMParser
   const formatXml = useCallback((xml: string): string => {
-     try {
-       let formatted = '';
-       const reg = /(>)(<)(\/*)/g;
-       xml = xml.replace(reg, '$1\r\n$2$3');
-       let pad = 0;
-       xml.split('\r\n').forEach(node => {
-         let indent = 0;
-         const trimmedNode = node.trim(); // Get trimmed node for checks
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xml, "application/xml");
 
-         // Decrease indent ONLY if line IS a closing tag
-         if (trimmedNode.match(/^<\/\w[^>]*>$/)) { 
-           if (pad > 0) {
-             pad -= 1;
-           }
-           indent = 0; // No indent increase after closing tag
-         // Increase indent if line STARTS with an opening tag (and is not self-closing)
-         } else if (trimmedNode.match(/^<\w[^>]*[^\/]>.*$/) && !trimmedNode.match(/<\/\w[^>]*>$/)) {
-           indent = 1;
-         // No indent change for other lines (text, self-closing, comments, CDATA, etc.)
-         } else {
-           indent = 0;
-         }
+      // Prüfe auf Parser-Fehler
+      const parserError = doc.getElementsByTagName("parsererror")[0];
+      if (parserError) {
+        console.error("XML Parsing Error:", parserError.textContent);
+        // Gib Original-XML zurück oder spezifische Fehlermeldung
+        // Für den User ist das Original oft hilfreicher
+        return xml; 
+      }
 
-         const padding = '  '.repeat(pad);
-         formatted += padding + node + '\r\n'; // Use original node for output
-         pad += indent;
-       });
-       return formatted.trim();
-     } catch (e) {
-       return xml;
-     }
+      const serializeNode = (node: Node, level: number): string => {
+        let result = '';
+        const indent = '  '.repeat(level);
+
+        switch (node.nodeType) {
+          case Node.ELEMENT_NODE: {
+            const element = node as Element;
+            const tagName = element.tagName;
+            const attributes = Array.from(element.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ');
+            result += `${indent}<${tagName}${attributes ? ' ' + attributes : ''}>`;
+            
+            // Prüfen, ob das Element Kinder hat oder nur Textinhalt
+            if (element.childNodes.length > 0) {
+               let hasElementChild = false;
+               let nodeContent = '';
+               for (let i = 0; i < element.childNodes.length; i++) {
+                  const child = element.childNodes[i];
+                  if (child.nodeType === Node.ELEMENT_NODE) {
+                      hasElementChild = true;
+                      nodeContent += '\n' + serializeNode(child, level + 1);
+                  } else if (child.nodeType === Node.TEXT_NODE || child.nodeType === Node.CDATA_SECTION_NODE) {
+                      // Trim text/CDATA content to avoid extra newlines if only whitespace exists
+                      const trimmedContent = child.textContent?.trim();
+                      if (trimmedContent) {
+                          // Keine zusätzliche Einrückung für Text/CDATA, direkt anhängen
+                          nodeContent += child.nodeType === Node.CDATA_SECTION_NODE 
+                            ? `<![CDATA[${trimmedContent}]]>` 
+                            : trimmedContent;
+                      }
+                  } else if (child.nodeType === Node.COMMENT_NODE) {
+                      nodeContent += '\n' + serializeNode(child, level + 1);
+                  }
+               }
+
+               if (hasElementChild) {
+                  result += nodeContent + '\n' + `${indent}</${tagName}>`;
+               } else {
+                  // Keine Element-Kinder, füge Inhalt direkt an und schließe Tag in derselben Zeile (ggf. anpassen)
+                  result += nodeContent + `</${tagName}>`;
+               }
+
+            } else {
+              // Leeres Element (oder self-closing wurde vom Parser expandiert)
+              result += `</${tagName}>`;
+            }
+            break;
+          }
+          case Node.TEXT_NODE: {
+            // Textknoten werden innerhalb des Elternelements behandelt (s.o.)
+            // Nur relevant, wenn direkt serialisiert (sollte nicht vorkommen bei korrektem XML)
+             const trimmedText = node.textContent?.trim();
+             if (trimmedText) {
+               result += `${indent}${trimmedText}`;
+             }
+            break;
+          }
+          case Node.CDATA_SECTION_NODE: {
+             // CDATA-Knoten werden innerhalb des Elternelements behandelt (s.o.)
+             const cdataContent = node.textContent || '';
+             result += `${indent}<![CDATA[${cdataContent}]]>`; 
+            break;
+          }
+          case Node.COMMENT_NODE: {
+            const commentContent = node.textContent || '';
+            result += `${indent}<!--${commentContent}-->`;
+            break;
+          }
+          // Andere Knotentypen (ProcessingInstruction, DocumentType etc.) werden ignoriert
+        }
+        return result;
+      };
+
+      // Starte die Serialisierung mit dem Dokument-Element
+      let formattedXml = '';
+      if (doc.documentElement) {
+          formattedXml = serializeNode(doc.documentElement, 0);
+      }
+      
+      return formattedXml;
+
+    } catch (e) {
+      console.error("Error formatting XML:", e);
+      return xml; // Fallback auf Original-XML bei unerwarteten Fehlern
+    }
   }, []);
 
   return { highlightJson, highlightXml, formatXml };
