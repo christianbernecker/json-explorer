@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 12:54:51 CEST 2025", "commit": "fix: Remove unused vastUrl state variable and update docs"}
+{"deployment": "staging", "timestamp": "Tue May  6 13:06:32 CEST 2025", "commit": "fix: Attempt to fix VAST output height and investigate width issue"}

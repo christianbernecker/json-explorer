@@ -428,7 +428,7 @@ const JsonVastExplorer = React.memo(({
                 </div>
              )}
              {rawVastContent && (
-               <div className="w-1/2 min-w-0 flex flex-col flex-1">
+               <div className="w-1/2 min-w-0 flex flex-col flex-1 overflow-hidden">
                  {/* General Headline */}                 
                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                  
@@ -498,7 +498,7 @@ const JsonVastExplorer = React.memo(({
                           )}                          
                           <div 
                             dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(rawVastContent as string), isDarkMode), 'xml') }}
-                            className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto h-full`}
+                            className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
                           />
                        </div>
                     </div>
@@ -549,7 +549,7 @@ const JsonVastExplorer = React.memo(({
                                   )}                                  
                                   <div 
                                     dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightXml(formatXml(vastChain[activeVastTabIndex - 1].content as string), isDarkMode), 'xml') }}
-                                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto h-full`}
+                                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} flex-grow min-h-0 overflow-auto`}
                                   />
                                </div>
                                {/* Re-add Source URL line below content */}                              
