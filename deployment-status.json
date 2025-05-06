@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 09:22:25 CEST 2025", "commit": "Style: Aktiviere horizontales Scrollen statt Zeilenumbruch für Code"}
+{"deployment": "staging", "timestamp": "Tue May  6 09:28:22 CEST 2025", "commit": "Feat: Füge Umschalter für Zeilenumbruch/horiz. Scroll hinzu"}
