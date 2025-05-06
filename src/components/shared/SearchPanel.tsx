@@ -70,15 +70,33 @@ const SearchPanel = React.memo(({ targetRef, contentType, isDarkMode, onSearch }
     // Set new current match
     setCurrentMatchIndex(newIndex);
     
-    // Highlight and scroll to the new match
+    // Highlight and scroll to the new match if it's not fully visible
     const currentMatch = matches[newIndex];
-    currentMatch.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (isDarkMode) {
-      currentMatch.element.style.backgroundColor = '#713F12';
-    } else {
-      currentMatch.element.style.backgroundColor = '#FEF08A';
+    const element = currentMatch.element;
+    const container = targetRef.current;
+
+    if (element && container) {
+      const elementRect = element.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      // Check if the element is fully outside the visible container boundaries
+      const isAbove = elementRect.top < containerRect.top;
+      const isBelow = elementRect.bottom > containerRect.bottom;
+
+      // Scroll only if element is not fully visible
+      if (isAbove || isBelow) {
+         element.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); // Use 'nearest' to minimize scrolling
+      }
+
+      // Always apply highlight
+      if (isDarkMode) {
+        element.style.backgroundColor = '#713F12';
+      } else {
+        element.style.backgroundColor = '#FEF08A';
+      }
     }
-  }, [matches, currentMatchIndex, clearHighlights, isDarkMode]);
+
+  }, [matches, currentMatchIndex, clearHighlights, isDarkMode, targetRef]);
   
   // Clean up highlights when search term changes or component unmounts
   useEffect(() => {

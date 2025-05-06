@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 09:43:55 CEST 2025", "commit": "Fix: Entferne ungenutzten useEffect-Import"}
+{"deployment": "staging", "timestamp": "Tue May  6 09:47:44 CEST 2025", "commit": "Feat: Ermögliche Such-Navigation mit Enter/Shift+Enter"}
