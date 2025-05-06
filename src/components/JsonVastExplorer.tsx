@@ -311,13 +311,6 @@ const JsonVastExplorer = React.memo(({
     }
   }, [parsedJson, copyToClipboard]);
 
-  // Kopieren der VAST-URL in die Zwischenablage
-  const copyVastUrlToClipboard = useCallback(() => {
-    if (vastUrl) {
-      copyToClipboard(vastUrl, 'URL');
-    }
-  }, [vastUrl, copyToClipboard]);
-
   return (
     <div className="w-full flex flex-col" style={{ height: 'calc(100vh - 150px)' }}>
       <div className="mb-4">
