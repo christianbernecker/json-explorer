@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { AgGridReact } from 'ag-grid-react';
 import { ColDef, GridApi } from 'ag-grid-community';
@@ -14,6 +14,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import DataVisualizerHeader from './DataVisualizerHeader';
 import GlobalHeader from './GlobalHeader';
+import DataVisualizerLLMInsights from './DataVisualizerLLMInsights';
 
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
@@ -387,31 +388,31 @@ const generateColumnDefs = (data: DataRow[], nonEmptyColumns: string[]): ColDef[
 
 // Main Component
 function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
-  // State for file upload
-  const [isLoading, setIsLoading] = useState(false);
-  const [fileName, setFileName] = useState('');
-  const [fileError, setFileError] = useState<string | null>(null);
-  
-  // Data states
-  const [rawData, setRawData] = useState<DataRow[]>([]);
-  const [columnDefs, setColumnDefs] = useState<ColDef[]>([]);
+  const [data, setData] = useState<DataRow[]>([]);
+  const [originalData, setOriginalData] = useState<DataRow[]>([]);
+  const [columns, setColumns] = useState<string[]>([]);
   const [dimensions, setDimensions] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<string[]>([]);
-  
-  // UI states
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'data' | 'visualize' | 'analytics'>('dashboard');
-  
-  // Visualization states
-  const [chartType, setChartType] = useState<ChartType>('bar');
   const [selectedDimension, setSelectedDimension] = useState<string>('');
   const [selectedMetric, setSelectedMetric] = useState<string>('');
+  const [selectedAggregation, setSelectedAggregation] = useState<'sum' | 'average'>('sum');
+  const [chartData, setChartData] = useState<AggregatedData[]>([]);
+  const [chartType, setChartType] = useState<ChartType>('bar');
+  const [activeTab, setActiveTab] = useState<'table' | 'chart' | 'insights' | 'dashboard' | 'data' | 'visualize' | 'analytics'>('dashboard');
+  const [fileName, setFileName] = useState<string>('');
+  const [columnDefs, setColumnDefs] = useState<ColDef[]>([]);
+  const [gridApi, setGridApi] = useState<GridApi | null>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
+  
+  // State for file upload
+  const [isLoading, setIsLoading] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  
+  // Visualization states
   const [aggregationType, setAggregationType] = useState<'sum' | 'average'>('sum');
 
-  // AG-Grid states
-  const [gridApi, setGridApi] = useState<GridApi | null>(null);
-  
   // Calculate chart data 
-  const chartData = useMemo(() => {
+  const computedChartData = useMemo(() => {
     // Debug log to see the current dimensions and selected values
     console.log('Current dimensions:', dimensions);
     console.log('Selected dimension:', selectedDimension);
@@ -422,12 +423,17 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       return [];
     }
     
-    return aggregateData(rawData, selectedDimension, selectedMetric, aggregationType);
-  }, [rawData, selectedDimension, selectedMetric, aggregationType, dimensions]);
+    return aggregateData(data, selectedDimension, selectedMetric, aggregationType);
+  }, [data, selectedDimension, selectedMetric, aggregationType, dimensions]);
+
+  // Aktualisiere chartData state auf Basis von computedChartData
+  useEffect(() => {
+    setChartData(computedChartData);
+  }, [computedChartData]);
   
   // Effect to ensure selected dimension and metric are valid
   useEffect(() => {
-    if (rawData.length > 0) {
+    if (data.length > 0) {
       // Ensure we have a valid dimension selected
       if (!selectedDimension || !dimensions.includes(selectedDimension)) {
         console.log('Setting default dimension from', dimensions);
@@ -465,7 +471,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         }
       }
     }
-  }, [dimensions, metrics, rawData, selectedDimension, selectedMetric]);
+  }, [dimensions, metrics, data, selectedDimension, selectedMetric]);
   
   // Process the uploaded file
   const processFile = async (file: File) => {
@@ -545,7 +551,8 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             console.log('Detected dimensions:', detectedDimensions);
             console.log('Detected metrics:', detectedMetrics);
             
-            setRawData(processedData);
+            setData(processedData);
+            setOriginalData(processedData);
             setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
             setDimensions(detectedDimensions);
             setMetrics(detectedMetrics);
@@ -626,7 +633,8 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         console.log('Detected dimensions:', detectedDimensions);
         console.log('Detected metrics:', detectedMetrics);
         
-        setRawData(processedData);
+        setData(processedData);
+        setOriginalData(processedData);
         setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
         setDimensions(detectedDimensions);
         setMetrics(detectedMetrics);
@@ -672,7 +680,8 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             console.log('Detected dimensions:', detectedDimensions);
             console.log('Detected metrics:', detectedMetrics);
             
-            setRawData(processedData);
+            setData(processedData);
+            setOriginalData(processedData);
             setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
             setDimensions(detectedDimensions);
             setMetrics(detectedMetrics);
@@ -708,7 +717,8 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             console.log('Detected dimensions:', detectedDimensions);
             console.log('Detected metrics:', detectedMetrics);
             
-            setRawData(processedData);
+            setData(processedData);
+            setOriginalData(processedData);
             setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
             setDimensions(detectedDimensions);
             setMetrics(detectedMetrics);
@@ -789,10 +799,10 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
 
   // Define JSON export function
   const exportToJson = useCallback(() => {
-    if (rawData.length > 0) {
+    if (data.length > 0) {
       try {
         // Create a JSON string from the data
-        const jsonStr = JSON.stringify(rawData, null, 2);
+        const jsonStr = JSON.stringify(data, null, 2);
         
         // Create a blob with the JSON data
         const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -810,7 +820,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         console.error('Error exporting JSON:', error);
       }
     }
-  }, [rawData, fileName]);
+  }, [data, fileName]);
 
   // Define Excel export function
   const exportToExcel = useCallback(() => {
@@ -840,11 +850,11 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
     const pdf = new jsPDF();
     pdf.text(`Data Export: ${fileName}`, 14, 16);
     
-    if (rawData.length > 0) {
+    if (data.length > 0) {
       // Füge eine einfache Tabelle hinzu
       const startY = 25;
       const rowHeight = 8;
-      const headers = Object.keys(rawData[0]);
+      const headers = Object.keys(data[0]);
       
       // Basische Implementierung ohne autotable
       pdf.setFontSize(10);
@@ -855,11 +865,11 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       });
       
       // Zeichne Daten (nur die ersten 10 Zeilen)
-      const maxRows = Math.min(10, rawData.length);
+      const maxRows = Math.min(10, data.length);
       for (let i = 0; i < maxRows; i++) {
         const y = startY + (i + 1) * rowHeight;
         headers.forEach((header, j) => {
-          const value = String(rawData[i][header] || '');
+          const value = String(data[i][header] || '');
           // Kürze zu lange Werte
           const displayValue = value.length > 15 ? value.substring(0, 12) + '...' : value;
           pdf.text(displayValue, 14 + j * 30, y);
@@ -868,7 +878,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
     }
     
     pdf.save(`${fileName.split('.')[0] || 'data'}_export.pdf`);
-  }, [fileName, rawData]);
+  }, [fileName, data]);
 
   // AG-Grid onGridReady handler
   const onGridReady = useCallback((params: { api: GridApi }) => {
@@ -881,13 +891,121 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
     
   }, []);
 
-  // Define tabs for navigation
-  const tabs = [
-    { id: 'dashboard', label: 'Dashboard', disabled: rawData.length === 0 },
-    { id: 'data', label: 'Data Table', disabled: rawData.length === 0 },
-    { id: 'visualize', label: 'Visualize', disabled: rawData.length === 0 },
-    { id: 'analytics', label: 'Advanced Analytics', disabled: rawData.length === 0 }
-  ];
+  // Callback für Visualisierungsvorschläge vom LLM
+  const handleVisualizationSuggestion = (
+    suggestedChartType: ChartType,
+    suggestedDimension: string,
+    suggestedMetric: string
+  ) => {
+    // Prüfe, ob die vorgeschlagenen Dimensionen und Metriken vorhanden sind
+    const dimensionExists = dimensions.includes(suggestedDimension);
+    const metricExists = metrics.includes(suggestedMetric);
+    
+    // Setze Chart-Typ
+    setChartType(suggestedChartType);
+    
+    // Setze Dimension und Metrik, wenn sie existieren
+    if (dimensionExists) {
+      setSelectedDimension(suggestedDimension);
+    }
+    
+    if (metricExists) {
+      setSelectedMetric(suggestedMetric);
+    }
+    
+    // Wenn neue Dimension/Metrik gesetzt wurden, triggert useEffect 
+    // automatisch die Neugenerierung der Chartdaten
+  };
+
+  // Rendert die Tabs
+  const renderTabs = () => (
+    <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-4`}>
+      <button
+        className={`py-2 px-4 font-medium ${
+          activeTab === 'table'
+            ? isDarkMode 
+              ? 'text-blue-400 border-b-2 border-blue-400' 
+              : 'text-blue-600 border-b-2 border-blue-600'
+            : isDarkMode 
+              ? 'text-gray-300 hover:text-gray-100' 
+              : 'text-gray-600 hover:text-gray-800'
+        }`}
+        onClick={() => setActiveTab('table')}
+      >
+        Tabelle
+      </button>
+      <button
+        className={`py-2 px-4 font-medium ${
+          activeTab === 'chart'
+            ? isDarkMode 
+              ? 'text-blue-400 border-b-2 border-blue-400' 
+              : 'text-blue-600 border-b-2 border-blue-600'
+            : isDarkMode 
+              ? 'text-gray-300 hover:text-gray-100' 
+              : 'text-gray-600 hover:text-gray-800'
+        }`}
+        onClick={() => setActiveTab('chart')}
+      >
+        Visualisierung
+      </button>
+      <button
+        className={`py-2 px-4 font-medium ${
+          activeTab === 'insights'
+            ? isDarkMode 
+              ? 'text-blue-400 border-b-2 border-blue-400' 
+              : 'text-blue-600 border-b-2 border-blue-600'
+            : isDarkMode 
+              ? 'text-gray-300 hover:text-gray-100' 
+              : 'text-gray-600 hover:text-gray-800'
+        }`}
+        onClick={() => setActiveTab('insights')}
+      >
+        KI-Analyse
+      </button>
+    </div>
+  );
+
+  // Render der KI-Analyse Tab
+  const renderInsightsTab = () => (
+    <div className="mt-4">
+      {data.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-1">
+            <DataVisualizerLLMInsights
+              data={data}
+              dimensions={dimensions}
+              metrics={metrics}
+              selectedDimension={selectedDimension}
+              selectedMetric={selectedMetric}
+              aggregatedData={chartData}
+              onVisualizationSuggestion={handleVisualizationSuggestion}
+              isDarkMode={isDarkMode}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <div className="mb-4">
+              {renderChart()}
+            </div>
+            <div className={`h-64 ag-theme-${isDarkMode ? 'alpine-dark' : 'alpine'}`}>
+              <AgGridReact
+                columnDefs={columnDefs}
+                rowData={data}
+                onGridReady={onGridReady}
+                pagination={true}
+                paginationPageSize={10}
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Bitte laden Sie zuerst Daten hoch, um KI-Analysen zu erhalten.
+          </p>
+        </div>
+      )}
+    </div>
+  );
 
   // Chart rendering function 
   const renderChart = () => {
@@ -976,7 +1094,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             <Legend />
             <Bar 
               dataKey="value" 
-              name={`${selectedMetric} (${aggregationType})`} 
+              name={`${selectedMetric} (${selectedAggregation})`} 
               fill={isDarkMode ? '#60a5fa' : '#3b82f6'} 
               radius={[4, 4, 0, 0]}
             />
@@ -1005,7 +1123,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             <Line
               type="monotone"
               dataKey="value"
-              name={`${selectedMetric} (${aggregationType})`}
+              name={`${selectedMetric} (${selectedAggregation})`}
               stroke={isDarkMode ? '#60a5fa' : '#3b82f6'}
               strokeWidth={2}
               dot={{ r: 5 }}
@@ -1021,7 +1139,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             />
             <PolarRadiusAxis tick={{ fill: isDarkMode ? '#e5e7eb' : '#374151' }} />
             <Radar 
-              name={`${selectedMetric} (${aggregationType})`}
+              name={`${selectedMetric} (${selectedAggregation})`}
               dataKey="value"
               stroke={isDarkMode ? '#60a5fa' : '#3b82f6'}
               fill={isDarkMode ? '#60a5fa' : '#3b82f6'}
@@ -1048,7 +1166,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
               ))}
             </Pie>
             <Tooltip 
-              formatter={(value) => [`${value} (${selectedMetric})`, aggregationType]}
+              formatter={(value) => [`${value} (${selectedMetric})`, selectedAggregation]}
               contentStyle={{ 
                 backgroundColor: isDarkMode ? '#374151' : '#fff', 
                 borderColor: isDarkMode ? '#4b5563' : '#e5e7eb', 
@@ -1119,280 +1237,157 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   );
 
   return (
-    <div className={`w-full ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <SEO 
-        canonical="https://www.adtech-toolbox.com/apps/data-visualizer"
-        title="Data Visualizer | AdTech Toolbox"
-        description="Upload, analyze and visualize your AdTech reporting data with interactive dashboards, charts and tables."
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+      <SEO
+        title="Data Visualizer | CSV und Excel Analyse Tool"
+        description="Laden Sie CSV oder Excel Dateien hoch und analysieren Sie Ihre Daten mit interaktiven Visualisierungen und KI-gestützten Erkenntnissen."
       />
-      
-      {/* Global Header */}
-      <GlobalHeader 
-        isDarkMode={isDarkMode}
-      />
-      
-      {/* Spacer for fixed header */}
-      <div className="h-36"></div>
-      
-      {/* Full width container */}
-      <div className={`px-4 py-6 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        {/* DataVisualizerHeader für konsistenten Stil */}
-        <DataVisualizerHeader 
-          isDarkMode={isDarkMode}
-          fileName={fileName}
-          rowCount={rawData.length}
-          columnCount={columnDefs.length}
-          exportToCsv={exportToCsv}
-          exportToJson={exportToJson}
-          exportToExcel={exportToExcel}
-          exportToPdf={exportToPdf}
-          exportChartAsPng={activeTab === 'visualize' ? exportChartAsPng : undefined}
-          onUploadNewData={() => setRawData([])}
-          activeTab={activeTab}
-        />
+      <div className="container mx-auto p-4">
+        <GlobalHeader isDarkMode={isDarkMode} />
+        <DataVisualizerHeader isDarkMode={isDarkMode} />
         
-        {/* Main Content Area */}
-        <div className={`max-w-7xl mx-auto mt-6 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-          {/* Render content based on state */}
-          {rawData.length === 0 ? (
-            <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow p-6 mb-6`}>
-              {renderUploadForm()}
-            </div>
+        <div className={`my-6 p-6 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          {data.length === 0 ? (
+            renderUploadForm()
           ) : (
-            <div>
-              {/* Tab Buttons */}
-              <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-                {tabs.map(tab => (
+            <>
+              <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4">
+                <h2 className="text-xl font-bold mb-2 md:mb-0">
+                  {fileName || 'Datenanalyse'}
+                </h2>
+                <div className="flex space-x-2">
                   <button
-                    key={tab.id}
-                    className={`py-2 px-4 font-medium text-sm focus:outline-none ${
-                      activeTab === tab.id
-                        ? isDarkMode
-                          ? 'border-b-2 border-blue-400 text-blue-400'
-                          : 'border-b-2 border-blue-600 text-blue-600'
-                        : tab.disabled
-                          ? isDarkMode ? 'text-gray-600 cursor-not-allowed' : 'text-gray-400 cursor-not-allowed'
-                          : isDarkMode
-                            ? 'text-gray-300 hover:text-gray-100'
-                            : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                    onClick={() => !tab.disabled && setActiveTab(tab.id as any)}
-                    disabled={tab.disabled}
+                    className={`px-3 py-1 rounded text-sm ${
+                      isDarkMode ? 'bg-red-700 hover:bg-red-800' : 'bg-red-500 hover:bg-red-600'
+                    } text-white`}
+                    onClick={() => setData([])}
                   >
-                    {tab.label}
+                    Zurücksetzen
                   </button>
-                ))}
+                  <button
+                    className={`px-3 py-1 rounded text-sm ${
+                      isDarkMode ? 'bg-blue-700 hover:bg-blue-800' : 'bg-blue-500 hover:bg-blue-600'
+                    } text-white`}
+                    onClick={exportToPdf}
+                  >
+                    Als PDF speichern
+                  </button>
+                </div>
               </div>
               
-              {/* Content based on active tab */}
-              <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md`}>
-                {activeTab === 'dashboard' && (
-                  <div className="p-6">
-                    <h2 className="text-xl font-bold mb-4">Data Overview</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
-                        <p className="text-sm font-medium opacity-70">Rows</p>
-                        <p className="text-2xl font-bold">{rawData.length}</p>
-                      </div>
-                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
-                        <p className="text-sm font-medium opacity-70">Columns</p>
-                        <p className="text-2xl font-bold">{columnDefs.length}</p>
-                      </div>
-                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
-                        <p className="text-sm font-medium opacity-70">Dimensions</p>
-                        <p className="text-2xl font-bold">{dimensions.length}</p>
-                      </div>
-                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-blue-50'}`}>
-                        <p className="text-sm font-medium opacity-70">Metrics</p>
-                        <p className="text-2xl font-bold">{metrics.length}</p>
+              {renderTabs()}
+              
+              {activeTab === 'table' && (
+                <div className="my-4">
+                  <div className={`h-[600px] w-full ag-theme-${isDarkMode ? 'alpine-dark' : 'alpine'}`}>
+                    <AgGridReact
+                      columnDefs={columnDefs}
+                      rowData={data}
+                      onGridReady={onGridReady}
+                      pagination={true}
+                      paginationPageSize={10}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === 'chart' && (
+                <div className="mt-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <div className="lg:col-span-1">
+                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                        <h3 className="font-bold mb-2">Visualisierungsoptionen</h3>
+                        
+                        <div className="mb-4">
+                          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                            Diagrammtyp
+                          </label>
+                          <select
+                            value={chartType}
+                            onChange={(e) => setChartType(e.target.value as ChartType)}
+                            className={`w-full p-2 rounded border ${
+                              isDarkMode 
+                                ? 'bg-gray-800 text-white border-gray-600' 
+                                : 'bg-white text-gray-900 border-gray-300'
+                            }`}
+                          >
+                            <option value="bar">Balkendiagramm</option>
+                            <option value="line">Liniendiagramm</option>
+                            <option value="pie">Kreisdiagramm</option>
+                            <option value="radar">Radar-Diagramm</option>
+                            <option value="area">Flächendiagramm</option>
+                          </select>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                            Dimension (X-Achse)
+                          </label>
+                          <select
+                            value={selectedDimension}
+                            onChange={(e) => setSelectedDimension(e.target.value)}
+                            className={`w-full p-2 rounded border ${
+                              isDarkMode 
+                                ? 'bg-gray-800 text-white border-gray-600' 
+                                : 'bg-white text-gray-900 border-gray-300'
+                            }`}
+                          >
+                            <option value="">Bitte wählen</option>
+                            {dimensions.map((dim) => (
+                              <option key={dim} value={dim}>{dim}</option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                            Metrik (Y-Achse)
+                          </label>
+                          <select
+                            value={selectedMetric}
+                            onChange={(e) => setSelectedMetric(e.target.value)}
+                            className={`w-full p-2 rounded border ${
+                              isDarkMode 
+                                ? 'bg-gray-800 text-white border-gray-600' 
+                                : 'bg-white text-gray-900 border-gray-300'
+                            }`}
+                          >
+                            <option value="">Bitte wählen</option>
+                            {metrics.map((metric) => (
+                              <option key={metric} value={metric}>{metric}</option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
+                            Aggregationstyp
+                          </label>
+                          <select
+                            value={selectedAggregation}
+                            onChange={(e) => setSelectedAggregation(e.target.value as 'sum' | 'average')}
+                            className={`w-full p-2 rounded border ${
+                              isDarkMode 
+                                ? 'bg-gray-800 text-white border-gray-600' 
+                                : 'bg-white text-gray-900 border-gray-300'
+                            }`}
+                          >
+                            <option value="sum">Summe</option>
+                            <option value="average">Durchschnitt</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="flex flex-col lg:flex-row gap-6">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold mb-3">Detected Dimensions</h3>
-                        <div className={`max-h-60 overflow-y-auto p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                          {dimensions.length > 0 ? (
-                            <ul className="space-y-1">
-                              {dimensions.map((dim, index) => (
-                                <li key={index} className="py-1 px-2 rounded hover:bg-opacity-50 hover:bg-gray-500">{dim}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-gray-500 dark:text-gray-400">No dimensions detected</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold mb-3">Detected Metrics</h3>
-                        <div className={`max-h-60 overflow-y-auto p-3 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                          {metrics.length > 0 ? (
-                            <ul className="space-y-1">
-                              {metrics.map((metric, index) => (
-                                <li key={index} className="py-1 px-2 rounded hover:bg-opacity-50 hover:bg-gray-500">{metric}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-gray-500 dark:text-gray-400">No metrics detected</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'data' && (
-                  <div className="p-6">
-                    <div style={{ height: 600 }} className={gridThemeClass}>
-                      <AgGridReact
-                        rowData={rawData}
-                        columnDefs={columnDefs}
-                        pagination={true}
-                        paginationPageSize={20}
-                        onGridReady={onGridReady}
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                {activeTab === 'visualize' && (
-                  <div className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                          Chart Type
-                        </label>
-                        <select
-                          value={chartType}
-                          onChange={(e) => setChartType(e.target.value as ChartType)}
-                          className={`w-full px-3 py-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
-                              : 'bg-white border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          <option value="bar">Bar Chart</option>
-                          <option value="line">Line Chart</option>
-                          <option value="pie">Pie Chart</option>
-                          <option value="radar">Radar Chart</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                          Dimension
-                        </label>
-                        <select
-                          value={selectedDimension}
-                          onChange={(e) => setSelectedDimension(e.target.value)}
-                          className={`w-full px-3 py-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
-                              : 'bg-white border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          <option value="" disabled>Select dimension...</option>
-                          {dimensions.map(dim => (
-                            <option key={dim} value={dim}>{dim}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                          Metric
-                        </label>
-                        <select
-                          value={selectedMetric}
-                          onChange={(e) => setSelectedMetric(e.target.value)}
-                          className={`w-full px-3 py-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
-                              : 'bg-white border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          <option value="" disabled>Select metric...</option>
-                          {metrics.map(met => (
-                            <option key={met} value={met}>{met}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                          Aggregation
-                        </label>
-                        <select
-                          value={aggregationType}
-                          onChange={(e) => setAggregationType(e.target.value as 'sum' | 'average')}
-                          className={`w-full px-3 py-2 rounded border ${
-                            isDarkMode 
-                              ? 'bg-gray-700 border-gray-600 text-white' 
-                              : 'bg-white border-gray-300 text-gray-700'
-                          }`}
-                        >
-                          <option value="sum">Sum</option>
-                          <option value="average">Average</option>
-                        </select>
-                      </div>
-                    </div>
-                    
-                    <div id="chart-container" className={`p-4 rounded-lg mb-6 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                    <div className="lg:col-span-3" ref={chartRef}>
                       {renderChart()}
                     </div>
-                    
-                    {chartData.length > 0 && (
-                      <div>
-                        <h3 className={`text-lg font-semibold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                          Data Preview
-                        </h3>
-                        <div className={`overflow-x-auto rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-white'}`}>
-                          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead className={isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}>
-                              <tr>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                  {selectedDimension}
-                                </th>
-                                <th scope="col" className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-                                  {selectedMetric} ({aggregationType})
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                              {chartData.map((item, index) => (
-                                <tr key={index} className={index % 2 === 0 ? 'bg-transparent' : isDarkMode ? 'bg-gray-800 bg-opacity-50' : 'bg-gray-50'}>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm">{item.name}</td>
-                                  <td className="px-6 py-4 whitespace-nowrap text-sm">{item.value}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                )}
-                
-                {activeTab === 'analytics' && (
-                  <div className="p-6">
-                    <div className="text-center py-10">
-                      <h2 className="text-xl font-bold mb-4">Advanced Analytics (Coming Soon)</h2>
-                      <p className="max-w-2xl mx-auto mb-6">
-                        Machine learning-based insights, trend analysis, and predictive analytics 
-                        features are under development. Stay tuned for updates!
-                      </p>
-                      <button 
-                        className={`px-4 py-2 rounded ${
-                          isDarkMode 
-                            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                            : 'bg-blue-500 hover:bg-blue-600 text-white'
-                        }`}
-                        onClick={() => setActiveTab('visualize')}
-                      >
-                        Go back to Visualization
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+                </div>
+              )}
+              
+              {activeTab === 'insights' && renderInsightsTab()}
+            </>
           )}
         </div>
       </div>
