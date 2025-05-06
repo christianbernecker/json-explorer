@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May  6 09:35:56 CEST 2025", "commit": "Style: Ändere Output-Buttons zu Icon + Text (dezenter)"}
+{"deployment": "staging", "timestamp": "Tue May  6 09:41:51 CEST 2025", "commit": "Fix: Bereinige Suchlogik & teste Fix für dynamische Höhe"}
