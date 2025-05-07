@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
 import SearchPanel from './shared/SearchPanel';
@@ -718,6 +718,25 @@ const JsonVastExplorer = React.memo(({
     );
   }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
+  // Neuer State für den aktiven Such-Referenz
+  const [activeSearchRef, setActiveSearchRef] = useState<React.RefObject<HTMLDivElement> | null>(null);
+
+  // Initialisiere den activeSearchRef, wenn sich die Refs ändern
+  useEffect(() => {
+    if (showJsonSearch && jsonOutputRef.current) {
+      setActiveSearchRef(jsonOutputRef);
+    } else if (showVastSearch) {
+      if (activeVastTabIndex === 0 && embeddedVastOutputRef.current) {
+        setActiveSearchRef(embeddedVastOutputRef);
+      } else if (activeVastTabIndex > 0) {
+        const vastRef = getFetchedVastRef(activeVastTabIndex - 1);
+        if (vastRef.current) {
+          setActiveSearchRef(vastRef);
+        }
+      }
+    }
+  }, [showJsonSearch, showVastSearch, activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef]);
+
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* History Panel */}
@@ -831,7 +850,13 @@ const JsonVastExplorer = React.memo(({
                       Wrap
                     </button>
                     <button 
-                      onClick={() => setShowJsonSearch(!showJsonSearch)} 
+                      onClick={() => {
+                        const newShowJsonSearch = !showJsonSearch;
+                        setShowJsonSearch(newShowJsonSearch);
+                        if (newShowJsonSearch) {
+                          setActiveSearchRef(jsonOutputRef);
+                        }
+                      }} 
                       className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                       title="Find in JSON"
                     >
@@ -871,6 +896,7 @@ const JsonVastExplorer = React.memo(({
                         contentType="JSON"
                         targetRef={jsonOutputRef}
                         isDarkMode={isDarkMode}
+                        key="json-search"
                       />
                     )}
                     <div 
@@ -896,7 +922,13 @@ const JsonVastExplorer = React.memo(({
                         {vastChain.length > 0 ? (
                           <>
                             <button
-                              onClick={() => setActiveVastTabIndex(0)}
+                              onClick={() => {
+                                setActiveVastTabIndex(0);
+                                // Setze aktiven Such-Ref auf embeddedVastOutputRef wenn VAST-Suche aktiv ist
+                                if (showVastSearch) {
+                                  setActiveSearchRef(embeddedVastOutputRef);
+                                }
+                              }}
                               className={`${
                                 activeVastTabIndex === 0
                                   ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
@@ -908,7 +940,13 @@ const JsonVastExplorer = React.memo(({
                             {vastChain.map((item, index) => (
                               <button
                                 key={index}
-                                onClick={() => setActiveVastTabIndex(index + 1)}
+                                onClick={() => {
+                                  setActiveVastTabIndex(index + 1);
+                                  // Setze aktiven Such-Ref auf den entsprechenden Ref des VAST Items
+                                  if (showVastSearch) {
+                                    setActiveSearchRef(getFetchedVastRef(index));
+                                  }
+                                }}
                                 className={`${
                                   activeVastTabIndex === index + 1
                                     ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
@@ -957,7 +995,20 @@ const JsonVastExplorer = React.memo(({
                       </div>
                     </button>
                     <button
-                      onClick={() => setShowVastSearch(!showVastSearch)}
+                      onClick={() => {
+                        const newShowVastSearch = !showVastSearch;
+                        setShowVastSearch(newShowVastSearch);
+                        // Setze den aktiven Such-Ref basierend auf dem aktuellen Tab
+                        if (newShowVastSearch) {
+                          if (activeVastTabIndex === 0) {
+                            setActiveSearchRef(embeddedVastOutputRef);
+                          } else {
+                            setActiveSearchRef(getFetchedVastRef(activeVastTabIndex - 1));
+                          }
+                        } else {
+                          setActiveSearchRef(null);
+                        }
+                      }}
                       className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
                     >
                       <div className="flex items-center">
@@ -1014,21 +1065,17 @@ const JsonVastExplorer = React.memo(({
                     </div>
                     
                     {/* Search Panel */}
-                    {showVastSearch && activeVastTabIndex === 0 && embeddedVastOutputRef.current && (
+                    {showVastSearch && activeSearchRef && activeSearchRef.current && (
                       <SearchPanel
                         contentType="VAST"
-                        targetRef={embeddedVastOutputRef}
+                        targetRef={activeSearchRef}
                         isDarkMode={isDarkMode}
-                      />
-                    )}
-                    {showVastSearch && activeVastTabIndex > 0 && getFetchedVastRef(activeVastTabIndex - 1) && (
-                      <SearchPanel
-                        contentType="VAST"
-                        targetRef={getFetchedVastRef(activeVastTabIndex - 1)}
-                        isDarkMode={isDarkMode}
+                        // Einen Key hinzufügen, der sich ändert, wenn der Tab wechselt
+                        key={`vast-search-${activeVastTabIndex}`}
                       />
                     )}
                     
+                    {/* VAST Content Display - wurde versehentlich entfernt */}
                     <div className="text-sm p-4 overflow-x-auto" ref={activeVastTabIndex === 0 
                         ? embeddedVastOutputRef 
                         : (getFetchedVastRef(activeVastTabIndex - 1) || null)}>

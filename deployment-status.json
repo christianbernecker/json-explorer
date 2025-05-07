@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 22:17:00 CEST 2025", "commit": "Verbesserte Suchfunktion mit erweiterten Optionen und Performance-Optimierungen"}
+{"deployment": "staging", "timestamp": "Wed May  7 22:23:51 CEST 2025", "commit": "Optimierte Suchfunktion: Verbesserte JSON-Schlüsselsuche, auffälligeres Highlighting und sanfteres Scroll-Verhalten"}
