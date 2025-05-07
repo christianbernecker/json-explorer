@@ -55,6 +55,7 @@ interface ClaudeResponse {
 }
 
 // API-Einstellungen
+// Sicherheitsoptimierung: API-Schlüssel nur als Umgebungsvariable
 const CLAUDE_API_KEY = process.env.REACT_APP_ANTHROPIC_API_KEY || '';
 const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
