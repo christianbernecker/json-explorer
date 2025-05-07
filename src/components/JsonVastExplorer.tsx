@@ -375,45 +375,56 @@ const JsonVastExplorer = React.memo(({
     
     // Syntax-Highlighting für XML/VAST mit den Farben aus dem Screenshot
     const colorizeVast = (text: string, isDark: boolean): string => {
-      // XML escapen
-      const escapeXml = (str: string) => {
-        return str
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-      };
+      if (!text) return '';
       
-      // Farben definieren
-      const tagColor = isDark ? '#4299e1' : '#3182ce';
-      const attrColor = isDark ? '#48bb78' : '#38a169';
-      const valueColor = isDark ? '#ecc94b' : '#d69e2e';
-      const cdataColor = isDark ? '#a0aec0' : '#718096';
+      // Definiere Farben für verschiedene Elemente
+      const tagColor = isDark ? '#4299e1' : '#3182ce';       // Blau
+      const attrColor = isDark ? '#48bb78' : '#38a169';      // Grün  
+      const valueColor = isDark ? '#ecc94b' : '#d69e2e';     // Gelb/Orange
+      const cdataColor = isDark ? '#a0aec0' : '#718096';     // Grau
       
-      // XML escapen und dann Syntax-Highlighting anwenden
-      let colorized = escapeXml(text);
+      // Text für HTML-Darstellung escapen
+      let result = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
       
-      // Tag-Namen in blau
-      colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, 
-        '&lt;$1<span class="text-xml-tag" style="color: ' + tagColor + '">$2</span>');
+      // Einfaches Syntax-Highlighting für XML-Elemente
       
-      // Attribute-Namen in grün
-      colorized = colorized.replace(/\s([\w:]+)=/g, 
-        ' <span class="text-xml-attr" style="color: ' + attrColor + '">$1</span>=');
+      // XML-Tags einfärben (z.B. <VAST>, </VAST>)
+      result = result.replace(/&lt;(\/?)([\w:-]+)(\s|&gt;)/g, 
+        function(match, slash, tag, end) {
+          return '&lt;<span style="color:' + tagColor + '">' + slash + tag + '</span>' + end;
+        });
       
-      // Attribut-Werte in gelb/orange
-      colorized = colorized.replace(/="([^"]*)"/g, 
-        '="<span class="text-xml-value" style="color: ' + valueColor + '">$1</span>"');
+      // Attribute einfärben (z.B. version="2.0")
+      result = result.replace(/(\s)([\w:-]+)=/g, 
+        function(match, space, attr) {
+          return space + '<span style="color:' + attrColor + '">' + attr + '</span>=';
+        });
       
-      // CDATA-Markierung in grau
-      colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
-        '<span class="text-xml-cdata" style="color: ' + cdataColor + '">$1</span>');
+      // Attributwerte einfärben (in Anführungszeichen)
+      result = result.replace(/=(&quot;|")(.*?)(&quot;|")/g, 
+        function(match, openQuote, value, closeQuote) {
+          return '=' + openQuote + '<span style="color:' + valueColor + '">' + value + '</span>' + closeQuote;
+        });
       
-      // CDATA-Inhalt (URLs) in blau
-      colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, function(match, p1, p2, p3) {
-        return p1 + '<span class="text-xml-cdata-content" style="color: ' + tagColor + '">' + p2 + '</span>' + p3;
-      });
+      // CDATA Markierungen einfärben
+      result = result.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
+        function(match) {
+          return '<span style="color:' + cdataColor + '">' + match + '</span>';
+        });
       
-      return colorized;
+      // CDATA Inhalt einfärben (URLs innerhalb von CDATA)
+      result = result.replace(/(&lt;!\[CDATA\[)(.*?)(\]\]&gt;)/g, 
+        function(match, open, content, close) {
+          // Die CDATA-Tags sind bereits eingefärbt, daher nur den Inhalt einfärben
+          // Wir müssen manuell nach dem CDATA-Inhalt suchen, da das 's'-Flag nicht verfügbar ist
+          const safeContent = content.replace(/[\r\n]/g, ' '); // Zeilenumbrüche durch Leerzeichen ersetzen
+          return open + '<span style="color:' + tagColor + '">' + safeContent + '</span>' + close;
+        });
+      
+      return result;
     };
     
     const highlightedVast = (
