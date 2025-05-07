@@ -302,46 +302,6 @@ const JsonVastExplorer = React.memo(({
     if (!xml) return '';
     
     try {
-      // Syntax-Highlighting für XML/VAST mit den Farben aus dem Screenshot
-      const colorizeVast = (text: string, isDark: boolean): string => {
-        if (!text) return '';
-        
-        // HTML-Entities ersetzen
-        let colorized = text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-        
-        // Farben als CSS-Variablen definieren
-        const tagColor = isDark ? '#4299e1' : '#3182ce';
-        const attrColor = isDark ? '#48bb78' : '#38a169';
-        const valueColor = isDark ? '#ecc94b' : '#d69e2e';
-        const cdataColor = isDark ? '#a0aec0' : '#718096';
-        
-        // Tag-Namen in blau
-        colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, 
-          '&lt;$1<span style="color: ' + tagColor + '">$2</span>');
-        
-        // Attribute in grün
-        colorized = colorized.replace(/\s([\w:]+)=/g, 
-          ' <span style="color: ' + attrColor + '">$1</span>=');
-        
-        // Attributwerte in gelb/orange
-        colorized = colorized.replace(/="([^"]*)"/g, 
-          '="<span style="color: ' + valueColor + '">$1</span>"');
-        
-        // CDATA-Markierung in grau
-        colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
-          '<span style="color: ' + cdataColor + '">$1</span>');
-        
-        // CDATA-Inhalt in blau
-        colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, function(match, p1, p2, p3) {
-          return p1 + '<span style="color: ' + tagColor + '">' + p2 + '</span>' + p3;
-        });
-        
-        return colorized;
-      };
-      
       // XML mit einer verbesserten Formatierungslogik formatieren
       const formatXml = (xmlText: string): string => {
         // Entferne Leerzeichen und Zeilenumbrüche zwischen Tags
@@ -449,6 +409,7 @@ const JsonVastExplorer = React.memo(({
     const formattedVast = formatXmlForDisplay(vastContent);
     
     // Verbesserte Syntax-Highlighting für XML/VAST
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const colorizeVast = (text: string, isDark: boolean): string => {
       if (!text) return '';
       
