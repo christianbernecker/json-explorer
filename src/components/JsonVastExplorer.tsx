@@ -186,236 +186,6 @@ const JsonVastExplorer = React.memo(({
     }
   }, [extractAdTagUri, MAX_VAST_WRAPPER]);
 
-  // Format JSON and initiate VAST chain fetching
-  const handleFormat = useCallback(() => {
-    // Reset fetch states on new format
-    setVastChain([]); // Clear the previous chain
-    setActiveVastTabIndex(0); // Reset to embedded VAST tab
-    
-    try {
-      const inputStr = jsonInput.trim();
-      
-      if (!inputStr) {
-        setError('Please enter JSON.');
-        setParsedJson(null); // Ensure parsedJson is also reset
-        setRawVastContent(null);
-        return;
-      }
-      
-      const currentParsedJson = JSON.parse(inputStr);
-      setParsedJson(currentParsedJson);
-      setError('');
-      setRawVastContent(null); // Reset raw VAST initially
-
-      const vastInfo = findVastContent(currentParsedJson);
-      if (vastInfo) {
-        const currentRawVast = vastInfo.content;
-        setRawVastContent(currentRawVast);
-        
-        // Now try to extract and fetch the AdTagURI from the raw VAST content
-        const firstAdTagUri = extractAdTagUri(currentRawVast);
-        if (firstAdTagUri) {
-            fetchVastChainRecursive(firstAdTagUri); // Start recursive fetch
-        }
-        
-        const newHistoryItem: HistoryItemType = {
-          type: 'json_vast',
-          jsonContent: currentParsedJson,
-          vastContent: currentRawVast,
-          vastUrl: extractVastUrl(currentRawVast) || '', // Still store in history if needed, but not in state
-          timestamp: Date.now()
-        };
-        
-        addToHistoryItem(newHistoryItem);
-      } else {
-        setRawVastContent(null); // Already reset above, but good to be explicit
-        setVastChain([]); // Ensure chain is clear if no VAST found
-        setActiveVastTabIndex(0); // Reset tab
-        
-        const newHistoryItem: HistoryItemType = {
-          type: 'json',
-          content: currentParsedJson,
-          timestamp: Date.now()
-        };
-        
-        addToHistoryItem(newHistoryItem);
-      }
-    } catch (err: any) {
-      setError(`Parsing error: ${err.message}`);
-      setParsedJson(null);
-      setRawVastContent(null);
-      setVastChain([]);
-      setActiveVastTabIndex(0);
-      setShowVastSearch(false); // Also hide VAST search on error
-    }
-  }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastChainRecursive, addToHistoryItem]);
-  
-  // Copy content to clipboard - Optimized with useCallback
-  const copyToClipboard = useCallback((text: string, type: string) => {
-    navigator.clipboard.writeText(text).then(
-      () => {
-        setCopyMessage(`${type} copied!`);
-        setTimeout(() => setCopyMessage(''), 2000);
-      },
-      (err) => console.error('Error copying: ', err)
-    );
-  }, []);
-  
-  // Handle JSON input change
-  const handleJsonInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setJsonInput(e.target.value);
-  }, []);
-  
-  // Restore from history
-  const restoreFromHistory = useCallback((item: HistoryItemType) => {
-    if (item.type === 'json') {
-      setJsonInput(JSON.stringify(item.content, null, 2));
-      setParsedJson(item.content);
-      setRawVastContent(null);
-      setError('');
-    } else {
-      setJsonInput(JSON.stringify(item.jsonContent, null, 2));
-      setParsedJson(item.jsonContent);
-      setRawVastContent(item.vastContent || null);
-      setError('');
-      // Restore VAST chain potentially? For now, just clear it.
-      setVastChain([]);
-    }
-    setShowHistory(false);
-  }, [setShowHistory, setJsonInput, setParsedJson, setRawVastContent, setError, setVastChain]);
-  
-  // Clear all fields
-  const handleClear = useCallback(() => {
-    setJsonInput('');
-    setParsedJson(null);
-    setRawVastContent(null);
-    setError('');
-    setCopyMessage('');
-    setShowJsonSearch(false);
-    // Reset fetch states on clear
-    setVastChain([]);
-    setActiveVastTabIndex(0);
-    setShowVastSearch(false); // Also hide VAST search on clear
-  }, []);
-
-  // Kopieren des JSON-Inhalts in die Zwischenablage
-  const copyJsonToClipboard = useCallback(() => {
-    if (parsedJson) {
-      copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
-    }
-  }, [parsedJson, copyToClipboard]);
-
-  // Format XML for display - adding proper styling and line breaks
-  const formatXmlForDisplay = useCallback((xml: string | null): string => {
-    if (!xml) return '';
-    
-    try {
-      // Verbesserte XML-Formatierung mit korrekter Einrückung
-      const formatXml = (xml: string): string => {
-        // XML in einzelne Zeichen aufteilen für bessere Kontrolle
-        let formattedXml = '';
-        let indentLevel = 0;
-        let inCdata = false;
-        
-        // CDATA-Inhalte inline lassen und nicht umbrechen
-        xml = xml.replace(/(<!\[CDATA\[.*?\]\]>)/g, function(match) {
-          return match.replace(/\s+/g, ' ');
-        });
-        
-        // Tag-Inhalte und Tags durch Zeilenumbrüche trennen
-        xml = xml.replace(/>\s*</g, '>\n<');
-        
-        // Durch die Zeilen gehen und Einrückung hinzufügen
-        const lines = xml.split('\n');
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i].trim();
-          if (!line) continue;
-          
-          // Prüfen, ob es ein schließendes Tag ist
-          const isClosingTag = line.startsWith('</');
-          // Prüfen, ob es ein selbstschließendes Tag ist
-          const isSelfClosingTag = line.match(/<[^>]*\/>/);
-          // Prüfen, ob es ein CDATA-Block ist
-          const isCdataTag = line.match(/!\[CDATA\[.*?\]\]/);
-          
-          // Einrückung für schließende Tags reduzieren
-          if (isClosingTag) {
-            indentLevel--;
-          }
-          
-          // Einrückung hinzufügen (nur wenn nicht in CDATA-Block)
-          if (!inCdata) {
-            formattedXml += '  '.repeat(Math.max(0, indentLevel)) + line + '\n';
-          } else {
-            formattedXml += line + '\n';
-          }
-          
-          // Einrückung für öffnende Tags erhöhen
-          // Wenn es ein öffnendes, nicht selbstschließendes Tag ist
-          if (!isClosingTag && !isSelfClosingTag && line.startsWith('<') && !isCdataTag) {
-            indentLevel++;
-          }
-          
-          // CDATA-Status verfolgen
-          if (line.includes('<![CDATA[')) {
-            inCdata = true;
-          }
-          if (line.includes(']]>')) {
-            inCdata = false;
-          }
-        }
-        
-        return formattedXml;
-      };
-      
-      return formatXml(xml);
-    } catch (error) {
-      console.error('Error formatting XML:', error);
-      return xml;
-    }
-  }, []);
-  
-  // Handle toggle word wrap
-  const toggleWordWrap = useCallback(() => {
-    setIsWordWrapEnabled(prev => !prev);
-  }, []);
-  
-  // Copy VAST content to clipboard
-  const copyVastToClipboard = useCallback(() => {
-    if (activeVastTabIndex === 0 && rawVastContent) {
-      copyToClipboard(rawVastContent, 'VAST');
-    } else if (activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1]?.content) {
-      // Stellen sicher, dass content nicht null ist
-      const content = vastChain[activeVastTabIndex - 1].content;
-      if (content) {
-        copyToClipboard(content, 'VAST');
-      }
-    }
-  }, [activeVastTabIndex, rawVastContent, vastChain, copyToClipboard]);
-  
-  // Render VAST content with proper formatting
-  const renderVastContent = useCallback((vastContent: string | null) => {
-    if (!vastContent) return <p className="mt-4 text-red-500">No VAST content found</p>;
-    
-    const formattedVast = formatXmlForDisplay(vastContent);
-    
-    // Verwende die highlightXml-Funktion aus useHighlighter statt eigener Implementierung
-    const highlightedVast = (
-      <div 
-        dangerouslySetInnerHTML={{ 
-          __html: addLineNumbersGlobal(highlightXml(formattedVast, isDarkMode), 'xml')
-        }}
-        className={isWordWrapEnabled ? 'whitespace-normal' : 'whitespace-pre'}
-      />
-    );
-    
-    return (
-      <div className="mt-2">
-        {highlightedVast}
-      </div>
-    );
-  }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
-
   // Zuerst füge ich einen State für die aufgeklappten JSON-Elemente hinzu
   const [expandedJsonPaths, setExpandedJsonPaths] = useState<Set<string>>(new Set());
   const [expandedVastNodes, setExpandedVastNodes] = useState<Set<string>>(new Set());
@@ -621,6 +391,306 @@ const JsonVastExplorer = React.memo(({
     }
     return fetchedVastOutputRefs.current.get(index)!;
   }, []);
+
+  // Hilfsfunktion, um alle JSON-Pfade rekursiv aufzuklappen
+  const initializeExpandedPaths = useCallback((json: any, path: string = '', paths: Set<string> = new Set<string>()) => {
+    if (!json || typeof json !== 'object') return paths;
+    
+    // Aktuellen Pfad hinzufügen
+    if (path) {
+      paths.add(path);
+    }
+    
+    // Rekursiv alle Kinder durchgehen
+    Object.keys(json).forEach(key => {
+      const currentPath = path ? `${path}.${key}` : key;
+      if (json[key] && typeof json[key] === 'object') {
+        initializeExpandedPaths(json[key], currentPath, paths);
+      }
+    });
+    
+    setExpandedJsonPaths(paths);
+    return paths;
+  }, []);
+  
+  // Hilfsfunktion, um alle XML-Knoten rekursiv aufzuklappen
+  const initializeExpandedVastNodes = useCallback((xmlContent: string) => {
+    if (!xmlContent) return;
+    
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
+      const paths = new Set<string>();
+      
+      // Rekursive Funktion, um alle Pfade zu sammeln
+      const traverseNode = (node: Node, parentPath: string = '') => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element;
+          const nodeName = element.nodeName;
+          const nodePath = `${parentPath}/${nodeName}`;
+          
+          // Pfad zur Liste hinzufügen
+          paths.add(nodePath);
+          
+          // Rekursiv für alle Kinder
+          Array.from(element.childNodes).forEach(childNode => {
+            traverseNode(childNode, nodePath);
+          });
+        }
+      };
+      
+      // Starte mit dem Root-Element
+      traverseNode(xmlDoc.documentElement);
+      
+      setExpandedVastNodes(paths);
+    } catch (error) {
+      console.error("Error initializing expanded VAST nodes:", error);
+    }
+  }, []);
+
+  // Format JSON and initiate VAST chain fetching
+  const handleFormat = useCallback(() => {
+    // Reset fetch states on new format
+    setVastChain([]); // Clear the previous chain
+    setActiveVastTabIndex(0); // Reset to embedded VAST tab
+    
+    try {
+      const inputStr = jsonInput.trim();
+      
+      if (!inputStr) {
+        setError('Please enter JSON.');
+        setParsedJson(null); // Ensure parsedJson is also reset
+        setRawVastContent(null);
+        return;
+      }
+      
+      const currentParsedJson = JSON.parse(inputStr);
+      setParsedJson(currentParsedJson);
+      setError('');
+      setRawVastContent(null); // Reset raw VAST initially
+
+      const vastInfo = findVastContent(currentParsedJson);
+      if (vastInfo) {
+        const currentRawVast = vastInfo.content;
+        setRawVastContent(currentRawVast);
+        
+        // Initialisiere die aufgeklappten JSON-Pfade, wenn neue Daten geladen werden
+        initializeExpandedPaths(currentParsedJson);
+        
+        // Initialisiere die aufgeklappten VAST-Nodes, wenn neue VAST-Daten geladen werden
+        if (currentRawVast) {
+          initializeExpandedVastNodes(currentRawVast);
+        }
+        
+        // Now try to extract and fetch the AdTagURI from the raw VAST content
+        const firstAdTagUri = extractAdTagUri(currentRawVast);
+        if (firstAdTagUri) {
+            fetchVastChainRecursive(firstAdTagUri); // Start recursive fetch
+        }
+        
+        const newHistoryItem: HistoryItemType = {
+          type: 'json_vast',
+          jsonContent: currentParsedJson,
+          vastContent: currentRawVast,
+          vastUrl: extractVastUrl(currentRawVast) || '', // Still store in history if needed, but not in state
+          timestamp: Date.now()
+        };
+        
+        addToHistoryItem(newHistoryItem);
+      } else {
+        setRawVastContent(null); // Already reset above, but good to be explicit
+        setVastChain([]); // Ensure chain is clear if no VAST found
+        setActiveVastTabIndex(0); // Reset tab
+        
+        // Initialisiere die aufgeklappten JSON-Pfade, auch wenn kein VAST gefunden wurde
+        initializeExpandedPaths(currentParsedJson);
+        
+        const newHistoryItem: HistoryItemType = {
+          type: 'json',
+          content: currentParsedJson,
+          timestamp: Date.now()
+        };
+        
+        addToHistoryItem(newHistoryItem);
+      }
+    } catch (err: any) {
+      setError(`Parsing error: ${err.message}`);
+      setParsedJson(null);
+      setRawVastContent(null);
+      setVastChain([]);
+      setActiveVastTabIndex(0);
+      setShowVastSearch(false); // Also hide VAST search on error
+    }
+  }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastChainRecursive, addToHistoryItem, initializeExpandedPaths, initializeExpandedVastNodes]);
+  
+  // Copy content to clipboard - Optimized with useCallback
+  const copyToClipboard = useCallback((text: string, type: string) => {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setCopyMessage(`${type} copied!`);
+        setTimeout(() => setCopyMessage(''), 2000);
+      },
+      (err) => console.error('Error copying: ', err)
+    );
+  }, []);
+  
+  // Handle JSON input change
+  const handleJsonInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setJsonInput(e.target.value);
+  }, []);
+  
+  // Restore from history
+  const restoreFromHistory = useCallback((item: HistoryItemType) => {
+    if (item.type === 'json') {
+      setJsonInput(JSON.stringify(item.content, null, 2));
+      setParsedJson(item.content);
+      setRawVastContent(null);
+      setError('');
+    } else {
+      setJsonInput(JSON.stringify(item.jsonContent, null, 2));
+      setParsedJson(item.jsonContent);
+      setRawVastContent(item.vastContent || null);
+      setError('');
+      // Restore VAST chain potentially? For now, just clear it.
+      setVastChain([]);
+    }
+    setShowHistory(false);
+  }, [setShowHistory, setJsonInput, setParsedJson, setRawVastContent, setError, setVastChain]);
+  
+  // Clear all fields
+  const handleClear = useCallback(() => {
+    setJsonInput('');
+    setParsedJson(null);
+    setRawVastContent(null);
+    setError('');
+    setCopyMessage('');
+    setShowJsonSearch(false);
+    // Reset fetch states on clear
+    setVastChain([]);
+    setActiveVastTabIndex(0);
+    setShowVastSearch(false); // Also hide VAST search on clear
+    // Leere die aufgeklappten Pfade
+    setExpandedJsonPaths(new Set());
+    setExpandedVastNodes(new Set());
+  }, []);
+
+  // Kopieren des JSON-Inhalts in die Zwischenablage
+  const copyJsonToClipboard = useCallback(() => {
+    if (parsedJson) {
+      copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
+    }
+  }, [parsedJson, copyToClipboard]);
+
+  // Format XML for display - adding proper styling and line breaks
+  const formatXmlForDisplay = useCallback((xml: string | null): string => {
+    if (!xml) return '';
+    
+    try {
+      // Verbesserte XML-Formatierung mit korrekter Einrückung
+      const formatXml = (xml: string): string => {
+        // XML in einzelne Zeichen aufteilen für bessere Kontrolle
+        let formattedXml = '';
+        let indentLevel = 0;
+        let inCdata = false;
+        
+        // CDATA-Inhalte inline lassen und nicht umbrechen
+        xml = xml.replace(/(<!\[CDATA\[.*?\]\]>)/g, function(match) {
+          return match.replace(/\s+/g, ' ');
+        });
+        
+        // Tag-Inhalte und Tags durch Zeilenumbrüche trennen
+        xml = xml.replace(/>\s*</g, '>\n<');
+        
+        // Durch die Zeilen gehen und Einrückung hinzufügen
+        const lines = xml.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i].trim();
+          if (!line) continue;
+          
+          // Prüfen, ob es ein schließendes Tag ist
+          const isClosingTag = line.startsWith('</');
+          // Prüfen, ob es ein selbstschließendes Tag ist
+          const isSelfClosingTag = line.match(/<[^>]*\/>/);
+          // Prüfen, ob es ein CDATA-Block ist
+          const isCdataTag = line.match(/!\[CDATA\[.*?\]\]/);
+          
+          // Einrückung für schließende Tags reduzieren
+          if (isClosingTag) {
+            indentLevel--;
+          }
+          
+          // Einrückung hinzufügen (nur wenn nicht in CDATA-Block)
+          if (!inCdata) {
+            formattedXml += '  '.repeat(Math.max(0, indentLevel)) + line + '\n';
+          } else {
+            formattedXml += line + '\n';
+          }
+          
+          // Einrückung für öffnende Tags erhöhen
+          // Wenn es ein öffnendes, nicht selbstschließendes Tag ist
+          if (!isClosingTag && !isSelfClosingTag && line.startsWith('<') && !isCdataTag) {
+            indentLevel++;
+          }
+          
+          // CDATA-Status verfolgen
+          if (line.includes('<![CDATA[')) {
+            inCdata = true;
+          }
+          if (line.includes(']]>')) {
+            inCdata = false;
+          }
+        }
+        
+        return formattedXml;
+      };
+      
+      return formatXml(xml);
+    } catch (error) {
+      console.error('Error formatting XML:', error);
+      return xml;
+    }
+  }, []);
+  
+  // Handle toggle word wrap
+  const toggleWordWrap = useCallback(() => {
+    setIsWordWrapEnabled(prev => !prev);
+  }, []);
+  
+  // Copy VAST content to clipboard
+  const copyVastToClipboard = useCallback(() => {
+    if (activeVastTabIndex === 0 && rawVastContent) {
+      copyToClipboard(rawVastContent, 'VAST');
+    } else if (activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1]?.content) {
+      // Stellen sicher, dass content nicht null ist
+      const content = vastChain[activeVastTabIndex - 1].content;
+      if (content) {
+        copyToClipboard(content, 'VAST');
+      }
+    }
+  }, [activeVastTabIndex, rawVastContent, vastChain, copyToClipboard]);
+  
+  // Render VAST content with proper formatting
+  const renderVastContent = useCallback((vastContent: string | null) => {
+    if (!vastContent) return <p className="mt-4 text-red-500">No VAST content found</p>;
+    
+    const formattedVast = formatXmlForDisplay(vastContent);
+    
+    // Verwende die highlightXml-Funktion aus useHighlighter statt eigener Implementierung
+    const highlightedVast = (
+      <div 
+        dangerouslySetInnerHTML={{ 
+          __html: addLineNumbersGlobal(highlightXml(formattedVast, isDarkMode), 'xml')
+        }}
+        className={isWordWrapEnabled ? 'whitespace-normal' : 'whitespace-pre'}
+      />
+    );
+    
+    return (
+      <div className="mt-2">
+        {highlightedVast}
+      </div>
+    );
+  }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
   return (
     <div className="w-full h-full flex flex-col">
