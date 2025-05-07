@@ -920,7 +920,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         filter: true,
         minWidth: 125,
         width: 150,
-        valueFormatter: (params) => {
+        valueFormatter: (params: any) => {
           if (params.value === null || params.value === undefined) {
             return '';
           }
