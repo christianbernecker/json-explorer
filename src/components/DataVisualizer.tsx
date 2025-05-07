@@ -13,7 +13,8 @@ import { SEO } from './seo';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import GlobalHeader from './GlobalHeader';
+import DataVisualizerPlugin from './DataVisualizerPlugin';
+import ApplicationHeader from './ApplicationHeader';
 
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
@@ -399,7 +400,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   const [selectedAggregation, setSelectedAggregation] = useState<'sum' | 'average'>('sum');
   const [chartData, setChartData] = useState<AggregatedData[]>([]);
   const [chartType, setChartType] = useState<ChartType>('bar');
-  const [activeTab, setActiveTab] = useState<'table' | 'chart' | 'dashboard' | 'data' | 'visualize' | 'analytics'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'table' | 'chart' | 'dashboard' | 'data' | 'visualize' | 'analytics' | 'ai'>('dashboard');
   const [fileName, setFileName] = useState<string>('');
   const [columnDefs, setColumnDefs] = useState<ColDef[]>([]);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
@@ -956,6 +957,20 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       >
         Visualisierung
       </button>
+      <button
+        className={`py-2 px-4 font-medium ${
+          activeTab === 'ai'
+            ? isDarkMode 
+              ? 'text-blue-400 border-b-2 border-blue-400' 
+              : 'text-blue-600 border-b-2 border-blue-600'
+            : isDarkMode 
+              ? 'text-gray-300 hover:text-gray-100' 
+              : 'text-gray-600 hover:text-gray-800'
+        }`}
+        onClick={() => setActiveTab('ai')}
+      >
+        KI-Analyse
+      </button>
     </div>
   );
 
@@ -1195,9 +1210,15 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         description="Laden Sie CSV oder Excel Dateien hoch und analysieren Sie Ihre Daten mit interaktiven Visualisierungen und KI-gestützten Erkenntnissen."
         canonical="https://www.adtech-toolbox.com/apps/data-visualizer"
       />
-      <div className="container mx-auto p-4">
-        <GlobalHeader isDarkMode={isDarkMode} />
-        
+      
+      <ApplicationHeader 
+        isDarkMode={isDarkMode} 
+        toggleDarkMode={() => {}} 
+        title="Data Visualizer"
+        subtitle="Visualisiere und analysiere CSV, XLSX und JSON Daten mit KI-Unterstützung"
+      />
+      
+      <div className="container mx-auto p-4 mt-12">
         <div className={`my-6 p-6 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           {data.length === 0 ? (
             renderUploadForm()
@@ -1231,7 +1252,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
               
               {activeTab === 'table' && (
                 <div className="my-4">
-                  <div className={`h-[600px] w-full ag-theme-${isDarkMode ? 'alpine-dark' : 'alpine'}`}>
+                  <div className={`h-[600px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
                     <AgGridReact
                       columnDefs={columnDefs}
                       rowData={data}
@@ -1336,6 +1357,31 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {activeTab === 'ai' && (
+                <DataVisualizerPlugin
+                  data={data}
+                  dimensions={dimensions}
+                  metrics={metrics}
+                  selectedDimension={selectedDimension}
+                  selectedMetric={selectedMetric}
+                  chartData={chartData}
+                  chartType={chartType}
+                  onVisualizationSuggestion={handleVisualizationSuggestion}
+                  renderChart={renderChart}
+                  renderTable={() => (
+                    <div className={`h-[300px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
+                      <AgGridReact
+                        columnDefs={columnDefs}
+                        rowData={data.slice(0, 50)}
+                        pagination={true}
+                        paginationPageSize={10}
+                      />
+                    </div>
+                  )}
+                  isDarkMode={isDarkMode}
+                />
               )}
             </>
           )}

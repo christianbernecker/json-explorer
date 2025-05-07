@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DataRow, AggregatedData, ChartType } from '../types';
 import { LLMAnalysisResponse } from '../services/llmService';
 import llmService from '../services/llmService';
@@ -42,14 +42,8 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
   const [insights, setInsights] = useState<LLMAnalysisResponse | null>(null);
   const [provider, setProvider] = useState<'openai' | 'anthropic'>('anthropic');
 
-  // Analyse beim ersten Rendern oder bei Änderung der Daten starten
-  useEffect(() => {
-    if (data.length > 0 && dimensions.length > 0 && metrics.length > 0) {
-      analyzeDatatWithLLM();
-    }
-  }, [data, selectedDimension, selectedMetric, aggregatedData]);
-
-  const analyzeDatatWithLLM = async () => {
+  // LLM Analysefunktion
+  const analyzeDatatWithLLM = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -79,7 +73,14 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [data, dimensions, metrics, aggregatedData, selectedDimension, selectedMetric, provider, onVisualizationSuggestion]);
+
+  // Analyse beim ersten Rendern oder bei Änderung der Daten starten
+  useEffect(() => {
+    if (data.length > 0 && dimensions.length > 0 && metrics.length > 0) {
+      analyzeDatatWithLLM();
+    }
+  }, [data, selectedDimension, selectedMetric, aggregatedData, dimensions.length, metrics.length, analyzeDatatWithLLM]);
 
   // Handler für den Wechsel des LLM-Providers
   const handleProviderChange = (newProvider: 'openai' | 'anthropic') => {

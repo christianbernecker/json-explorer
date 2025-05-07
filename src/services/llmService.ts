@@ -254,6 +254,9 @@ export const analyzeDatatWithLLM = async (
   return response;
 };
 
-export default {
+// Erstelle ein benanntes Export-Objekt
+const llmService = {
   analyzeDatatWithLLM
-}; 
+};
+
+export default llmService; 

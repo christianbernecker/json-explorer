@@ -80,16 +80,6 @@ const JsonVastExplorer = React.memo(({
   // Refs for Fetched VAST outputs (dynamic)
   const fetchedVastOutputRefs = useRef<Map<number, React.RefObject<HTMLDivElement>>>(new Map());
   
-  // Helper function to get or create ref for fetched VAST tabs
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const getFetchedVastRef = (index: number): React.RefObject<HTMLDivElement> => {
-    if (!fetchedVastOutputRefs.current.has(index)) {
-        // Create refs on demand
-        fetchedVastOutputRefs.current.set(index, React.createRef<HTMLDivElement>());
-    }
-    return fetchedVastOutputRefs.current.get(index)!;
-  };
-  
   // Custom hook for Syntax Highlighting
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { highlightJson, highlightXml, formatXml } = useHighlighter();
@@ -307,6 +297,191 @@ const JsonVastExplorer = React.memo(({
     }
   }, [parsedJson, copyToClipboard]);
 
+  // Format XML for display - adding proper styling and line breaks
+  const formatXmlForDisplay = useCallback((xml: string | null): string => {
+    if (!xml) return '';
+    
+    try {
+      // Utility for XML indentation
+      const indentXml = (xml: string): string => {
+        let formatted = '';
+        let indent = 0;
+        const lines = xml.trim().split('\n');
+        
+        lines.forEach(line => {
+          // Trim the line for easier handling
+          const trimmedLine = line.trim();
+          
+          // Skip empty lines
+          if (!trimmedLine) return;
+          
+          // Check if the line is a closing tag
+          if (trimmedLine.startsWith('</')) {
+            indent--;
+          }
+          
+          // Add the line with proper indentation
+          formatted += ' '.repeat(indent * 2) + trimmedLine + '\n';
+          
+          // Check if the line is an opening tag and not self-closing
+          if (trimmedLine.startsWith('<') && 
+              !trimmedLine.startsWith('</') && 
+              !trimmedLine.endsWith('/>') &&
+              !trimmedLine.match(/><\//)) {
+            indent++;
+          }
+        });
+        
+        return formatted;
+      };
+      
+      // First, normalize the XML by using a basic string replacement approach
+      const normalizedXml = xml
+        .replace(/>\s*</g, '>\n<')  // Add line breaks between tags
+        .replace(/(<[^<>]*>)([^<>]*)/g, '$1$2');  // Handle text nodes
+        
+      // Then indent it properly
+      return indentXml(normalizedXml);
+    } catch (error) {
+      console.error('Error formatting XML:', error);
+      return xml;
+    }
+  }, []);
+  
+  // Render VAST content with proper formatting
+  const renderVastContent = useCallback((vastContent: string | null) => {
+    if (!vastContent) return <p className="mt-4 text-red-500">No VAST content found</p>;
+    
+    const formattedVast = formatXmlForDisplay(vastContent);
+    const highlightedVast = (
+      <div 
+        dangerouslySetInnerHTML={{ 
+          __html: addLineNumbersGlobal(
+            formattedVast
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/("[^"]*")/g, '<span style="color: ' + (isDarkMode ? '#a5d6ff' : '#008080') + ';">$1</span>')
+              .replace(/&lt;(\/?[a-zA-Z][a-zA-Z0-9:]*)/g, '&lt;<span style="color: ' + (isDarkMode ? '#ff7b72' : '#800000') + ';">$1</span>')
+              .replace(/([a-zA-Z][a-zA-Z0-9:]*)=&quot;/g, '<span style="color: ' + (isDarkMode ? '#d2a8ff' : '#f069cc') + ';">$1</span>=&quot;'),
+            'xml'
+          )
+        }}
+        className={isWordWrapEnabled ? 'whitespace-normal' : 'whitespace-pre'}
+      />
+    );
+    
+    return (
+      <div className="text-sm mt-4 mb-4 overflow-x-auto" style={{ maxHeight: '600px' }}>
+        {highlightedVast}
+      </div>
+    );
+  }, [addLineNumbersGlobal, formatXmlForDisplay, isDarkMode, isWordWrapEnabled]);
+
+  // Render the VAST tabs
+  const renderVastTabs = useCallback(() => {
+    // Helper function to get or create ref for fetched VAST tabs
+    const getFetchedVastRef = (index: number): React.RefObject<HTMLDivElement> => {
+      if (!fetchedVastOutputRefs.current.has(index)) {
+          // Create refs on demand
+          fetchedVastOutputRefs.current.set(index, React.createRef<HTMLDivElement>());
+      }
+      return fetchedVastOutputRefs.current.get(index)!;
+    };
+
+    // Interface for tab items
+    interface TabItem {
+      id: number;
+      label: string;
+      ref: React.RefObject<HTMLDivElement>;
+      content: string | null;
+      error?: string | null;
+      isLoading?: boolean;
+    }
+
+    // If no VAST content, show empty state
+    if (!rawVastContent && vastChain.length === 0) {
+      return (
+        <div className={`p-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg mt-4`}>
+          <p className="text-center text-gray-500">No VAST content detected in the JSON</p>
+        </div>
+      );
+    }
+
+    // Create all tabs
+    const tabs: TabItem[] = [];
+    
+    // Embedded VAST tab
+    if (rawVastContent) {
+      tabs.push({
+        id: 0,
+        label: 'Embedded VAST',
+        ref: embeddedVastOutputRef,
+        content: rawVastContent
+      });
+    }
+    
+    // Chain VAST tabs
+    vastChain.forEach((item, index) => {
+      tabs.push({
+        id: index + 1,
+        label: `VAST ${index + 1}${item.isLoading ? ' (Loading...)' : ''}`,
+        ref: getFetchedVastRef(index),
+        content: item.content,
+        error: item.error,
+        isLoading: item.isLoading
+      });
+    });
+    
+    return (
+      <div className="mt-4">
+        <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className="flex flex-wrap -mb-px">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveVastTabIndex(tab.id)}
+                className={`${
+                  activeVastTabIndex === tab.id
+                    ? `${isDarkMode ? 'border-blue-500 text-blue-400' : 'border-blue-500 text-blue-600'} border-b-2`
+                    : `${isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-300' : 'border-transparent text-gray-500 hover:text-gray-700'} border-b-2`
+                } px-4 py-2 text-sm font-medium`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="mt-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 overflow-auto">
+          {tabs.map(tab => (
+            <div 
+              key={tab.id} 
+              ref={tab.ref}
+              className={`${activeVastTabIndex === tab.id ? 'block' : 'hidden'}`}
+            >
+              {tab.isLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+              ) : tab.error ? (
+                <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
+                  <p className="font-medium">Error fetching VAST:</p>
+                  <p>{tab.error}</p>
+                </div>
+              ) : (
+                renderVastContent(tab.content)
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }, [rawVastContent, vastChain, activeVastTabIndex, isDarkMode, embeddedVastOutputRef, renderVastContent]);
+
   return (
     <div className="w-full flex flex-col" style={{ height: 'calc(100vh - 150px)' }}>
       {/* History Panel */}
@@ -447,20 +622,7 @@ const JsonVastExplorer = React.memo(({
                  {/* General Headline */}                 
                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                  
-                 {/* Tab Navigation - Dynamic */} 
-                 <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-2 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800`}>
-                    {/* Embedded VAST Tab (Index 0) */}                 
-                    <button 
-                       onClick={() => setActiveVastTabIndex(0)}
-                       className={`py-2 px-4 text-sm font-medium focus:outline-none whitespace-nowrap ${
-                         activeVastTabIndex === 0 
-                           ? (isDarkMode ? 'border-blue-400 text-blue-300' : 'border-blue-500 text-blue-600') + ' border-b-2'
-                           : (isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300')
-                      }`}
-                    >
-                      Embedded VAST
-                    </button>
-                 </div>
+                 {renderVastTabs()}
                </div>
              )}
            </div>
