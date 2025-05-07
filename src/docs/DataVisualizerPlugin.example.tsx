@@ -6,7 +6,8 @@ import { ColDef } from 'ag-grid-community';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis
+  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  Area
 } from 'recharts';
 import { DataRow, AggregatedData, ChartType } from '../types';
 import DataVisualizerPlugin from '../components/DataVisualizerPlugin';

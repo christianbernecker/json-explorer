@@ -10,11 +10,10 @@ import {
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { SEO } from './seo';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import DataVisualizerHeader from './DataVisualizerHeader';
 import GlobalHeader from './GlobalHeader';
-import DataVisualizerLLMInsights from './DataVisualizerLLMInsights';
 
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
@@ -389,7 +388,9 @@ const generateColumnDefs = (data: DataRow[], nonEmptyColumns: string[]): ColDef[
 // Main Component
 function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   const [data, setData] = useState<DataRow[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [originalData, setOriginalData] = useState<DataRow[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [columns, setColumns] = useState<string[]>([]);
   const [dimensions, setDimensions] = useState<string[]>([]);
   const [metrics, setMetrics] = useState<string[]>([]);
@@ -398,7 +399,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   const [selectedAggregation, setSelectedAggregation] = useState<'sum' | 'average'>('sum');
   const [chartData, setChartData] = useState<AggregatedData[]>([]);
   const [chartType, setChartType] = useState<ChartType>('bar');
-  const [activeTab, setActiveTab] = useState<'table' | 'chart' | 'insights' | 'dashboard' | 'data' | 'visualize' | 'analytics'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'table' | 'chart' | 'dashboard' | 'data' | 'visualize' | 'analytics'>('dashboard');
   const [fileName, setFileName] = useState<string>('');
   const [columnDefs, setColumnDefs] = useState<ColDef[]>([]);
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
@@ -409,6 +410,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   const [fileError, setFileError] = useState<string | null>(null);
   
   // Visualization states
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [aggregationType, setAggregationType] = useState<'sum' | 'average'>('sum');
 
   // Calculate chart data 
@@ -784,11 +786,13 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   });
 
   // Define grid theme class based on dark mode
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const gridThemeClass = isDarkMode 
     ? 'ag-theme-alpine ag-theme-custom-dark' 
     : 'ag-theme-alpine';
 
   // Define the export to CSV function
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const exportToCsv = useCallback(() => {
     if (gridApi) {
       gridApi.exportDataAsCsv({
@@ -798,6 +802,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   }, [gridApi, fileName]);
 
   // Define JSON export function
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const exportToJson = useCallback(() => {
     if (data.length > 0) {
       try {
@@ -823,6 +828,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   }, [data, fileName]);
 
   // Define Excel export function
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const exportToExcel = useCallback(() => {
     if (gridApi) {
       gridApi.exportDataAsExcel({
@@ -832,6 +838,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   }, [gridApi, fileName]);
 
   // Export chart as PNG
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const exportChartAsPng = useCallback(() => {
     const chartElement = document.getElementById('chart-container');
     if (chartElement) {
@@ -892,6 +899,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   }, []);
 
   // Callback für Visualisierungsvorschläge vom LLM
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleVisualizationSuggestion = (
     suggestedChartType: ChartType,
     suggestedDimension: string,
@@ -948,62 +956,6 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       >
         Visualisierung
       </button>
-      <button
-        className={`py-2 px-4 font-medium ${
-          activeTab === 'insights'
-            ? isDarkMode 
-              ? 'text-blue-400 border-b-2 border-blue-400' 
-              : 'text-blue-600 border-b-2 border-blue-600'
-            : isDarkMode 
-              ? 'text-gray-300 hover:text-gray-100' 
-              : 'text-gray-600 hover:text-gray-800'
-        }`}
-        onClick={() => setActiveTab('insights')}
-      >
-        KI-Analyse
-      </button>
-    </div>
-  );
-
-  // Render der KI-Analyse Tab
-  const renderInsightsTab = () => (
-    <div className="mt-4">
-      {data.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-1">
-            <DataVisualizerLLMInsights
-              data={data}
-              dimensions={dimensions}
-              metrics={metrics}
-              selectedDimension={selectedDimension}
-              selectedMetric={selectedMetric}
-              aggregatedData={chartData}
-              onVisualizationSuggestion={handleVisualizationSuggestion}
-              isDarkMode={isDarkMode}
-            />
-          </div>
-          <div className="lg:col-span-2">
-            <div className="mb-4">
-              {renderChart()}
-            </div>
-            <div className={`h-64 ag-theme-${isDarkMode ? 'alpine-dark' : 'alpine'}`}>
-              <AgGridReact
-                columnDefs={columnDefs}
-                rowData={data}
-                onGridReady={onGridReady}
-                pagination={true}
-                paginationPageSize={10}
-              />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            Bitte laden Sie zuerst Daten hoch, um KI-Analysen zu erhalten.
-          </p>
-        </div>
-      )}
     </div>
   );
 
@@ -1241,10 +1193,10 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       <SEO
         title="Data Visualizer | CSV und Excel Analyse Tool"
         description="Laden Sie CSV oder Excel Dateien hoch und analysieren Sie Ihre Daten mit interaktiven Visualisierungen und KI-gestützten Erkenntnissen."
+        canonical="https://www.adtech-toolbox.com/apps/data-visualizer"
       />
       <div className="container mx-auto p-4">
         <GlobalHeader isDarkMode={isDarkMode} />
-        <DataVisualizerHeader isDarkMode={isDarkMode} />
         
         <div className={`my-6 p-6 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           {data.length === 0 ? (
@@ -1385,8 +1337,6 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                   </div>
                 </div>
               )}
-              
-              {activeTab === 'insights' && renderInsightsTab()}
             </>
           )}
         </div>
