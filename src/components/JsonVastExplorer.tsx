@@ -394,23 +394,24 @@ const JsonVastExplorer = React.memo(({
       
       // Tag-Namen in blau
       colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, 
-        '&lt;$1<span style=color:' + tagColor + '>$2</span>');
+        '&lt;$1<span class="text-xml-tag" style="color: ' + tagColor + '">$2</span>');
       
       // Attribute-Namen in grün
       colorized = colorized.replace(/\s([\w:]+)=/g, 
-        ' <span style=color:' + attrColor + '>$1</span>=');
+        ' <span class="text-xml-attr" style="color: ' + attrColor + '">$1</span>=');
       
       // Attribut-Werte in gelb/orange
       colorized = colorized.replace(/="([^"]*)"/g, 
-        '="<span style=color:' + valueColor + '>$1</span>"');
+        '="<span class="text-xml-value" style="color: ' + valueColor + '">$1</span>"');
       
       // CDATA-Markierung in grau
       colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
-        '<span style=color:' + cdataColor + '>$1</span>');
+        '<span class="text-xml-cdata" style="color: ' + cdataColor + '">$1</span>');
       
       // CDATA-Inhalt (URLs) in blau
-      colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, 
-        '$1<span style=color:' + tagColor + '>$2</span>$3');
+      colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, function(match, p1, p2, p3) {
+        return p1 + '<span class="text-xml-cdata-content" style="color: ' + tagColor + '">' + p2 + '</span>' + p3;
+      });
       
       return colorized;
     };
