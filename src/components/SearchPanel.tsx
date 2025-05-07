@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface SearchPanelProps {
   contentType: 'JSON' | 'VAST';
@@ -28,10 +28,38 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
     }
     
     performSearch();
-  }, [searchTerm]);
+  }, [searchTerm, clearHighlights, performSearch, targetRef]);
+
+  // Entferne alle Highlights
+  const clearHighlights = useCallback(() => {
+    if (!targetRef.current) return;
+    
+    // Entferne bestehende Highlights
+    const existingMatches = targetRef.current.querySelectorAll('.search-match');
+    existingMatches.forEach(match => {
+      const parent = match.parentNode;
+      if (parent) {
+        const textContent = match.textContent || '';
+        const textNode = document.createTextNode(textContent);
+        parent.replaceChild(textNode, match);
+      }
+    });
+    
+    // Entferne das aktuelle Highlight
+    const currentMatch = targetRef.current.querySelector('.current-match') as HTMLElement | null;
+    if (currentMatch) {
+      currentMatch.classList.remove('current-match');
+      currentMatch.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+    }
+  }, [targetRef, isDarkMode]);
+
+  // Escape spezielle Regex-Zeichen
+  const escapeRegExp = useCallback((string: string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }, []);
 
   // Führe Suche durch und markiere Übereinstimmungen
-  const performSearch = () => {
+  const performSearch = useCallback(() => {
     if (!targetRef.current || !searchTerm) return;
     
     // Lösche bestehende Highlights
@@ -49,7 +77,6 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
       let inTag = false;
       let lastMatchIndex = 0;
       let highlightedHtml = '';
-      let newHtml = '';
       
       // Durchlaufe das HTML Zeichen für Zeichen
       for (let i = 0; i < contentHtml.length; i++) {
@@ -60,8 +87,6 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
         } else if (char === '>') {
           inTag = false;
         }
-        
-        newHtml += char;
         
         if (!inTag && i > lastMatchIndex) {
           // Suche nach Übereinstimmungen im aktuellen Textabschnitt
@@ -94,35 +119,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
     } catch (error) {
       console.error('Search error:', error);
     }
-  };
-  
-  // Escape spezielle Regex-Zeichen
-  const escapeRegExp = (string: string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  };
-
-  // Entferne alle Highlights
-  const clearHighlights = () => {
-    if (!targetRef.current) return;
-    
-    // Entferne bestehende Highlights
-    const existingMatches = targetRef.current.querySelectorAll('.search-match');
-    existingMatches.forEach(match => {
-      const parent = match.parentNode;
-      if (parent) {
-        const textContent = match.textContent || '';
-        const textNode = document.createTextNode(textContent);
-        parent.replaceChild(textNode, match);
-      }
-    });
-    
-    // Entferne das aktuelle Highlight
-    const currentMatch = targetRef.current.querySelector('.current-match') as HTMLElement | null;
-    if (currentMatch) {
-      currentMatch.classList.remove('current-match');
-      currentMatch.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
-    }
-  };
+  }, [clearHighlights, escapeRegExp, isDarkMode, searchTerm, targetRef]);
 
   // Zur nächsten Übereinstimmung navigieren
   const goToNextMatch = () => {
