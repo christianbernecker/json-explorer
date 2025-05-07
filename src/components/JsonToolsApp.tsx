@@ -112,8 +112,9 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
         subtitle="Validate, Compare & Explore VAST/JSON"
       />
       
-      <div className="container mx-auto px-16 py-8 mt-24" style={{ maxWidth: "90%" }}>
-        <div className={`p-6 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+      {/* Container mit minimalen Rändern für bessere Raumnutzung */}
+      <div className="container mx-auto px-1 sm:px-2 md:px-4 lg:px-6 py-2 sm:py-4 md:py-6 mt-16 sm:mt-20 md:mt-24" style={{ maxWidth: "99%" }}>
+        <div className={`p-2 sm:p-3 md:p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           {activeTab === 'explorer' ? (
             <JsonVastExplorer 
               isDarkMode={isDarkMode}
