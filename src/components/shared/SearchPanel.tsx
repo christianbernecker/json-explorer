@@ -15,6 +15,7 @@ interface SearchResult {
   element: HTMLElement;
   line?: number;
   context?: string;
+  isKey?: boolean;
 }
 
 const SearchPanel: React.FC<SearchPanelProps> = ({ 
@@ -173,57 +174,86 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   const searchInJsonContent = useCallback((content: Node, pattern: RegExp, results: SearchResult[]) => {
     // Verbesserte JSON-Suche, die auch die Struktur des DOMs berücksichtigt
     const searchNode = (node: Node, isKey: boolean = false) => {
-      // Spezieller Fall: Suche in JSON-Schlüsseln
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as HTMLElement;
-        // Prüfe auf spezifische JSON-Schlüssel Klassen oder Keywords
-        const isJsonKey = (
-          element.classList.contains('text-blue-300') || 
-          element.classList.contains('text-indigo-600') ||
-          element.className.includes('blue') || // Weitere mögliche Klassen für Schlüssel
-          (element.textContent && element.textContent.includes('bids')) // Direktsuche nach "bids"
-        );
-        
-        // Wenn das Element ein JSON-Schlüssel ist und wir in Schlüsseln suchen sollen
-        if (isJsonKey && options.searchInKeys && element.textContent) {
-          const keyText = element.textContent.trim();
-          let match;
-          // Setze den Pattern zurück
-          pattern.lastIndex = 0;
-          while ((match = pattern.exec(keyText)) !== null) {
-            results.push({
-              match: match[0],
-              element: element,
-              context: `Key: ${keyText}`,
-              line: getLineNumber(element)
-            });
-          }
-        }
-        
-        // Rekursiv durch alle Kinder suchen
-        for (let i = 0; i < element.childNodes.length; i++) {
-          // Erkennen, ob es sich um einen Schlüssel handelt
-          const isChildKey = isKey || element.classList.contains('text-blue-300') || element.classList.contains('text-indigo-600');
-          searchNode(element.childNodes[i], isChildKey);
-        }
-      } 
-      // Suche in Textknoten
-      else if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+      // Direkte Textsuche in allen Textknoten, unabhängig vom Typ
+      if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const text = node.textContent.trim();
         if (text) {
-          // Setze den RegExp-Index zurück
-          pattern.lastIndex = 0;
+          // Erstelle eine neue RegExp-Instanz für jede Suche, um lastIndex-Probleme zu vermeiden
+          const localPattern = new RegExp(pattern.source, pattern.flags);
           let match;
-          while ((match = pattern.exec(text)) !== null) {
+          
+          while ((match = localPattern.exec(text)) !== null) {
             if (node.parentElement) {
+              // Ermittle, ob es sich um einen Schlüssel handelt
+              const isKeyElement = 
+                node.parentElement.classList.contains('text-blue-300') || 
+                node.parentElement.classList.contains('text-indigo-600') ||
+                node.parentElement.className.includes('blue');
+              
               results.push({
                 match: match[0],
                 element: node.parentElement,
-                context: text.substring(Math.max(0, match.index - 20), match.index + match[0].length + 20),
-                line: getLineNumber(node.parentElement)
+                context: isKeyElement 
+                  ? `Key: ${text}` 
+                  : text.substring(Math.max(0, match.index - 20), match.index + match[0].length + 20),
+                line: getLineNumber(node.parentElement),
+                isKey: isKeyElement
               });
             }
           }
+        }
+      }
+      
+      // Spezialfall für JSON-Schlüssel in SPAN-Elementen
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        const isJsonKey = 
+          element.classList.contains('text-blue-300') || 
+          element.classList.contains('text-indigo-600') ||
+          element.className.includes('blue');
+        
+        // Direkte Suche im HTML-Inhalt für alle Elemente
+        if (element.textContent) {
+          const text = element.textContent.trim();
+          
+          // Bei JSON-Schlüssel-Suche
+          if (options.searchInKeys && isJsonKey && text) {
+            // Erstelle eine neue RegExp-Instanz
+            const keyPattern = new RegExp(pattern.source, pattern.flags);
+            let match;
+            
+            while ((match = keyPattern.exec(text)) !== null) {
+              results.push({
+                match: match[0],
+                element: element,
+                context: `Key: ${text}`,
+                line: getLineNumber(element),
+                isKey: true
+              });
+            }
+          }
+          
+          // Universal-Suche in allen Elementen
+          // Erstelle eine neue RegExp-Instanz
+          const universalPattern = new RegExp(pattern.source, pattern.flags);
+          if (universalPattern.test(text)) {
+            const parentElement = element.tagName === 'SPAN' ? element : element.closest('span');
+            if (parentElement && !results.some(r => r.element === parentElement)) {
+              results.push({
+                match: pattern.source.replace(/\\b|\\B|\^|\$/g, ''),
+                element: parentElement as HTMLElement,
+                context: text,
+                line: getLineNumber(parentElement as HTMLElement),
+                isKey: isJsonKey
+              });
+            }
+          }
+        }
+        
+        // Rekursiv durch alle Kinder durchsuchen
+        const childNodes = element.childNodes;
+        for (let i = 0; i < childNodes.length; i++) {
+          searchNode(childNodes[i], isJsonKey);
         }
       }
     };
@@ -241,35 +271,27 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     // Starte Suche im Inhalt
     searchNode(content);
     
-    // Zusätzlich direkt nach dem Text "bids" suchen
-    if (pattern.source.includes('bids') || pattern.source.includes('\\bbids\\b')) {
-      const bidsElements = document.querySelectorAll('span:not(.search-match)');
-      bidsElements.forEach(element => {
-        if (element.textContent && element.textContent.includes('bids')) {
-          if (options.caseSensitive || options.useRegex) {
-            // Für case-sensitive oder regex, den pattern verwenden
-            pattern.lastIndex = 0;
-            if (pattern.test(element.textContent)) {
-              results.push({
-                match: 'bids',
-                element: element as HTMLElement,
-                context: `JSON Key: ${element.textContent}`,
-                line: getLineNumber(element as HTMLElement)
-              });
-            }
-          } else {
-            // Für case-insensitive, direkter Textvergleich
-            results.push({
-              match: 'bids',
-              element: element as HTMLElement,
-              context: `JSON Key: ${element.textContent}`,
-              line: getLineNumber(element as HTMLElement)
-            });
-          }
+    // Vereinfachte globale Suche nach dem Text in allen span-Elementen (Fallback)
+    if (results.length === 0) {
+      const searchTermClean = pattern.source.replace(/\\b|\\B|\^|\$/g, '');
+      
+      // Durchsuche alle span-Elemente im Dokument
+      const allSpans = content.parentElement?.querySelectorAll('span') || [];
+      allSpans.forEach(span => {
+        if (span.textContent && 
+            span.textContent.toLowerCase().includes(searchTermClean.toLowerCase()) && 
+            !span.classList.contains('search-match')) {
+          results.push({
+            match: searchTermClean,
+            element: span as HTMLElement,
+            context: span.textContent,
+            line: getLineNumber(span as HTMLElement),
+            isKey: span.classList.contains('text-blue-300') || span.classList.contains('text-indigo-600')
+          });
         }
       });
     }
-  }, [options.searchInKeys, options.caseSensitive, options.useRegex]);
+  }, [options.searchInKeys]);
 
   // Durchführung der Suche mit verbesserter Performance
   const performSearch = useCallback(() => {
