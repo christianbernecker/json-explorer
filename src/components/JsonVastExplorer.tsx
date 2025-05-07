@@ -40,7 +40,6 @@ const JsonVastExplorer = React.memo(({
   setShowHistory
 }: JsonVastExplorerProps) => {
   // Explorer state
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   const [jsonInput, setJsonInput] = useState('');
   const [parsedJson, setParsedJson] = useState<any>(null);
   const [rawVastContent, setRawVastContent] = useState<string | null>(null);
@@ -54,7 +53,6 @@ const JsonVastExplorer = React.memo(({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showVastSearch, setShowVastSearch] = useState(false);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
-  /* eslint-enable @typescript-eslint/no-unused-vars */
   
   // State für die VAST Kette (Wrapper)
   interface VastChainItem {
@@ -73,10 +71,8 @@ const JsonVastExplorer = React.memo(({
   const [activeVastTabIndex, setActiveVastTabIndex] = useState<number>(0);
   
   // Refs for search functionality
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const jsonOutputRef = useRef<HTMLDivElement>(null);
-  /* eslint-enable @typescript-eslint/no-unused-vars */
   
   // Ref for Embedded VAST output
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -258,7 +254,6 @@ const JsonVastExplorer = React.memo(({
   }, []);
   
   // Handle JSON input change
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   const handleJsonInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJsonInput(e.target.value);
   }, []);
@@ -301,8 +296,7 @@ const JsonVastExplorer = React.memo(({
       copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
     }
   }, [parsedJson, copyToClipboard]);
-  /* eslint-enable @typescript-eslint/no-unused-vars */
-  
+
   // Format XML for display - adding proper styling and line breaks
   const formatXmlForDisplay = useCallback((xml: string | null): string => {
     if (!xml) return '';
@@ -416,7 +410,6 @@ const JsonVastExplorer = React.memo(({
     
     // Verbesserte Syntax-Highlighting für XML/VAST
     const colorizeVast = (text: string, isDark: boolean): string => {
-      // HTML Entities zuerst umwandeln, um sie richtig darzustellen
       let colorized = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -424,23 +417,23 @@ const JsonVastExplorer = React.memo(({
       
       // Tags in Blau (mit korrigiertem Regex-Pattern)
       colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, 
-        '&lt;$1<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">$2</span>');
+        '&lt;$1<span class="xml-tag" style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">$2</span>');
       
       // Attribute in Grün (mit korrigiertem Regex-Pattern)
       colorized = colorized.replace(/\s([\w:]+)=/g, 
-        ' <span style="color: ' + (isDark ? '#48bb78' : '#38a169') + '">$1</span>=');
+        ' <span class="xml-attr" style="color: ' + (isDark ? '#48bb78' : '#38a169') + '">$1</span>=');
       
       // Attributwerte in Gelb (mit korrigiertem Regex-Pattern)
       colorized = colorized.replace(/="([^"]*)"/g, 
-        '="<span style="color: ' + (isDark ? '#ecc94b' : '#d69e2e') + '">$1</span>"');
+        '="<span class="xml-value" style="color: ' + (isDark ? '#ecc94b' : '#d69e2e') + '">$1</span>"');
       
       // CDATA-Markierung in Grau
       colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
-        '<span style="color: ' + (isDark ? '#a0aec0' : '#718096') + '">$1</span>');
+        '<span class="xml-cdata" style="color: ' + (isDark ? '#a0aec0' : '#718096') + '">$1</span>');
       
       // CDATA-Inhalt in Blau - Fix für überlappende Spans
       colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, function(match, p1, p2, p3) {
-        return p1 + '<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">' + p2 + '</span>' + p3;
+        return p1 + '<span class="xml-cdata-content" style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">' + p2 + '</span>' + p3;
       });
       
       return colorized;
@@ -861,7 +854,6 @@ const JsonVastExplorer = React.memo(({
   };
 
   // Funktion zum Rendern der JSON-Outline
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   const renderJsonOutline = () => {
     if (!parsedJson) return null;
     
@@ -874,7 +866,6 @@ const JsonVastExplorer = React.memo(({
       </div>
     );
   };
-  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -888,9 +879,9 @@ const JsonVastExplorer = React.memo(({
         />
       )}
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* JSON Input/Output Section */}
-        <div className="flex flex-col h-full">
+        <div>
           <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
             JSON Eingabe
           </h2>
@@ -969,7 +960,7 @@ const JsonVastExplorer = React.memo(({
         </div>
         
         {/* VAST Viewer Section */}
-        <div className="flex flex-col h-full">
+        <div>
           <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
             VAST Viewer
           </h2>
