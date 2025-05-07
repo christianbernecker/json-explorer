@@ -415,25 +415,26 @@ const JsonVastExplorer = React.memo(({
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
       
-      // Tags in Blau
+      // Tags in Blau (mit korrigiertem Regex-Pattern)
       colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, 
-        '&lt;$1<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + ';">$2</span>');
+        '&lt;$1<span class="xml-tag" style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">$2</span>');
       
-      // Attribute in Grün
+      // Attribute in Grün (mit korrigiertem Regex-Pattern)
       colorized = colorized.replace(/\s([\w:]+)=/g, 
-        ' <span style="color: ' + (isDark ? '#48bb78' : '#38a169') + ';">$1</span>=');
+        ' <span class="xml-attr" style="color: ' + (isDark ? '#48bb78' : '#38a169') + '">$1</span>=');
       
-      // Attributwerte in Gelb
+      // Attributwerte in Gelb (mit korrigiertem Regex-Pattern)
       colorized = colorized.replace(/="([^"]*)"/g, 
-        '="<span style="color: ' + (isDark ? '#ecc94b' : '#d69e2e') + ';">$1</span>"');
+        '="<span class="xml-value" style="color: ' + (isDark ? '#ecc94b' : '#d69e2e') + '">$1</span>"');
       
       // CDATA-Markierung in Grau
       colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
-        '<span style="color: ' + (isDark ? '#a0aec0' : '#718096') + ';">$1</span>');
+        '<span class="xml-cdata" style="color: ' + (isDark ? '#a0aec0' : '#718096') + '">$1</span>');
       
-      // CDATA-Inhalt in Blau
-      colorized = colorized.replace(/(&lt;!\[CDATA\[)<span style="[^"]*">(.+?)<\/span>(\]\]&gt;)/g, 
-        '$1<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + ';">$2</span>$3');
+      // CDATA-Inhalt in Blau - Fix für überlappende Spans
+      colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, function(match, p1, p2, p3) {
+        return p1 + '<span class="xml-cdata-content" style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">' + p2 + '</span>' + p3;
+      });
       
       return colorized;
     };
@@ -878,152 +879,99 @@ const JsonVastExplorer = React.memo(({
         />
       )}
 
-      <div className="mb-4">
-        <div className="flex flex-row space-x-4">
-          <div className="flex-1">
-            <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>JSON Input</h3>
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* JSON Input/Output Section */}
+        <div>
+          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
+            JSON Eingabe
+          </h2>
+          
+          <div className={`mb-4 rounded-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}>
+            <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-t-lg border-b border-gray-300 dark:border-gray-600 flex justify-between items-center">
+              <div className="flex space-x-2">
+                <label 
+                  htmlFor="json-input"
+                  className={`text-xs uppercase font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}
+                >
+                  Eingabe: JSON
+                </label>
+              </div>
+              
+              <div className="flex space-x-2">
+                <button
+                  onClick={handleClear}
+                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+                >
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Leeren
+                  </div>
+                </button>
+              </div>
+            </div>
+            
             <textarea
-              ref={textAreaRef}
-              value={jsonInput}
-              onChange={handleJsonInputChange}
-              placeholder="Paste your JSON here..."
-              className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
+              id="json-input"
+              className={`w-full p-4 font-mono text-sm resize-none outline-none ${
                 isDarkMode 
-                  ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                  : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                  ? 'bg-gray-800 text-gray-200 placeholder-gray-500' 
+                  : 'bg-white text-gray-800 placeholder-gray-400'
               }`}
+              style={{ height: '40vh', minHeight: '350px', maxHeight: '50vh' }}
+              value={jsonInput}
+              onChange={(e) => setJsonInput(e.target.value)}
+              placeholder="Füge hier dein JSON mit VAST-Inhalt ein..."
+              aria-label="JSON input"
             />
+          </div>
+          
+          <div className="flex space-x-3">
+            <button
+              onClick={handleFormat}
+              className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
+                isDarkMode
+                  ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white'
+                  : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white'
+              }`}
+              title="Format JSON (Ctrl+Shift+F)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" /> 
+              </svg>
+              Format
+            </button>
+            <button
+              onClick={handleClear}
+              className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
+                isDarkMode
+                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-600'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+              title="Clear Input (Ctrl+Shift+L)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear
+            </button>
           </div>
         </div>
         
-        <div className="flex space-x-3 mt-4">
-          <button
-            onClick={handleFormat}
-            className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
-              isDarkMode
-                ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white'
-                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white'
-            }`}
-            title="Format JSON (Ctrl+Shift+F)"
+        {/* VAST Viewer Section */}
+        <div>
+          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
+            VAST Viewer
+          </h2>
+          
+          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg border ${
+            isDarkMode ? 'border-gray-700' : 'border-gray-300'} h-full flex flex-col`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" /> 
-            </svg>
-            Format
-          </button>
-          <button
-            onClick={handleClear}
-            className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
-              isDarkMode
-                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-600'
-                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
-            title="Clear Input (Ctrl+Shift+L)"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Clear
-          </button>
+            {renderVastTabs()}
+          </div>
         </div>
       </div>
-
-      {error && (
-        <div className={`p-4 mb-4 rounded-lg flex items-center ${
-          isDarkMode 
-            ? 'bg-red-900 text-red-200 border-l-4 border-red-600' 
-            : 'bg-red-50 text-red-600 border-l-4 border-red-500'
-        }`}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span>{error}</span>
-        </div>
-      )}
-      
-      {(parsedJson || rawVastContent) && (
-        <div className="flex-1 flex flex-col min-h-0">
-           <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 flex-1 min-h-0">
-             {parsedJson && (
-                <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full lg:w-3/4'} min-w-0 flex flex-col`}>
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                      Formatted JSON
-                    </h3>
-                    
-                    {/* Control buttons auf gleicher Höhe wie die Headline */}
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)}
-                        className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                        title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                        </svg>
-                        Wrap
-                      </button>
-                      <button 
-                        onClick={() => setShowJsonSearch(!showJsonSearch)} 
-                        className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                        title="Find in JSON"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        Find
-                      </button>
-                      <button 
-                        onClick={copyJsonToClipboard} 
-                        className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                        title="Copy JSON"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        Copy
-                      </button>
-                    </div>
-                  </div>
-
-                  <div 
-                    ref={jsonOutputRef}
-                    className={`flex-1 p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
-                    style={{ height: 'calc(100vh - 350px)' }}
-                  >
-                    {showJsonSearch && (
-                      <SearchPanel
-                        contentType="JSON"
-                        targetRef={jsonOutputRef}
-                        isDarkMode={isDarkMode}
-                      />
-                    )}
-                    <div 
-                      dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
-                      className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </div>
-                </div>
-             )}
-             {rawVastContent && (
-               <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full lg:w-3/4'} min-w-0 flex flex-col`}>
-                 {/* Überschrift auf gleicher Höhe wie bei JSON */}                 
-                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
-                 
-                 {renderVastTabs()}
-               </div>
-             )}
-             
-             {/* JSON Outline Panel auf der rechten Seite */}
-             {parsedJson && !rawVastContent && (
-               <div className="w-full lg:w-1/4 min-w-0 flex flex-col">
-                 {renderJsonOutline()}
-               </div>
-             )}
-           </div>
-        </div>
-      )}
       
       {/* CopyMessage anzeigen */}
       {copyMessage && (

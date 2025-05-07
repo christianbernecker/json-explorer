@@ -468,272 +468,34 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
     }
   }, [dimensions, metrics, data, selectedDimension, selectedMetric]);
   
-  // Process the uploaded file
+  // Daten verarbeiten
   const processFile = async (file: File) => {
     setIsLoading(true);
     setFileError(null);
+    
+    // Dateinamen speichern
     setFileName(file.name);
     
     try {
-      const extension = file.name.split('.').pop()?.toLowerCase();
+      console.log('Datei wird verarbeitet:', file.name, file.type);
       
-      if (extension === 'csv') {
+      // Verarbeitung basierend auf dem Dateityp
+      if (file.name.endsWith('.csv')) {
         const text = await file.text();
-        Papa.parse<Record<string, unknown>>(text, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            if (results.data.length === 0) {
-              setFileError('No data found in the file');
-              setIsLoading(false);
-              return;
-            }
-            
-            console.log('CSV parse results:', results);
-            
-            // Convert date strings to Date objects for CSV
-            const processedData = results.data.map(row => {
-              const processedRow: DataRow = {};
-              
-              // Ensure row is a proper object before using Object.entries
-              if (row && typeof row === 'object') {
-                Object.entries(row as Record<string, unknown>).forEach(([key, value]) => {
-                  // Skip empty values
-                  if (value === undefined || value === null || value === '') {
-                    processedRow[key] = '';
-                    return;
-                  }
-                  
-                  // Check if this might be a date field
-                  const lowerKey = key.toLowerCase();
-                  const mightBeDate = 
-                    lowerKey.includes('date') || 
-                    lowerKey.includes('day') || 
-                    lowerKey.includes('month') ||
-                    lowerKey.includes('zeit') ||  // German
-                    lowerKey.includes('time');
-                  
-                  if (mightBeDate && typeof value === 'string') {
-                    try {
-                      const dateValue = new Date(value);
-                      if (!isNaN(dateValue.getTime())) {
-                        console.log(`Converting field ${key} with value ${value} to Date object:`, dateValue);
-                        processedRow[key] = dateValue;
-                        return;
-                      }
-                    } catch (e) {
-                      console.log(`Failed to parse date from ${key}:`, value);
-                    }
-                  }
-                  
-                  // Try to convert numeric strings to numbers
-                  if (typeof value === 'string' && !isNaN(Number(value))) {
-                    processedRow[key] = Number(value);
-                  } else {
-                    processedRow[key] = value;
-                  }
-                });
-              }
-              
-              return processedRow;
-            });
-            
-            const nonEmptyColumns = identifyNonEmptyColumns(processedData);
-            console.log('Detected non-empty columns:', nonEmptyColumns);
-            
-            // Identify dimensions and metrics from the data
-            const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
-            console.log('Detected dimensions:', detectedDimensions);
-            console.log('Detected metrics:', detectedMetrics);
-            
-            setData(processedData);
-            setOriginalData(processedData);
-            setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
-            setDimensions(detectedDimensions);
-            setMetrics(detectedMetrics);
-            setIsLoading(false);
-          },
-          error: (error: Error) => {
-            console.error('CSV parsing error:', error);
-            setFileError(`Error parsing CSV: ${error.message}`);
-            setIsLoading(false);
-          }
-        });
-      } else if (extension === 'xlsx' || extension === 'xls') {
+        parseCSV(text);
+      } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
         const arrayBuffer = await file.arrayBuffer();
-        
-        // Use cellDates: true to automatically convert dates
-        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
-        
-        if (workbook.SheetNames.length === 0) {
-          setFileError('No sheets found in the workbook');
-          setIsLoading(false);
-          return;
-        }
-        
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        
-        // Convert to JSON with header option for column names
-        const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: "A" });
-        
-        if (rawJson.length <= 1) {  // Only has header row or empty
-          setFileError('No data found in the Excel file');
-          setIsLoading(false);
-          return;
-        }
-        
-        console.log('Excel raw data:', rawJson);
-        
-        // Extract headers from the first row
-        const firstRow = rawJson[0] as Record<string, string>;
-        const headers = Object.values(firstRow);
-        
-        // Process the data starting from the second row
-        const processedData = rawJson.slice(1).map((row: any) => {
-          const processedRow: DataRow = {};
-          
-          // Type safety check
-          if (typeof row === 'object' && row !== null) {
-            const typedRow = row as Record<string, any>;
-            // Use for...in loop with hasOwnProperty for safe iteration
-            for (const colIndex in typedRow) {
-              if (Object.prototype.hasOwnProperty.call(typedRow, colIndex)) {
-                const value = typedRow[colIndex];
-                const headerIndex = Object.keys(firstRow || {}).indexOf(colIndex);
-                const header = headers[headerIndex] || `Column ${colIndex}`;
-                
-                // Detect and convert date values
-                if (value instanceof Date) {
-                  processedRow[header] = value;
-                } else if (typeof value === 'string' && isDateString(value)) {
-                  processedRow[header] = new Date(value);
-                } else {
-                  processedRow[header] = value;
-                }
-              }
-            }
-          }
-          
-          return processedRow;
-        });
-        
-        console.log('Processed Excel data:', processedData);
-        
-        const nonEmptyColumns = identifyNonEmptyColumns(processedData);
-        console.log('Detected non-empty columns:', nonEmptyColumns);
-        
-        // Identify dimensions and metrics from the data
-        const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
-        console.log('Detected dimensions:', detectedDimensions);
-        console.log('Detected metrics:', detectedMetrics);
-        
-        setData(processedData);
-        setOriginalData(processedData);
-        setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
-        setDimensions(detectedDimensions);
-        setMetrics(detectedMetrics);
-        setIsLoading(false);
-        
-      } else if (extension === 'json') {
+        parseExcel(arrayBuffer);
+      } else if (file.name.endsWith('.json')) {
         const text = await file.text();
-        
-        try {
-          const jsonData = JSON.parse(text);
-          
-          // Handle array of objects
-          if (Array.isArray(jsonData)) {
-            // Convert date strings to Date objects
-            const processedData = jsonData.map((item) => {
-              // Type safety check
-              if (typeof item !== 'object' || item === null) {
-                return {} as DataRow;
-              }
-              
-              const row: DataRow = {};
-              
-              // Type-safe iteration with proper checks
-              const typedItem = item as Record<string, unknown>;
-              for (const key in typedItem) {
-                if (Object.prototype.hasOwnProperty.call(typedItem, key)) {
-                  const value = typedItem[key];
-                  if (typeof value === 'string' && isDateString(value)) {
-                    row[key] = new Date(value);
-                  } else {
-                    row[key] = value;
-                  }
-                }
-              }
-              
-              return row;
-            });
-            
-            const nonEmptyColumns = identifyNonEmptyColumns(processedData);
-            
-            // Identify dimensions and metrics from the data
-            const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
-            console.log('Detected dimensions:', detectedDimensions);
-            console.log('Detected metrics:', detectedMetrics);
-            
-            setData(processedData);
-            setOriginalData(processedData);
-            setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
-            setDimensions(detectedDimensions);
-            setMetrics(detectedMetrics);
-            setIsLoading(false);
-          } else if (typeof jsonData === 'object' && jsonData !== null) {
-            // Handle single object - convert to array with one item
-            const processedData = [jsonData].map((item) => {
-              const row: DataRow = {};
-              
-              // Make sure item is an object before iterating
-              if (typeof item === 'object' && item !== null) {
-                const typedItem = item as Record<string, unknown>;
-                // Use for...in loop with hasOwnProperty for type safety
-                for (const key in typedItem) {
-                  if (Object.prototype.hasOwnProperty.call(typedItem, key)) {
-                    const value = typedItem[key];
-                    if (typeof value === 'string' && isDateString(value)) {
-                      row[key] = new Date(value);
-                    } else {
-                      row[key] = value;
-                    }
-                  }
-                }
-              }
-              
-              return row;
-            });
-            
-            const nonEmptyColumns = identifyNonEmptyColumns(processedData);
-            
-            // Identify dimensions and metrics from the data
-            const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
-            console.log('Detected dimensions:', detectedDimensions);
-            console.log('Detected metrics:', detectedMetrics);
-            
-            setData(processedData);
-            setOriginalData(processedData);
-            setColumnDefs(generateColumnDefs(processedData, nonEmptyColumns));
-            setDimensions(detectedDimensions);
-            setMetrics(detectedMetrics);
-            setIsLoading(false);
-          } else {
-            setFileError('Invalid JSON format: expected an array of objects or a single object');
-            setIsLoading(false);
-          }
-        } catch (error) {
-          console.error('JSON parsing error:', error);
-          setFileError(`Error parsing JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
-          setIsLoading(false);
-        }
+        parseJSON(text);
       } else {
-        setFileError(`Unsupported file format: ${extension}. Please upload a CSV, Excel, or JSON file.`);
+        setFileError('Nicht unterstütztes Dateiformat. Bitte laden Sie eine CSV-, XLSX-, XLS- oder JSON-Datei hoch.');
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('File processing error:', error);
-      setFileError(`Error processing the file: ${error instanceof Error ? error.message : String(error)}`);
+      console.error('Fehler beim Verarbeiten der Datei:', error);
+      setFileError(`Fehler beim Verarbeiten der Datei: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
       setIsLoading(false);
     }
   };
@@ -1136,6 +898,350 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
     </div>
   );
 
+  // Column defs generieren (mit Debug-Info)
+  const generateColumnDefsWithDebug = useCallback((data: DataRow[], nonEmptyColumns: string[]): ColDef[] => {
+    console.log('Generiere Spaltendefinitionen für Tabelle:', {
+      rowCount: data.length,
+      columnCount: nonEmptyColumns.length,
+      sampleRow: data.length > 0 ? data[0] : null
+    });
+
+    return nonEmptyColumns.map(key => {
+      let columnType = 'string';
+      if (data.length > 0) {
+        const values = data.map(row => row[key]).filter(Boolean);
+        columnType = identifyColumnType(values);
+      }
+    
+      return {
+        field: key,
+        headerName: key,
+        sortable: true,
+        filter: true,
+        minWidth: 125,
+        width: 150,
+        valueFormatter: (params) => {
+          if (params.value === null || params.value === undefined) {
+            return '';
+          }
+          if (columnType === 'date' && params.value instanceof Date) {
+            return formatDateValue(params.value);
+          }
+          if (typeof params.value === 'number') {
+            return params.value.toLocaleString();
+          }
+          return String(params.value);
+        }
+      };
+    });
+  }, [formatDateValue]);
+
+  // Tabelle rendern (mit Debug-Ausgabe)
+  const renderTableWithDebug = useCallback(() => {
+    console.log('Tabelle wird gerendert:', {
+      rowCount: data.length,
+      columnCount: columnDefs.length,
+      firstRow: data.length > 0 ? data[0] : null
+    });
+    
+    if (data.length === 0) {
+      return (
+        <div className="h-64 flex items-center justify-center">
+          <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+            Keine Daten vorhanden. Bitte laden Sie eine Datei hoch.
+          </p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className={`h-[400px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
+        <AgGridReact
+          onGridReady={(params: GridReadyEvent) => {
+            console.log('Grid ist bereit, API wird initialisiert');
+            const api = params.api;
+            setGridApi(api);
+            api.sizeColumnsToFit();
+          }}
+          defaultColDef={{
+            resizable: true,
+            sortable: true,
+            filter: true
+          }}
+          columnDefs={columnDefs}
+          rowData={data}
+          pagination={true}
+          paginationPageSize={10}
+          domLayout="autoHeight"
+        />
+      </div>
+    );
+  }, [data, columnDefs, isDarkMode]);
+
+  // CSV-Datei parsen
+  const parseCSV = (text: string) => {
+    console.log('CSV-Datei wird geparst');
+    Papa.parse<Record<string, unknown>>(text, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        if (results.data.length === 0) {
+          setFileError('Keine Daten in der CSV-Datei gefunden');
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log('CSV-Parse-Ergebnisse:', results);
+        
+        // Datum-Strings in Date-Objekte umwandeln
+        const processedData = results.data.map(row => {
+          const processedRow: DataRow = {};
+          
+          // Sicherstellen, dass die Zeile ein korrektes Objekt ist
+          if (row && typeof row === 'object') {
+            Object.entries(row as Record<string, unknown>).forEach(([key, value]) => {
+              // Leere Werte überspringen
+              if (value === undefined || value === null || value === '') {
+                processedRow[key] = '';
+                return;
+              }
+              
+              // Prüfen, ob es sich um ein Datumsfeld handeln könnte
+              const lowerKey = key.toLowerCase();
+              const mightBeDate = 
+                lowerKey.includes('date') || 
+                lowerKey.includes('day') || 
+                lowerKey.includes('month') ||
+                lowerKey.includes('zeit') ||  // Deutsch
+                lowerKey.includes('time');
+              
+              if (mightBeDate && typeof value === 'string') {
+                try {
+                  const dateValue = new Date(value);
+                  if (!isNaN(dateValue.getTime())) {
+                    console.log(`Feld ${key} mit Wert ${value} wird in Date-Objekt konvertiert:`, dateValue);
+                    processedRow[key] = dateValue;
+                    return;
+                  }
+                } catch (e) {
+                  console.log(`Fehler beim Parsen des Datums aus ${key}:`, value);
+                }
+              }
+              
+              // Versuche, numerische Strings in Zahlen umzuwandeln
+              if (typeof value === 'string' && !isNaN(Number(value))) {
+                processedRow[key] = Number(value);
+              } else {
+                processedRow[key] = value;
+              }
+            });
+          }
+          
+          return processedRow;
+        });
+        
+        console.log('Verarbeitete CSV-Daten:', processedData);
+        
+        const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+        console.log('Erkannte nicht-leere Spalten:', nonEmptyColumns);
+        
+        // Identifiziere Dimensionen und Metriken aus den Daten
+        const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
+        console.log('Erkannte Dimensionen:', detectedDimensions);
+        console.log('Erkannte Metriken:', detectedMetrics);
+        
+        setData(processedData);
+        setOriginalData(processedData);
+        setColumnDefs(generateColumnDefsWithDebug(processedData, nonEmptyColumns));
+        setDimensions(detectedDimensions);
+        setMetrics(detectedMetrics);
+        setIsLoading(false);
+      },
+      error: (error: Error) => {
+        console.error('CSV-Parser-Fehler:', error);
+        setFileError(`Fehler beim Parsen der CSV-Datei: ${error.message}`);
+        setIsLoading(false);
+      }
+    });
+  };
+  
+  // Excel-Datei parsen
+  const parseExcel = (arrayBuffer: ArrayBuffer) => {
+    console.log('Excel-Datei wird geparst');
+    
+    // Verwende cellDates: true, um Daten automatisch zu konvertieren
+    const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+    
+    if (workbook.SheetNames.length === 0) {
+      setFileError('Keine Arbeitsblätter in der Excel-Datei gefunden');
+      setIsLoading(false);
+      return;
+    }
+    
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    
+    // Konvertiere in JSON mit header-Option für Spaltennamen
+    const rawJson = XLSX.utils.sheet_to_json(worksheet, { header: "A" });
+    
+    if (rawJson.length <= 1) { // Nur Überschriftenzeile oder leer
+      setFileError('Keine Daten in der Excel-Datei gefunden');
+      setIsLoading(false);
+      return;
+    }
+    
+    console.log('Excel-Rohdaten:', rawJson);
+    
+    // Extrahiere Überschriften aus der ersten Zeile
+    const firstRow = rawJson[0] as Record<string, string>;
+    const headers = Object.values(firstRow);
+    
+    // Verarbeite die Daten ab der zweiten Zeile
+    const processedData = rawJson.slice(1).map((row: any) => {
+      const processedRow: DataRow = {};
+      
+      // Typsicherheitsüberprüfung
+      if (typeof row === 'object' && row !== null) {
+        const typedRow = row as Record<string, any>;
+        // Verwende for...in-Schleife mit hasOwnProperty für sichere Iteration
+        for (const colIndex in typedRow) {
+          if (Object.prototype.hasOwnProperty.call(typedRow, colIndex)) {
+            const value = typedRow[colIndex];
+            const headerIndex = Object.keys(firstRow || {}).indexOf(colIndex);
+            const header = headers[headerIndex] || `Spalte ${colIndex}`;
+            
+            // Erkenne und konvertiere Datumswerte
+            if (value instanceof Date) {
+              processedRow[header] = value;
+            } else if (typeof value === 'string' && isDateString(value)) {
+              processedRow[header] = new Date(value);
+            } else {
+              processedRow[header] = value;
+            }
+          }
+        }
+      }
+      
+      return processedRow;
+    });
+    
+    console.log('Verarbeitete Excel-Daten:', processedData);
+    
+    const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+    console.log('Erkannte nicht-leere Spalten:', nonEmptyColumns);
+    
+    // Identifiziere Dimensionen und Metriken aus den Daten
+    const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
+    console.log('Erkannte Dimensionen:', detectedDimensions);
+    console.log('Erkannte Metriken:', detectedMetrics);
+    
+    setData(processedData);
+    setOriginalData(processedData);
+    setColumnDefs(generateColumnDefsWithDebug(processedData, nonEmptyColumns));
+    setDimensions(detectedDimensions);
+    setMetrics(detectedMetrics);
+    setIsLoading(false);
+  };
+  
+  // JSON-Datei parsen
+  const parseJSON = (text: string) => {
+    console.log('JSON-Datei wird geparst');
+    
+    try {
+      const jsonData = JSON.parse(text);
+      
+      // Behandle Array von Objekten
+      if (Array.isArray(jsonData)) {
+        // Konvertiere Datumsstrings in Date-Objekte
+        const processedData = jsonData.map((item) => {
+          // Typsicherheitsüberprüfung
+          if (typeof item !== 'object' || item === null) {
+            return {} as DataRow;
+          }
+          
+          const row: DataRow = {};
+          
+          // Typsichere Iteration mit korrekten Überprüfungen
+          const typedItem = item as Record<string, unknown>;
+          for (const key in typedItem) {
+            if (Object.prototype.hasOwnProperty.call(typedItem, key)) {
+              const value = typedItem[key];
+              if (typeof value === 'string' && isDateString(value)) {
+                row[key] = new Date(value);
+              } else {
+                row[key] = value;
+              }
+            }
+          }
+          
+          return row;
+        });
+        
+        console.log('Verarbeitete JSON-Daten:', processedData);
+        
+        const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+        
+        // Identifiziere Dimensionen und Metriken aus den Daten
+        const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
+        console.log('Erkannte Dimensionen:', detectedDimensions);
+        console.log('Erkannte Metriken:', detectedMetrics);
+        
+        setData(processedData);
+        setOriginalData(processedData);
+        setColumnDefs(generateColumnDefsWithDebug(processedData, nonEmptyColumns));
+        setDimensions(detectedDimensions);
+        setMetrics(detectedMetrics);
+        setIsLoading(false);
+      } else if (typeof jsonData === 'object' && jsonData !== null) {
+        // Behandle einzelnes Objekt - konvertiere in Array mit einem Element
+        const processedData = [jsonData].map((item) => {
+          const row: DataRow = {};
+          
+          // Stelle sicher, dass das Element ein Objekt ist, bevor du iterierst
+          if (typeof item === 'object' && item !== null) {
+            const typedItem = item as Record<string, unknown>;
+            // Verwende for...in-Schleife mit hasOwnProperty für Typsicherheit
+            for (const key in typedItem) {
+              if (Object.prototype.hasOwnProperty.call(typedItem, key)) {
+                const value = typedItem[key];
+                if (typeof value === 'string' && isDateString(value)) {
+                  row[key] = new Date(value);
+                } else {
+                  row[key] = value;
+                }
+              }
+            }
+          }
+          
+          return row;
+        });
+        
+        console.log('Verarbeitete JSON-Daten (einzelnes Objekt):', processedData);
+        
+        const nonEmptyColumns = identifyNonEmptyColumns(processedData);
+        
+        // Identifiziere Dimensionen und Metriken aus den Daten
+        const { dimensions: detectedDimensions, metrics: detectedMetrics } = identifyColumnTypes(processedData);
+        console.log('Erkannte Dimensionen:', detectedDimensions);
+        console.log('Erkannte Metriken:', detectedMetrics);
+        
+        setData(processedData);
+        setOriginalData(processedData);
+        setColumnDefs(generateColumnDefsWithDebug(processedData, nonEmptyColumns));
+        setDimensions(detectedDimensions);
+        setMetrics(detectedMetrics);
+        setIsLoading(false);
+      } else {
+        setFileError('Ungültiges JSON-Format: Es wird ein Array von Objekten oder ein einzelnes Objekt erwartet');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('JSON-Parser-Fehler:', error);
+      setFileError(`Fehler beim Parsen von JSON: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       <SEO
@@ -1192,25 +1298,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                 chartType={chartType}
                 onVisualizationSuggestion={handleVisualizationSuggestion}
                 renderChart={renderChart}
-                renderTable={() => (
-                  <div className={`h-[400px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
-                    <AgGridReact
-                      onGridReady={(params: GridReadyEvent) => {
-                        const api = params.api;
-                        api.sizeColumnsToFit();
-                      }}
-                      defaultColDef={{
-                        resizable: true,
-                        sortable: true,
-                        filter: true
-                      }}
-                      columnDefs={columnDefs}
-                      rowData={data}
-                      pagination={true}
-                      paginationPageSize={10}
-                    />
-                  </div>
-                )}
+                renderTable={renderTableWithDebug}
                 isDarkMode={isDarkMode}
               />
             </>

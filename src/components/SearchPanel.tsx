@@ -126,10 +126,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
       
       let node;
       while ((node = walker.nextNode()) !== null) {
-        // Nur echte Textnodes, keine leeren oder nur mit Whitespace
-        if (node.textContent?.trim()) {
-          textNodes.push(node);
-        }
+        // Wir speichern alle Textnodes, auch leere für vollständige Abdeckung
+        textNodes.push(node);
       }
       
       // Matches zählen
@@ -152,14 +150,20 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
           });
           
           // Neues Element erstellen und einfügen
-          const newElement = document.createElement('span');
-          newElement.innerHTML = highlightedText;
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = highlightedText;
           
-          // Altes Text-Node durch neues Element ersetzen
-          parent.replaceChild(newElement, textNode);
+          // Wir extrahieren die Kindelemente statt die HTML direkt zu setzen
+          const fragment = document.createDocumentFragment();
+          while (tempDiv.firstChild) {
+            fragment.appendChild(tempDiv.firstChild);
+          }
+          
+          // Altes Text-Node durch neues Fragment ersetzen
+          parent.replaceChild(fragment, textNode);
           
           // Alle neue Matches zum Array hinzufügen
-          const newMatchElements = newElement.querySelectorAll('.search-match');
+          const newMatchElements = parent.querySelectorAll('.search-match');
           newMatchElements.forEach(match => {
             matchElements.push(match as HTMLElement);
           });

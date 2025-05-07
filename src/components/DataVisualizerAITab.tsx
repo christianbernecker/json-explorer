@@ -47,7 +47,26 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
     setIsLoading(true);
     setError(null);
 
+    // Debug-Info zum Finden des Problems
+    console.log('KI-Analyse wird gestartet mit:', {
+      dataLength: data.length,
+      dimensionsCount: dimensions.length,
+      metricsCount: metrics.length,
+      selectedDimension,
+      selectedMetric,
+      provider,
+      apiKey: process.env.REACT_APP_ANTHROPIC_API_KEY ? 'vorhanden' : 'fehlt'
+    });
+
     try {
+      // Prüfe, ob der API-Schlüssel konfiguriert ist
+      if (provider === 'anthropic' && !process.env.REACT_APP_ANTHROPIC_API_KEY) {
+        console.error('Kein Claude API-Schlüssel gefunden. Bitte stellen Sie sicher, dass REACT_APP_ANTHROPIC_API_KEY konfiguriert ist.');
+        setError('Claude API-Schlüssel fehlt. Bitte konfigurieren Sie die Umgebungsvariable REACT_APP_ANTHROPIC_API_KEY.');
+        setIsLoading(false);
+        return;
+      }
+
       const response = await llmService.analyzeDatatWithLLM({
         data,
         dimensions,
@@ -57,6 +76,7 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
         selectedMetric
       }, provider);
 
+      console.log('KI-Analyse erfolgreich:', response);
       setInsights(response);
 
       // Aktualisiere die Visualisierung basierend auf den Vorschlägen
@@ -68,8 +88,8 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
         );
       }
     } catch (err: any) {
-      setError(err.message || 'Fehler bei der LLM-Analyse');
-      console.error('LLM Analysefehler:', err);
+      console.error('KI-Analysefehler:', err);
+      setError(`Fehler bei der KI-Analyse: ${err.message || 'Unbekannter Fehler'}`);
     } finally {
       setIsLoading(false);
     }
