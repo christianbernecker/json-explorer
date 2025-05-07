@@ -885,15 +885,15 @@ const JsonVastExplorer = React.memo(({
       
       {(parsedJson || rawVastContent) && (
         <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4 flex-1 min-h-0">
+          <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 flex-1 min-h-0">
             {parsedJson && (
-              <div className={`${rawVastContent ? 'w-full lg:w-1/2' : 'w-full lg:w-2/3'} min-w-0 flex flex-col`}>
+              <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full lg:w-3/4'} min-w-0 flex flex-col`}>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                     Formatted JSON
                   </h3>
                   
-                  {/* Control buttons */}
+                  {/* Control buttons auf gleicher Höhe wie die Headline */}
                   <div className="flex space-x-2">
                     <button 
                       onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)}
@@ -928,52 +928,49 @@ const JsonVastExplorer = React.memo(({
                   </div>
                 </div>
 
-                <div className="flex flex-row space-x-4">
-                  <div 
-                    ref={jsonOutputRef}
-                    className={`flex-1 p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
-                    style={{ height: 'calc(100vh - 350px)' }}
-                  >
-                    {showJsonSearch && (
-                      <SearchPanel
-                        contentType="JSON"
-                        targetRef={jsonOutputRef}
-                        isDarkMode={isDarkMode}
-                      />
-                    )}
-                    <div 
-                      dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
-                      className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
-                      style={{ maxWidth: "100%" }}
+                <div 
+                  ref={jsonOutputRef}
+                  className={`flex-1 p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
+                  style={{ height: 'calc(100vh - 350px)' }}
+                >
+                  {showJsonSearch && (
+                    <SearchPanel
+                      contentType="JSON"
+                      targetRef={jsonOutputRef}
+                      isDarkMode={isDarkMode}
                     />
-                  </div>
-                  
-                  {/* JSON Outline Panel */}
-                  <div className="w-64 hidden lg:block">
-                    {renderJsonOutline()}
-                  </div>
+                  )}
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
+                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                    style={{ maxWidth: "100%" }}
+                  />
                 </div>
               </div>
             )}
             
-            {/* VAST Content */}
+            {/* VAST Content - separate column on the right */}
             {rawVastContent && (
-              <div className={`${parsedJson ? 'w-full lg:w-1/2' : 'w-full lg:w-2/3'} min-w-0 flex flex-col`}>
+              <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full lg:w-3/4'} min-w-0 flex flex-col`}>
                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
-                
-                <div className="flex flex-row space-x-4">
-                  <div className="flex-1">
-                    {renderVastTabs()}
-                  </div>
-                  
-                  {/* VAST Outline Panel */}
-                  <div className="w-64 hidden lg:block">
-                    {renderVastOutline()}
-                  </div>
-                </div>
+                {renderVastTabs()}
+              </div>
+            )}
+            
+            {/* JSON Outline Panel auf der rechten Seite, wenn kein VAST angezeigt wird */}
+            {parsedJson && !rawVastContent && (
+              <div className="w-full lg:w-1/4 min-w-0 flex flex-col">
+                {renderJsonOutline()}
               </div>
             )}
           </div>
+          
+          {/* VAST Outline unten anzeigen */}
+          {rawVastContent && (
+            <div className="w-full mt-4 min-w-0 flex flex-col">
+              {renderVastOutline()}
+            </div>
+          )}
         </div>
       )}
       
