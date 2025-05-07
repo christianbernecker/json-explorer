@@ -389,47 +389,11 @@ const JsonVastExplorer = React.memo(({
     
     const formattedVast = formatXmlForDisplay(vastContent);
     
-    // Verbesserte Version für XML-Highlighting mit einfachen Farbhervorhebungen
-    const colorizeVast = (text: string, isDark: boolean): string => {
-      if (!text) return '';
-      
-      // Basis-Farben für Light/Dark Mode
-      const tagColor = isDark ? '#f97316' : '#dd6b20'; // Orange
-      const attrNameColor = isDark ? '#3b82f6' : '#2563eb'; // Blau
-      const attrValueColor = isDark ? '#10b981' : '#059669'; // Grün
-      const cdataColor = isDark ? '#a855f7' : '#7e22ce'; // Lila
-      const commentColor = isDark ? '#6b7280' : '#4b5563'; // Grau
-      
-      // Zuerst Text escapen
-      let escaped = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-      
-      // Dann Hervorhebungen mit einfachen <span> Tags hinzufügen
-      // 1. XML-Tags (inkl. Schließende & selbstschließende Tags)
-      escaped = escaped.replace(/&lt;(\/?)([\w\-:]+)([^&]*?)(\/??)&gt;/g, 
-        `&lt;<span style="color: ${tagColor}">$1$2</span>$3$4&gt;`);
-      
-      // 2. Attribute
-      escaped = escaped.replace(/(\s+)([\w\-:]+)=(&quot;|&apos;)([^&]*)(\3)/g, 
-        `$1<span style="color: ${attrNameColor}">$2</span>=<span style="color: ${attrValueColor}">$3$4$5</span>`);
-      
-      // 3. CDATA
-      escaped = escaped.replace(/&lt;!\[CDATA\[(.*?)\]\]&gt;/g, 
-        `&lt;![<span style="color: ${cdataColor}">CDATA</span>[$1]]&gt;`);
-      
-      // 4. Kommentare
-      escaped = escaped.replace(/&lt;!--(.*?)--&gt;/g, 
-        `<span style="color: ${commentColor}">&lt;!--$1--&gt;</span>`);
-      
-      return escaped;
-    };
-    
+    // Verwende die highlightXml-Funktion aus useHighlighter statt eigener Implementierung
     const highlightedVast = (
       <div 
         dangerouslySetInnerHTML={{ 
-          __html: addLineNumbersGlobal(colorizeVast(formattedVast, isDarkMode), 'xml')
+          __html: addLineNumbersGlobal(highlightXml(formattedVast, isDarkMode), 'xml')
         }}
         className={isWordWrapEnabled ? 'whitespace-normal' : 'whitespace-pre'}
       />
@@ -440,7 +404,7 @@ const JsonVastExplorer = React.memo(({
         {highlightedVast}
       </div>
     );
-  }, [addLineNumbersGlobal, formatXmlForDisplay, isDarkMode, isWordWrapEnabled]);
+  }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
   // Render the VAST tabs
   const renderVastTabs = useCallback(() => {
