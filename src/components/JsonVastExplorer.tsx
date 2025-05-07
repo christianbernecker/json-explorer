@@ -416,6 +416,10 @@ const JsonVastExplorer = React.memo(({
     );
   }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
+  // Zuerst füge ich einen State für die aufgeklappten JSON-Elemente hinzu
+  const [expandedJsonPaths, setExpandedJsonPaths] = useState<Set<string>>(new Set());
+  const [expandedVastNodes, setExpandedVastNodes] = useState<Set<string>>(new Set());
+
   // Funktion zum Anzeigen der JSON-Outline
   const generateJsonOutline = (json: any, path: string = ''): React.ReactNode => {
     if (!json || typeof json !== 'object') return null;
@@ -428,6 +432,7 @@ const JsonVastExplorer = React.memo(({
           const currentPath = path ? `${path}.${key}` : key;
           const currentValue = json[key];
           const isObject = currentValue && typeof currentValue === 'object';
+          const isExpanded = expandedJsonPaths.has(currentPath);
           
           // Abkürzung für Arrays mit vielen Elementen
           if (isArray && Object.keys(json).length > 20 && index >= 10 && index < Object.keys(json).length - 5) {
@@ -447,21 +452,35 @@ const JsonVastExplorer = React.memo(({
                 <span 
                   className={`cursor-pointer flex items-center ${isDarkMode ? 'hover:text-blue-300' : 'hover:text-blue-600'}`}
                   onClick={() => {
-                    // Scroll zur entsprechenden Position im JSON
-                    const searchKey = isArray ? `\\[${key}\\]` : `"${key}"`;
-                    const elements = jsonOutputRef.current?.querySelectorAll(`[data-key="${searchKey}"]`);
-                    if (elements && elements.length > 0) {
-                      elements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      // Kurzes Highlighting
-                      elements[0].classList.add(isDarkMode ? 'bg-blue-900' : 'bg-blue-100');
-                      setTimeout(() => {
-                        elements[0].classList.remove(isDarkMode ? 'bg-blue-900' : 'bg-blue-100');
-                      }, 1500);
+                    if (isObject) {
+                      // Toggle expanded state für diesen Pfad
+                      const newExpandedPaths = new Set(expandedJsonPaths);
+                      if (isExpanded) {
+                        newExpandedPaths.delete(currentPath);
+                      } else {
+                        newExpandedPaths.add(currentPath);
+                      }
+                      setExpandedJsonPaths(newExpandedPaths);
+                    } else {
+                      // Scroll zur entsprechenden Position im JSON
+                      const searchKey = isArray ? `\\[${key}\\]` : `"${key}"`;
+                      const elements = jsonOutputRef.current?.querySelectorAll(`[data-key="${searchKey}"]`);
+                      if (elements && elements.length > 0) {
+                        elements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Kurzes Highlighting
+                        elements[0].classList.add(isDarkMode ? 'bg-blue-900' : 'bg-blue-100');
+                        setTimeout(() => {
+                          elements[0].classList.remove(isDarkMode ? 'bg-blue-900' : 'bg-blue-100');
+                        }, 1500);
+                      }
                     }
                   }}
                 >
                   {isObject && (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                      className={`h-4 w-4 mr-1 transition-transform duration-200 ${isExpanded ? 'transform rotate-90' : ''}`} 
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   )}
@@ -478,25 +497,11 @@ const JsonVastExplorer = React.memo(({
                   )}
                 </span>
               </div>
-              {isObject && generateJsonOutline(currentValue, currentPath)}
+              {isObject && isExpanded && generateJsonOutline(currentValue, currentPath)}
             </li>
           );
         })}
       </ul>
-    );
-  };
-
-  // Funktion zum Rendern der JSON-Outline
-  const renderJsonOutline = () => {
-    if (!parsedJson) return null;
-    
-    return (
-      <div className={`p-4 rounded-lg border overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-        <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>JSON Structure</h4>
-        <div className="text-xs font-mono">
-          {generateJsonOutline(parsedJson)}
-        </div>
-      </div>
     );
   };
 
@@ -510,7 +515,7 @@ const JsonVastExplorer = React.memo(({
       const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
       
       // Rekursive Funktion zum Aufbau der Outline
-      const traverseNode = (node: Node, depth: number = 0): React.ReactNode => {
+      const traverseNode = (node: Node, depth: number = 0, parentPath: string = ''): React.ReactNode => {
         // Textknoten ignorieren
         if (node.nodeType === Node.TEXT_NODE) {
           const textContent = node.textContent?.trim();
@@ -530,6 +535,8 @@ const JsonVastExplorer = React.memo(({
           const nodeName = element.nodeName;
           const hasChildren = element.childNodes.length > 0;
           const attributes = element.attributes;
+          const nodePath = `${parentPath}/${nodeName}`;
+          const isExpanded = expandedVastNodes.has(nodePath);
           
           return (
             <li key={`${nodeName}-${depth}`} className="py-1">
@@ -537,12 +544,23 @@ const JsonVastExplorer = React.memo(({
                 <span 
                   className={`cursor-pointer flex items-center ${isDarkMode ? 'hover:text-blue-300' : 'hover:text-blue-600'}`}
                   onClick={() => {
-                    // Hier könnte eine Funktion zum Scrollen zur entsprechenden Stelle im XML implementiert werden
-                    // Ähnlich wie bei der JSON-Outline
+                    if (hasChildren) {
+                      // Toggle expanded state für diesen Pfad
+                      const newExpandedNodes = new Set(expandedVastNodes);
+                      if (isExpanded) {
+                        newExpandedNodes.delete(nodePath);
+                      } else {
+                        newExpandedNodes.add(nodePath);
+                      }
+                      setExpandedVastNodes(newExpandedNodes);
+                    }
                   }}
                 >
                   {hasChildren && (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                      className={`h-4 w-4 mr-1 transition-transform duration-200 ${isExpanded ? 'transform rotate-90' : ''}`} 
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   )}
@@ -561,12 +579,12 @@ const JsonVastExplorer = React.memo(({
                 </span>
               </div>
               
-              {/* Rekursion für Kinder-Elemente */}
-              {hasChildren && (
+              {/* Rekursion für Kinder-Elemente, nur wenn ausgeklappt */}
+              {hasChildren && isExpanded && (
                 <ul className="ml-4">
                   {Array.from(element.childNodes).map((childNode, index) => (
                     <React.Fragment key={index}>
-                      {traverseNode(childNode, depth + 1)}
+                      {traverseNode(childNode, depth + 1, nodePath)}
                     </React.Fragment>
                   ))}
                 </ul>
@@ -589,7 +607,7 @@ const JsonVastExplorer = React.memo(({
       console.error("Error generating XML outline:", error);
       return <p className="text-red-500">Failed to parse XML</p>;
     }
-  }, [isDarkMode]);
+  }, [isDarkMode, expandedVastNodes]);
 
   // Zuerst füge ich die State-Variablen für die Ansichtsumschaltung hinzu
   const [showJsonStructure, setShowJsonStructure] = useState(false);
@@ -742,9 +760,8 @@ const JsonVastExplorer = React.memo(({
                 {/* Toggle zwischen JSON und Structure */}
                 {showJsonStructure ? (
                   <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                    <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>JSON Structure</h4>
                     <div className="text-xs font-mono">
-                      {renderJsonOutline()}
+                      {generateJsonOutline(parsedJson)}
                     </div>
                   </div>
                 ) : (
@@ -869,7 +886,6 @@ const JsonVastExplorer = React.memo(({
                 {/* Toggle zwischen VAST und Structure */}
                 {showVastStructure ? (
                   <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                    <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>VAST Structure</h4>
                     <div className="text-xs font-mono">
                       {generateVastOutline(activeVastTabIndex === 0 
                         ? rawVastContent 
