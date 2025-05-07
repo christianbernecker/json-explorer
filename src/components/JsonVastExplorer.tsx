@@ -789,25 +789,6 @@ const JsonVastExplorer = React.memo(({
     }
   }, [isDarkMode]);
 
-  // Funktion zum Rendern der VAST-Outline
-  const renderVastOutline = useCallback(() => {
-    const currentTabIndex = activeVastTabIndex;
-    const currentContent = currentTabIndex === 0 
-      ? rawVastContent 
-      : vastChain[currentTabIndex - 1]?.content || null;
-      
-    if (!currentContent) return null;
-    
-    return (
-      <div className={`p-4 rounded-lg border overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-        <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>VAST Structure</h4>
-        <div className="text-xs font-mono">
-          {generateVastOutline(currentContent)}
-        </div>
-      </div>
-    );
-  }, [activeVastTabIndex, rawVastContent, vastChain, generateVastOutline, isDarkMode]);
-
   return (
     <div className="w-full h-full flex flex-col">
       {/* History Panel */}
@@ -886,8 +867,9 @@ const JsonVastExplorer = React.memo(({
       {(parsedJson || rawVastContent) && (
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 flex-1 min-h-0">
+            {/* JSON Content - Left column */}
             {parsedJson && (
-              <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full lg:w-3/4'} min-w-0 flex flex-col`}>
+              <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full lg:w-2/3'} min-w-0 flex flex-col`}>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                     Formatted JSON
@@ -928,49 +910,66 @@ const JsonVastExplorer = React.memo(({
                   </div>
                 </div>
 
-                <div 
-                  ref={jsonOutputRef}
-                  className={`flex-1 p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
-                  style={{ height: 'calc(100vh - 350px)' }}
-                >
-                  {showJsonSearch && (
-                    <SearchPanel
-                      contentType="JSON"
-                      targetRef={jsonOutputRef}
-                      isDarkMode={isDarkMode}
-                    />
-                  )}
+                <div className="flex space-x-4 h-full">
+                  {/* JSON View Panel - Main area */}
                   <div 
-                    dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
-                    className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
-                    style={{ maxWidth: "100%" }}
-                  />
+                    ref={jsonOutputRef}
+                    className={`flex-1 p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
+                    style={{ height: 'calc(100vh - 350px)' }}
+                  >
+                    {showJsonSearch && (
+                      <SearchPanel
+                        contentType="JSON"
+                        targetRef={jsonOutputRef}
+                        isDarkMode={isDarkMode}
+                      />
+                    )}
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
+                      className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </div>
+                  
+                  {/* JSON Structure Sidebar - Similar to the screenshot */}
+                  <div className="w-64 flex-shrink-0">
+                    <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                      <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>JSON Structure</h4>
+                      <div className="text-xs font-mono">
+                        {renderJsonOutline()}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
             
-            {/* VAST Content - separate column on the right */}
+            {/* VAST Content - Right column or full width if no JSON */}
             {rawVastContent && (
-              <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full lg:w-3/4'} min-w-0 flex flex-col`}>
+              <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full lg:w-2/3'} min-w-0 flex flex-col`}>
                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
-                {renderVastTabs()}
-              </div>
-            )}
-            
-            {/* JSON Outline Panel auf der rechten Seite, wenn kein VAST angezeigt wird */}
-            {parsedJson && !rawVastContent && (
-              <div className="w-full lg:w-1/4 min-w-0 flex flex-col">
-                {renderJsonOutline()}
+                
+                <div className="flex space-x-4 h-full">
+                  {/* VAST Main Content */}
+                  <div className="flex-1">
+                    {renderVastTabs()}
+                  </div>
+                  
+                  {/* VAST Structure Sidebar - Similar to JSON sidebar */}
+                  <div className="w-64 flex-shrink-0">
+                    <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                      <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>VAST Structure</h4>
+                      <div className="text-xs font-mono">
+                        {generateVastOutline(activeVastTabIndex === 0 
+                          ? rawVastContent 
+                          : vastChain[activeVastTabIndex - 1]?.content || null)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
-          
-          {/* VAST Outline unten anzeigen */}
-          {rawVastContent && (
-            <div className="w-full mt-4 min-w-0 flex flex-col">
-              {renderVastOutline()}
-            </div>
-          )}
         </div>
       )}
       
