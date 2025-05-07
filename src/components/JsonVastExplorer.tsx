@@ -302,51 +302,64 @@ const JsonVastExplorer = React.memo(({
     if (!xml) return '';
     
     try {
-      // Utility for XML indentation
-      const indentXml = (xml: string): string => {
-        let formatted = '';
-        let indent = 0;
-        const lines = xml.trim().split('\n');
-        
-        lines.forEach(line => {
-          // Trim the line for easier handling
-          const trimmedLine = line.trim();
-          
-          // Skip empty lines
-          if (!trimmedLine) return;
-          
-          // Check if the line is a closing tag
-          if (trimmedLine.startsWith('</')) {
-            indent--;
-          }
-          
-          // Add the line with proper indentation
-          formatted += ' '.repeat(indent * 2) + trimmedLine + '\n';
-          
-          // Check if the line is an opening tag and not self-closing
-          if (trimmedLine.startsWith('<') && 
-              !trimmedLine.startsWith('</') && 
-              !trimmedLine.endsWith('/>') &&
-              !trimmedLine.match(/><\//)) {
-            indent++;
-          }
-        });
-        
-        return formatted;
-      };
-      
-      // First, normalize the XML by using a basic string replacement approach
+      // Verbesserte Formatierung für einzeilige CDATA-Abschnitte
       const normalizedXml = xml
-        .replace(/>\s*</g, '>\n<')  // Add line breaks between tags
-        .replace(/(<[^<>]*>)([^<>]*)/g, '$1$2');  // Handle text nodes
+        // CDATA in einer Zeile mit dem umgebenden Tag halten
+        .replace(/>(\s*)<!\[CDATA\[(.*?)\]\]>(\s*)</g, '><![CDATA[$2]]><')
+        // Andere Tags mit Zeilenumbrüchen trennen
+        .replace(/>\s*</g, '>\n<')
+        .replace(/(<[^<>]*>)([^<>]*)/g, '$1$2');
         
-      // Then indent it properly
-      return indentXml(normalizedXml);
+      // Einrückungslogik
+      let formatted = '';
+      let indent = 0;
+      const lines = normalizedXml.trim().split('\n');
+      
+      lines.forEach(line => {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) return;
+        
+        // Schließende Tags verringern die Einrückung
+        if (trimmedLine.startsWith('</')) {
+          indent = Math.max(0, indent - 1);
+        }
+        
+        // Füge die Zeile mit richtiger Einrückung hinzu
+        formatted += ' '.repeat(indent * 2) + trimmedLine + '\n';
+        
+        // Öffnende Tags (ohne sofortiges Schließen) erhöhen die Einrückung
+        const isOpeningTag = trimmedLine.startsWith('<') && 
+                            !trimmedLine.startsWith('</') && 
+                            !trimmedLine.endsWith('/>') &&
+                            !trimmedLine.includes('</');
+        
+        if (isOpeningTag) {
+          indent++;
+        }
+      });
+      
+      return formatted;
     } catch (error) {
       console.error('Error formatting XML:', error);
       return xml;
     }
   }, []);
+  
+  // Handle toggle word wrap
+  const toggleWordWrap = useCallback(() => {
+    setIsWordWrapEnabled(prev => !prev);
+  }, []);
+  
+  // Copy VAST content to clipboard
+  const copyVastToClipboard = useCallback(() => {
+    if (activeVastTabIndex === 0 && rawVastContent) {
+      copyToClipboard(rawVastContent, 'VAST');
+    } else if (activeVastTabIndex === 1 && vastChain[0]?.content) {
+      copyToClipboard(vastChain[0].content, 'VAST');
+    } else if (activeVastTabIndex === 2 && vastChain[1]?.content) {
+      copyToClipboard(vastChain[1].content, 'VAST');
+    }
+  }, [activeVastTabIndex, rawVastContent, vastChain, copyToClipboard]);
   
   // Render VAST content with proper formatting
   const renderVastContent = useCallback((vastContent: string | null) => {
@@ -361,9 +374,18 @@ const JsonVastExplorer = React.memo(({
               .replace(/&/g, '&amp;')
               .replace(/</g, '&lt;')
               .replace(/>/g, '&gt;')
-              .replace(/("[^"]*")/g, '<span style="color: ' + (isDarkMode ? '#a5d6ff' : '#008080') + ';">$1</span>')
-              .replace(/&lt;(\/?[a-zA-Z][a-zA-Z0-9:]*)/g, '&lt;<span style="color: ' + (isDarkMode ? '#ff7b72' : '#800000') + ';">$1</span>')
-              .replace(/([a-zA-Z][a-zA-Z0-9:]*)=&quot;/g, '<span style="color: ' + (isDarkMode ? '#d2a8ff' : '#f069cc') + ';">$1</span>=&quot;'),
+              // CDATA Inhalt markieren
+              .replace(/(&lt;!\[CDATA\[)(.*?)(\]\]&gt;)/g, 
+                '$1<span style="color: ' + (isDarkMode ? '#79b8ff' : '#0550ae') + ';">$2</span>$3')
+              // Tag-Namen in rot
+              .replace(/&lt;(\/?[a-zA-Z][a-zA-Z0-9:]*)/g, 
+                '&lt;<span style="color: ' + (isDarkMode ? '#ff7b72' : '#e3116c') + ';">$1</span>')
+              // Attribute-Namen in lila
+              .replace(/([a-zA-Z][a-zA-Z0-9:]*)=&quot;/g, 
+                '<span style="color: ' + (isDarkMode ? '#d2a8ff' : '#9901a7') + ';">$1</span>=&quot;')
+              // Attribut-Werte in blau
+              .replace(/=&quot;([^&]*)&quot;/g, 
+                '=&quot;<span style="color: ' + (isDarkMode ? '#a5d6ff' : '#1a56db') + ';">$1</span>&quot;'),
             'xml'
           )
         }}
@@ -372,7 +394,7 @@ const JsonVastExplorer = React.memo(({
     );
     
     return (
-      <div className="text-sm mt-4 mb-4 overflow-x-auto" style={{ maxHeight: '600px' }}>
+      <div className="mt-2">
         {highlightedVast}
       </div>
     );
@@ -443,17 +465,18 @@ const JsonVastExplorer = React.memo(({
     
     return (
       <div className="mt-4">
-        <div className={`border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-          <div className="flex flex-wrap -mb-px">
+        {/* Tab Headers */}
+        <div className={`rounded-t-lg bg-gray-100 dark:bg-gray-700 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+          <div className="flex flex-wrap">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveVastTabIndex(tab.id)}
                 className={`${
                   activeVastTabIndex === tab.id
-                    ? `${isDarkMode ? 'border-blue-500 text-blue-400' : 'border-blue-500 text-blue-600'} border-b-2`
-                    : `${isDarkMode ? 'border-transparent text-gray-400 hover:text-gray-300' : 'border-transparent text-gray-500 hover:text-gray-700'} border-b-2`
-                } px-4 py-2 text-sm font-medium`}
+                    ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
+                    : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
+                } px-4 py-2 text-sm font-medium rounded-t-lg`}
               >
                 {tab.label}
               </button>
@@ -461,80 +484,178 @@ const JsonVastExplorer = React.memo(({
           </div>
         </div>
         
-        <div className="mt-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 overflow-auto">
+        {/* Tab Content */}
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-b-lg overflow-auto">
+          {/* Embedded VAST */}
           <div 
             className={activeVastTabIndex === 0 ? 'block' : 'hidden'}
             ref={embeddedVastOutputRef}
           >
-            <div className="text-xs mb-2 text-gray-400 dark:text-gray-400">
-              <span className="font-semibold">Source:</span> JSON
+            <div className="flex justify-end space-x-2 p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+              <button
+                onClick={toggleWordWrap}
+                className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
+                  Wrap
+                </div>
+              </button>
+              <button
+                onClick={() => setShowVastSearch(!showVastSearch)}
+                className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Find
+                </div>
+              </button>
+              <button
+                onClick={copyVastToClipboard}
+                className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                </div>
+              </button>
             </div>
-            {renderVastContent(rawVastContent)}
+            <div className="text-sm p-4 overflow-x-auto" style={{ maxHeight: '600px' }}>
+              {renderVastContent(rawVastContent)}
+            </div>
           </div>
           
+          {/* VASTAdTagURI (1) */}
           <div 
             className={activeVastTabIndex === 1 ? 'block' : 'hidden'}
             ref={getFetchedVastRef(0)}
           >
-            {vastChain[0]?.isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-            ) : vastChain[0]?.error ? (
-              <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
-                <p className="font-medium">Error fetching VAST:</p>
-                <p>{vastChain[0]?.error}</p>
-              </div>
-            ) : vastChain[0]?.content ? (
-              <>
-                {vastChain[0]?.uri && (
-                  <div className="text-xs mb-2 text-gray-400 dark:text-gray-400">
-                    <span className="font-semibold">Source:</span> {vastChain[0]?.uri}
-                  </div>
-                )}
-                {renderVastContent(vastChain[0]?.content)}
-              </>
-            ) : (
-              <div className="text-center py-4">Kein Wrapper gefunden</div>
-            )}
+            <div className="flex justify-end space-x-2 p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+              <button
+                onClick={toggleWordWrap}
+                className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
+                  Wrap
+                </div>
+              </button>
+              <button
+                onClick={() => setShowVastSearch(!showVastSearch)}
+                className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Find
+                </div>
+              </button>
+              <button
+                onClick={copyVastToClipboard}
+                className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                </div>
+              </button>
+            </div>
+            <div className="text-sm p-4 overflow-x-auto" style={{ maxHeight: '600px' }}>
+              {vastChain[0]?.isLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+              ) : vastChain[0]?.error ? (
+                <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
+                  <p className="font-medium">Error fetching VAST:</p>
+                  <p>{vastChain[0]?.error}</p>
+                </div>
+              ) : vastChain[0]?.content ? (
+                renderVastContent(vastChain[0]?.content)
+              ) : (
+                <div className="text-center py-4">Kein Wrapper gefunden</div>
+              )}
+            </div>
           </div>
           
+          {/* VASTAdTagURI (2) */}
           <div 
             className={activeVastTabIndex === 2 ? 'block' : 'hidden'}
             ref={getFetchedVastRef(1)}
           >
-            {vastChain[1]?.isLoading ? (
-              <div className="flex justify-center items-center py-12">
-                <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              </div>
-            ) : vastChain[1]?.error ? (
-              <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
-                <p className="font-medium">Error fetching VAST:</p>
-                <p>{vastChain[1]?.error}</p>
-              </div>
-            ) : vastChain[1]?.content ? (
-              <>
-                {vastChain[1]?.uri && (
-                  <div className="text-xs mb-2 text-gray-400 dark:text-gray-400">
-                    <span className="font-semibold">Source:</span> {vastChain[1]?.uri}
-                  </div>
-                )}
-                {renderVastContent(vastChain[1]?.content)}
-              </>
-            ) : (
-              <div className="text-center py-4">Kein Wrapper gefunden</div>
-            )}
+            <div className="flex justify-end space-x-2 p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+              <button
+                onClick={toggleWordWrap}
+                className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
+                  Wrap
+                </div>
+              </button>
+              <button
+                onClick={() => setShowVastSearch(!showVastSearch)}
+                className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Find
+                </div>
+              </button>
+              <button
+                onClick={copyVastToClipboard}
+                className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+              >
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                </div>
+              </button>
+            </div>
+            <div className="text-sm p-4 overflow-x-auto" style={{ maxHeight: '600px' }}>
+              {vastChain[1]?.isLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </div>
+              ) : vastChain[1]?.error ? (
+                <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
+                  <p className="font-medium">Error fetching VAST:</p>
+                  <p>{vastChain[1]?.error}</p>
+                </div>
+              ) : vastChain[1]?.content ? (
+                renderVastContent(vastChain[1]?.content)
+              ) : (
+                <div className="text-center py-4">Kein Wrapper gefunden</div>
+              )}
+            </div>
           </div>
         </div>
       </div>
     );
-  }, [rawVastContent, vastChain, activeVastTabIndex, isDarkMode, embeddedVastOutputRef, renderVastContent]);
+  }, [rawVastContent, vastChain, activeVastTabIndex, isDarkMode, embeddedVastOutputRef, renderVastContent, showVastSearch, setShowVastSearch, toggleWordWrap, copyVastToClipboard]);
 
   return (
     <div className="w-full flex flex-col" style={{ height: 'calc(100vh - 150px)' }}>
