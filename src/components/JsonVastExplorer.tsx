@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
-import SearchPanel from './SearchPanel';
+import SearchPanel from './shared/SearchPanel';
 import JsonHistoryPanel from './shared/JsonHistoryPanel';
 
 // VastInfo type for internal use

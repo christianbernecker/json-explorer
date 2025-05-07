@@ -19,15 +19,10 @@ export interface HistoryItem {
 }
 
 export interface SearchPanelProps {
-  targetRef: React.RefObject<HTMLDivElement | null>;
-  contentType: string;
+  targetRef: React.RefObject<HTMLDivElement>;
+  contentType: 'JSON' | 'VAST' | string;
   isDarkMode: boolean;
   onSearch?: (term: string) => void;
-}
-
-export interface SearchResult {
-  element: HTMLElement;
-  rowIndex: number;
 }
 
 export interface JsonVastExplorerProps {

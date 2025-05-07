@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 21:56:39 CEST 2025", "commit": "Maximiere Raumnutzung mit dichterem Layout und kleineren Rändern"}
+{"deployment": "staging", "timestamp": "Wed May  7 22:00:47 CEST 2025", "commit": "Maximiere Raumnutzung durch Anpassung der übergeordneten Container"}

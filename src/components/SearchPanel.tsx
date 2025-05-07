@@ -57,7 +57,6 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
       const currentMatch = targetRef.current.querySelector('.current-match') as HTMLElement | null;
       if (currentMatch) {
         currentMatch.classList.remove('current-match');
-        currentMatch.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
       }
     } catch (err) {
       console.error('Error clearing highlights:', err);
@@ -66,7 +65,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
         targetRef.current.innerHTML = originalContent.current;
       }
     }
-  }, [targetRef, isDarkMode, error, matches.length]);
+  }, [targetRef, error, matches.length]);
 
   // Aktuelle Übereinstimmung hervorheben und zu ihr scrollen
   const highlightMatch = useCallback((index: number, matchElements: HTMLElement[]) => {
@@ -74,11 +73,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
     
     try {
       // Reset das vorherige aktuelle Element
-      const previousMatch = matchElements[currentMatchIndex];
-      if (previousMatch) {
-        previousMatch.classList.remove('current-match');
-        previousMatch.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
-      }
+      matchElements.forEach(match => {
+        match.classList.remove('current-match');
+        match.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+        match.style.color = isDarkMode ? 'white' : 'black';
+      });
       
       // Markiere das neue Element
       const match = matchElements[index];
@@ -86,15 +85,15 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
       match.style.backgroundColor = isDarkMode ? '#ef4444' : '#f87171';
       match.style.color = 'white';
       
-      // Scrolle zur Position
+      // Scrolle zur Position mit mehr Kontext
       match.scrollIntoView({ behavior: 'smooth', block: 'center' });
       
       setCurrentMatchIndex(index);
     } catch (err) {
       console.error('Error highlighting match:', err);
-      setError('Failed to highlight match');
+      setError('Fehler beim Hervorheben der Treffer');
     }
-  }, [currentMatchIndex, isDarkMode]);
+  }, [isDarkMode]);
 
   // Führe Suche durch und markiere Übereinstimmungen
   const performSearch = useCallback(() => {
@@ -120,12 +119,16 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = originalContent.current;
       
+      // Funktion zum Sammeln der Textknoten
       const collectTextNodes = (node: Node, textNodes: Node[]) => {
-        if (node.nodeType === Node.TEXT_NODE) {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent && node.textContent.trim()) {
+          // Nur nicht-leere Textknoten hinzufügen
           textNodes.push(node);
-        } else {
-          for (let i = 0; i < node.childNodes.length; i++) {
-            collectTextNodes(node.childNodes[i], textNodes);
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          // Alle Kindelemente durchlaufen
+          const childNodes = node.childNodes;
+          for (let i = 0; i < childNodes.length; i++) {
+            collectTextNodes(childNodes[i], textNodes);
           }
         }
       };
@@ -138,16 +141,12 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
       
       // Matches zählen
       let matchesFound = 0;
-      // Variable wird nicht mehr verwendet, daher als ungenutzt markieren
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const matchElements: HTMLElement[] = [];
       
       // Durch Textknoten iterieren und Treffer markieren
       textNodes.forEach(textNode => {
         const text = textNode.textContent || '';
-        const matches = text.match(regex);
-        
-        if (matches) {
+        // Prüfen, ob der Text den Suchbegriff enthält
+        if (text.toLowerCase().includes(searchTerm.toLowerCase())) {
           const parent = textNode.parentNode as HTMLElement;
           if (!parent) return;
           
@@ -207,7 +206,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
       return;
     }
     
-    performSearch();
+    const debounceTimer = setTimeout(() => {
+      performSearch();
+    }, 300); // Debounce für bessere Performance
+    
+    return () => clearTimeout(debounceTimer);
   }, [searchTerm, clearHighlights, performSearch, targetRef]);
 
   // Zur nächsten Übereinstimmung navigieren
