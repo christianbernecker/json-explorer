@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 16:48:59 CEST 2025", "commit": "Test: XML-Anzeige ohne Farbmarkierungen"}
+{"deployment": "staging", "timestamp": "Wed May  7 16:58:44 CEST 2025", "commit": "Fix: Verbesserte XML-Einrückung mit korrektem Tabbing"}
