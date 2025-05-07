@@ -55,20 +55,39 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
       selectedDimension,
       selectedMetric,
       provider,
-      apiKey: process.env.REACT_APP_ANTHROPIC_API_KEY ? 'vorhanden' : 'fehlt'
+      anthropicApiKey: process.env.REACT_APP_ANTHROPIC_API_KEY ? 'vorhanden' : 'fehlt',
+      openaiApiKey: process.env.REACT_APP_OPENAI_API_KEY ? 'vorhanden' : 'fehlt'
     });
 
     try {
-      // Prüfe, ob der API-Schlüssel konfiguriert ist
-      if (provider === 'anthropic' && !process.env.REACT_APP_ANTHROPIC_API_KEY) {
+      // Prüfe, ob API-Schlüssel konfiguriert sind
+      const anthropicKeyMissing = provider === 'anthropic' && !process.env.REACT_APP_ANTHROPIC_API_KEY;
+      const openaiKeyMissing = provider === 'openai' && !process.env.REACT_APP_OPENAI_API_KEY;
+      
+      if (anthropicKeyMissing) {
         console.error('Kein Claude API-Schlüssel gefunden. Bitte stellen Sie sicher, dass REACT_APP_ANTHROPIC_API_KEY konfiguriert ist.');
-        setError('Claude API-Schlüssel fehlt. Bitte konfigurieren Sie die Umgebungsvariable REACT_APP_ANTHROPIC_API_KEY.');
+        setError('Claude API-Schlüssel fehlt. Bitte konfigurieren Sie die Umgebungsvariable REACT_APP_ANTHROPIC_API_KEY oder wählen Sie einen anderen Anbieter.');
+        setIsLoading(false);
+        return;
+      }
+      
+      if (openaiKeyMissing) {
+        console.error('Kein OpenAI API-Schlüssel gefunden. Bitte stellen Sie sicher, dass REACT_APP_OPENAI_API_KEY konfiguriert ist.');
+        setError('OpenAI API-Schlüssel fehlt. Bitte konfigurieren Sie die Umgebungsvariable REACT_APP_OPENAI_API_KEY oder wählen Sie einen anderen Anbieter.');
         setIsLoading(false);
         return;
       }
 
+      // Reduziere die Datenmenge für die API-Anfrage, um Timeout-Probleme zu vermeiden
+      const maxSampleSize = 100; // Maximal 100 Datensätze senden
+      const sampledData = data.length > maxSampleSize 
+        ? data.slice(0, maxSampleSize) 
+        : data;
+      
+      console.log(`KI-Analyse nutzt ${sampledData.length} von ${data.length} Datensätzen (abgeschnitten für Performanz)`);
+
       const response = await llmService.analyzeDatatWithLLM({
-        data,
+        data: sampledData,
         dimensions,
         metrics,
         aggregatedData,

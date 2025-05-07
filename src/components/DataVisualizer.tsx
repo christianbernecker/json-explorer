@@ -941,7 +941,8 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
     console.log('Tabelle wird gerendert:', {
       rowCount: data.length,
       columnCount: columnDefs.length,
-      firstRow: data.length > 0 ? data[0] : null
+      firstRow: data.length > 0 ? data[0] : null,
+      gridApi: gridApi ? 'verfügbar' : 'nicht initialisiert'
     });
     
     if (data.length === 0) {
@@ -954,6 +955,11 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       );
     }
     
+    // Prüfe, ob die Daten korrekt strukturiert sind
+    if (data.length > 0 && typeof data[0] === 'object') {
+      console.log('Stichprobe der Daten:', data.slice(0, 3));
+    }
+    
     return (
       <div className={`h-[400px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
         <AgGridReact
@@ -962,21 +968,30 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
             const api = params.api;
             setGridApi(api);
             api.sizeColumnsToFit();
+            
+            // Prüfen ob Daten sichtbar sind
+            console.log('Grid wurde initialisiert mit', api.getDisplayedRowCount(), 'sichtbaren Zeilen');
           }}
           defaultColDef={{
             resizable: true,
             sortable: true,
-            filter: true
+            filter: true,
+            flex: 1,
+            minWidth: 100
           }}
           columnDefs={columnDefs}
           rowData={data}
           pagination={true}
           paginationPageSize={10}
           domLayout="autoHeight"
+          getRowId={(params: { data: DataRow; index: number }) => {
+            // Eindeutige Row-ID generieren
+            return `row-${params.index}`;
+          }}
         />
       </div>
     );
-  }, [data, columnDefs, isDarkMode]);
+  }, [data, columnDefs, isDarkMode, gridApi]);
 
   // CSV-Datei parsen
   const parseCSV = (text: string) => {

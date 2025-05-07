@@ -410,6 +410,7 @@ const JsonVastExplorer = React.memo(({
     
     // Verbesserte Syntax-Highlighting für XML/VAST
     const colorizeVast = (text: string, isDark: boolean): string => {
+      // HTML Entities zuerst umwandeln, um sie richtig darzustellen
       let colorized = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -417,23 +418,23 @@ const JsonVastExplorer = React.memo(({
       
       // Tags in Blau (mit korrigiertem Regex-Pattern)
       colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, 
-        '&lt;$1<span class="xml-tag" style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">$2</span>');
+        '&lt;$1<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">$2</span>');
       
       // Attribute in Grün (mit korrigiertem Regex-Pattern)
       colorized = colorized.replace(/\s([\w:]+)=/g, 
-        ' <span class="xml-attr" style="color: ' + (isDark ? '#48bb78' : '#38a169') + '">$1</span>=');
+        ' <span style="color: ' + (isDark ? '#48bb78' : '#38a169') + '">$1</span>=');
       
       // Attributwerte in Gelb (mit korrigiertem Regex-Pattern)
       colorized = colorized.replace(/="([^"]*)"/g, 
-        '="<span class="xml-value" style="color: ' + (isDark ? '#ecc94b' : '#d69e2e') + '">$1</span>"');
+        '="<span style="color: ' + (isDark ? '#ecc94b' : '#d69e2e') + '">$1</span>"');
       
       // CDATA-Markierung in Grau
       colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
-        '<span class="xml-cdata" style="color: ' + (isDark ? '#a0aec0' : '#718096') + '">$1</span>');
+        '<span style="color: ' + (isDark ? '#a0aec0' : '#718096') + '">$1</span>');
       
       // CDATA-Inhalt in Blau - Fix für überlappende Spans
       colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, function(match, p1, p2, p3) {
-        return p1 + '<span class="xml-cdata-content" style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">' + p2 + '</span>' + p3;
+        return p1 + '<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">' + p2 + '</span>' + p3;
       });
       
       return colorized;
@@ -879,9 +880,9 @@ const JsonVastExplorer = React.memo(({
         />
       )}
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* JSON Input/Output Section */}
-        <div>
+        <div className="flex flex-col h-full">
           <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
             JSON Eingabe
           </h2>
@@ -960,7 +961,7 @@ const JsonVastExplorer = React.memo(({
         </div>
         
         {/* VAST Viewer Section */}
-        <div>
+        <div className="flex flex-col h-full">
           <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
             VAST Viewer
           </h2>

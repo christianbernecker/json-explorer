@@ -103,6 +103,9 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
     // Aktuellen Inhalt speichern, falls noch nicht getan
     if (!originalContent.current) {
       originalContent.current = targetRef.current.innerHTML;
+    } else {
+      // Stelle den Originalinhalt wieder her, bevor neue Suche durchgeführt wird
+      targetRef.current.innerHTML = originalContent.current;
     }
     
     // Lösche bestehende Highlights
@@ -110,31 +113,34 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
     setError(null);
     
     try {
-      // String-Inhalt des Containers holen
-      const contentContainer = targetRef.current;
-      
-      // Case-insensitive Suche
+      // Regulärer Ausdruck für Suche erstellen
       const regex = new RegExp(escapeRegExp(searchTerm), 'gi');
       
-      // Wir suchen im Original-Text (ohne HTML-Tags)
-      const textNodes = [];
-      const walker = document.createTreeWalker(
-        contentContainer,
-        NodeFilter.SHOW_TEXT,
-        null
-      );
+      // HTML in temporäres Element parsen, um Textknoten zu finden
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = originalContent.current;
       
-      let node;
-      while ((node = walker.nextNode()) !== null) {
-        // Wir speichern alle Textnodes, auch leere für vollständige Abdeckung
-        textNodes.push(node);
+      const collectTextNodes = (node: Node, textNodes: Node[]) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          textNodes.push(node);
+        } else {
+          for (let i = 0; i < node.childNodes.length; i++) {
+            collectTextNodes(node.childNodes[i], textNodes);
+          }
+        }
+      };
+      
+      // Sammle alle Textknoten
+      const textNodes: Node[] = [];
+      for (let i = 0; i < tempDiv.childNodes.length; i++) {
+        collectTextNodes(tempDiv.childNodes[i], textNodes);
       }
       
       // Matches zählen
       let matchesFound = 0;
       const matchElements: HTMLElement[] = [];
       
-      // Durch Text-Nodes iterieren und Treffer hervorheben
+      // Durch Textknoten iterieren und Treffer markieren
       textNodes.forEach(textNode => {
         const text = textNode.textContent || '';
         const matches = text.match(regex);
@@ -149,34 +155,31 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
             return `<span class="search-match" style="background-color: ${isDarkMode ? '#3b82f680' : '#93c5fd80'}; color: ${isDarkMode ? 'white' : 'black'};">${match}</span>`;
           });
           
-          // Neues Element erstellen und einfügen
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = highlightedText;
+          // Neues Element mit hervorgehobenem Text erstellen
+          const replacementNode = document.createElement('span');
+          replacementNode.innerHTML = highlightedText;
           
-          // Wir extrahieren die Kindelemente statt die HTML direkt zu setzen
-          const fragment = document.createDocumentFragment();
-          while (tempDiv.firstChild) {
-            fragment.appendChild(tempDiv.firstChild);
-          }
-          
-          // Altes Text-Node durch neues Fragment ersetzen
-          parent.replaceChild(fragment, textNode);
-          
-          // Alle neue Matches zum Array hinzufügen
-          const newMatchElements = parent.querySelectorAll('.search-match');
-          newMatchElements.forEach(match => {
-            matchElements.push(match as HTMLElement);
-          });
+          // Altes Textnode durch neues mit Highlights ersetzen
+          parent.replaceChild(replacementNode, textNode);
         }
       });
       
+      // Übernehme den geänderten Inhalt zurück in das Original-Element
+      targetRef.current.innerHTML = tempDiv.innerHTML;
+      
+      // Finde alle Matches im Originalcontainer
+      const newMatches = targetRef.current.querySelectorAll('.search-match');
+      
+      // Konvertiere NodeList zu Array für bessere Handhabung
+      const matchElementsArray = Array.from(newMatches) as HTMLElement[];
+      
       // Ergebnisse aktualisieren
-      setMatches(matchElements);
+      setMatches(matchElementsArray);
       setMatchCount(matchesFound);
       
       // Erstes Match hervorheben, falls vorhanden
-      if (matchElements.length > 0) {
-        highlightMatch(0, matchElements);
+      if (matchElementsArray.length > 0) {
+        highlightMatch(0, matchElementsArray);
       }
     } catch (err) {
       console.error('Search error:', err);
