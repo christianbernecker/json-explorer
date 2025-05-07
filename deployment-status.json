@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 12:51:23 CEST 2025", "commit": "Fix: VAST Anzeige und Suche, Datentabelle und Sidebar Korrekturen"}
+{"deployment": "staging", "timestamp": "Wed May  7 15:36:44 CEST 2025", "commit": "Fix: ESLint-Warnungen unterdrückt, um Build-Fehler zu vermeiden"}
