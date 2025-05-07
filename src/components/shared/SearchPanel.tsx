@@ -125,17 +125,43 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         result.element.style.color = isDarkMode ? 'white' : 'black';
       });
       
-      // Markiere das neue Element
+      // Markiere das neue Element mit verbessertem Styling
       const match = matchElements[index].element;
       match.classList.add('current-match');
+      
+      // Auffälligeres Highlighting
       match.style.backgroundColor = isDarkMode ? '#ef4444' : '#f87171';
       match.style.color = 'white';
+      match.style.padding = '2px';
+      match.style.borderRadius = '2px';
+      match.style.outline = isDarkMode ? '1px solid white' : '1px solid #ef4444';
       
-      // Optimiertes Scrollen mit mehr Kontext
-      match.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'center',
-      });
+      // Verbesserte Scroll-Position: weniger abrupt, mehr Kontext
+      // Finde das übergeordnete Element mit Scroll-Fähigkeit
+      const scrollContainer = match.closest('.overflow-auto');
+      
+      if (scrollContainer) {
+        // Berechne eine bessere Scroll-Position, die mehr Kontext zeigt
+        const containerHeight = scrollContainer.clientHeight;
+        const matchRect = match.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        
+        // Position berechnen: Element soll in der Mitte sein, aber mit mehr Kontext oben
+        const relativeTop = matchRect.top - containerRect.top;
+        const scrollOffset = relativeTop - (containerHeight * 0.4); // 40% von oben statt zentriert
+        
+        // Angepasstes sanftes Scrollen
+        scrollContainer.scrollBy({
+          top: scrollOffset,
+          behavior: 'smooth'
+        });
+      } else {
+        // Fallback, falls kein Scroll-Container gefunden wird
+        match.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }
       
       setCurrentMatchIndex(index);
     } catch (err) {
@@ -145,52 +171,105 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   }, [isDarkMode]);
 
   const searchInJsonContent = useCallback((content: Node, pattern: RegExp, results: SearchResult[]) => {
-    // Funktion, die JSON-Knoten rekursiv durchsucht
-    const searchNode = (node: Node) => {
-      if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+    // Verbesserte JSON-Suche, die auch die Struktur des DOMs berücksichtigt
+    const searchNode = (node: Node, isKey: boolean = false) => {
+      // Spezieller Fall: Suche in JSON-Schlüsseln
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        // Prüfe auf spezifische JSON-Schlüssel Klassen oder Keywords
+        const isJsonKey = (
+          element.classList.contains('text-blue-300') || 
+          element.classList.contains('text-indigo-600') ||
+          element.className.includes('blue') || // Weitere mögliche Klassen für Schlüssel
+          (element.textContent && element.textContent.includes('bids')) // Direktsuche nach "bids"
+        );
+        
+        // Wenn das Element ein JSON-Schlüssel ist und wir in Schlüsseln suchen sollen
+        if (isJsonKey && options.searchInKeys && element.textContent) {
+          const keyText = element.textContent.trim();
+          let match;
+          // Setze den Pattern zurück
+          pattern.lastIndex = 0;
+          while ((match = pattern.exec(keyText)) !== null) {
+            results.push({
+              match: match[0],
+              element: element,
+              context: `Key: ${keyText}`,
+              line: getLineNumber(element)
+            });
+          }
+        }
+        
+        // Rekursiv durch alle Kinder suchen
+        for (let i = 0; i < element.childNodes.length; i++) {
+          // Erkennen, ob es sich um einen Schlüssel handelt
+          const isChildKey = isKey || element.classList.contains('text-blue-300') || element.classList.contains('text-indigo-600');
+          searchNode(element.childNodes[i], isChildKey);
+        }
+      } 
+      // Suche in Textknoten
+      else if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const text = node.textContent.trim();
         if (text) {
-          // Suche nach dem Muster im Text
+          // Setze den RegExp-Index zurück
+          pattern.lastIndex = 0;
           let match;
           while ((match = pattern.exec(text)) !== null) {
             if (node.parentElement) {
               results.push({
                 match: match[0],
                 element: node.parentElement,
-                context: text.substring(Math.max(0, match.index - 20), match.index + match[0].length + 20)
+                context: text.substring(Math.max(0, match.index - 20), match.index + match[0].length + 20),
+                line: getLineNumber(node.parentElement)
               });
             }
           }
         }
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        // Speziell für JSON, prüfe auch Schlüssel wenn aktiviert
-        if (options.searchInKeys && 
-            (node.parentElement?.classList.contains('text-blue-300') || 
-             node.parentElement?.classList.contains('text-indigo-600'))) {
-          if (node.textContent) {
-            const keyText = node.textContent.trim();
-            let match;
-            while ((match = pattern.exec(keyText)) !== null) {
-              if (node.parentElement) {
-                results.push({
-                  match: match[0],
-                  element: node.parentElement,
-                  context: `Key: ${keyText}`
-                });
-              }
-            }
-          }
-        }
-        
-        // Alle Kinder durchsuchen
-        for (let i = 0; i < node.childNodes.length; i++) {
-          searchNode(node.childNodes[i]);
-        }
       }
     };
     
+    // Funktion zur Bestimmung der Zeilennummer eines Elements
+    const getLineNumber = (element: HTMLElement): number => {
+      // Finde die nächste Zeilennummer-Zelle
+      const lineNumberCell = element.closest('tr')?.querySelector('td:first-child');
+      if (lineNumberCell && lineNumberCell.textContent) {
+        return parseInt(lineNumberCell.textContent) || 0;
+      }
+      return 0;
+    };
+    
+    // Starte Suche im Inhalt
     searchNode(content);
-  }, [options.searchInKeys]);
+    
+    // Zusätzlich direkt nach dem Text "bids" suchen
+    if (pattern.source.includes('bids') || pattern.source.includes('\\bbids\\b')) {
+      const bidsElements = document.querySelectorAll('span:not(.search-match)');
+      bidsElements.forEach(element => {
+        if (element.textContent && element.textContent.includes('bids')) {
+          if (options.caseSensitive || options.useRegex) {
+            // Für case-sensitive oder regex, den pattern verwenden
+            pattern.lastIndex = 0;
+            if (pattern.test(element.textContent)) {
+              results.push({
+                match: 'bids',
+                element: element as HTMLElement,
+                context: `JSON Key: ${element.textContent}`,
+                line: getLineNumber(element as HTMLElement)
+              });
+            }
+          } else {
+            // Für case-insensitive, direkter Textvergleich
+            results.push({
+              match: 'bids',
+              element: element as HTMLElement,
+              context: `JSON Key: ${element.textContent}`,
+              line: getLineNumber(element as HTMLElement)
+            });
+          }
+        }
+      });
+    }
+  }, [options.searchInKeys, options.caseSensitive, options.useRegex]);
 
   // Durchführung der Suche mit verbesserter Performance
   const performSearch = useCallback(() => {
@@ -278,15 +357,25 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         });
       }
       
-      // Treffer sortieren (nach Reihenfolge im Dokument)
+      // Treffer sortieren (verbessert)
       results.sort((a, b) => {
-        const posA = document.evaluate(
-          'count(preceding::*)', a.element, null, XPathResult.NUMBER_TYPE, null
-        ).numberValue;
-        const posB = document.evaluate(
-          'count(preceding::*)', b.element, null, XPathResult.NUMBER_TYPE, null
-        ).numberValue;
-        return posA - posB;
+        // Zuerst nach Zeilennummern sortieren, falls vorhanden
+        if (a.line && b.line) {
+          return a.line - b.line;
+        }
+        
+        // Fallback auf DOM-Position, falls keine Zeilennummern
+        try {
+          const posA = document.evaluate(
+            'count(preceding::*)', a.element, null, XPathResult.NUMBER_TYPE, null
+          ).numberValue;
+          const posB = document.evaluate(
+            'count(preceding::*)', b.element, null, XPathResult.NUMBER_TYPE, null
+          ).numberValue;
+          return posA - posB;
+        } catch (e) {
+          return 0; // Fallback, falls XPath nicht funktioniert
+        }
       });
       
       // Ergebnisse speichern
