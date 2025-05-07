@@ -416,204 +416,6 @@ const JsonVastExplorer = React.memo(({
     );
   }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
-  // Render the VAST tabs
-  const renderVastTabs = useCallback(() => {
-    // Helper function to get or create ref for fetched VAST tabs
-    const getFetchedVastRef = (index: number): React.RefObject<HTMLDivElement> => {
-      if (!fetchedVastOutputRefs.current.has(index)) {
-          // Create refs on demand
-          fetchedVastOutputRefs.current.set(index, React.createRef<HTMLDivElement>());
-      }
-      return fetchedVastOutputRefs.current.get(index)!;
-    };
-
-    // Interface for tab items
-    interface TabItem {
-      id: number;
-      label: string;
-      ref: React.RefObject<HTMLDivElement>;
-      content: string | null;
-      error?: string | null;
-      isLoading?: boolean;
-      source?: string;
-    }
-
-    // If no VAST content, show empty state
-    if (!rawVastContent && vastChain.length === 0) {
-      return (
-        <div className={`p-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg mt-4`}>
-          <p className="text-center text-gray-500">No VAST content detected in the JSON</p>
-        </div>
-      );
-    }
-
-    // Create all tabs
-    const tabs: TabItem[] = [
-      {
-        id: 0,
-        label: 'Embedded VAST',
-        ref: embeddedVastOutputRef,
-        content: rawVastContent,
-        source: 'JSON'
-      }
-    ];
-    
-    // Füge dynamisch Wrapper-Tabs basierend auf gefundenen VASTAdTagURIs hinzu
-    // (maximal 5 Tabs, einschließlich des Embedded-Tabs)
-    for (let i = 0; i < Math.min(vastChain.length, 4); i++) {
-      tabs.push({
-        id: i + 1,
-        label: `VASTAdTagURI (${i + 1})`,
-        ref: getFetchedVastRef(i),
-        content: vastChain[i]?.content || null,
-        error: vastChain[i]?.error || null,
-        isLoading: vastChain[i]?.isLoading || false,
-        source: vastChain[i]?.uri || ''
-      });
-    }
-    
-    // Erstelle Search Panel für den aktuellen Tab
-    const renderSearchPanel = (targetRef: React.RefObject<HTMLDivElement> | null) => {
-      if (!showVastSearch || !targetRef?.current) return null;
-      
-      return (
-        <SearchPanel
-          contentType="VAST"
-          targetRef={targetRef}
-          isDarkMode={isDarkMode}
-        />
-      );
-    };
-    
-    // Render source link
-    const renderSource = (source?: string) => {
-      if (!source) return null;
-      
-      let displaySource = source;
-      if (source !== 'JSON') {
-        // Zeige die vollständige URL an, nicht abgekürzt
-        displaySource = source;
-      }
-      
-      const handleSourceClick = () => {
-        if (source !== 'JSON') {
-          window.open(source, '_blank', 'noopener,noreferrer');
-        }
-      };
-      
-      return (
-        <span 
-          className={`cursor-pointer hover:underline ${
-            isDarkMode ? 'text-blue-400' : 'text-blue-600'
-          }`}
-          onClick={handleSourceClick}
-          title={source}
-        >
-          {displaySource}
-        </span>
-      );
-    };
-    
-    return (
-      <div className="mt-4">
-        {/* Tab Headers */}
-        <div className={`rounded-t-lg bg-gray-100 dark:bg-gray-700 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
-          <div className="flex flex-wrap">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveVastTabIndex(tab.id)}
-                className={`${
-                  activeVastTabIndex === tab.id
-                    ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
-                    : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
-                } px-4 py-2 text-sm font-medium rounded-t-lg`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Tab Content */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-b-lg border border-gray-200 dark:border-gray-700 shadow-inner" style={{ height: 'calc(100vh - 350px)', overflow: 'auto' }}>
-          {/* Tab Inhalte - dynamisch generiert */}
-          {tabs.map((tab) => (
-            <div 
-              key={tab.id}
-              className={activeVastTabIndex === tab.id ? 'block' : 'hidden'}
-              ref={tab.ref}
-            >
-              <div className="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                <div className="text-xs">
-                  Source: {renderSource(tab.source)}
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={toggleWordWrap}
-                    className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                  >
-                    <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                      </svg>
-                      Wrap
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setShowVastSearch(!showVastSearch)}
-                    className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                  >
-                    <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      Find
-                    </div>
-                  </button>
-                  <button
-                    onClick={copyVastToClipboard}
-                    className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                  >
-                    <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Copy
-                    </div>
-                  </button>
-                </div>
-              </div>
-              
-              {/* Search Panel */}
-              {renderSearchPanel(tab.ref)}
-              
-              <div className="text-sm p-4 overflow-x-auto">
-                {tab.isLoading ? (
-                  <div className="flex justify-center items-center py-12">
-                    <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  </div>
-                ) : tab.error ? (
-                  <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
-                    <p className="font-medium">Error fetching VAST:</p>
-                    <p>{tab.error}</p>
-                  </div>
-                ) : tab.content ? (
-                  renderVastContent(tab.content)
-                ) : (
-                  <div className="text-center py-4">Kein Wrapper gefunden</div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }, [rawVastContent, vastChain, activeVastTabIndex, isDarkMode, embeddedVastOutputRef, renderVastContent, showVastSearch, setShowVastSearch, toggleWordWrap, copyVastToClipboard]);
-
   // Funktion zum Anzeigen der JSON-Outline
   const generateJsonOutline = (json: any, path: string = ''): React.ReactNode => {
     if (!json || typeof json !== 'object') return null;
@@ -789,6 +591,19 @@ const JsonVastExplorer = React.memo(({
     }
   }, [isDarkMode]);
 
+  // Zuerst füge ich die State-Variablen für die Ansichtsumschaltung hinzu
+  const [showJsonStructure, setShowJsonStructure] = useState(false);
+  const [showVastStructure, setShowVastStructure] = useState(false);
+
+  // Helper function für VAST Refs
+  const getFetchedVastRef = useCallback((index: number): React.RefObject<HTMLDivElement> => {
+    if (!fetchedVastOutputRefs.current.has(index)) {
+      // Create refs on demand
+      fetchedVastOutputRefs.current.set(index, React.createRef<HTMLDivElement>());
+    }
+    return fetchedVastOutputRefs.current.get(index)!;
+  }, []);
+
   return (
     <div className="w-full h-full flex flex-col">
       {/* History Panel */}
@@ -869,14 +684,28 @@ const JsonVastExplorer = React.memo(({
           <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 flex-1 min-h-0">
             {/* JSON Content - Left column */}
             {parsedJson && (
-              <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full lg:w-2/3'} min-w-0 flex flex-col`}>
+              <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
                 <div className="flex justify-between items-center mb-2">
                   <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
                     Formatted JSON
                   </h3>
                   
-                  {/* Control buttons auf gleicher Höhe wie die Headline */}
+                  {/* Control buttons mit Toggle für Structure */}
                   <div className="flex space-x-2">
+                    <button 
+                      onClick={() => setShowJsonStructure(!showJsonStructure)}
+                      className={`flex items-center px-2 py-1 rounded-md text-xs ${
+                        showJsonStructure 
+                          ? (isDarkMode ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white') 
+                          : (isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')
+                      }`}
+                      title="Toggle between JSON view and structure view"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                      </svg>
+                      Structure
+                    </button>
                     <button 
                       onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)}
                       className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
@@ -910,8 +739,15 @@ const JsonVastExplorer = React.memo(({
                   </div>
                 </div>
 
-                <div className="flex space-x-4 h-full">
-                  {/* JSON View Panel - Main area */}
+                {/* Toggle zwischen JSON und Structure */}
+                {showJsonStructure ? (
+                  <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                    <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>JSON Structure</h4>
+                    <div className="text-xs font-mono">
+                      {renderJsonOutline()}
+                    </div>
+                  </div>
+                ) : (
                   <div 
                     ref={jsonOutputRef}
                     className={`flex-1 p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
@@ -930,43 +766,180 @@ const JsonVastExplorer = React.memo(({
                       style={{ maxWidth: "100%" }}
                     />
                   </div>
-                  
-                  {/* JSON Structure Sidebar - Similar to the screenshot */}
-                  <div className="w-64 flex-shrink-0">
-                    <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                      <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>JSON Structure</h4>
-                      <div className="text-xs font-mono">
-                        {renderJsonOutline()}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             )}
             
             {/* VAST Content - Right column or full width if no JSON */}
             {rawVastContent && (
-              <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full lg:w-2/3'} min-w-0 flex flex-col`}>
+              <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                 
-                <div className="flex space-x-4 h-full">
-                  {/* VAST Main Content */}
-                  <div className="flex-1">
-                    {renderVastTabs()}
-                  </div>
-                  
-                  {/* VAST Structure Sidebar - Similar to JSON sidebar */}
-                  <div className="w-64 flex-shrink-0">
-                    <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-                      <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>VAST Structure</h4>
-                      <div className="text-xs font-mono">
-                        {generateVastOutline(activeVastTabIndex === 0 
-                          ? rawVastContent 
-                          : vastChain[activeVastTabIndex - 1]?.content || null)}
-                      </div>
+                {/* Tabs und Toggle für Structure */}
+                <div className="mb-2 flex flex-wrap justify-between items-center">
+                  <div className={`rounded-t-lg bg-gray-100 dark:bg-gray-700 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
+                    <div className="flex flex-wrap">
+                      {vastChain.length > 0 ? (
+                        <>
+                          <button
+                            onClick={() => setActiveVastTabIndex(0)}
+                            className={`${
+                              activeVastTabIndex === 0
+                                ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
+                                : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
+                            } px-4 py-2 text-sm font-medium rounded-t-lg`}
+                          >
+                            Embedded VAST
+                          </button>
+                          {vastChain.map((item, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setActiveVastTabIndex(index + 1)}
+                              className={`${
+                                activeVastTabIndex === index + 1
+                                  ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
+                                  : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
+                              } px-4 py-2 text-sm font-medium rounded-t-lg`}
+                            >
+                              VASTAdTagURI ({index + 1})
+                            </button>
+                          ))}
+                        </>
+                      ) : (
+                        <button
+                          className={`${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500 px-4 py-2 text-sm font-medium rounded-t-lg`}
+                        >
+                          Embedded VAST
+                        </button>
+                      )}
                     </div>
                   </div>
+                  
+                  <div className="flex space-x-2 mt-2 md:mt-0">
+                    <button
+                      onClick={() => setShowVastStructure(!showVastStructure)}
+                      className={`flex items-center px-2 py-1 rounded-md text-xs ${
+                        showVastStructure 
+                          ? (isDarkMode ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white') 
+                          : (isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')
+                      }`}
+                      title="Toggle between VAST view and structure view"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                      </svg>
+                      Structure
+                    </button>
+                    <button
+                      onClick={toggleWordWrap}
+                      className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+                    >
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                        Wrap
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setShowVastSearch(!showVastSearch)}
+                      className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+                    >
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Find
+                      </div>
+                    </button>
+                    <button
+                      onClick={copyVastToClipboard}
+                      className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+                    >
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy
+                      </div>
+                    </button>
+                  </div>
                 </div>
+                
+                {/* Toggle zwischen VAST und Structure */}
+                {showVastStructure ? (
+                  <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                    <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>VAST Structure</h4>
+                    <div className="text-xs font-mono">
+                      {generateVastOutline(activeVastTabIndex === 0 
+                        ? rawVastContent 
+                        : vastChain[activeVastTabIndex - 1]?.content || null)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-inner" style={{ height: 'calc(100vh - 350px)', overflow: 'auto' }}>
+                    {/* Content des aktuellen Tabs */}
+                    <div className="p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                      <div className="text-xs">
+                        Source: {activeVastTabIndex === 0 
+                          ? <span className={isDarkMode ? 'text-blue-400' : 'text-blue-600'}>JSON</span> 
+                          : (vastChain[activeVastTabIndex - 1]?.uri && (
+                            <span 
+                              className={`cursor-pointer hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
+                              onClick={() => {
+                                if (vastChain[activeVastTabIndex - 1]?.uri) {
+                                  window.open(vastChain[activeVastTabIndex - 1].uri, '_blank', 'noopener,noreferrer');
+                                }
+                              }}
+                              title={vastChain[activeVastTabIndex - 1]?.uri}
+                            >
+                              {vastChain[activeVastTabIndex - 1]?.uri}
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                    
+                    {/* Search Panel */}
+                    {showVastSearch && activeVastTabIndex === 0 && embeddedVastOutputRef.current && (
+                      <SearchPanel
+                        contentType="VAST"
+                        targetRef={embeddedVastOutputRef}
+                        isDarkMode={isDarkMode}
+                      />
+                    )}
+                    {showVastSearch && activeVastTabIndex > 0 && getFetchedVastRef(activeVastTabIndex - 1) && (
+                      <SearchPanel
+                        contentType="VAST"
+                        targetRef={getFetchedVastRef(activeVastTabIndex - 1)}
+                        isDarkMode={isDarkMode}
+                      />
+                    )}
+                    
+                    <div className="text-sm p-4 overflow-x-auto" ref={activeVastTabIndex === 0 
+                        ? embeddedVastOutputRef 
+                        : (getFetchedVastRef(activeVastTabIndex - 1) || null)}>
+                      {activeVastTabIndex === 0 ? (
+                        renderVastContent(rawVastContent)
+                      ) : vastChain[activeVastTabIndex - 1]?.isLoading ? (
+                        <div className="flex justify-center items-center py-12">
+                          <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                        </div>
+                      ) : vastChain[activeVastTabIndex - 1]?.error ? (
+                        <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
+                          <p className="font-medium">Error fetching VAST:</p>
+                          <p>{vastChain[activeVastTabIndex - 1]?.error}</p>
+                        </div>
+                      ) : vastChain[activeVastTabIndex - 1]?.content ? (
+                        renderVastContent(vastChain[activeVastTabIndex - 1]?.content)
+                      ) : (
+                        <div className="text-center py-4">Kein Wrapper gefunden</div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
