@@ -43,14 +43,12 @@ const JsonVastExplorer = React.memo(({
   const [jsonInput, setJsonInput] = useState('');
   const [parsedJson, setParsedJson] = useState<any>(null);
   const [rawVastContent, setRawVastContent] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState('');
   
   // copyMessage wird für Benachrichtigungen nach dem Kopieren verwendet
   const [copyMessage, setCopyMessage] = useState('');
   
   // Suche-States
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showJsonSearch, setShowJsonSearch] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showVastSearch, setShowVastSearch] = useState(false);
@@ -73,7 +71,6 @@ const JsonVastExplorer = React.memo(({
   const [activeVastTabIndex, setActiveVastTabIndex] = useState<number>(0);
   
   // Refs for search functionality
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const jsonOutputRef = useRef<HTMLDivElement>(null);
   
@@ -257,7 +254,6 @@ const JsonVastExplorer = React.memo(({
   }, []);
   
   // Handle JSON input change
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleJsonInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJsonInput(e.target.value);
   }, []);
@@ -295,7 +291,6 @@ const JsonVastExplorer = React.memo(({
   }, []);
 
   // Kopieren des JSON-Inhalts in die Zwischenablage
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const copyJsonToClipboard = useCallback(() => {
     if (parsedJson) {
       copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
@@ -307,84 +302,49 @@ const JsonVastExplorer = React.memo(({
     if (!xml) return '';
     
     try {
-      // XML mit einer verbesserten Formatierungslogik formatieren
-      const formatXml = (xmlText: string): string => {
-        // Entferne Leerzeichen und Zeilenumbrüche zwischen Tags
-        let xml = xmlText.replace(/>\s*</g, '><');
-        
-        // Spezialfall: CDATA sollte inline mit Tags bleiben
-        xml = xml.replace(/(<[^>]*>)(<!\[CDATA\[(.*?)\]\]>)(<\/[^>]*>)/g, '$1$2$4');
-        
-        let formatted = '';
+      // Speziell für VAST XML formatieren - CDATA inline mit Tags
+      const preprocessXml = (xml: string): string => {
+        // CDATA-Inhalte in einer Zeile mit Tags halten
+        return xml
+          .replace(/>\s*<!\[CDATA\[(.*?)\]\]>\s*</g, '><![CDATA[$1]]><')
+          .replace(/>\s*</g, '>\n<'); // Tag-Trennung durch Zeilenumbrüche
+      };
+      
+      // XML Text indentieren
+      const indentXml = (text: string): string => {
+        const lines = text.split('\n');
         let indent = 0;
-        let inCdata = false;
+        let result = '';
         
-        // Gehe jeden Zeichen durch
-        for (let i = 0; i < xml.length; i++) {
-          const char = xml.charAt(i);
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
           
-          // Prüfe auf CDATA-Beginn
-          if (i + 8 < xml.length && xml.substring(i, i+9) === '<![CDATA[') {
-            inCdata = true;
-            formatted += '<![CDATA[';
-            i += 8;
-            continue;
-          }
-          
-          // Prüfe auf CDATA-Ende
-          if (inCdata && i + 2 < xml.length && xml.substring(i, i+3) === ']]>') {
-            inCdata = false;
-            formatted += ']]>';
-            i += 2;
-            continue;
-          }
-          
-          // Wenn in CDATA, füge Zeichen direkt hinzu
-          if (inCdata) {
-            formatted += char;
-            continue;
-          }
-          
-          // Behandle öffnende Tags
-          if (char === '<' && xml.charAt(i+1) !== '/') {
-            // Ist es ein selbstschließendes Tag?
-            const selfClosing = xml.indexOf('/>', i) < xml.indexOf('>', i) && xml.indexOf('/>', i) !== -1;
-            // Ist es ein kombiniertes Tag (öffnen + schließen in einem)?
-            const combinedTag = xml.substring(i).match(/^<[^>]*>[^<]*<\/[^>]*>/);
-            
-            if (!selfClosing && !combinedTag) {
-              formatted += '\n' + ' '.repeat(indent * 2) + '<';
-              indent++;
-            } else {
-              formatted += '\n' + ' '.repeat(indent * 2) + '<';
-            }
-          } 
-          // Behandle schließende Tags
-          else if (char === '<' && xml.charAt(i+1) === '/') {
+          // Schließende Tags reduzieren Einrückung
+          if (line.startsWith('</')) {
             indent--;
-            formatted += '\n' + ' '.repeat(indent * 2) + '<';
           }
-          // Für das Ende eines selbstschließenden Tags oder normalen Tags
-          else if (char === '>') {
-            formatted += '>';
-            
-            // Wenn das nächste Zeichen ein öffnendes '<' ist, füge keinen Zeilenumbruch ein
-            if (i + 1 < xml.length && xml.charAt(i+1) === '<') {
-              // nichts tun
-            } else {
-              formatted += '\n' + ' '.repeat(indent * 2);
-            }
+          
+          // Einrückung hinzufügen
+          if (indent > 0) {
+            result += '  '.repeat(indent);
           }
-          // Für alle anderen Zeichen
-          else {
-            formatted += char;
+          result += line + '\n';
+          
+          // Öffnende Tags erhöhen Einrückung, außer selbstschließende oder Kombi-Tags
+          if (line.startsWith('<') && 
+              !line.startsWith('</') && 
+              !line.endsWith('/>') && 
+              !line.match(/<[^>]*>[^<]*<\/[^>]*>/)) {
+            indent++;
           }
         }
         
-        return formatted.trim();
+        return result;
       };
       
-      return formatXml(xml);
+      const processedXml = preprocessXml(xml);
+      return indentXml(processedXml);
     } catch (error) {
       console.error('Error formatting XML:', error);
       return xml;
@@ -413,43 +373,44 @@ const JsonVastExplorer = React.memo(({
     
     const formattedVast = formatXmlForDisplay(vastContent);
     
-    // Verbesserte Syntax-Highlighting für XML/VAST
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // Syntax-Highlighting für XML/VAST mit den Farben aus dem Screenshot
     const colorizeVast = (text: string, isDark: boolean): string => {
-      if (!text) return '';
+      // XML escapen
+      const escapeXml = (str: string) => {
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      };
       
-      // HTML-Entities ersetzen
-      let colorized = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-      
-      // Farben als CSS-Variablen definieren
+      // Farben definieren
       const tagColor = isDark ? '#4299e1' : '#3182ce';
       const attrColor = isDark ? '#48bb78' : '#38a169';
       const valueColor = isDark ? '#ecc94b' : '#d69e2e';
       const cdataColor = isDark ? '#a0aec0' : '#718096';
       
+      // XML escapen und dann Syntax-Highlighting anwenden
+      let colorized = escapeXml(text);
+      
       // Tag-Namen in blau
       colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, 
-        '&lt;$1<span style="color: ' + tagColor + '">$2</span>');
+        '&lt;$1<span style=color:' + tagColor + '>$2</span>');
       
-      // Attribute in grün
+      // Attribute-Namen in grün
       colorized = colorized.replace(/\s([\w:]+)=/g, 
-        ' <span style="color: ' + attrColor + '">$1</span>=');
+        ' <span style=color:' + attrColor + '>$1</span>=');
       
-      // Attributwerte in gelb/orange
+      // Attribut-Werte in gelb/orange
       colorized = colorized.replace(/="([^"]*)"/g, 
-        '="<span style="color: ' + valueColor + '">$1</span>"');
+        '="<span style=color:' + valueColor + '>$1</span>"');
       
       // CDATA-Markierung in grau
       colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
-        '<span style="color: ' + cdataColor + '">$1</span>');
+        '<span style=color:' + cdataColor + '>$1</span>');
       
-      // CDATA-Inhalt in blau
-      colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, function(match, p1, p2, p3) {
-        return p1 + '<span style="color: ' + tagColor + '">' + p2 + '</span>' + p3;
-      });
+      // CDATA-Inhalt (URLs) in blau
+      colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, 
+        '$1<span style=color:' + tagColor + '>$2</span>$3');
       
       return colorized;
     };
@@ -551,11 +512,17 @@ const JsonVastExplorer = React.memo(({
       if (!source) return null;
       
       let displaySource = source;
-      
-      // Wenn nicht JSON, dann zeige die volle URL an
       if (source !== 'JSON') {
-        // Keine Kürzung mehr, zeige die volle URL an
-        displaySource = source;
+        // URL formatieren
+        try {
+          const url = new URL(source);
+          displaySource = `${url.host}${url.pathname}`;
+          if (displaySource.length > 50) {
+            displaySource = displaySource.substring(0, 47) + '...';
+          }
+        } catch (e) {
+          // Falls keine gültige URL, den Original-String belassen
+        }
       }
       
       const handleSourceClick = () => {
@@ -869,7 +836,6 @@ const JsonVastExplorer = React.memo(({
   };
 
   // Funktion zum Rendern der JSON-Outline
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderJsonOutline = () => {
     if (!parsedJson) return null;
     
@@ -895,99 +861,152 @@ const JsonVastExplorer = React.memo(({
         />
       )}
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* JSON Input/Output Section */}
-        <div className="flex flex-col h-full">
-          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
-            JSON Eingabe
-          </h2>
-          
-          <div className={`mb-4 rounded-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}>
-            <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-t-lg border-b border-gray-300 dark:border-gray-600 flex justify-between items-center">
-              <div className="flex space-x-2">
-                <label 
-                  htmlFor="json-input"
-                  className={`text-xs uppercase font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}
-                >
-                  Eingabe: JSON
-                </label>
-              </div>
-              
-              <div className="flex space-x-2">
-                <button
-                  onClick={handleClear}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Leeren
-                  </div>
-                </button>
-              </div>
-            </div>
-            
+      <div className="mb-4">
+        <div className="flex flex-row space-x-4">
+          <div className="flex-1">
+            <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>JSON Input</h3>
             <textarea
-              id="json-input"
-              className={`w-full p-4 font-mono text-sm resize-none outline-none ${
-                isDarkMode 
-                  ? 'bg-gray-800 text-gray-200 placeholder-gray-500' 
-                  : 'bg-white text-gray-800 placeholder-gray-400'
-              }`}
-              style={{ height: '40vh', minHeight: '350px', maxHeight: '50vh' }}
+              ref={textAreaRef}
               value={jsonInput}
-              onChange={(e) => setJsonInput(e.target.value)}
-              placeholder="Füge hier dein JSON mit VAST-Inhalt ein..."
-              aria-label="JSON input"
+              onChange={handleJsonInputChange}
+              placeholder="Paste your JSON here..."
+              className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                  : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              }`}
             />
-          </div>
-          
-          <div className="flex space-x-3">
-            <button
-              onClick={handleFormat}
-              className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
-                isDarkMode
-                  ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white'
-                  : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white'
-              }`}
-              title="Format JSON (Ctrl+Shift+F)"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" /> 
-              </svg>
-              Format
-            </button>
-            <button
-              onClick={handleClear}
-              className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
-                isDarkMode
-                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-600'
-                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-              title="Clear Input (Ctrl+Shift+L)"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Clear
-            </button>
           </div>
         </div>
         
-        {/* VAST Viewer Section */}
-        <div className="flex flex-col h-full">
-          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
-            VAST Viewer
-          </h2>
-          
-          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg border ${
-            isDarkMode ? 'border-gray-700' : 'border-gray-300'} h-full flex flex-col`}
+        <div className="flex space-x-3 mt-4">
+          <button
+            onClick={handleFormat}
+            className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
+              isDarkMode
+                ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white'
+                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white'
+            }`}
+            title="Format JSON (Ctrl+Shift+F)"
           >
-            {renderVastTabs()}
-          </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" /> 
+            </svg>
+            Format
+          </button>
+          <button
+            onClick={handleClear}
+            className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
+              isDarkMode
+                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-600'
+                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+            title="Clear Input (Ctrl+Shift+L)"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear
+          </button>
         </div>
       </div>
+
+      {error && (
+        <div className={`p-4 mb-4 rounded-lg flex items-center ${
+          isDarkMode 
+            ? 'bg-red-900 text-red-200 border-l-4 border-red-600' 
+            : 'bg-red-50 text-red-600 border-l-4 border-red-500'
+        }`}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <span>{error}</span>
+        </div>
+      )}
+      
+      {(parsedJson || rawVastContent) && (
+        <div className="flex-1 flex flex-col min-h-0">
+           <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 flex-1 min-h-0">
+             {parsedJson && (
+                <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full lg:w-3/4'} min-w-0 flex flex-col`}>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+                      Formatted JSON
+                    </h3>
+                    
+                    {/* Control buttons auf gleicher Höhe wie die Headline */}
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)}
+                        className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                        title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                        Wrap
+                      </button>
+                      <button 
+                        onClick={() => setShowJsonSearch(!showJsonSearch)} 
+                        className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                        title="Find in JSON"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Find
+                      </button>
+                      <button 
+                        onClick={copyJsonToClipboard} 
+                        className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                        title="Copy JSON"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+
+                  <div 
+                    ref={jsonOutputRef}
+                    className={`flex-1 p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
+                    style={{ height: 'calc(100vh - 350px)' }}
+                  >
+                    {showJsonSearch && (
+                      <SearchPanel
+                        contentType="JSON"
+                        targetRef={jsonOutputRef}
+                        isDarkMode={isDarkMode}
+                      />
+                    )}
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
+                      className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </div>
+                </div>
+             )}
+             {rawVastContent && (
+               <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full lg:w-3/4'} min-w-0 flex flex-col`}>
+                 {/* Überschrift auf gleicher Höhe wie bei JSON */}                 
+                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
+                 
+                 {renderVastTabs()}
+               </div>
+             )}
+             
+             {/* JSON Outline Panel auf der rechten Seite */}
+             {parsedJson && !rawVastContent && (
+               <div className="w-full lg:w-1/4 min-w-0 flex flex-col">
+                 {renderJsonOutline()}
+               </div>
+             )}
+           </div>
+        </div>
+      )}
       
       {/* CopyMessage anzeigen */}
       {copyMessage && (
