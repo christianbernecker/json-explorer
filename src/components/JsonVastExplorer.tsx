@@ -302,49 +302,84 @@ const JsonVastExplorer = React.memo(({
     if (!xml) return '';
     
     try {
-      // Speziell für VAST XML formatieren - CDATA inline mit Tags
-      const preprocessXml = (xml: string): string => {
-        // CDATA-Inhalte in einer Zeile mit Tags halten
-        return xml
-          .replace(/>\s*<!\[CDATA\[(.*?)\]\]>\s*</g, '><![CDATA[$1]]><')
-          .replace(/>\s*</g, '>\n<'); // Tag-Trennung durch Zeilenumbrüche
-      };
-      
-      // XML Text indentieren
-      const indentXml = (text: string): string => {
-        const lines = text.split('\n');
-        let indent = 0;
-        let result = '';
+      // XML mit einer verbesserten Formatierungslogik formatieren
+      const formatXml = (xmlText: string): string => {
+        // Entferne Leerzeichen und Zeilenumbrüche zwischen Tags
+        let xml = xmlText.replace(/>\s*</g, '><');
         
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
+        // Spezialfall: CDATA sollte inline mit Tags bleiben
+        xml = xml.replace(/(<[^>]*>)(<!\[CDATA\[(.*?)\]\]>)(<\/[^>]*>)/g, '$1$2$4');
+        
+        let formatted = '';
+        let indent = 0;
+        let inCdata = false;
+        
+        // Gehe jeden Zeichen durch
+        for (let i = 0; i < xml.length; i++) {
+          const char = xml.charAt(i);
           
-          // Schließende Tags reduzieren Einrückung
-          if (line.startsWith('</')) {
+          // Prüfe auf CDATA-Beginn
+          if (i + 8 < xml.length && xml.substring(i, i+9) === '<![CDATA[') {
+            inCdata = true;
+            formatted += '<![CDATA[';
+            i += 8;
+            continue;
+          }
+          
+          // Prüfe auf CDATA-Ende
+          if (inCdata && i + 2 < xml.length && xml.substring(i, i+3) === ']]>') {
+            inCdata = false;
+            formatted += ']]>';
+            i += 2;
+            continue;
+          }
+          
+          // Wenn in CDATA, füge Zeichen direkt hinzu
+          if (inCdata) {
+            formatted += char;
+            continue;
+          }
+          
+          // Behandle öffnende Tags
+          if (char === '<' && xml.charAt(i+1) !== '/') {
+            // Ist es ein selbstschließendes Tag?
+            const selfClosing = xml.indexOf('/>', i) < xml.indexOf('>', i) && xml.indexOf('/>', i) !== -1;
+            // Ist es ein kombiniertes Tag (öffnen + schließen in einem)?
+            const combinedTag = xml.substring(i).match(/^<[^>]*>[^<]*<\/[^>]*>/);
+            
+            if (!selfClosing && !combinedTag) {
+              formatted += '\n' + ' '.repeat(indent * 2) + '<';
+              indent++;
+            } else {
+              formatted += '\n' + ' '.repeat(indent * 2) + '<';
+            }
+          } 
+          // Behandle schließende Tags
+          else if (char === '<' && xml.charAt(i+1) === '/') {
             indent--;
+            formatted += '\n' + ' '.repeat(indent * 2) + '<';
           }
-          
-          // Einrückung hinzufügen
-          if (indent > 0) {
-            result += '  '.repeat(indent);
+          // Für das Ende eines selbstschließenden Tags oder normalen Tags
+          else if (char === '>') {
+            formatted += '>';
+            
+            // Wenn das nächste Zeichen ein öffnendes '<' ist, füge keinen Zeilenumbruch ein
+            if (i + 1 < xml.length && xml.charAt(i+1) === '<') {
+              // nichts tun
+            } else {
+              formatted += '\n' + ' '.repeat(indent * 2);
+            }
           }
-          result += line + '\n';
-          
-          // Öffnende Tags erhöhen Einrückung, außer selbstschließende oder Kombi-Tags
-          if (line.startsWith('<') && 
-              !line.startsWith('</') && 
-              !line.endsWith('/>') && 
-              !line.match(/<[^>]*>[^<]*<\/[^>]*>/)) {
-            indent++;
+          // Für alle anderen Zeichen
+          else {
+            formatted += char;
           }
         }
         
-        return result;
+        return formatted.trim();
       };
       
-      const processedXml = preprocessXml(xml);
-      return indentXml(processedXml);
+      return formatXml(xml);
     } catch (error) {
       console.error('Error formatting XML:', error);
       return xml;
@@ -373,27 +408,34 @@ const JsonVastExplorer = React.memo(({
     
     const formattedVast = formatXmlForDisplay(vastContent);
     
-    // Syntax-Highlighting für XML/VAST mit den Farben aus dem Screenshot
+    // Verbesserte Syntax-Highlighting für XML/VAST
     const colorizeVast = (text: string, isDark: boolean): string => {
-      return text
+      let colorized = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        // Tag-Namen in blau
-        .replace(/&lt;(\/?)([\w:]+)/g, 
-          '&lt;$1<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + ';">$2</span>')
-        // Attribute-Namen in grün
-        .replace(/\s([\w:]+)=/g, 
-          ' <span style="color: ' + (isDark ? '#48bb78' : '#38a169') + ';">$1</span>=')
-        // Attribut-Werte in gelb/orange
-        .replace(/="([^"]*)"/g, 
-          '="<span style="color: ' + (isDark ? '#ecc94b' : '#d69e2e') + ';">$1</span>"')
-        // CDATA-Markierung in grau
-        .replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
-          '<span style="color: ' + (isDark ? '#a0aec0' : '#718096') + ';">$1</span>')
-        // CDATA-Inhalt (URLs) in blau
-        .replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, 
-          '$1<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + ';">$2</span>$3');
+        .replace(/>/g, '&gt;');
+      
+      // Tags in Blau
+      colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, 
+        '&lt;$1<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + ';">$2</span>');
+      
+      // Attribute in Grün
+      colorized = colorized.replace(/\s([\w:]+)=/g, 
+        ' <span style="color: ' + (isDark ? '#48bb78' : '#38a169') + ';">$1</span>=');
+      
+      // Attributwerte in Gelb
+      colorized = colorized.replace(/="([^"]*)"/g, 
+        '="<span style="color: ' + (isDark ? '#ecc94b' : '#d69e2e') + ';">$1</span>"');
+      
+      // CDATA-Markierung in Grau
+      colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
+        '<span style="color: ' + (isDark ? '#a0aec0' : '#718096') + ';">$1</span>');
+      
+      // CDATA-Inhalt in Blau
+      colorized = colorized.replace(/(&lt;!\[CDATA\[)<span style="[^"]*">(.+?)<\/span>(\]\]&gt;)/g, 
+        '$1<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + ';">$2</span>$3');
+      
+      return colorized;
     };
     
     const highlightedVast = (
@@ -493,17 +535,11 @@ const JsonVastExplorer = React.memo(({
       if (!source) return null;
       
       let displaySource = source;
+      
+      // Wenn nicht JSON, dann zeige die volle URL an
       if (source !== 'JSON') {
-        // URL formatieren
-        try {
-          const url = new URL(source);
-          displaySource = `${url.host}${url.pathname}`;
-          if (displaySource.length > 50) {
-            displaySource = displaySource.substring(0, 47) + '...';
-          }
-        } catch (e) {
-          // Falls keine gültige URL, den Original-String belassen
-        }
+        // Keine Kürzung mehr, zeige die volle URL an
+        displaySource = source;
       }
       
       const handleSourceClick = () => {

@@ -2,6 +2,7 @@
 // Dieser Service kommuniziert mit LLM-APIs (Claude 3.5 oder ChatGPT 4 mini)
 
 import { AggregatedData, DataRow } from '../types';
+import type { MessageRole } from '../types/index';
 
 // Interface für den LLM-Request
 interface LLMAnalysisRequest {
@@ -24,6 +25,39 @@ export interface LLMAnalysisResponse {
   };
   additionalQuestions: string[]; // Vorschläge für weitere Analysen
 }
+
+// Nachrichten-Interface für die API
+interface Message {
+  role: MessageRole;
+  content: string;
+}
+
+// Claude-spezifische Typen
+interface ClaudeMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface ClaudeResponse {
+  id: string;
+  type: string;
+  role: string;
+  model: string;
+  content: { type: string; text: string }[];
+  stop_reason: string;
+  stop_sequence: string | null;
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+    cache_creation_input_tokens: number;
+    cache_read_input_tokens: number;
+  };
+}
+
+// API-Einstellungen
+const CLAUDE_API_KEY = process.env.REACT_APP_ANTHROPIC_API_KEY || '';
+const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
+const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 
 /**
  * Generiert einen Prompt für das LLM basierend auf den Daten
@@ -308,4 +342,78 @@ const llmService = {
   analyzeDatatWithLLM
 };
 
-export default llmService; 
+export default llmService;
+
+export async function sendMessageToClaude(messages: Message[]): Promise<string> {
+  try {
+    // Konvertiere Nachrichten ins Claude-Format
+    const claudeMessages: ClaudeMessage[] = messages
+      .filter(msg => msg.role !== 'system')
+      .map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      }));
+    
+    // System-Nachricht als Benutzer-Nachricht zum Beginn hinzufügen
+    const systemMessages = messages.filter(msg => msg.role === 'system');
+    let systemPrompt = '';
+    
+    if (systemMessages.length > 0) {
+      systemPrompt = systemMessages.map(msg => msg.content).join('\n\n');
+    }
+    
+    // Claude API-Anfrage
+    const response = await fetch(CLAUDE_API_URL, {
+      method: 'POST',
+      headers: {
+        'x-api-key': CLAUDE_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 1024,
+        messages: claudeMessages,
+        system: systemPrompt || undefined
+      })
+    });
+    
+    // Fehler abfangen
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`Claude API error (${response.status}): ${errorData}`);
+    }
+    
+    // Erfolgreiche Antwort verarbeiten
+    const data: ClaudeResponse = await response.json();
+    
+    // Text aus der Antwort extrahieren
+    const responseText = data.content
+      .filter(item => item.type === 'text')
+      .map(item => item.text)
+      .join('');
+    
+    return responseText;
+  } catch (error) {
+    console.error('Error sending message to Claude:', error);
+    throw error;
+  }
+}
+
+// Generische Funktion zum Senden an jeden LLM-Dienst
+export async function sendMessageToLLM(
+  provider: 'Claude' | 'ChatGPT',
+  messages: Message[]
+): Promise<string> {
+  try {
+    if (provider === 'Claude') {
+      return await sendMessageToClaude(messages);
+    } else {
+      // ChatGPT wird später implementiert
+      throw new Error('ChatGPT is not yet implemented');
+    }
+  } catch (error) {
+    console.error(`Error sending message to ${provider}:`, error);
+    throw error;
+  }
+} 
