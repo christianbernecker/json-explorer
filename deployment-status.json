@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 09:42:50 CEST 2025", "commit": "Fix: VAST-Tabs auf 'Embedded VAST', 'VASTAdTagURI (1)' und 'VASTAdTagURI (2)' korrigiert"}
+{"deployment": "staging", "timestamp": "Wed May  7 09:51:57 CEST 2025", "commit": "Fix: VAST-Ausgabe komplett überarbeitet mit korrektem Tab-Design, Styling und Buttons"}
