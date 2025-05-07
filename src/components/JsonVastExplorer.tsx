@@ -373,40 +373,13 @@ const JsonVastExplorer = React.memo(({
     
     const formattedVast = formatXmlForDisplay(vastContent);
     
-    // Syntax-Highlighting für XML/VAST mit den Farben aus dem Screenshot
+    // Stark vereinfachte Version für XML-Highlighting
     const colorizeVast = (text: string, isDark: boolean): string => {
-      // Die vollständige HTML-Tags zur direkten Ausgabe
-      const blueStart = '<span style="color:' + (isDark ? '#4299e1' : '#3182ce') + ';">';
-      const greenStart = '<span style="color:' + (isDark ? '#48bb78' : '#38a169') + ';">';
-      const yellowStart = '<span style="color:' + (isDark ? '#ecc94b' : '#d69e2e') + ';">';
-      const grayStart = '<span style="color:' + (isDark ? '#a0aec0' : '#718096') + ';">';
-      const spanEnd = '</span>';
-
-      // Erst Text escapen
-      let colorized = text
+      // Nur Text escapen, keine Farb-Hervorhebung
+      return text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
-
-      // Dann Tag-Namen einfärben (blau)
-      colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, '&lt;$1' + blueStart + '$2' + spanEnd);
-      
-      // Attribute-Namen einfärben (grün)
-      colorized = colorized.replace(/\s([\w:]+)=/g, ' ' + greenStart + '$1' + spanEnd + '=');
-      
-      // Attribut-Werte einfärben (gelb/orange)
-      colorized = colorized.replace(/="([^"]*)"/g, '="' + yellowStart + '$1' + spanEnd + '"');
-      
-      // CDATA-Markierung einfärben (grau)
-      colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, grayStart + '$1' + spanEnd);
-      
-      // CDATA-Inhalt einfärben (blau)
-      colorized = colorized.replace(/(&lt;!\[CDATA\[)(.*?)(\]\]&gt;)/g, 
-        function(match, open, content, close) {
-          return open + blueStart + content + spanEnd + close;
-        });
-      
-      return colorized;
     };
     
     const highlightedVast = (
