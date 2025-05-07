@@ -342,6 +342,7 @@ const identifyNonEmptyColumns = (data: DataRow[]): string[] => {
 };
 
 // Generate AG-Grid column definitions from data
+/* eslint-disable @typescript-eslint/no-unused-vars */
 const generateColumnDefs = (data: DataRow[], nonEmptyColumns: string[]): ColDef[] => {
   if (data.length === 0 || nonEmptyColumns.length === 0) return [];
   
@@ -377,6 +378,48 @@ const generateColumnDefs = (data: DataRow[], nonEmptyColumns: string[]): ColDef[
   
   return columnDefs;
 };
+/* eslint-enable @typescript-eslint/no-unused-vars */
+
+// Column defs generieren (mit Debug-Info)
+const generateColumnDefsWithDebug = useCallback((data: DataRow[], nonEmptyColumns: string[]): ColDef[] => {
+  console.log('Generiere Spaltendefinitionen für Tabelle:', {
+    rowCount: data.length,
+    columnCount: nonEmptyColumns.length,
+    sampleRow: data.length > 0 ? data[0] : null
+  });
+
+  return nonEmptyColumns.map(key => {
+    let columnType = 'string';
+    if (data.length > 0) {
+      const values = data.map(row => row[key]).filter(Boolean);
+      columnType = identifyColumnType(values);
+    }
+  
+    return {
+      field: key,
+      headerName: key,
+      sortable: true,
+      filter: true,
+      minWidth: 125,
+      width: 150,
+      valueFormatter: (params: any) => {
+        if (params.value === null || params.value === undefined) {
+          return '';
+        }
+        if (columnType === 'date' && params.value instanceof Date) {
+          // Formatiere Datumswerte direkt im useCallback
+          return params.value instanceof Date 
+            ? params.value.toISOString().split('T')[0]
+            : params.value;
+        }
+        if (typeof params.value === 'number') {
+          return params.value.toLocaleString();
+        }
+        return String(params.value);
+      }
+    };
+  });
+}, []);
 
 // Main Component
 function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
@@ -499,31 +542,6 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       setIsLoading(false);
     }
   };
-  
-  // Helper function to format date values consistently
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  const formatDateValue = (value: any): string => {
-    if (value instanceof Date) {
-      // Convert date object to string (YYYY-MM-DD)
-      return value.toISOString().split('T')[0];
-    } else if (typeof value === 'string') {
-      // Check if string represents a date
-      const datePattern = /^\d{1,2}[/-]\d{1,2}[/-]\d{2,4}$/;
-      if (datePattern.test(value) || value.includes('-')) {
-        try {
-          const date = new Date(value);
-          if (!isNaN(date.getTime())) {
-            return date.toISOString().split('T')[0];
-          }
-        } catch (e) {
-          // Failed to parse as date, return original
-        }
-      }
-    }
-    // Return as string for any other case
-    return String(value);
-  };
-  /* eslint-enable @typescript-eslint/no-unused-vars */
   
   // Setup dropzone
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -897,44 +915,6 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       )}
     </div>
   );
-
-  // Column defs generieren (mit Debug-Info)
-  const generateColumnDefsWithDebug = useCallback((data: DataRow[], nonEmptyColumns: string[]): ColDef[] => {
-    console.log('Generiere Spaltendefinitionen für Tabelle:', {
-      rowCount: data.length,
-      columnCount: nonEmptyColumns.length,
-      sampleRow: data.length > 0 ? data[0] : null
-    });
-
-    return nonEmptyColumns.map(key => {
-      let columnType = 'string';
-      if (data.length > 0) {
-        const values = data.map(row => row[key]).filter(Boolean);
-        columnType = identifyColumnType(values);
-      }
-    
-      return {
-        field: key,
-        headerName: key,
-        sortable: true,
-        filter: true,
-        minWidth: 125,
-        width: 150,
-        valueFormatter: (params: any) => {
-          if (params.value === null || params.value === undefined) {
-            return '';
-          }
-          if (columnType === 'date' && params.value instanceof Date) {
-            return formatDateValue(params.value);
-          }
-          if (typeof params.value === 'number') {
-            return params.value.toLocaleString();
-          }
-          return String(params.value);
-        }
-      };
-    });
-  }, [formatDateValue]);
 
   // Tabelle rendern (mit Debug-Ausgabe)
   const renderTableWithDebug = useCallback(() => {

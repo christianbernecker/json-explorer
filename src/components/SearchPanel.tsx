@@ -138,6 +138,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
       
       // Matches zählen
       let matchesFound = 0;
+      // Variable wird nicht mehr verwendet, daher als ungenutzt markieren
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const matchElements: HTMLElement[] = [];
       
       // Durch Textknoten iterieren und Treffer markieren

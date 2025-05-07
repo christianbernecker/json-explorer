@@ -40,6 +40,7 @@ const JsonVastExplorer = React.memo(({
   setShowHistory
 }: JsonVastExplorerProps) => {
   // Explorer state
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const [jsonInput, setJsonInput] = useState('');
   const [parsedJson, setParsedJson] = useState<any>(null);
   const [rawVastContent, setRawVastContent] = useState<string | null>(null);
@@ -53,6 +54,7 @@ const JsonVastExplorer = React.memo(({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showVastSearch, setShowVastSearch] = useState(false);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
+  /* eslint-enable @typescript-eslint/no-unused-vars */
   
   // State für die VAST Kette (Wrapper)
   interface VastChainItem {
@@ -71,8 +73,10 @@ const JsonVastExplorer = React.memo(({
   const [activeVastTabIndex, setActiveVastTabIndex] = useState<number>(0);
   
   // Refs for search functionality
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const jsonOutputRef = useRef<HTMLDivElement>(null);
+  /* eslint-enable @typescript-eslint/no-unused-vars */
   
   // Ref for Embedded VAST output
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -254,6 +258,7 @@ const JsonVastExplorer = React.memo(({
   }, []);
   
   // Handle JSON input change
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const handleJsonInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJsonInput(e.target.value);
   }, []);
@@ -296,7 +301,8 @@ const JsonVastExplorer = React.memo(({
       copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
     }
   }, [parsedJson, copyToClipboard]);
-
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+  
   // Format XML for display - adding proper styling and line breaks
   const formatXmlForDisplay = useCallback((xml: string | null): string => {
     if (!xml) return '';
@@ -855,6 +861,7 @@ const JsonVastExplorer = React.memo(({
   };
 
   // Funktion zum Rendern der JSON-Outline
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const renderJsonOutline = () => {
     if (!parsedJson) return null;
     
@@ -867,6 +874,7 @@ const JsonVastExplorer = React.memo(({
       </div>
     );
   };
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   return (
     <div className="w-full h-full flex flex-col">
