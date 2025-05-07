@@ -13,22 +13,10 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
   const [matches, setMatches] = useState<HTMLElement[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Fokussiere das Suchfeld beim Mounten
-  useEffect(() => {
-    searchInputRef.current?.focus();
+  // Escape spezielle Regex-Zeichen
+  const escapeRegExp = useCallback((string: string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }, []);
-
-  // Führe die Suche aus, wenn sich der Suchbegriff ändert
-  useEffect(() => {
-    if (!searchTerm || !targetRef.current) {
-      clearHighlights();
-      setMatchCount(0);
-      setCurrentMatchIndex(0);
-      return;
-    }
-    
-    performSearch();
-  }, [searchTerm, clearHighlights, performSearch, targetRef]);
 
   // Entferne alle Highlights
   const clearHighlights = useCallback(() => {
@@ -53,10 +41,28 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
     }
   }, [targetRef, isDarkMode]);
 
-  // Escape spezielle Regex-Zeichen
-  const escapeRegExp = useCallback((string: string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }, []);
+  // Aktuelle Übereinstimmung hervorheben und zu ihr scrollen
+  const highlightMatch = useCallback((index: number, matchElements: HTMLElement[]) => {
+    if (!matchElements.length) return;
+    
+    // Reset das vorherige aktuelle Element
+    const previousMatch = matchElements[currentMatchIndex];
+    if (previousMatch) {
+      previousMatch.classList.remove('current-match');
+      previousMatch.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+    }
+    
+    // Markiere das neue Element
+    const match = matchElements[index];
+    match.classList.add('current-match');
+    match.style.backgroundColor = isDarkMode ? '#ef4444' : '#f87171';
+    match.style.color = 'white';
+    
+    // Scrolle zur Position
+    match.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    setCurrentMatchIndex(index);
+  }, [currentMatchIndex, isDarkMode]);
 
   // Führe Suche durch und markiere Übereinstimmungen
   const performSearch = useCallback(() => {
@@ -119,46 +125,40 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
     } catch (error) {
       console.error('Search error:', error);
     }
-  }, [clearHighlights, escapeRegExp, isDarkMode, searchTerm, targetRef]);
+  }, [clearHighlights, escapeRegExp, isDarkMode, searchTerm, targetRef, highlightMatch]);
+
+  // Fokussiere das Suchfeld beim Mounten
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
+
+  // Führe die Suche aus, wenn sich der Suchbegriff ändert
+  useEffect(() => {
+    if (!searchTerm || !targetRef.current) {
+      clearHighlights();
+      setMatchCount(0);
+      setCurrentMatchIndex(0);
+      return;
+    }
+    
+    performSearch();
+  }, [searchTerm, clearHighlights, performSearch, targetRef]);
 
   // Zur nächsten Übereinstimmung navigieren
-  const goToNextMatch = () => {
+  const goToNextMatch = useCallback(() => {
     if (matches.length === 0) return;
     
     const nextIndex = (currentMatchIndex + 1) % matches.length;
     highlightMatch(nextIndex, matches);
-  };
+  }, [currentMatchIndex, highlightMatch, matches]);
 
   // Zur vorherigen Übereinstimmung navigieren
-  const goToPrevMatch = () => {
+  const goToPrevMatch = useCallback(() => {
     if (matches.length === 0) return;
     
     const prevIndex = (currentMatchIndex - 1 + matches.length) % matches.length;
     highlightMatch(prevIndex, matches);
-  };
-
-  // Aktuelle Übereinstimmung hervorheben und zu ihr scrollen
-  const highlightMatch = (index: number, matchElements: HTMLElement[]) => {
-    if (!matchElements.length) return;
-    
-    // Reset das vorherige aktuelle Element
-    const previousMatch = matchElements[currentMatchIndex];
-    if (previousMatch) {
-      previousMatch.classList.remove('current-match');
-      previousMatch.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
-    }
-    
-    // Markiere das neue Element
-    const match = matchElements[index];
-    match.classList.add('current-match');
-    match.style.backgroundColor = isDarkMode ? '#ef4444' : '#f87171';
-    match.style.color = 'white';
-    
-    // Scrolle zur Position
-    match.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-    setCurrentMatchIndex(index);
-  };
+  }, [currentMatchIndex, highlightMatch, matches]);
 
   return (
     <div className={`flex items-center p-2 mb-2 rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
