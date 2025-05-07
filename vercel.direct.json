@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/", "destination": "/json-explorer" },
+    { "source": "/json-explorer", "destination": "/index.html" },
+    { "source": "/json-explorer/(.*)", "destination": "/$1" }
+  ]
+} 
