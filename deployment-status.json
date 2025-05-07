@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 15:36:44 CEST 2025", "commit": "Fix: ESLint-Warnungen unterdrückt, um Build-Fehler zu vermeiden"}
+{"deployment": "staging", "timestamp": "Wed May  7 15:42:11 CEST 2025", "commit": "Fix: VAST Tag-Anzeige korrigiert"}
