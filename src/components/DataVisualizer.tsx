@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { AgGridReact } from 'ag-grid-react';
 import { ColDef, GridApi } from 'ag-grid-community';
@@ -397,14 +397,14 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   const [metrics, setMetrics] = useState<string[]>([]);
   const [selectedDimension, setSelectedDimension] = useState<string>('');
   const [selectedMetric, setSelectedMetric] = useState<string>('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedAggregation, setSelectedAggregation] = useState<'sum' | 'average'>('sum');
   const [chartData, setChartData] = useState<AggregatedData[]>([]);
   const [chartType, setChartType] = useState<ChartType>('bar');
-  const [activeTab, setActiveTab] = useState<'table' | 'chart' | 'dashboard' | 'data' | 'visualize' | 'analytics' | 'ai'>('dashboard');
   const [fileName, setFileName] = useState<string>('');
   const [columnDefs, setColumnDefs] = useState<ColDef[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
-  const chartRef = useRef<HTMLDivElement>(null);
   
   // State for file upload
   const [isLoading, setIsLoading] = useState(false);
@@ -888,17 +888,6 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
     pdf.save(`${fileName.split('.')[0] || 'data'}_export.pdf`);
   }, [fileName, data]);
 
-  // AG-Grid onGridReady handler
-  const onGridReady = useCallback((params: { api: GridApi }) => {
-    setGridApi(params.api);
-    
-    // Auto-size columns after data is loaded
-    setTimeout(() => {
-      params.api.sizeColumnsToFit();
-    }, 100);
-    
-  }, []);
-
   // Callback für Visualisierungsvorschläge vom LLM
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleVisualizationSuggestion = (
@@ -925,54 +914,6 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
     // Wenn neue Dimension/Metrik gesetzt wurden, triggert useEffect 
     // automatisch die Neugenerierung der Chartdaten
   };
-
-  // Rendert die Tabs
-  const renderTabs = () => (
-    <div className={`flex border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} mb-4`}>
-      <button
-        className={`py-2 px-4 font-medium ${
-          activeTab === 'table'
-            ? isDarkMode 
-              ? 'text-blue-400 border-b-2 border-blue-400' 
-              : 'text-blue-600 border-b-2 border-blue-600'
-            : isDarkMode 
-              ? 'text-gray-300 hover:text-gray-100' 
-              : 'text-gray-600 hover:text-gray-800'
-        }`}
-        onClick={() => setActiveTab('table')}
-      >
-        Tabelle
-      </button>
-      <button
-        className={`py-2 px-4 font-medium ${
-          activeTab === 'chart'
-            ? isDarkMode 
-              ? 'text-blue-400 border-b-2 border-blue-400' 
-              : 'text-blue-600 border-b-2 border-blue-600'
-            : isDarkMode 
-              ? 'text-gray-300 hover:text-gray-100' 
-              : 'text-gray-600 hover:text-gray-800'
-        }`}
-        onClick={() => setActiveTab('chart')}
-      >
-        Visualisierung
-      </button>
-      <button
-        className={`py-2 px-4 font-medium ${
-          activeTab === 'ai'
-            ? isDarkMode 
-              ? 'text-blue-400 border-b-2 border-blue-400' 
-              : 'text-blue-600 border-b-2 border-blue-600'
-            : isDarkMode 
-              ? 'text-gray-300 hover:text-gray-100' 
-              : 'text-gray-600 hover:text-gray-800'
-        }`}
-        onClick={() => setActiveTab('ai')}
-      >
-        KI-Analyse
-      </button>
-    </div>
-  );
 
   // Chart rendering function 
   const renderChart = () => {
@@ -1218,7 +1159,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         subtitle="Visualisiere und analysiere CSV, XLSX und JSON Daten mit KI-Unterstützung"
       />
       
-      <div className="container mx-auto p-4 mt-12">
+      <div className="container mx-auto px-12 mt-12">
         <div className={`my-6 p-6 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
           {data.length === 0 ? (
             renderUploadForm()
@@ -1248,141 +1189,29 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                 </div>
               </div>
               
-              {renderTabs()}
-              
-              {activeTab === 'table' && (
-                <div className="my-4">
-                  <div className={`h-[600px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
+              {/* KI-Dashboard ohne Tabs */}
+              <DataVisualizerPlugin
+                data={data}
+                dimensions={dimensions}
+                metrics={metrics}
+                selectedDimension={selectedDimension}
+                selectedMetric={selectedMetric}
+                chartData={chartData}
+                chartType={chartType}
+                onVisualizationSuggestion={handleVisualizationSuggestion}
+                renderChart={renderChart}
+                renderTable={() => (
+                  <div className={`h-[400px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
                     <AgGridReact
                       columnDefs={columnDefs}
                       rowData={data}
-                      onGridReady={onGridReady}
                       pagination={true}
                       paginationPageSize={10}
                     />
                   </div>
-                </div>
-              )}
-              
-              {activeTab === 'chart' && (
-                <div className="mt-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                    <div className="lg:col-span-1">
-                      <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-                        <h3 className="font-bold mb-2">Visualisierungsoptionen</h3>
-                        
-                        <div className="mb-4">
-                          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                            Diagrammtyp
-                          </label>
-                          <select
-                            value={chartType}
-                            onChange={(e) => setChartType(e.target.value as ChartType)}
-                            className={`w-full p-2 rounded border ${
-                              isDarkMode 
-                                ? 'bg-gray-800 text-white border-gray-600' 
-                                : 'bg-white text-gray-900 border-gray-300'
-                            }`}
-                          >
-                            <option value="bar">Balkendiagramm</option>
-                            <option value="line">Liniendiagramm</option>
-                            <option value="pie">Kreisdiagramm</option>
-                            <option value="radar">Radar-Diagramm</option>
-                            <option value="area">Flächendiagramm</option>
-                          </select>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                            Dimension (X-Achse)
-                          </label>
-                          <select
-                            value={selectedDimension}
-                            onChange={(e) => setSelectedDimension(e.target.value)}
-                            className={`w-full p-2 rounded border ${
-                              isDarkMode 
-                                ? 'bg-gray-800 text-white border-gray-600' 
-                                : 'bg-white text-gray-900 border-gray-300'
-                            }`}
-                          >
-                            <option value="">Bitte wählen</option>
-                            {dimensions.map((dim) => (
-                              <option key={dim} value={dim}>{dim}</option>
-                            ))}
-                          </select>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                            Metrik (Y-Achse)
-                          </label>
-                          <select
-                            value={selectedMetric}
-                            onChange={(e) => setSelectedMetric(e.target.value)}
-                            className={`w-full p-2 rounded border ${
-                              isDarkMode 
-                                ? 'bg-gray-800 text-white border-gray-600' 
-                                : 'bg-white text-gray-900 border-gray-300'
-                            }`}
-                          >
-                            <option value="">Bitte wählen</option>
-                            {metrics.map((metric) => (
-                              <option key={metric} value={metric}>{metric}</option>
-                            ))}
-                          </select>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'} mb-1`}>
-                            Aggregationstyp
-                          </label>
-                          <select
-                            value={selectedAggregation}
-                            onChange={(e) => setSelectedAggregation(e.target.value as 'sum' | 'average')}
-                            className={`w-full p-2 rounded border ${
-                              isDarkMode 
-                                ? 'bg-gray-800 text-white border-gray-600' 
-                                : 'bg-white text-gray-900 border-gray-300'
-                            }`}
-                          >
-                            <option value="sum">Summe</option>
-                            <option value="average">Durchschnitt</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="lg:col-span-3" ref={chartRef}>
-                      {renderChart()}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'ai' && (
-                <DataVisualizerPlugin
-                  data={data}
-                  dimensions={dimensions}
-                  metrics={metrics}
-                  selectedDimension={selectedDimension}
-                  selectedMetric={selectedMetric}
-                  chartData={chartData}
-                  chartType={chartType}
-                  onVisualizationSuggestion={handleVisualizationSuggestion}
-                  renderChart={renderChart}
-                  renderTable={() => (
-                    <div className={`h-[300px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
-                      <AgGridReact
-                        columnDefs={columnDefs}
-                        rowData={data.slice(0, 50)}
-                        pagination={true}
-                        paginationPageSize={10}
-                      />
-                    </div>
-                  )}
-                  isDarkMode={isDarkMode}
-                />
-              )}
+                )}
+                isDarkMode={isDarkMode}
+              />
             </>
           )}
         </div>

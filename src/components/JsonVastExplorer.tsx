@@ -397,6 +397,7 @@ const JsonVastExplorer = React.memo(({
       content: string | null;
       error?: string | null;
       isLoading?: boolean;
+      source?: string;
     }
 
     // If no VAST content, show empty state
@@ -417,7 +418,8 @@ const JsonVastExplorer = React.memo(({
         id: 0,
         label: 'Embedded VAST',
         ref: embeddedVastOutputRef,
-        content: rawVastContent
+        content: rawVastContent,
+        source: 'JSON'
       });
     }
     
@@ -425,11 +427,12 @@ const JsonVastExplorer = React.memo(({
     vastChain.forEach((item, index) => {
       tabs.push({
         id: index + 1,
-        label: `VAST ${index + 1}${item.isLoading ? ' (Loading...)' : ''}`,
+        label: `Wrapper ${index + 1}${item.isLoading ? ' (Loading...)' : ''}`,
         ref: getFetchedVastRef(index),
         content: item.content,
         error: item.error,
-        isLoading: item.isLoading
+        isLoading: item.isLoading,
+        source: item.uri
       });
     });
     
@@ -473,7 +476,14 @@ const JsonVastExplorer = React.memo(({
                   <p>{tab.error}</p>
                 </div>
               ) : (
-                renderVastContent(tab.content)
+                <div>
+                  {tab.source && (
+                    <div className={`text-xs mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      <span className="font-semibold">Source:</span> {tab.source}
+                    </div>
+                  )}
+                  {renderVastContent(tab.content)}
+                </div>
               )}
             </div>
           ))}

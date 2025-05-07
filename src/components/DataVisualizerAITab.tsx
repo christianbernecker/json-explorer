@@ -173,17 +173,25 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
   );
 
   return (
-    <div className="mt-4">
+    <div className="w-full h-full">
       {data.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1">
             {renderInsightsPanel()}
           </div>
-          <div className="lg:col-span-2">
-            <div className="mb-4">
-              {renderChart()}
+          <div className="lg:col-span-3">
+            <div className="mb-6">
+              <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                Visualisierung: {selectedDimension} nach {selectedMetric}
+              </h3>
+              <div className="h-[400px]">
+                {renderChart()}
+              </div>
             </div>
             <div>
+              <h3 className={`text-lg font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                Datentabelle
+              </h3>
               {renderTable()}
             </div>
           </div>
