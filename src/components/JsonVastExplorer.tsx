@@ -719,7 +719,7 @@ const JsonVastExplorer = React.memo(({
   }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
   return (
-    <div className="w-full h-full flex flex-col px-2 sm:px-3 md:px-4 lg:px-6">
+    <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* History Panel */}
       {showHistory && (
         <JsonHistoryPanel
@@ -730,16 +730,16 @@ const JsonVastExplorer = React.memo(({
         />
       )}
 
-      <div className="mb-3 md:mb-4">
-        <div className="flex flex-row space-x-4">
+      <div className="mb-2 sm:mb-3 md:mb-4">
+        <div className="flex flex-row space-x-2 sm:space-x-3 md:space-x-4">
           <div className="flex-1">
-            <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>JSON Input</h3>
+            <h3 className={`text-base md:text-lg font-semibold mb-1 md:mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>JSON Input</h3>
             <textarea
               ref={textAreaRef}
               value={jsonInput}
               onChange={handleJsonInputChange}
               placeholder="Paste your JSON here..."
-              className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
+              className={`w-full h-28 sm:h-32 p-2 sm:p-3 border rounded-lg font-mono text-xs mb-1 md:mb-2 outline-none transition ${
                 isDarkMode 
                   ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
                   : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
@@ -794,8 +794,8 @@ const JsonVastExplorer = React.memo(({
       )}
       
       {(parsedJson || rawVastContent) && (
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 lg:space-x-4 flex-1 min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 mt-1 sm:mt-2">
+          <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 lg:space-x-3 flex-1 min-h-0">
             {/* JSON Content - Left column */}
             {parsedJson && (
               <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
@@ -864,7 +864,7 @@ const JsonVastExplorer = React.memo(({
                   <div 
                     ref={jsonOutputRef}
                     className={`flex-1 p-2 sm:p-3 md:p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
-                    style={{ height: 'calc(100vh - 350px)' }}
+                    style={{ height: 'calc(100vh - 300px)' }}
                   >
                     {showJsonSearch && (
                       <SearchPanel
@@ -991,7 +991,7 @@ const JsonVastExplorer = React.memo(({
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-inner" style={{ height: 'calc(100vh - 320px)', overflow: 'auto' }}>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-inner" style={{ height: 'calc(100vh - 280px)', overflow: 'auto' }}>
                     {/* Content des aktuellen Tabs */}
                     <div className="p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                       <div className="text-xs">
