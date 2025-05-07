@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, GridApi } from 'ag-grid-community';
+import type { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer,
@@ -353,23 +353,15 @@ const generateColumnDefs = (data: DataRow[], nonEmptyColumns: string[]): ColDef[
       .filter(val => val !== undefined && val !== null && val !== '');
     
     const hasDateValue = sampleValues.some(val => val instanceof Date);
-    const hasNumericValue = sampleValues.some(val => typeof val === 'number');
     
-    let filterType: string;
-    
-    if (hasDateValue) {
-      filterType = 'agDateColumnFilter';
-    } else if (hasNumericValue) {
-      filterType = 'agNumberColumnFilter';
-    } else {
-      filterType = 'agTextColumnFilter';
-    }
+    // Verwende boolean für Filter statt String
+    const filter = true;
     
     return {
       field,
       headerName: field,
       sortable: true,
-      filter: filterType,
+      filter, // Jetzt ein boolescher Wert
       resizable: true,
       // Special rendering for dates
       cellRenderer: hasDateValue 
@@ -598,7 +590,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         const headers = Object.values(firstRow);
         
         // Process the data starting from the second row
-        const processedData = rawJson.slice(1).map((row) => {
+        const processedData = rawJson.slice(1).map((row: any) => {
           const processedRow: DataRow = {};
           
           // Type safety check
@@ -843,7 +835,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   const exportChartAsPng = useCallback(() => {
     const chartElement = document.getElementById('chart-container');
     if (chartElement) {
-      html2canvas(chartElement).then(canvas => {
+      html2canvas(chartElement).then((canvas: HTMLCanvasElement) => {
         const link = document.createElement('a');
         link.download = `${fileName.split('.')[0] || 'chart'}_export.png`;
         link.href = canvas.toDataURL('image/png');
@@ -1203,6 +1195,15 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
                 renderTable={() => (
                   <div className={`h-[400px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
                     <AgGridReact
+                      onGridReady={(params: GridReadyEvent) => {
+                        const api = params.api;
+                        api.sizeColumnsToFit();
+                      }}
+                      defaultColDef={{
+                        resizable: true,
+                        sortable: true,
+                        filter: true
+                      }}
                       columnDefs={columnDefs}
                       rowData={data}
                       pagination={true}

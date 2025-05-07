@@ -112,24 +112,26 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
         subtitle="Validate, Compare & Explore VAST/JSON"
       />
       
-      <div className="flex-grow mt-0 min-h-0 overflow-y-auto">
-        {activeTab === 'explorer' ? (
-          <JsonVastExplorer 
-            isDarkMode={isDarkMode}
-            history={vastExplorerHistory}
-            setHistory={setVastExplorerHistory}
-            showHistory={showVastExplorerHistory}
-            setShowHistory={setShowVastExplorerHistory}
-          />
-        ) : (
-          <JsonDiffInspector 
-            isDarkMode={isDarkMode}
-            history={diffInspectorHistory}
-            setHistory={setDiffInspectorHistory}
-            showHistory={showDiffInspectorHistory}
-            setShowHistory={setShowDiffInspectorHistory}
-          />
-        )}
+      <div className="container mx-auto px-16 py-8 mt-24" style={{ maxWidth: "90%" }}>
+        <div className={`p-6 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+          {activeTab === 'explorer' ? (
+            <JsonVastExplorer 
+              isDarkMode={isDarkMode}
+              history={vastExplorerHistory}
+              setHistory={setVastExplorerHistory}
+              showHistory={showVastExplorerHistory}
+              setShowHistory={setShowVastExplorerHistory}
+            />
+          ) : (
+            <JsonDiffInspector 
+              isDarkMode={isDarkMode}
+              history={diffInspectorHistory}
+              setHistory={setDiffInspectorHistory}
+              showHistory={showDiffInspectorHistory}
+              setShowHistory={setShowDiffInspectorHistory}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

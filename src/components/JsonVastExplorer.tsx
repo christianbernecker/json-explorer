@@ -410,30 +410,35 @@ const JsonVastExplorer = React.memo(({
     }
 
     // Create all tabs
-    const tabs: TabItem[] = [];
-    
-    // Embedded VAST tab
-    if (rawVastContent) {
-      tabs.push({
+    const tabs: TabItem[] = [
+      {
         id: 0,
         label: 'Embedded VAST',
         ref: embeddedVastOutputRef,
         content: rawVastContent,
         source: 'JSON'
-      });
-    }
+      }
+    ];
     
-    // Chain VAST tabs
-    vastChain.forEach((item, index) => {
-      tabs.push({
-        id: index + 1,
-        label: `Wrapper ${index + 1}${item.isLoading ? ' (Loading...)' : ''}`,
-        ref: getFetchedVastRef(index),
-        content: item.content,
-        error: item.error,
-        isLoading: item.isLoading,
-        source: item.uri
-      });
+    // Füge statische Wrapper-Tabs hinzu
+    tabs.push({
+      id: 1,
+      label: 'Wrapper 1',
+      ref: getFetchedVastRef(0),
+      content: vastChain[0]?.content || null,
+      error: vastChain[0]?.error || null,
+      isLoading: vastChain[0]?.isLoading || false,
+      source: vastChain[0]?.uri || ''
+    });
+    
+    tabs.push({
+      id: 2,
+      label: 'Wrapper 2',
+      ref: getFetchedVastRef(1),
+      content: vastChain[1]?.content || null,
+      error: vastChain[1]?.error || null,
+      isLoading: vastChain[1]?.isLoading || false,
+      source: vastChain[1]?.uri || ''
     });
     
     return (
@@ -457,36 +462,75 @@ const JsonVastExplorer = React.memo(({
         </div>
         
         <div className="mt-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 overflow-auto">
-          {tabs.map(tab => (
-            <div 
-              key={tab.id} 
-              ref={tab.ref}
-              className={`${activeVastTabIndex === tab.id ? 'block' : 'hidden'}`}
-            >
-              {tab.isLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </div>
-              ) : tab.error ? (
-                <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
-                  <p className="font-medium">Error fetching VAST:</p>
-                  <p>{tab.error}</p>
-                </div>
-              ) : (
-                <div>
-                  {tab.source && (
-                    <div className={`text-xs mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      <span className="font-semibold">Source:</span> {tab.source}
-                    </div>
-                  )}
-                  {renderVastContent(tab.content)}
-                </div>
-              )}
+          <div 
+            className={activeVastTabIndex === 0 ? 'block' : 'hidden'}
+            ref={embeddedVastOutputRef}
+          >
+            <div className="text-xs mb-2 text-gray-400 dark:text-gray-400">
+              <span className="font-semibold">Source:</span> JSON
             </div>
-          ))}
+            {renderVastContent(rawVastContent)}
+          </div>
+          
+          <div 
+            className={activeVastTabIndex === 1 ? 'block' : 'hidden'}
+            ref={getFetchedVastRef(0)}
+          >
+            {vastChain[0]?.isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            ) : vastChain[0]?.error ? (
+              <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
+                <p className="font-medium">Error fetching VAST:</p>
+                <p>{vastChain[0]?.error}</p>
+              </div>
+            ) : vastChain[0]?.content ? (
+              <>
+                {vastChain[0]?.uri && (
+                  <div className="text-xs mb-2 text-gray-400 dark:text-gray-400">
+                    <span className="font-semibold">Source:</span> {vastChain[0]?.uri}
+                  </div>
+                )}
+                {renderVastContent(vastChain[0]?.content)}
+              </>
+            ) : (
+              <div className="text-center py-4">Kein Wrapper gefunden</div>
+            )}
+          </div>
+          
+          <div 
+            className={activeVastTabIndex === 2 ? 'block' : 'hidden'}
+            ref={getFetchedVastRef(1)}
+          >
+            {vastChain[1]?.isLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </div>
+            ) : vastChain[1]?.error ? (
+              <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
+                <p className="font-medium">Error fetching VAST:</p>
+                <p>{vastChain[1]?.error}</p>
+              </div>
+            ) : vastChain[1]?.content ? (
+              <>
+                {vastChain[1]?.uri && (
+                  <div className="text-xs mb-2 text-gray-400 dark:text-gray-400">
+                    <span className="font-semibold">Source:</span> {vastChain[1]?.uri}
+                  </div>
+                )}
+                {renderVastContent(vastChain[1]?.content)}
+              </>
+            ) : (
+              <div className="text-center py-4">Kein Wrapper gefunden</div>
+            )}
+          </div>
         </div>
       </div>
     );
