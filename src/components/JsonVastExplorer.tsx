@@ -275,7 +275,7 @@ const JsonVastExplorer = React.memo(({
     );
   };
 
-  // Funktion zum Generieren der XML-Outline
+  // Funktion zum Generieren der XML-Outline - Verbesserte Version
   const generateVastOutline = useCallback((xmlContent: string | null): React.ReactNode => {
     if (!xmlContent) return null;
     
@@ -359,6 +359,32 @@ const JsonVastExplorer = React.memo(({
                   ))}
                 </ul>
               )}
+            </li>
+          );
+        }
+        
+        // CDATA-Knoten explizit verarbeiten
+        if (node.nodeType === Node.CDATA_SECTION_NODE) {
+          const cdataContent = node.nodeValue?.trim();
+          if (!cdataContent) return null;
+          
+          return (
+            <li className="py-1 pl-2 ml-4">
+              <span className="text-purple-500 dark:text-purple-400 text-xs">
+                {'<![CDATA['}{cdataContent.length > 30 ? `${cdataContent.substring(0, 30)}...` : cdataContent}{']]>'}
+              </span>
+            </li>
+          );
+        }
+        
+        // Comment-Knoten verarbeiten
+        if (node.nodeType === Node.COMMENT_NODE) {
+          const commentContent = node.nodeValue?.trim();
+          if (!commentContent) return null;
+          
+          return (
+            <li className="py-1 pl-2 ml-4 text-gray-400 text-xs">
+              {'<!-- '}{commentContent.length > 20 ? `${commentContent.substring(0, 20)}...` : commentContent}{' -->'}
             </li>
           );
         }
@@ -862,9 +888,9 @@ const JsonVastExplorer = React.memo(({
               <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                 
-                {/* Tabs und Toggle für Structure - NEUE IMPLEMENTIERUNG MIT SCROLLBARER LEISTE */}
-                <div className="mb-2 flex flex-wrap justify-between items-center">
-                  <div className={`rounded-t-lg bg-gray-100 dark:bg-gray-700 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} overflow-hidden`} style={{ maxWidth: '70%' }}>
+                {/* Tabs und Toggle für Structure - MIT MEHR ABSTAND */}
+                <div className="flex flex-col mb-4">
+                  <div className={`rounded-t-lg bg-gray-100 dark:bg-gray-700 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} overflow-hidden mb-2`} style={{ maxWidth: '80%' }}>
                     <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none' }}>
                       <div className="flex whitespace-nowrap" style={{ minWidth: 'max-content' }}>
                         {vastChain.length > 0 ? (
@@ -904,7 +930,7 @@ const JsonVastExplorer = React.memo(({
                     </div>
                   </div>
                   
-                  <div className="flex space-x-2 mt-2 md:mt-0">
+                  <div className="flex space-x-2 mt-3">
                     <button
                       onClick={() => setShowVastStructure(!showVastStructure)}
                       className={`flex items-center px-2 py-1 rounded-md text-xs ${
