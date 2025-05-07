@@ -43,12 +43,14 @@ const JsonVastExplorer = React.memo(({
   const [jsonInput, setJsonInput] = useState('');
   const [parsedJson, setParsedJson] = useState<any>(null);
   const [rawVastContent, setRawVastContent] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState('');
   
   // copyMessage wird für Benachrichtigungen nach dem Kopieren verwendet
   const [copyMessage, setCopyMessage] = useState('');
   
   // Suche-States
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showJsonSearch, setShowJsonSearch] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showVastSearch, setShowVastSearch] = useState(false);
@@ -71,6 +73,7 @@ const JsonVastExplorer = React.memo(({
   const [activeVastTabIndex, setActiveVastTabIndex] = useState<number>(0);
   
   // Refs for search functionality
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const jsonOutputRef = useRef<HTMLDivElement>(null);
   
@@ -254,6 +257,7 @@ const JsonVastExplorer = React.memo(({
   }, []);
   
   // Handle JSON input change
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleJsonInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJsonInput(e.target.value);
   }, []);
@@ -291,6 +295,7 @@ const JsonVastExplorer = React.memo(({
   }, []);
 
   // Kopieren des JSON-Inhalts in die Zwischenablage
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const copyJsonToClipboard = useCallback(() => {
     if (parsedJson) {
       copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
@@ -864,6 +869,7 @@ const JsonVastExplorer = React.memo(({
   };
 
   // Funktion zum Rendern der JSON-Outline
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderJsonOutline = () => {
     if (!parsedJson) return null;
     
