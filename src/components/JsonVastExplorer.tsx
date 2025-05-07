@@ -423,7 +423,7 @@ const JsonVastExplorer = React.memo(({
     // Füge statische Wrapper-Tabs hinzu
     tabs.push({
       id: 1,
-      label: 'Wrapper 1',
+      label: 'VASTAdTagURI (1)',
       ref: getFetchedVastRef(0),
       content: vastChain[0]?.content || null,
       error: vastChain[0]?.error || null,
@@ -433,7 +433,7 @@ const JsonVastExplorer = React.memo(({
     
     tabs.push({
       id: 2,
-      label: 'Wrapper 2',
+      label: 'VASTAdTagURI (2)',
       ref: getFetchedVastRef(1),
       content: vastChain[1]?.content || null,
       error: vastChain[1]?.error || null,
