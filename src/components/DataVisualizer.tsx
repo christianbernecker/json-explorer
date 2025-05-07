@@ -380,47 +380,6 @@ const generateColumnDefs = (data: DataRow[], nonEmptyColumns: string[]): ColDef[
 };
 /* eslint-enable @typescript-eslint/no-unused-vars */
 
-// Column defs generieren (mit Debug-Info)
-const generateColumnDefsWithDebug = useCallback((data: DataRow[], nonEmptyColumns: string[]): ColDef[] => {
-  console.log('Generiere Spaltendefinitionen für Tabelle:', {
-    rowCount: data.length,
-    columnCount: nonEmptyColumns.length,
-    sampleRow: data.length > 0 ? data[0] : null
-  });
-
-  return nonEmptyColumns.map(key => {
-    let columnType = 'string';
-    if (data.length > 0) {
-      const values = data.map(row => row[key]).filter(Boolean);
-      columnType = identifyColumnType(values);
-    }
-  
-    return {
-      field: key,
-      headerName: key,
-      sortable: true,
-      filter: true,
-      minWidth: 125,
-      width: 150,
-      valueFormatter: (params: any) => {
-        if (params.value === null || params.value === undefined) {
-          return '';
-        }
-        if (columnType === 'date' && params.value instanceof Date) {
-          // Formatiere Datumswerte direkt im useCallback
-          return params.value instanceof Date 
-            ? params.value.toISOString().split('T')[0]
-            : params.value;
-        }
-        if (typeof params.value === 'number') {
-          return params.value.toLocaleString();
-        }
-        return String(params.value);
-      }
-    };
-  });
-}, []);
-
 // Main Component
 function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   const [data, setData] = useState<DataRow[]>([]);
@@ -448,6 +407,47 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   // Visualization states
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [aggregationType, setAggregationType] = useState<'sum' | 'average'>('sum');
+
+  // Column defs generieren (mit Debug-Info)
+  const generateColumnDefsWithDebug = useCallback((data: DataRow[], nonEmptyColumns: string[]): ColDef[] => {
+    console.log('Generiere Spaltendefinitionen für Tabelle:', {
+      rowCount: data.length,
+      columnCount: nonEmptyColumns.length,
+      sampleRow: data.length > 0 ? data[0] : null
+    });
+
+    return nonEmptyColumns.map(key => {
+      let columnType = 'string';
+      if (data.length > 0) {
+        const values = data.map(row => row[key]).filter(Boolean);
+        columnType = identifyColumnType(values);
+      }
+    
+      return {
+        field: key,
+        headerName: key,
+        sortable: true,
+        filter: true,
+        minWidth: 125,
+        width: 150,
+        valueFormatter: (params: any) => {
+          if (params.value === null || params.value === undefined) {
+            return '';
+          }
+          if (columnType === 'date' && params.value instanceof Date) {
+            // Formatiere Datumswerte direkt im useCallback
+            return params.value instanceof Date 
+              ? params.value.toISOString().split('T')[0]
+              : params.value;
+          }
+          if (typeof params.value === 'number') {
+            return params.value.toLocaleString();
+          }
+          return String(params.value);
+        }
+      };
+    });
+  }, []);
 
   // Calculate chart data 
   const computedChartData = useMemo(() => {
