@@ -302,49 +302,65 @@ const JsonVastExplorer = React.memo(({
     if (!xml) return '';
     
     try {
-      // Speziell für VAST XML formatieren - CDATA inline mit Tags
-      const preprocessXml = (xml: string): string => {
-        // CDATA-Inhalte in einer Zeile mit Tags halten
-        return xml
-          .replace(/>\s*<!\[CDATA\[(.*?)\]\]>\s*</g, '><![CDATA[$1]]><')
-          .replace(/>\s*</g, '>\n<'); // Tag-Trennung durch Zeilenumbrüche
-      };
-      
-      // XML Text indentieren
-      const indentXml = (text: string): string => {
-        const lines = text.split('\n');
-        let indent = 0;
-        let result = '';
+      // Verbesserte XML-Formatierung mit korrekter Einrückung
+      const formatXml = (xml: string): string => {
+        // XML in einzelne Zeichen aufteilen für bessere Kontrolle
+        let formattedXml = '';
+        let indentLevel = 0;
+        let inCdata = false;
         
+        // CDATA-Inhalte inline lassen und nicht umbrechen
+        xml = xml.replace(/(<!\[CDATA\[.*?\]\]>)/g, function(match) {
+          return match.replace(/\s+/g, ' ');
+        });
+        
+        // Tag-Inhalte und Tags durch Zeilenumbrüche trennen
+        xml = xml.replace(/>\s*</g, '>\n<');
+        
+        // Durch die Zeilen gehen und Einrückung hinzufügen
+        const lines = xml.split('\n');
         for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
+          let line = lines[i].trim();
           if (!line) continue;
           
-          // Schließende Tags reduzieren Einrückung
-          if (line.startsWith('</')) {
-            indent--;
+          // Prüfen, ob es ein schließendes Tag ist
+          const isClosingTag = line.startsWith('</');
+          // Prüfen, ob es ein selbstschließendes Tag ist
+          const isSelfClosingTag = line.match(/<[^>]*\/>/);
+          // Prüfen, ob es ein CDATA-Block ist
+          const isCdataTag = line.match(/!\[CDATA\[.*?\]\]/);
+          
+          // Einrückung für schließende Tags reduzieren
+          if (isClosingTag) {
+            indentLevel--;
           }
           
-          // Einrückung hinzufügen
-          if (indent > 0) {
-            result += '  '.repeat(indent);
+          // Einrückung hinzufügen (nur wenn nicht in CDATA-Block)
+          if (!inCdata) {
+            formattedXml += '  '.repeat(Math.max(0, indentLevel)) + line + '\n';
+          } else {
+            formattedXml += line + '\n';
           }
-          result += line + '\n';
           
-          // Öffnende Tags erhöhen Einrückung, außer selbstschließende oder Kombi-Tags
-          if (line.startsWith('<') && 
-              !line.startsWith('</') && 
-              !line.endsWith('/>') && 
-              !line.match(/<[^>]*>[^<]*<\/[^>]*>/)) {
-            indent++;
+          // Einrückung für öffnende Tags erhöhen
+          // Wenn es ein öffnendes, nicht selbstschließendes Tag ist
+          if (!isClosingTag && !isSelfClosingTag && line.startsWith('<') && !isCdataTag) {
+            indentLevel++;
+          }
+          
+          // CDATA-Status verfolgen
+          if (line.includes('<![CDATA[')) {
+            inCdata = true;
+          }
+          if (line.includes(']]>')) {
+            inCdata = false;
           }
         }
         
-        return result;
+        return formattedXml;
       };
       
-      const processedXml = preprocessXml(xml);
-      return indentXml(processedXml);
+      return formatXml(xml);
     } catch (error) {
       console.error('Error formatting XML:', error);
       return xml;
