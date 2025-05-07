@@ -33,17 +33,8 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
         setShowHistory={setShowHistory}
       />
       
-      <div className="h-36"></div>
+      <div className="h-20"></div>
       
-      <div className={`mb-4 ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-          <div className="hidden">
-            <h1 className="text-xl font-semibold">{title}</h1>
-            <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{subtitle}</p>
-          </div>
-        </div>
-      </div>
-
       <InfoPanel 
         isVisible={showInfo} 
         onClose={() => setShowInfo(false)} 

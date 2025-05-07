@@ -87,33 +87,32 @@ Antworte in diesem JSON-Format:
  */
 const queryOpenAI = async (prompt: string): Promise<LLMAnalysisResponse> => {
   try {
-    // In einer echten Implementierung würde hier die OpenAI API aufgerufen werden
-    // Dies ist ein Platzhalter für den Prototyp
+    // Echte API-Implementierung
+    const apiKey = process.env.REACT_APP_OPENAI_API_KEY || '';
     
-    // Beispielantwort für den Prototyp
-    const mockResponse: LLMAnalysisResponse = {
-      insights: [
-        "Dimension X zeigt einen kontinuierlichen Anstieg der Metrik Y über die letzten 3 Monate",
-        "Die Top 3 Einträge machen 45% des Gesamtwertes aus",
-        "Es gibt eine statistische Anomalie bei Eintrag Z"
-      ],
-      visualizationSuggestion: {
-        type: "bar",
-        dimension: "", // Wird im Hauptcode gefüllt
-        metric: "", // Wird im Hauptcode gefüllt
-        explanation: "Ein Balkendiagramm eignet sich am besten für den Vergleich kategorischer Daten"
-      },
-      additionalQuestions: [
-        "Wie entwickelt sich der Trend über einen längeren Zeitraum?",
-        "Gibt es saisonale Schwankungen in den Daten?"
-      ]
-    };
+    if (!apiKey) {
+      console.warn('Kein OpenAI API-Key gefunden, verwende Mock-Antwort');
+      return {
+        insights: [
+          "Dimension X zeigt einen kontinuierlichen Anstieg der Metrik Y über die letzten 3 Monate",
+          "Die Top 3 Einträge machen 45% des Gesamtwertes aus",
+          "Es gibt eine statistische Anomalie bei Eintrag Z"
+        ],
+        visualizationSuggestion: {
+          type: "bar",
+          dimension: "", // Wird im Hauptcode gefüllt
+          metric: "", // Wird im Hauptcode gefüllt
+          explanation: "Ein Balkendiagramm eignet sich am besten für den Vergleich kategorischer Daten"
+        },
+        additionalQuestions: [
+          "Wie entwickelt sich der Trend über einen längeren Zeitraum?",
+          "Gibt es saisonale Schwankungen in den Daten?"
+        ]
+      };
+    }
     
-    return mockResponse;
+    console.log('Sende Anfrage an OpenAI API...');
     
-    // Echte API-Implementierung würde so aussehen:
-    /*
-    const apiKey = process.env.OPENAI_API_KEY || '';
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -121,7 +120,7 @@ const queryOpenAI = async (prompt: string): Promise<LLMAnalysisResponse> => {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4-mini',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -136,7 +135,15 @@ const queryOpenAI = async (prompt: string): Promise<LLMAnalysisResponse> => {
       })
     });
     
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('OpenAI API Fehler:', errorData);
+      throw new Error(`API-Fehler: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
+    console.log('OpenAI Antwort erhalten:', data);
+    
     const rawResponse = data.choices[0].message.content;
     
     // Parse die JSON-Antwort
@@ -146,10 +153,28 @@ const queryOpenAI = async (prompt: string): Promise<LLMAnalysisResponse> => {
       console.error('Fehler beim Parsen der LLM-Antwort:', error);
       throw new Error('Ungültiges Antwortformat vom LLM');
     }
-    */
+    
   } catch (error) {
     console.error('Fehler bei der OpenAI-Anfrage:', error);
-    throw error;
+    
+    // Fallback auf Mock-Antwort bei Fehlern
+    return {
+      insights: [
+        "Fehler bei der API-Anfrage - Fallback-Antwort",
+        "Bitte überprüfe deine API-Schlüssel und Netzwerkverbindung",
+        "Dies ist eine generierte Beispielantwort"
+      ],
+      visualizationSuggestion: {
+        type: "bar",
+        dimension: "",
+        metric: "",
+        explanation: "Dies ist eine Fallback-Erklärung"
+      },
+      additionalQuestions: [
+        "Sind alle notwendigen API-Konfigurationen korrekt?",
+        "Ist die Netzwerkverbindung stabil?"
+      ]
+    };
   }
 };
 
@@ -158,33 +183,32 @@ const queryOpenAI = async (prompt: string): Promise<LLMAnalysisResponse> => {
  */
 const queryAnthropicClaude = async (prompt: string): Promise<LLMAnalysisResponse> => {
   try {
-    // In einer echten Implementierung würde hier die Anthropic Claude API aufgerufen werden
-    // Dies ist ein Platzhalter für den Prototyp
+    // Echte API-Implementierung
+    const apiKey = process.env.REACT_APP_ANTHROPIC_API_KEY || '';
     
-    // Beispielantwort für den Prototyp
-    const mockResponse: LLMAnalysisResponse = {
-      insights: [
-        "Dimension X zeigt einen klaren Aufwärtstrend mit Wachstum von 23% im letzten Quartal",
-        "Es gibt eine hohe Korrelation (0.87) zwischen Metrik Y und Metrik Z",
-        "Die geografische Verteilung zeigt eine Konzentration in Region A und B"
-      ],
-      visualizationSuggestion: {
-        type: "bar",
-        dimension: "", // Wird im Hauptcode gefüllt
-        metric: "", // Wird im Hauptcode gefüllt
-        explanation: "Ein Balkendiagramm visualisiert die Unterschiede zwischen den Kategorien am deutlichsten"
-      },
-      additionalQuestions: [
-        "Wie verteilen sich die Werte innerhalb der Top-Kategorie?",
-        "Gibt es Ausreißer, die näher untersucht werden sollten?"
-      ]
-    };
+    if (!apiKey) {
+      console.warn('Kein Anthropic API-Key gefunden, verwende Mock-Antwort');
+      return {
+        insights: [
+          "Dimension X zeigt einen klaren Aufwärtstrend mit Wachstum von 23% im letzten Quartal",
+          "Es gibt eine hohe Korrelation (0.87) zwischen Metrik Y und Metrik Z",
+          "Die geografische Verteilung zeigt eine Konzentration in Region A und B"
+        ],
+        visualizationSuggestion: {
+          type: "bar",
+          dimension: "", // Wird im Hauptcode gefüllt
+          metric: "", // Wird im Hauptcode gefüllt
+          explanation: "Ein Balkendiagramm visualisiert die Unterschiede zwischen den Kategorien am deutlichsten"
+        },
+        additionalQuestions: [
+          "Wie verteilen sich die Werte innerhalb der Top-Kategorie?",
+          "Gibt es Ausreißer, die näher untersucht werden sollten?"
+        ]
+      };
+    }
     
-    return mockResponse;
+    console.log('Sende Anfrage an Anthropic Claude API...');
     
-    // Echte API-Implementierung würde so aussehen:
-    /*
-    const apiKey = process.env.ANTHROPIC_API_KEY || '';
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -205,7 +229,15 @@ const queryAnthropicClaude = async (prompt: string): Promise<LLMAnalysisResponse
       })
     });
     
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Claude API Fehler:', errorData);
+      throw new Error(`API-Fehler: ${response.status} ${response.statusText}`);
+    }
+    
     const data = await response.json();
+    console.log('Anthropic Claude Antwort erhalten:', data);
+    
     const rawResponse = data.content[0].text;
     
     // Parse die JSON-Antwort
@@ -221,10 +253,27 @@ const queryAnthropicClaude = async (prompt: string): Promise<LLMAnalysisResponse
       console.error('Fehler beim Parsen der Claude-Antwort:', error);
       throw new Error('Ungültiges Antwortformat von Claude');
     }
-    */
+    
   } catch (error) {
     console.error('Fehler bei der Anthropic-Anfrage:', error);
-    throw error;
+    // Fallback auf Mock-Antwort bei Fehlern
+    return {
+      insights: [
+        "Fehler bei der API-Anfrage - Fallback-Antwort",
+        "Bitte überprüfe deine API-Schlüssel und Netzwerkverbindung",
+        "Dies ist eine generierte Beispielantwort"
+      ],
+      visualizationSuggestion: {
+        type: "bar",
+        dimension: "",
+        metric: "",
+        explanation: "Dies ist eine Fallback-Erklärung"
+      },
+      additionalQuestions: [
+        "Sind alle notwendigen API-Konfigurationen korrekt?",
+        "Ist die Netzwerkverbindung stabil?"
+      ]
+    };
   }
 };
 

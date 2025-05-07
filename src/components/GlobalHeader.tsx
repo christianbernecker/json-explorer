@@ -13,6 +13,7 @@ interface GlobalHeaderProps {
 const GlobalHeader: React.FC<GlobalHeaderProps> = ({ isDarkMode, toggleDarkMode, showHistory, setShowHistory }) => {
   const location = useLocation();
   const isJSONExplorer = location.pathname.includes('/apps/json-explorer');
+  const isDataVisualizer = location.pathname.includes('/apps/data-visualizer');
   const [showInfo, setShowInfo] = useState(false);
 
   return (
@@ -43,14 +44,32 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({ isDarkMode, toggleDarkMode,
                   </div>
                 </div>
                 <div className="h-8 border-l border-gray-300 dark:border-gray-600 mx-2"></div>
-                <h1 className="text-xl font-bold">
-                  <span className={`bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600`}>
-                    JSON Toolkit
-                  </span>
-                </h1>
-                <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
-                  Validate, Compare & Explore VAST/JSON
-                </p>
+                
+                {isJSONExplorer && (
+                  <>
+                    <h1 className="text-xl font-bold">
+                      <span className={`bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600`}>
+                        JSON Toolkit
+                      </span>
+                    </h1>
+                    <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      Validate, Compare & Explore VAST/JSON
+                    </p>
+                  </>
+                )}
+                
+                {isDataVisualizer && (
+                  <>
+                    <h1 className="text-xl font-bold">
+                      <span className={`bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600`}>
+                        Data Visualizer
+                      </span>
+                    </h1>
+                    <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                      Visualisiere und analysiere CSV, XLSX und JSON Daten mit KI-Unterstützung
+                    </p>
+                  </>
+                )}
               </div>
               
               <div className="flex items-center space-x-4">
