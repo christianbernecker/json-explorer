@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 20:31:58 CEST 2025", "commit": "Klickbare Pfeile für Structure-Ansicht und doppelte Überschriften entfernt"}
+{"deployment": "staging", "timestamp": "Wed May  7 20:38:13 CEST 2025", "commit": "Fix VASTAdTagURI Erkennung und standardmäßig Struktur aufklappen"}

@@ -862,43 +862,45 @@ const JsonVastExplorer = React.memo(({
               <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
                 <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                 
-                {/* Tabs und Toggle für Structure */}
+                {/* Tabs und Toggle für Structure - NEUE IMPLEMENTIERUNG MIT SCROLLBARER LEISTE */}
                 <div className="mb-2 flex flex-wrap justify-between items-center">
-                  <div className={`rounded-t-lg bg-gray-100 dark:bg-gray-700 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
-                    <div className="flex flex-wrap">
-                      {vastChain.length > 0 ? (
-                        <>
+                  <div className={`rounded-t-lg bg-gray-100 dark:bg-gray-700 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} overflow-hidden`} style={{ maxWidth: '70%' }}>
+                    <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none' }}>
+                      <div className="flex whitespace-nowrap" style={{ minWidth: 'max-content' }}>
+                        {vastChain.length > 0 ? (
+                          <>
+                            <button
+                              onClick={() => setActiveVastTabIndex(0)}
+                              className={`${
+                                activeVastTabIndex === 0
+                                  ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
+                                  : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
+                              } px-4 py-2 text-sm font-medium rounded-t-lg flex-shrink-0`}
+                            >
+                              Embedded VAST
+                            </button>
+                            {vastChain.map((item, index) => (
+                              <button
+                                key={index}
+                                onClick={() => setActiveVastTabIndex(index + 1)}
+                                className={`${
+                                  activeVastTabIndex === index + 1
+                                    ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
+                                    : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
+                                } px-4 py-2 text-sm font-medium rounded-t-lg flex-shrink-0`}
+                              >
+                                VASTAdTagURI ({index + 1})
+                              </button>
+                            ))}
+                          </>
+                        ) : (
                           <button
-                            onClick={() => setActiveVastTabIndex(0)}
-                            className={`${
-                              activeVastTabIndex === 0
-                                ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
-                                : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
-                            } px-4 py-2 text-sm font-medium rounded-t-lg`}
+                            className={`${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500 px-4 py-2 text-sm font-medium rounded-t-lg flex-shrink-0`}
                           >
                             Embedded VAST
                           </button>
-                          {vastChain.map((item, index) => (
-                            <button
-                              key={index}
-                              onClick={() => setActiveVastTabIndex(index + 1)}
-                              className={`${
-                                activeVastTabIndex === index + 1
-                                  ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
-                                  : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
-                              } px-4 py-2 text-sm font-medium rounded-t-lg`}
-                            >
-                              VASTAdTagURI ({index + 1})
-                            </button>
-                          ))}
-                        </>
-                      ) : (
-                        <button
-                          className={`${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500 px-4 py-2 text-sm font-medium rounded-t-lg`}
-                        >
-                          Embedded VAST
-                        </button>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                   
