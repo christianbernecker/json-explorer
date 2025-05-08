@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 09:37:53 CEST 2025", "commit": "Behebung der drei Hauptprobleme: 1) API-Key-Konfiguration verbessert 2) JSON-Suchfunktion optimiert 3) Sidebar-Navigation korrigiert"}
+{"deployment": "staging", "timestamp": "Thu May  8 09:48:57 CEST 2025", "commit": "Optimierung der API-Schlüssel-Konfiguration in Data Visualizer: Frontend und Backend können jetzt über ANTHROPIC_API_KEY und REACT_APP_ANTHROPIC_API_KEY kommunizieren"}
