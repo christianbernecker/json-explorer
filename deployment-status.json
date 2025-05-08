@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 11:16:17 CEST 2025", "commit": "Umfassende Fehlerbehebung für Suchfunktion mit verbesserter Ref-Verwaltung und Fehlerbehandlung"}
+{"deployment": "staging", "timestamp": "Thu May  8 11:24:00 CEST 2025", "commit": "Erneutes Deployment der Suchfunktionsverbesserungen"}

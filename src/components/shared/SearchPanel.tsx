@@ -196,166 +196,167 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     return 0;
   }, []);
 
-  // Neue verbesserte Volltextsuche - kombiniert für JSON und andere Inhalte
+  // Verbesserte Volltextsuche - effizienter und zuverlässiger für alle Inhalte
   const indexContentForSearch = useCallback((container: HTMLElement, pattern: RegExp): SearchResult[] => {
     const results: SearchResult[] = [];
     
-    // 1. Erzeugen einer flachen Liste aller Textknoten
-    const getAllTextNodes = (node: Node): Text[] => {
-      const textNodes: Text[] = [];
-      
-      const traverse = (n: Node) => {
-        // Ignoriere Suchpanel selbst
-        if (n instanceof HTMLElement && 
-            (n.classList.contains('search-panel-container') || 
-             n.classList.contains('search-match'))) {
-          return;
-        }
+    try {
+      // 1. Funktion zum Durchsuchen von Text und Erstellen von Markierungen
+      const processTextContent = (element: HTMLElement, text: string, isKey: boolean = false) => {
+        if (!text.trim()) return;
         
-        if (n.nodeType === Node.TEXT_NODE && n.textContent && n.textContent.trim()) {
-          textNodes.push(n as Text);
-        } else if (n.nodeType === Node.ELEMENT_NODE) {
-          for (let i = 0; i < n.childNodes.length; i++) {
-            traverse(n.childNodes[i]);
-          }
-        }
-      };
-      
-      traverse(node);
-      return textNodes;
-    };
-    
-    // 2. Spezielle Indexierung für JSON-Attribute
-    const indexJsonAttributes = () => {
-      // Finde alle Attribute, die für JSON wichtig sein könnten
-      const jsonElems = container.querySelectorAll('[data-key], [data-value], [data-path], .json-key, .json-value');
-      
-      jsonElems.forEach(elem => {
-        const element = elem as HTMLElement;
-        const isKey = element.classList.contains('json-key') || 
-                     element.hasAttribute('data-key') || 
-                     element.getAttribute('data-type') === 'key';
-        
-        // Nur in Schlüsseln suchen, wenn die Option aktiviert ist
+        // Wenn es sich um einen Schlüssel handelt und nicht in Schlüsseln gesucht werden soll
         if (isKey && !options.searchInKeys) return;
         
-        // Suche in Attributen und Textinhalt
-        let searchTargets: string[] = [];
-        
-        // Textinhalt hinzufügen
-        if (element.textContent) {
-          searchTargets.push(element.textContent);
-        }
-        
-        // Attribute hinzufügen
-        ['data-key', 'data-value', 'data-path'].forEach(attr => {
-          const attrValue = element.getAttribute(attr);
-          if (attrValue) searchTargets.push(attrValue);
-        });
-        
-        // Überprüfen, ob einer der Targets dem Suchmuster entspricht
-        searchTargets.forEach(target => {
-          pattern.lastIndex = 0; // Reset für jede Suche
-          if (pattern.test(target)) {
-            const span = document.createElement('span');
-            span.className = 'search-match';
-            span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
-            span.style.color = isDarkMode ? 'white' : 'black';
-            
-            // Kopiere den Inhalt des Elements
-            const originalContent = element.innerHTML;
-            span.innerHTML = originalContent;
-            
-            // Ersetze den Inhalt des Elements
-            element.innerHTML = '';
-            element.appendChild(span);
-            
-            results.push({
-              match: target.match(pattern)?.[0] || target,
-              element: span,
-              context: target,
-              line: getLineNumber(element),
-              isKey
-            });
-          }
-        });
-      });
-    };
-    
-    // 3. Allgemeine Textsuche in normalen Textknoten
-    const searchTextNodes = () => {
-      const textNodes = getAllTextNodes(container);
-      
-      textNodes.forEach(textNode => {
-        const text = textNode.textContent || '';
+        // Globalen RegExp-Status zurücksetzen
         pattern.lastIndex = 0;
         
-        let match = pattern.exec(text);
-        if (match) {
-          // Erstelle ein Fragment für die Ersetzung
-          const fragment = document.createDocumentFragment();
+        // Prüfen ob der Text dem Suchmuster entspricht
+        if (pattern.test(text)) {
+          // RegExp zurücksetzen für die tatsächliche Übereinstimmung
+          pattern.lastIndex = 0;
           
-          // Text vor dem Match
-          if (match.index > 0) {
-            fragment.appendChild(document.createTextNode(text.substring(0, match.index)));
-          }
-          
-          // Highlight-Element
+          // Text in ein Highlight-Element einpacken
           const span = document.createElement('span');
           span.className = 'search-match';
           span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
           span.style.color = isDarkMode ? 'white' : 'black';
-          span.textContent = match[0];
-          fragment.appendChild(span);
+          span.textContent = text;
           
-          // Text nach dem Match
-          if (match.index + match[0].length < text.length) {
-            fragment.appendChild(document.createTextNode(text.substring(match.index + match[0].length)));
-          }
+          // Originalinhalt ersetzen
+          element.innerHTML = '';
+          element.appendChild(span);
           
-          // Element, das den Textknoten enthält
-          const parentElement = textNode.parentElement as HTMLElement;
+          // Treffer hinzufügen
+          results.push({
+            match: text.match(pattern)?.[0] || text,
+            element: span,
+            context: text,
+            line: getLineNumber(element),
+            isKey
+          });
           
-          // Überprüfe, ob es sich um einen JSON-Schlüssel handelt
-          const isKey = parentElement?.classList.contains('json-key') || 
-                        parentElement?.getAttribute('data-type') === 'key';
-          
-          // Nur hinzufügen, wenn es kein Schlüssel ist oder Keys durchsucht werden sollen
-          if (!isKey || options.searchInKeys) {
-            // Ersetze den Textknoten mit dem Fragment
-            if (textNode.parentNode) {
-              textNode.parentNode.replaceChild(fragment, textNode);
+          return true; // Zeigt an, dass ein Treffer gefunden wurde
+        }
+        
+        return false; // Kein Treffer gefunden
+      };
+      
+      // 2. Funktion zum rekursiven Durchlaufen des DOM
+      const traverseDOM = (node: Node) => {
+        // Ignoriere das Suchpanel selbst und bereits markierte Elemente
+        if (node instanceof HTMLElement && 
+            (node.classList.contains('search-panel-container') || 
+             node.classList.contains('search-match'))) {
+          return;
+        }
+        
+        // A. Text-Knoten verarbeiten
+        if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+          const text = node.textContent.trim();
+          if (text) {
+            const parent = node.parentElement;
+            if (parent) {
+              // Prüfen, ob es sich um einen JSON-Schlüssel handelt
+              const isKey = parent.classList.contains('json-key') || 
+                          parent.hasAttribute('data-key') || 
+                          parent.getAttribute('data-type') === 'key';
               
-              // Füge das Ergebnis hinzu
-              results.push({
-                match: match[0],
-                element: span,
-                context: text.substring(
-                  Math.max(0, match.index - 20), 
-                  Math.min(text.length, match.index + match[0].length + 20)
-                ),
-                line: getLineNumber(parentElement),
-                isKey
-              });
+              // Textknoten in ein Element umwandeln, um das Highlighting zu ermöglichen
+              if (!isKey || options.searchInKeys) {
+                pattern.lastIndex = 0;
+                
+                if (pattern.test(text)) {
+                  // RegExp zurücksetzen für die tatsächliche Übereinstimmung
+                  pattern.lastIndex = 0;
+                  
+                  // Match finden (für Kontext)
+                  const match = pattern.exec(text);
+                  
+                  if (match) {
+                    // Ein neues Text-Fragment erstellen
+                    const fragment = document.createDocumentFragment();
+                    
+                    // Text vor dem Match
+                    if (match.index > 0) {
+                      fragment.appendChild(document.createTextNode(text.substring(0, match.index)));
+                    }
+                    
+                    // Das Match selbst hervorheben
+                    const span = document.createElement('span');
+                    span.className = 'search-match';
+                    span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+                    span.style.color = isDarkMode ? 'white' : 'black';
+                    span.textContent = match[0];
+                    fragment.appendChild(span);
+                    
+                    // Text nach dem Match
+                    if (match.index + match[0].length < text.length) {
+                      fragment.appendChild(document.createTextNode(text.substring(match.index + match[0].length)));
+                    }
+                    
+                    // Den Textknoten durch das Fragment ersetzen
+                    node.parentNode?.replaceChild(fragment, node);
+                    
+                    // Treffer hinzufügen
+                    results.push({
+                      match: match[0],
+                      element: span,
+                      context: text.substring(
+                        Math.max(0, match.index - 20), 
+                        Math.min(text.length, match.index + match[0].length + 20)
+                      ),
+                      line: getLineNumber(parent),
+                      isKey
+                    });
+                  }
+                }
+              }
             }
           }
         }
+        // B. Element-Knoten rekursiv verarbeiten
+        else if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as HTMLElement;
+          
+          // Spezielle Behandlung für JSON-Elemente mit Datenattributen
+          if (contentType === 'JSON') {
+            const isJsonKey = element.classList.contains('json-key') || 
+                             element.hasAttribute('data-key') || 
+                             element.getAttribute('data-type') === 'key';
+            
+            // Attributwerte durchsuchen
+            if (!isJsonKey || options.searchInKeys) {
+              ['data-key', 'data-value', 'data-path'].forEach(attr => {
+                const attrValue = element.getAttribute(attr);
+                if (attrValue) {
+                  processTextContent(element, attrValue, attr === 'data-key');
+                }
+              });
+            }
+          }
+          
+          // Kinder-Elemente rekursiv durchsuchen
+          for (let i = 0; i < node.childNodes.length; i++) {
+            traverseDOM(node.childNodes[i]);
+          }
+        }
+      };
+      
+      // Starte die DOM-Traversierung
+      traverseDOM(container);
+      
+      // Sortiere nach Zeilennummern
+      return results.sort((a, b) => {
+        if (a.line !== undefined && b.line !== undefined) {
+          return a.line - b.line;
+        }
+        return 0;
       });
-    };
-    
-    // Führe beide Suchtypen durch
-    if (contentType === 'JSON') {
-      indexJsonAttributes(); // Spezifisch für JSON
+    } catch (error) {
+      console.error('Fehler bei der Volltextsuche:', error);
+      return [];
     }
-    searchTextNodes(); // Immer durchführen
-    
-    // Sortiere nach Zeilennummern
-    return results.sort((a, b) => {
-      if (a.line !== undefined && b.line !== undefined) {
-        return a.line - b.line;
-      }
-      return 0;
-    });
   }, [getLineNumber, isDarkMode, options.searchInKeys, contentType]);
 
   // Durchführung der Suche mit verbesserter Fehlerbehandlung
