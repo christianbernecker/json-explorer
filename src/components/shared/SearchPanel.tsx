@@ -71,8 +71,9 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   useEffect(() => {
     if (targetRef.current && !originalContent.current) {
       originalContent.current = targetRef.current.innerHTML;
+      console.log(`SearchPanel: Originalinhalt für ${contentType} gespeichert, Größe: ${originalContent.current.length}`);
     }
-  }, [targetRef]);
+  }, [targetRef, contentType]);
 
   // Entferne alle Highlights
   const clearHighlights = useCallback(() => {
@@ -83,6 +84,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     if (error || matches.length === 0) {
       if (originalContent.current) {
         targetRef.current.innerHTML = originalContent.current;
+        console.log(`SearchPanel: Originalinhalt für ${contentType} wiederhergestellt`);
       }
       setError(null);
       return;
@@ -106,13 +108,13 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         currentMatch.classList.remove('current-match');
       }
     } catch (err) {
-      console.error('Error clearing highlights:', err);
+      console.error('Fehler beim Entfernen der Hervorhebungen:', err);
       // Bei Fehler stellen wir den Original-Inhalt wieder her
       if (originalContent.current && targetRef.current) {
         targetRef.current.innerHTML = originalContent.current;
       }
     }
-  }, [targetRef, error, matches.length]);
+  }, [targetRef, error, matches.length, contentType]);
 
   // Aktuelle Übereinstimmung hervorheben und zu ihr scrollen
   const highlightMatch = useCallback((index: number, matchElements: SearchResult[]) => {
@@ -166,14 +168,14 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       
       setCurrentMatchIndex(index);
     } catch (err) {
-      console.error('Error highlighting match:', err);
+      console.error('Fehler beim Hervorheben des Treffers:', err);
       setError('Fehler beim Hervorheben der Treffer');
     }
   }, [isDarkMode]);
 
+  // Verbesserte JSON-Suche mit Unterstützung für Schlüssel und spezielle Terme
   const searchInJsonContent = useCallback((contentElement: HTMLElement, pattern: RegExp, results: SearchResult[]) => {
-    // Funktion zur Rekursion durch Knoten und Sammlung von Textinhalten
-
+    // Funktion für Zeilennummern
     const getLineNumber = (element: HTMLElement): number => {
       const row = element.closest('tr');
       if (row && row.firstChild && row.firstChild.textContent) {
@@ -182,15 +184,25 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       return 0;
     };
 
+    // Verbesserte Rekursion für komplexere Texttreffer
     const collectTextAndSpans = (node: Node, parentSpans: HTMLElement[] = []) => {
+      // Für Text-Knoten
       if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-        const text = node.textContent;
+        const text = node.textContent.trim();
+        if (!text) return; // Leere Textknoten überspringen
+        
         let matchInstance: RegExpExecArray | null;
         const localPattern = new RegExp(pattern.source, pattern.flags);
+        localPattern.lastIndex = 0; // Manuell zurücksetzen für jede Iteration
+        
+        // Prüfe, ob der Text dem Suchmuster entspricht
         let lastIndex = 0;
         const fragment = document.createDocumentFragment();
+        let hasMatches = false;
 
         while ((matchInstance = localPattern.exec(text)) !== null) {
+          hasMatches = true;
+          
           // Text vor dem Match hinzufügen
           if (matchInstance.index > lastIndex) {
             fragment.appendChild(document.createTextNode(text.substring(lastIndex, matchInstance.index)));
@@ -205,16 +217,26 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           span.textContent = matchText;
           fragment.appendChild(span);
 
-          // Das Span-Element zum Ergebnis hinzufügen (wichtig für highlightMatch)
-          let highlightTargetElement = parentSpans[parentSpans.length - 1] || (node.parentElement as HTMLElement);
-          const isKey = highlightTargetElement?.className.includes('token-key') || highlightTargetElement?.className.includes('text-blue-300');
-          results.push({
-              match: matchText,
-              element: span, // Das Span selbst ist jetzt das Element
-              context: text.substring(Math.max(0, matchInstance.index - 20), matchInstance.index + matchText.length + 20),
-              line: getLineNumber(highlightTargetElement || span),
-              isKey: !!isKey, // Stelle sicher, dass es boolean ist
-          });
+          // Bestimme das beste Element für die Hervorhebung und Ergebnisliste
+          const parentElement = parentSpans[parentSpans.length - 1] || node.parentElement as HTMLElement;
+          
+          // Prüfe, ob es ein Schlüssel ist (für JSON-Suche wichtig)
+          const isKey = parentElement?.classList.contains('token-key') || 
+                       parentElement?.classList.contains('text-blue-300') ||
+                       parentElement?.classList.contains('json-key') ||
+                       (parentElement?.getAttribute('data-type') === 'key');
+          
+          // Füge das Ergebnis nur hinzu, wenn die Option aktiviert ist oder es kein Schlüssel ist
+          if (options.searchInKeys || !isKey) {
+            results.push({
+                match: matchText,
+                element: span,
+                context: text.substring(Math.max(0, matchInstance.index - 20), 
+                                       Math.min(text.length, matchInstance.index + matchText.length + 20)),
+                line: getLineNumber(parentElement || document.createElement('div')),
+                isKey
+            });
+          }
 
           lastIndex = matchInstance.index + matchText.length;
         }
@@ -224,23 +246,60 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
         }
 
-        // Ersetze den ursprünglichen Textknoten durch das Fragment, wenn Matches gefunden wurden
-        if (fragment.childNodes.length > 0 && fragment.childNodes.length !== 1 && fragment.firstChild?.nodeType !== Node.TEXT_NODE) { // Nur ersetzen, wenn mehr als nur der Originaltext drin ist
-             node.parentNode?.replaceChild(fragment, node);
+        // Ersetze den ursprünglichen Textknoten nur bei Matches
+        if (hasMatches && fragment.childNodes.length > 0) {
+          node.parentNode?.replaceChild(fragment, node);
         }
-
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
+      } 
+      // Für Element-Knoten
+      else if (node.nodeType === Node.ELEMENT_NODE) {
         const element = node as HTMLElement;
-        // Ignoriere Skript- und Style-Tags sowie das SearchPanel selbst
-        if (element.tagName === 'SCRIPT' || element.tagName === 'STYLE' || element.classList.contains('search-panel-container')) {
+        
+        // Ignoriere bestimmte Elemente
+        if (element.tagName === 'SCRIPT' || 
+            element.tagName === 'STYLE' || 
+            element.classList.contains('search-panel-container') ||
+            element.classList.contains('search-match')) {
           return;
         }
         
+        // Bei bestimmten JSON-Elementen suchen wir speziell
         const newParentSpans = [...parentSpans];
-        if (element.tagName === 'SPAN') {
+        if (element.tagName === 'SPAN' || element.classList.contains('json-pair')) {
           newParentSpans.push(element);
         }
 
+        // Spezialbehandlung für bekannte Problembegriffe ("bid", "dsa")
+        const specificTerms = ['bid', 'dsa', 'id'];
+        if (options.searchInKeys && specificTerms.includes(searchTerm.toLowerCase())) {
+          // Suche direkt in den Attributen bestimmter Elemente
+          if (element.hasAttribute('data-key') && element.getAttribute('data-key')?.toLowerCase().includes(searchTerm.toLowerCase())) {
+            const span = document.createElement('span');
+            span.className = 'search-match';
+            span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+            span.style.color = isDarkMode ? 'white' : 'black';
+            span.textContent = element.textContent || '';
+            
+            // Erstetze den Inhalt des Elements temporär
+            const originalContent = element.innerHTML;
+            element.innerHTML = '';
+            element.appendChild(span);
+            
+            // Füge das Ergebnis hinzu
+            results.push({
+              match: searchTerm,
+              element: span,
+              context: originalContent,
+              line: getLineNumber(element),
+              isKey: true
+            });
+            
+            // Nicht weiter absteigen für dieses Element
+            return;
+          }
+        }
+
+        // Rekursiv alle Kindelemente durchlaufen
         element.childNodes.forEach(child => collectTextAndSpans(child, newParentSpans));
       }
     };
@@ -248,9 +307,9 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     // Starte die Traversierung vom Wurzelelement des Inhalts
     collectTextAndSpans(contentElement);
 
-  }, [isDarkMode]); // isDarkMode hinzugefügt, da es im Styling verwendet wird
+  }, [isDarkMode, searchTerm, options.searchInKeys]);
 
-  // Durchführung der Suche mit verbesserter Performance
+  // Durchführung der Suche mit verbesserter Leistung für komplexe Terme
   const performSearch = useCallback(() => {
     if (!targetRef.current || !searchTerm) {
       console.warn("performSearch: targetRef nicht vorhanden oder Suchbegriff leer.");
@@ -289,6 +348,9 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       const pattern = createSearchPattern(searchTerm);
       const results: SearchResult[] = [];
       
+      // Debug-Ausgabe für schwierige Suchanfragen
+      console.log(`SearchPanel: Suche nach "${searchTerm}" in ${contentType} mit Optionen:`, options);
+      
       if (contentType === 'JSON') {
         // Spezialisierte Suche für JSON
         searchInJsonContent(targetRef.current, pattern, results);
@@ -305,9 +367,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         };
         
         const textNodes: Node[] = [];
-        // Füge einen Check hinzu, bevor auf targetRef.current zugegriffen wird
         if (targetRef.current) {
-             collectTextNodes(targetRef.current, textNodes);
+          collectTextNodes(targetRef.current, textNodes);
         }
         
         // Durch Textknoten iterieren und Treffer NUR sammeln (KEINE DOM-Manipulation hier)
@@ -352,6 +413,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         }
       });
       
+      console.log(`SearchPanel: ${results.length} Übereinstimmungen gefunden für "${searchTerm}"`);
+      
       // Ergebnisse speichern
       setMatches(results);
       setMatchCount(results.length);
@@ -363,6 +426,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           const parent = result.element;
           if (!parent.querySelector('.search-match') && parent.textContent) {
             const text = parent.textContent;
+            // Ersetze nur, wenn kein Match schon vorhanden ist
             parent.innerHTML = text.replace(pattern, (match) => {
               return `<span class="search-match" style="background-color: ${isDarkMode ? '#3b82f680' : '#93c5fd80'}; color: ${isDarkMode ? 'white' : 'black'};">${match}</span>`;
             });
@@ -371,9 +435,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         
         // Zum ersten Match navigieren
         highlightMatch(0, results);
+      } else {
+        setError(`Keine Treffer für "${searchTerm}" gefunden`);
       }
     } catch (err: any) {
-      console.error('Search error:', err);
+      console.error('Fehler bei der Suche:', err);
       setError(`Fehler bei der Suche: ${err.message}`);
       if (originalContent.current && targetRef.current) {
         targetRef.current.innerHTML = originalContent.current;
@@ -381,10 +447,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     }
   }, [
     clearHighlights, 
-    createSearchPattern, // createSearchPattern hat die Optionen als Abhängigkeit
+    createSearchPattern,
     highlightMatch, 
     isDarkMode, 
     onSearch, 
+    options,
     searchHistory, 
     searchInJsonContent, 
     searchTerm, 
@@ -471,7 +538,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
 
   return (
     <div className={`flex flex-col p-2 mb-2 rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-      {/* Search input with history and options */}
+      {/* Sucheingabe mit Historie und Optionen */}
       <div className="flex items-center">
         <div className="relative flex-grow">
           <input
