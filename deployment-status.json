@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 09:48:57 CEST 2025", "commit": "Optimierung der API-Schlüssel-Konfiguration in Data Visualizer: Frontend und Backend können jetzt über ANTHROPIC_API_KEY und REACT_APP_ANTHROPIC_API_KEY kommunizieren"}
+{"deployment": "staging", "timestamp": "Thu May  8 09:58:33 CEST 2025", "commit": "Verbesserte Suchfunktion mit Unterstützung für komplexe JSON-Schlüssel und Lokalisierung"}
