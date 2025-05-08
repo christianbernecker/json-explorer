@@ -47,6 +47,7 @@ const JsonVastExplorer = React.memo(({
   const [error, setError] = useState('');
   
   // copyMessage wird für Benachrichtigungen nach dem Kopieren verwendet
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [copyMessage, setCopyMessage] = useState('');
   
   // Suche und Tab-Verwaltung
@@ -58,6 +59,7 @@ const JsonVastExplorer = React.memo(({
   const [directSearchCleanup, setDirectSearchCleanup] = useState<(() => void) | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTabIndex, _setActiveTabIndex] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
   
   // State für die VAST Kette (Wrapper)
@@ -763,6 +765,7 @@ const JsonVastExplorer = React.memo(({
   }, [isSearchOpen]);
 
   // Verbesserte Suche mit präzisem Highlighting
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const performDirectSearch = useCallback(() => {
     // Reset previous search results
     setDirectSearchResults([]);
@@ -974,35 +977,78 @@ const JsonVastExplorer = React.memo(({
                       </svg>
                       Wrap
                     </button>
-                    {/* Integrierte Suchleiste direkt im UI */}
-                    <div className="relative flex items-center">
-                      <input
-                        type="text"
-                        className={`w-32 sm:w-48 px-2 py-1 text-xs rounded-l-md search-input ${
-                          isDarkMode 
-                            ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500' 
-                            : 'border-gray-300 focus:border-blue-500'
-                        } outline-none`}
-                        placeholder="Suchen..."
-                        value={directSearchTerm}
-                        onChange={(e) => setDirectSearchTerm(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') performDirectSearch();
-                        }}
-                      />
-                      <button
-                        onClick={performDirectSearch}
-                        className={`px-2 py-1 text-xs rounded-r-md ${
-                          isDarkMode 
-                            ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                            : 'bg-blue-500 text-white hover:bg-blue-600'
-                        }`}
-                        title="Suche (Enter)"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </button>
+                    <button 
+                      onClick={copyJsonToClipboard} 
+                      className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                      title="Copy JSON"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy
+                    </button>
+                    
+                    {/* Integrierte Suchleiste direkt im UI - jetzt ganz rechts und mit Outline */}
+                    <div className="relative flex items-center ml-auto">
+                      <div className={`flex items-center border ${isDarkMode ? 'border-blue-500' : 'border-blue-400'} rounded-md overflow-hidden`}>
+                        <input
+                          type="text"
+                          className={`w-32 sm:w-48 px-2 py-1 text-xs search-input ${
+                            isDarkMode 
+                              ? 'bg-gray-700 text-gray-200 focus:outline-none' 
+                              : 'bg-white text-gray-700 focus:outline-none'
+                          }`}
+                          placeholder="Suchen..."
+                          value={directSearchTerm}
+                          onChange={(e) => setDirectSearchTerm(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              // Explizite Übergabe des JSON-Containers an die Suchfunktion
+                              const { matches, cleanup, highlightMatch } = performSearch(
+                                directSearchTerm,
+                                jsonRef.current,
+                                directSearchCleanup
+                              );
+                              
+                              setDirectSearchResults(matches);
+                              setDirectSearchCleanup(() => cleanup);
+                              
+                              if (matches.length > 0) {
+                                setCurrentDirectResultIndex(0);
+                                highlightMatch(0, matches);
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            // Explizite Übergabe des JSON-Containers an die Suchfunktion
+                            const { matches, cleanup, highlightMatch } = performSearch(
+                              directSearchTerm,
+                              jsonRef.current,
+                              directSearchCleanup
+                            );
+                            
+                            setDirectSearchResults(matches);
+                            setDirectSearchCleanup(() => cleanup);
+                            
+                            if (matches.length > 0) {
+                              setCurrentDirectResultIndex(0);
+                              highlightMatch(0, matches);
+                            }
+                          }}
+                          className={`px-2 py-1 text-xs ${
+                            isDarkMode 
+                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                              : 'bg-blue-500 text-white hover:bg-blue-600'
+                          }`}
+                          title="Suche (Enter)"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </button>
+                      </div>
                       
                       {directSearchResults.length > 0 && (
                         <div className="flex items-center ml-1">
@@ -1040,16 +1086,6 @@ const JsonVastExplorer = React.memo(({
                         </div>
                       )}
                     </div>
-                    <button 
-                      onClick={copyJsonToClipboard} 
-                      className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                      title="Copy JSON"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Copy
-                    </button>
                   </div>
                 </div>
 
@@ -1165,35 +1201,87 @@ const JsonVastExplorer = React.memo(({
                         Wrap
                       </div>
                     </button>
-                    {/* Integrierte Suchleiste auch im VAST-Panel */}
-                    <div className="relative flex items-center">
-                      <input
-                        type="text"
-                        className={`w-32 sm:w-48 px-2 py-1 text-xs rounded-l-md search-input ${
-                          isDarkMode 
-                            ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500' 
-                            : 'border-gray-300 focus:border-blue-500'
-                        } outline-none`}
-                        placeholder="Suchen..."
-                        value={directSearchTerm}
-                        onChange={(e) => setDirectSearchTerm(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') performDirectSearch();
-                        }}
-                      />
-                      <button
-                        onClick={performDirectSearch}
-                        className={`px-2 py-1 text-xs rounded-r-md ${
-                          isDarkMode 
-                            ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                            : 'bg-blue-500 text-white hover:bg-blue-600'
-                        }`}
-                        title="Suche (Enter)"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <button
+                      onClick={copyVastToClipboard}
+                      className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+                    >
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
-                      </button>
+                        Copy
+                      </div>
+                    </button>
+                    
+                    {/* Integrierte Suchleiste auch im VAST-Panel - jetzt ganz rechts und mit Outline */}
+                    <div className="relative flex items-center ml-auto">
+                      <div className={`flex items-center border ${isDarkMode ? 'border-blue-500' : 'border-blue-400'} rounded-md overflow-hidden`}>
+                        <input
+                          type="text"
+                          className={`w-32 sm:w-48 px-2 py-1 text-xs search-input ${
+                            isDarkMode 
+                              ? 'bg-gray-700 text-gray-200 focus:outline-none' 
+                              : 'bg-white text-gray-700 focus:outline-none'
+                          }`}
+                          placeholder="Suchen..."
+                          value={directSearchTerm}
+                          onChange={(e) => setDirectSearchTerm(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              // Explizite Übergabe des VAST-Containers an die Suchfunktion
+                              const vastContainer = activeVastTabIndex === 0 
+                                ? embeddedVastOutputRef.current 
+                                : getFetchedVastRef(activeVastTabIndex - 1).current;
+                              
+                              const { matches, cleanup, highlightMatch } = performSearch(
+                                directSearchTerm,
+                                vastContainer,
+                                directSearchCleanup
+                              );
+                              
+                              setDirectSearchResults(matches);
+                              setDirectSearchCleanup(() => cleanup);
+                              
+                              if (matches.length > 0) {
+                                setCurrentDirectResultIndex(0);
+                                highlightMatch(0, matches);
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={() => {
+                            // Explizite Übergabe des VAST-Containers an die Suchfunktion
+                            const vastContainer = activeVastTabIndex === 0 
+                              ? embeddedVastOutputRef.current 
+                              : getFetchedVastRef(activeVastTabIndex - 1).current;
+                            
+                            const { matches, cleanup, highlightMatch } = performSearch(
+                              directSearchTerm,
+                              vastContainer,
+                              directSearchCleanup
+                            );
+                            
+                            setDirectSearchResults(matches);
+                            setDirectSearchCleanup(() => cleanup);
+                            
+                            if (matches.length > 0) {
+                              setCurrentDirectResultIndex(0);
+                              highlightMatch(0, matches);
+                            }
+                          }}
+                          className={`px-2 py-1 text-xs ${
+                            isDarkMode 
+                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                              : 'bg-blue-500 text-white hover:bg-blue-600'
+                          }`}
+                          title="Suche (Enter)"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </button>
+                      </div>
                       
                       {directSearchResults.length > 0 && (
                         <div className="flex items-center ml-1">
@@ -1231,17 +1319,6 @@ const JsonVastExplorer = React.memo(({
                         </div>
                       )}
                     </div>
-                    <button
-                      onClick={copyVastToClipboard}
-                      className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      <div className="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        Copy
-                      </div>
-                    </button>
                   </div>
                 </div>
                 
@@ -1278,27 +1355,9 @@ const JsonVastExplorer = React.memo(({
                     {/* VAST Content Display */}
                     <div className="text-sm p-4 overflow-x-auto" 
                       ref={activeVastTabIndex === 0 ? embeddedVastOutputRef : getFetchedVastRef(activeVastTabIndex - 1)}
-                      key={`vast-content-${activeVastTabIndex}-${vastChain.length}`}
+                      key={`vast-output-${activeVastTabIndex}`}
                     >
-                      {activeVastTabIndex === 0 ? (
-                        renderVastContent(rawVastContent)
-                      ) : vastChain[activeVastTabIndex - 1]?.isLoading ? (
-                        <div className="flex justify-center items-center py-12">
-                          <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                        </div>
-                      ) : vastChain[activeVastTabIndex - 1]?.error ? (
-                        <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
-                          <p className="font-medium">Error fetching VAST:</p>
-                          <p>{vastChain[activeVastTabIndex - 1]?.error}</p>
-                        </div>
-                      ) : vastChain[activeVastTabIndex - 1]?.content ? (
-                        renderVastContent(vastChain[activeVastTabIndex - 1]?.content)
-                      ) : (
-                        <div className="text-center py-4">Kein Wrapper gefunden</div>
-                      )}
+                      {renderVastContent(rawVastContent)}
                     </div>
                   </div>
                 )}
@@ -1307,46 +1366,6 @@ const JsonVastExplorer = React.memo(({
           </div>
         </div>
       )}
-      
-      {/* CopyMessage anzeigen */}
-      {copyMessage && (
-        <div 
-          className={`fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg text-sm font-medium z-50 animate-fade-out ${ 
-            isDarkMode 
-            ? 'bg-green-800 text-green-100' 
-            : 'bg-green-100 text-green-800' 
-          }`}
-        >
-          {copyMessage}
-        </div>
-      )}
-
-      {/* Debug-Nachricht für direkte Sichtbarkeit von Events */}
-      {searchDebugMessage && (
-        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg">
-          {searchDebugMessage}
-        </div>
-      )}
-
-      {/* JSON Viewer mit korrekter Ref für Suche */}
-      <div 
-        ref={jsonRef}
-        className={`absolute left-0 top-0 w-0 h-0 overflow-hidden opacity-0 pointer-events-none`}
-      >
-        {/* Kopie des JSON-Inhalts für Suche */}
-        {parsedJson && (
-          <div dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }} />
-        )}
-      </div>
-      
-      {/* VAST Viewer mit korrekter Ref für Suche */}
-      <div 
-        ref={vastRef}
-        className={`absolute left-0 top-0 w-0 h-0 overflow-hidden opacity-0 pointer-events-none`}
-      >
-        {/* Kopie des VAST-Inhalts für Suche */}
-        {rawVastContent && renderVastContent(rawVastContent)}
-      </div>
     </div>
   );
 });

@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 14:49:15 CEST 2025", "commit": "Fix der JSON/VAST Explorer Suchfunktion: Behebt Probleme mit Suche nach bid und Trennung zwischen JSON und VAST Panels"}
+{"deployment": "staging", "timestamp": "Thu May  8 15:04:53 CEST 2025", "commit": "Verbesserung der Suchfunktionalität: Behebung von Kontext-Problemen und UI-Integration"}
