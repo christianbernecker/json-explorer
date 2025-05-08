@@ -19,7 +19,7 @@ interface SearchResult {
 }
 
 // Spezielle technische Terme, die besondere Behandlung benötigen
-const SPECIAL_TERMS = ['bid', 'dsa', 'id', 'key', 'uuid'];
+const SPECIAL_TERMS = ['bid', 'dsa', 'id', 'key', 'uuid', 'adId', 'adid', 'ad_id', 'campaign', 'price', 'auction', 'creative', 'adunit', 'adUnit', 'ad_unit', 'advertiser'];
 
 const SearchPanel: React.FC<SearchPanelProps> = ({ 
   contentType, 
@@ -191,11 +191,20 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         const attrValue = element.getAttribute(attr);
         if (!attrValue) continue;
         
-        // Überprüfe, ob der Attributwert dem Muster entspricht
-        if (pattern.test(attrValue)) {
-          // Reset pattern.lastIndex, die durch test() verändert wurde
-          pattern.lastIndex = 0;
-          
+        // Direkter String-Vergleich für sehr kurze Begriffe (3-4 Zeichen)
+        const isShortTermMatch = searchTerm.length <= 4 && 
+          (attrValue.toLowerCase() === searchTerm.toLowerCase() || 
+           attrValue.toLowerCase().includes(`.${searchTerm.toLowerCase()}`) ||
+           attrValue.toLowerCase().includes(`_${searchTerm.toLowerCase()}`) ||
+           attrValue.toLowerCase().includes(`-${searchTerm.toLowerCase()}`));
+        
+        // Regulärer Ausdruck für normale Suche
+        const isRegexMatch = pattern.test(attrValue);
+        
+        // Reset pattern.lastIndex, die durch test() verändert wurde
+        pattern.lastIndex = 0;
+        
+        if (isShortTermMatch || isRegexMatch) {
           // Erzeuge ein Highlight-Element
           const span = document.createElement('span');
           span.className = 'search-match';
@@ -222,7 +231,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         }
       }
     });
-  }, [isDarkMode]);
+  }, [isDarkMode, searchTerm]);
 
   // Hilfsfunktion für Zeilennummer
   const getLineNumber = (element: HTMLElement): number => {
@@ -237,11 +246,45 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   // Verbesserte JSON-Suche mit spezieller Unterstützung für technische Begriffe
   const searchInJsonContent = useCallback((contentElement: HTMLElement, pattern: RegExp, results: SearchResult[]) => {
     // Optimierte Suche für spezielle Begriffe wie "bid", "dsa", etc.
-    const isSpecialTerm = SPECIAL_TERMS.includes(searchTerm.toLowerCase());
+    const searchTermLower = searchTerm.toLowerCase();
+    const isSpecialTerm = SPECIAL_TERMS.some(term => 
+      searchTermLower === term || 
+      searchTermLower.includes(term) || 
+      term.includes(searchTermLower)
+    );
     
     // Bei speziellen Begriffen erst direkt in data-Attributen suchen
     if (isSpecialTerm) {
       searchInJsonDirectAttributes(contentElement, pattern, results);
+      
+      // Zusätzlich: Suche in Klassen-Namen (oft beinhalten Elemente semantische Klassen)
+      const allElements = contentElement.querySelectorAll('*');
+      allElements.forEach(node => {
+        const element = node as HTMLElement;
+        const className = element.className;
+        
+        if (typeof className === 'string' && pattern.test(className)) {
+          pattern.lastIndex = 0; // Reset
+          
+          // Erzeuge ein Highlight-Element für den Klassennamen-Treffer
+          const span = document.createElement('span');
+          span.className = 'search-match';
+          span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+          span.style.color = isDarkMode ? 'white' : 'black';
+          
+          const originalContent = element.innerHTML;
+          span.innerHTML = originalContent;
+          
+          element.innerHTML = '';
+          element.appendChild(span);
+          
+          results.push({
+            match: className,
+            element: span,
+            context: originalContent
+          });
+        }
+      });
     }
     
     // Verbesserte Rekursion für komplexere Texttreffer

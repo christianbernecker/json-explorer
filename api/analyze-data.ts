@@ -89,16 +89,21 @@ const queryAnthropicClaude = async (prompt: string, apiKey: string): Promise<LLM
   console.log('API-Route: Sende Anfrage an Anthropic Claude API...');
     
   try {
+    // Debug-Info für Diagnose
+    console.log('API-Route: Model:', CLAUDE_MODEL);
+    console.log('API-Route: API-Key vorhanden:', !!apiKey);
+    console.log('API-Route: API-Key-Format korrekt:', apiKey.startsWith('sk-ant-'));
+    
     const response = await fetch(CLAUDE_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01' // Empfohlene Version
+        'anthropic-version': '2023-06-01',
+        'anthropic-api-key': apiKey
       },
       body: JSON.stringify({
         model: CLAUDE_MODEL,
-        max_tokens: 1500, // Etwas höher für komplexere Analysen
+        max_tokens: 1500,
         messages: [
           {
             role: 'user',
@@ -108,6 +113,9 @@ const queryAnthropicClaude = async (prompt: string, apiKey: string): Promise<LLM
         temperature: 0.3
       })
     });
+    
+    // Ausführliches Logging des HTTP-Status
+    console.log('API-Route: Claude API HTTP Status:', response.status, response.statusText);
     
     if (!response.ok) {
       const errorData = await response.text();
