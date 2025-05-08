@@ -52,8 +52,7 @@ const JsonVastExplorer = React.memo(({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState(0);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [activeTabIndex, _setActiveTabIndex] = useState(0);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
   
   // State für die VAST Kette (Wrapper)
   interface VastChainItem {
@@ -744,6 +743,9 @@ const JsonVastExplorer = React.memo(({
     );
   }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
+  // Tab-Wechsel mit Ref-Tracking
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  
   // Referenzen für DOM-Elemente
   const jsonRef = useRef<HTMLDivElement>(null);
   const vastRef = useRef<HTMLDivElement>(null);

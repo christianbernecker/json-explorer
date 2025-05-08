@@ -4,19 +4,18 @@ import { SearchPanelProps } from '../../types';
 // Erweiterte Suchoptionen
 interface SearchOptions {
   caseSensitive: boolean;
-  wholeWord: boolean;
+  useRegex: boolean;
   searchInKeys: boolean;
-  highlightAll: boolean; // Neue Option zum Highlighten aller Fundstellen
-  regexSearch: boolean;  // Neue Option für reguläre Ausdrücke
+  wholeWord: boolean;
 }
 
-// Erweitertes Suchergebnis mit mehr Kontext
-interface SearchMatch {
-  node: HTMLElement;
-  matchText: string;
-  lineNumber?: number;
-  context?: string;       // Zeigt Text um den Fund herum
-  isPartialMatch?: boolean; // Kennzeichnet Treffer in Teilwörtern
+// Suchergebnis-Typ
+interface SearchResult {
+  match: string;
+  element: HTMLElement;
+  line?: number;
+  context?: string;
+  isKey?: boolean;
 }
 
 const SearchPanel: React.FC<SearchPanelProps> = ({ 
@@ -26,462 +25,432 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   onSearch 
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const [matchCount, setMatchCount] = useState(0);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
-  const [matches, setMatches] = useState<SearchMatch[]>([]);
+  const [matches, setMatches] = useState<SearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
   const [options, setOptions] = useState<SearchOptions>({
     caseSensitive: false,
-    wholeWord: false,
+    useRegex: false,
     searchInKeys: true,
-    highlightAll: false,
-    regexSearch: false
+    wholeWord: false
   });
-  const [isSearching, setIsSearching] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const originalContentRef = useRef<string>('');
-  const currentMatches = useRef<SearchMatch[]>([]);
+  const originalContent = useRef<string>('');
   
-  // Speichere den originalen Inhalt beim ersten Laden
-  useEffect(() => {
-    if (targetRef.current && !originalContentRef.current) {
-      originalContentRef.current = targetRef.current.innerHTML;
-      console.log(`SearchPanel: Originalinhalt für ${contentType} gespeichert (${originalContentRef.current.length} Bytes)`);
-    }
-  }, [targetRef, contentType]);
-  
-  // Hilfsfunktion zum Escape von Regex-Zeichen
+  // Helper für Regex-Escape
   const escapeRegExp = useCallback((string: string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }, []);
-  
+
+  // Erstelle den Suchausdruck basierend auf den Optionen
+  const createSearchPattern = useCallback((term: string): RegExp => {
+    if (!term) return new RegExp('');
+    
+    let pattern = term;
+    
+    // Wenn kein Regex verwendet wird, escape die Sonderzeichen
+    if (!options.useRegex) {
+      pattern = escapeRegExp(pattern);
+    }
+    
+    // Für Ganzwort-Suche
+    if (options.wholeWord) {
+      pattern = `\\b${pattern}\\b`;
+    }
+    
+    // Erstelle RegExp mit entsprechenden Flags
+    return new RegExp(pattern, options.caseSensitive ? 'g' : 'gi');
+  }, [options.useRegex, options.caseSensitive, options.wholeWord, escapeRegExp]);
+
+  // Speichere den originalen Inhalt beim ersten Laden
+  useEffect(() => {
+    if (targetRef.current && !originalContent.current) {
+      originalContent.current = targetRef.current.innerHTML;
+      console.log(`SearchPanel: Originalinhalt für ${contentType} gespeichert, Größe: ${originalContent.current.length}`);
+    }
+  }, [targetRef, contentType]);
+
   // Entferne alle Highlights
-  const resetHighlights = useCallback(() => {
+  const clearHighlights = useCallback(() => {
     if (!targetRef.current) return;
     
-    try {
-      // Entferne aktuelle Highlights - sowohl current-match als auch search-match
-      const currentHighlights = targetRef.current.querySelectorAll('.current-match');
-      currentHighlights.forEach(el => {
-        if (el instanceof HTMLElement) {
-          el.classList.remove('current-match');
-          el.removeAttribute('style');
-        }
-      });
-      
-      const searchHighlights = targetRef.current.querySelectorAll('.search-match');
-      searchHighlights.forEach(el => {
-        if (el instanceof HTMLElement) {
-          el.classList.remove('search-match');
-          el.removeAttribute('style');
-        }
-      });
-      
-      // Stelle Originalinhalt wieder her, wenn in einer neuen Suche
-      if (originalContentRef.current && (searchTerm === '' || error)) {
-        targetRef.current.innerHTML = originalContentRef.current;
+    if (error || matches.length === 0) {
+      if (originalContent.current) {
+        targetRef.current.innerHTML = originalContent.current;
+        console.log(`SearchPanel: Originalinhalt für ${contentType} wiederhergestellt`);
       }
-    } catch (error) {
-      console.error('Fehler beim Zurücksetzen der Highlights:', error);
+      setError(null);
+      return;
     }
-  }, [targetRef, searchTerm, error]);
-  
-  // Extrahiere Kontext um den Suchbegriff herum
-  const getContext = useCallback((text: string, term: string): string => {
-    if (!text || !term) return '';
     
     try {
-      const termIndex = options.caseSensitive 
-        ? text.indexOf(term)
-        : text.toLowerCase().indexOf(term.toLowerCase());
+      // Entferne bestehende Highlights
+      const existingMatches = targetRef.current.querySelectorAll('.search-match');
+      existingMatches.forEach(match => {
+        if (match.parentNode) {
+          const parent = match.parentNode;
+          const textContent = match.textContent || '';
+          const textNode = document.createTextNode(textContent);
+          parent.replaceChild(textNode, match);
+        }
+      });
       
-      if (termIndex === -1) return text.slice(0, 50) + '...'; // Fallback
-      
-      const contextStart = Math.max(0, termIndex - 30);
-      const contextEnd = Math.min(text.length, termIndex + term.length + 30);
-      let context = text.slice(contextStart, contextEnd);
-      
-      if (contextStart > 0) context = '...' + context;
-      if (contextEnd < text.length) context = context + '...';
-      
-      return context;
-    } catch (e) {
-      return text.slice(0, 50) + '...';
+      // Entferne das aktuelle Highlight
+      const currentMatch = targetRef.current.querySelector('.current-match');
+      if (currentMatch) {
+        currentMatch.classList.remove('current-match');
+      }
+    } catch (err) {
+      console.error('Fehler beim Entfernen der Hervorhebungen:', err);
+      if (originalContent.current && targetRef.current) {
+        targetRef.current.innerHTML = originalContent.current;
+      }
     }
-  }, [options.caseSensitive]);
-  
-  // Highlight ein bestimmtes Match
-  const highlightMatch = useCallback((index: number, matchList: SearchMatch[]) => {
-    if (!matchList.length) return;
+  }, [targetRef, error, matches.length, contentType]);
+
+  // Aktuelle Übereinstimmung hervorheben und zu ihr scrollen
+  const highlightMatch = useCallback((index: number, matchElements: SearchResult[]) => {
+    if (!matchElements.length) return;
     
     try {
-      // Entferne nur das current-match highlighting, behalte andere highlights wenn highlightAll aktiv ist
-      const currentHighlighted = document.querySelectorAll('.current-match');
-      currentHighlighted.forEach(el => {
-        if (el instanceof HTMLElement) {
-          el.classList.remove('current-match');
-          if (!el.classList.contains('search-match') && options.highlightAll) {
-            el.classList.add('search-match');
-            el.style.backgroundColor = isDarkMode ? 'rgba(59, 130, 246, 0.4)' : 'rgba(59, 130, 246, 0.2)';
-          } else {
-            el.removeAttribute('style');
+      // Reset das vorherige aktuelle Element
+      matchElements.forEach(result => {
+        const element = result.element;
+        element.classList.remove('current-match');
+        element.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+        element.style.color = isDarkMode ? 'white' : 'black';
+        element.style.padding = '';
+        element.style.borderRadius = '';
+        element.style.outline = '';
+      });
+      
+      // Markiere das neue Element mit verbessertem Styling
+      const match = matchElements[index].element;
+      match.classList.add('current-match');
+      
+      // Auffälligeres Highlighting für bessere Sichtbarkeit
+      match.style.backgroundColor = isDarkMode ? '#ef4444' : '#f87171';
+      match.style.color = 'white';
+      match.style.padding = '2px';
+      match.style.borderRadius = '2px';
+      match.style.outline = isDarkMode ? '1px solid white' : '1px solid #ef4444';
+      
+      // Verbesserte Scroll-Position: mit mehr Kontext
+      const scrollContainer = match.closest('.overflow-auto') || match.closest('[style*="overflow"]');
+      
+      if (scrollContainer) {
+        // Berechne eine bessere Scroll-Position, die mehr Kontext zeigt
+        const containerHeight = scrollContainer.clientHeight;
+        const matchRect = match.getBoundingClientRect();
+        const containerRect = scrollContainer.getBoundingClientRect();
+        
+        const relativeTop = matchRect.top - containerRect.top;
+        const scrollOffset = relativeTop - (containerHeight * 0.4); // 40% von oben
+        
+        scrollContainer.scrollBy({
+          top: scrollOffset,
+          behavior: 'smooth'
+        });
+      } else {
+        // Fallback, falls kein Scroll-Container gefunden wird
+        match.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }
+      
+      setCurrentMatchIndex(index);
+    } catch (err) {
+      console.error('Fehler beim Hervorheben des Treffers:', err);
+      setError('Fehler beim Hervorheben der Treffer');
+    }
+  }, [isDarkMode]);
+
+  // Hilfsfunktion für Zeilennummer in useCallback verpackt
+  const getLineNumber = useCallback((element: HTMLElement): number => {
+    const row = element.closest('tr');
+    if (row && row.firstChild && row.firstChild.textContent) {
+      const num = parseInt(row.firstChild.textContent.trim(), 10);
+      return isNaN(num) ? 0 : num;
+    }
+    return 0;
+  }, []);
+
+  // Neue verbesserte Volltextsuche - kombiniert für JSON und andere Inhalte
+  const indexContentForSearch = useCallback((container: HTMLElement, pattern: RegExp): SearchResult[] => {
+    const results: SearchResult[] = [];
+    
+    // 1. Erzeugen einer flachen Liste aller Textknoten
+    const getAllTextNodes = (node: Node): Text[] => {
+      const textNodes: Text[] = [];
+      
+      const traverse = (n: Node) => {
+        // Ignoriere Suchpanel selbst
+        if (n instanceof HTMLElement && 
+            (n.classList.contains('search-panel-container') || 
+             n.classList.contains('search-match'))) {
+          return;
+        }
+        
+        if (n.nodeType === Node.TEXT_NODE && n.textContent && n.textContent.trim()) {
+          textNodes.push(n as Text);
+        } else if (n.nodeType === Node.ELEMENT_NODE) {
+          for (let i = 0; i < n.childNodes.length; i++) {
+            traverse(n.childNodes[i]);
           }
         }
-      });
+      };
       
-      // Highlighte das aktuelle Match
-      const match = matchList[index];
-      match.node.classList.add('current-match');
-      match.node.style.backgroundColor = isDarkMode ? '#ef4444' : '#f87171';
-      match.node.style.color = 'white';
-      match.node.style.padding = '2px';
-      match.node.style.borderRadius = '2px';
-      match.node.style.outline = isDarkMode ? '1px solid white' : '1px solid #ef4444';
+      traverse(node);
+      return textNodes;
+    };
+    
+    // 2. Spezielle Indexierung für JSON-Attribute
+    const indexJsonAttributes = () => {
+      // Finde alle Attribute, die für JSON wichtig sein könnten
+      const jsonElems = container.querySelectorAll('[data-key], [data-value], [data-path], .json-key, .json-value');
       
-      // Scrolle zum Match mit besserer Positionierung
-      match.node.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-      });
-      
-      // Aktualisiere den Index
-      setCurrentMatchIndex(index);
-    } catch (error) {
-      console.error('Fehler beim Hervorheben:', error);
-    }
-  }, [isDarkMode, options.highlightAll]);
-  
-  // Highlight alle Matches auf einmal
-  const highlightAllMatches = useCallback((matchList: SearchMatch[]) => {
-    if (!matchList.length || !options.highlightAll) return;
-    
-    try {
-      matchList.forEach(match => {
-        if (!match.node.classList.contains('current-match')) {
-          match.node.classList.add('search-match');
-          match.node.style.backgroundColor = isDarkMode ? 'rgba(59, 130, 246, 0.4)' : 'rgba(59, 130, 246, 0.2)';
-          match.node.style.padding = '2px';
-          match.node.style.borderRadius = '2px';
-        }
-      });
-    } catch (error) {
-      console.error('Fehler beim Hervorheben aller Treffer:', error);
-    }
-  }, [isDarkMode, options.highlightAll]);
-  
-  // Textfragmente auch in zusammengesetzten Wörtern suchen
-  const findPartialMatches = useCallback((text: string, term: string, caseSensitive: boolean): boolean => {
-    if (!term || !text) return false;
-    
-    // Spezialfall für Bindestriche und Unterstriche, um technische Begriffe zu finden
-    if (text.includes('-') || text.includes('_')) {
-      const parts = text.split(/[-_]/);
-      return parts.some(part => 
-        caseSensitive ? part.includes(term) : part.toLowerCase().includes(term.toLowerCase())
-      );
-    }
-    
-    // Für camelCase und PascalCase (z.B. findBid in findBidRequest)
-    const camelCaseRegex = caseSensitive
-      ? new RegExp(`[A-Z]?${escapeRegExp(term)}(?:[A-Z]|$)`)
-      : new RegExp(`[A-Z]?${escapeRegExp(term)}(?:[A-Z]|$)`, 'i');
-    
-    if (camelCaseRegex.test(text)) {
-      return true;
-    }
-    
-    // Direkte Teilstring-Suche als Fallback
-    return caseSensitive
-      ? text.includes(term)
-      : text.toLowerCase().includes(term.toLowerCase());
-  }, [escapeRegExp]);
-  
-  // Verbesserte Sammlung von Textelementen
-  const collectTextElements = useCallback((container: HTMLElement): HTMLElement[] => {
-    const elements: HTMLElement[] = [];
-    const visited = new Set<HTMLElement>(); // Vermeidet Duplikate
-    
-    // Walk the DOM tree to find all text-containing elements
-    const walkDOM = (node: HTMLElement) => {
-      // Skip search panel elements
-      if (
-        node.closest('.search-panel-container') || 
-        node.classList.contains('search-match') ||
-        node.classList.contains('current-match')
-      ) {
-        return;
-      }
-      
-      // Avoid processing the same node twice
-      if (visited.has(node)) return;
-      visited.add(node);
-      
-      // Prüfe auf relevante Inhalte oder Attribute
-      const textContent = node.textContent?.trim();
-      
-      if (textContent) {
-        // Prüfe auf verschiedene Arten von Elementen mit Text
-        const isTextNode = node.childNodes.length === 1 && node.firstChild?.nodeType === Node.TEXT_NODE;
-        const hasDataAttributes = node.hasAttribute('data-key') || 
-                                 node.hasAttribute('data-value') || 
-                                 node.hasAttribute('data-path');
+      jsonElems.forEach(elem => {
+        const element = elem as HTMLElement;
+        const isKey = element.classList.contains('json-key') || 
+                     element.hasAttribute('data-key') || 
+                     element.getAttribute('data-type') === 'key';
         
-        const isKey = node.classList.contains('json-key') || 
-                      node.getAttribute('data-type') === 'key';
+        // Nur in Schlüsseln suchen, wenn die Option aktiviert ist
+        if (isKey && !options.searchInKeys) return;
         
-        // In JSON-Schlüsseln nur suchen, wenn die Option aktiviert ist
-        if ((isTextNode || hasDataAttributes) && (!isKey || options.searchInKeys)) {
-          elements.push(node);
+        // Suche in Attributen und Textinhalt
+        let searchTargets: string[] = [];
+        
+        // Textinhalt hinzufügen
+        if (element.textContent) {
+          searchTargets.push(element.textContent);
         }
-      }
+        
+        // Attribute hinzufügen
+        ['data-key', 'data-value', 'data-path'].forEach(attr => {
+          const attrValue = element.getAttribute(attr);
+          if (attrValue) searchTargets.push(attrValue);
+        });
+        
+        // Überprüfen, ob einer der Targets dem Suchmuster entspricht
+        searchTargets.forEach(target => {
+          pattern.lastIndex = 0; // Reset für jede Suche
+          if (pattern.test(target)) {
+            const span = document.createElement('span');
+            span.className = 'search-match';
+            span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+            span.style.color = isDarkMode ? 'white' : 'black';
+            
+            // Kopiere den Inhalt des Elements
+            const originalContent = element.innerHTML;
+            span.innerHTML = originalContent;
+            
+            // Ersetze den Inhalt des Elements
+            element.innerHTML = '';
+            element.appendChild(span);
+            
+            results.push({
+              match: target.match(pattern)?.[0] || target,
+              element: span,
+              context: target,
+              line: getLineNumber(element),
+              isKey
+            });
+          }
+        });
+      });
+    };
+    
+    // 3. Allgemeine Textsuche in normalen Textknoten
+    const searchTextNodes = () => {
+      const textNodes = getAllTextNodes(container);
       
-      // Rekursiv durch alle Kindelemente gehen
-      Array.from(node.children).forEach(child => {
-        if (child instanceof HTMLElement) {
-          walkDOM(child);
+      textNodes.forEach(textNode => {
+        const text = textNode.textContent || '';
+        pattern.lastIndex = 0;
+        
+        let match = pattern.exec(text);
+        if (match) {
+          // Erstelle ein Fragment für die Ersetzung
+          const fragment = document.createDocumentFragment();
+          
+          // Text vor dem Match
+          if (match.index > 0) {
+            fragment.appendChild(document.createTextNode(text.substring(0, match.index)));
+          }
+          
+          // Highlight-Element
+          const span = document.createElement('span');
+          span.className = 'search-match';
+          span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+          span.style.color = isDarkMode ? 'white' : 'black';
+          span.textContent = match[0];
+          fragment.appendChild(span);
+          
+          // Text nach dem Match
+          if (match.index + match[0].length < text.length) {
+            fragment.appendChild(document.createTextNode(text.substring(match.index + match[0].length)));
+          }
+          
+          // Element, das den Textknoten enthält
+          const parentElement = textNode.parentElement as HTMLElement;
+          
+          // Überprüfe, ob es sich um einen JSON-Schlüssel handelt
+          const isKey = parentElement?.classList.contains('json-key') || 
+                        parentElement?.getAttribute('data-type') === 'key';
+          
+          // Nur hinzufügen, wenn es kein Schlüssel ist oder Keys durchsucht werden sollen
+          if (!isKey || options.searchInKeys) {
+            // Ersetze den Textknoten mit dem Fragment
+            if (textNode.parentNode) {
+              textNode.parentNode.replaceChild(fragment, textNode);
+              
+              // Füge das Ergebnis hinzu
+              results.push({
+                match: match[0],
+                element: span,
+                context: text.substring(
+                  Math.max(0, match.index - 20), 
+                  Math.min(text.length, match.index + match[0].length + 20)
+                ),
+                line: getLineNumber(parentElement),
+                isKey
+              });
+            }
+          }
         }
       });
     };
     
-    // Starte die Traversierung vom Container aus
-    walkDOM(container);
-    
-    // Zusätzliche Prüfung für Elemente mit data-Attributen, die keinen Text enthalten
-    container.querySelectorAll('[data-key], [data-value], [data-path]').forEach(element => {
-      if (element instanceof HTMLElement && !visited.has(element)) {
-        visited.add(element);
-        elements.push(element);
-      }
-    });
-    
-    return elements;
-  }, [options.searchInKeys]);
-  
-  // Erweiterte Suche in Elementen
-  const searchInElements = useCallback((elements: HTMLElement[], term: string): SearchMatch[] => {
-    if (!term.trim()) return [];
-    
-    const results: SearchMatch[] = [];
-    let pattern: RegExp | null = null;
-    
-    try {
-      // Für reguläre Ausdrücke
-      if (options.regexSearch) {
-        try {
-          pattern = new RegExp(term, options.caseSensitive ? '' : 'i');
-        } catch (e) {
-          console.error('Invalid regex pattern:', e);
-          setError(`Ungültiger regulärer Ausdruck: ${term}`);
-          return [];
-        }
-      } else {
-        // Für normale Suche
-        const escapedTerm = escapeRegExp(term);
-        const flags = options.caseSensitive ? '' : 'i';
-        
-        if (options.wholeWord) {
-          pattern = new RegExp(`\\b${escapedTerm}\\b`, flags);
-        } else {
-          pattern = new RegExp(escapedTerm, flags);
-        }
-      }
-      
-      // Durchsuche alle Elemente
-      elements.forEach(element => {
-        // 1. Textinhalt für die Suche sammeln
-        const textContent = element.textContent?.trim() || '';
-        
-        // 2. Daten-Attribute hinzufügen
-        let attributeContent = '';
-        ['data-key', 'data-value', 'data-path'].forEach(attr => {
-          const attrValue = element.getAttribute(attr);
-          if (attrValue) {
-            attributeContent += ' ' + attrValue;
-          }
-        });
-        
-        // Kompletter durchsuchbarer Text
-        const searchableText = (textContent + ' ' + attributeContent).trim();
-        
-        // Regex-basierte Suche
-        if (pattern && searchableText && pattern.test(searchableText)) {
-          // Bestimme die Zeilennummer, falls vorhanden
-          let lineNumber: number | undefined;
-          const lineElement = element.closest('tr');
-          if (lineElement && lineElement.firstChild && lineElement.firstChild.textContent) {
-            const lineText = lineElement.firstChild.textContent.trim();
-            const parsedLine = parseInt(lineText, 10);
-            if (!isNaN(parsedLine)) {
-              lineNumber = parsedLine;
-            }
-          }
-          
-          // Füge das Match hinzu
-          results.push({
-            node: element,
-            matchText: searchableText,
-            lineNumber,
-            context: getContext(searchableText, term),
-            isPartialMatch: false
-          });
-        } 
-        // Zusätzliche Suche für Teilwörter, wenn keine ganze Wortübereinstimmung gefunden wurde
-        else if (!options.wholeWord && !options.regexSearch && pattern && !pattern.test(searchableText)) {
-          if (findPartialMatches(searchableText, term, options.caseSensitive)) {
-            let lineNumber: number | undefined;
-            const lineElement = element.closest('tr');
-            if (lineElement && lineElement.firstChild && lineElement.firstChild.textContent) {
-              const lineText = lineElement.firstChild.textContent.trim();
-              const parsedLine = parseInt(lineText, 10);
-              if (!isNaN(parsedLine)) {
-                lineNumber = parsedLine;
-              }
-            }
-            
-            results.push({
-              node: element,
-              matchText: searchableText,
-              lineNumber,
-              context: getContext(searchableText, term),
-              isPartialMatch: true
-            });
-          }
-        }
-      });
-      
-      // Sortiere nach Zeilennummer und dann nach partiellem Match
-      return results.sort((a, b) => {
-        // Priorisiere exakte Treffer vor Teiltreffer
-        if ((a.isPartialMatch === true) !== (b.isPartialMatch === true)) {
-          return a.isPartialMatch ? 1 : -1;
-        }
-        
-        // Dann nach Zeilennummer sortieren
-        if (a.lineNumber !== undefined && b.lineNumber !== undefined) {
-          return a.lineNumber - b.lineNumber;
-        }
-        
-        return 0;
-      });
-    } catch (error) {
-      console.error('Fehler bei der Suche in Elementen:', error);
-      return [];
+    // Führe beide Suchtypen durch
+    if (contentType === 'JSON') {
+      indexJsonAttributes(); // Spezifisch für JSON
     }
-  }, [options.caseSensitive, options.wholeWord, options.regexSearch, escapeRegExp, findPartialMatches, getContext]);
-  
-  // Verbesserte Suchlogik mit Progress-Feedback
+    searchTextNodes(); // Immer durchführen
+    
+    // Sortiere nach Zeilennummern
+    return results.sort((a, b) => {
+      if (a.line !== undefined && b.line !== undefined) {
+        return a.line - b.line;
+      }
+      return 0;
+    });
+  }, [getLineNumber, isDarkMode, options.searchInKeys, contentType]);
+
+  // Durchführung der Suche
   const performSearch = useCallback(() => {
-    const container = targetRef.current;
-    if (!container || !searchTerm.trim()) {
-      setMatches([]);
+    if (!targetRef.current || !searchTerm) {
+      clearHighlights();
       setMatchCount(0);
       setCurrentMatchIndex(0);
+      setMatches([]);
       setError(null);
-      resetHighlights();
       return;
     }
     
-    setIsSearching(true);
+    // In Such-Historie speichern
+    if (!searchHistory.includes(searchTerm)) {
+      setSearchHistory(prev => [searchTerm, ...prev.slice(0, 9)]);
+    }
+    setHistoryIndex(-1);
+    
+    if (onSearch) {
+      onSearch(searchTerm);
+    }
+    
+    // Aktuellen Inhalt speichern, falls noch nicht getan
+    if (!originalContent.current) {
+      originalContent.current = targetRef.current.innerHTML;
+    } else {
+      // Stelle den Originalinhalt wieder her, bevor neue Suche durchgeführt wird
+      targetRef.current.innerHTML = originalContent.current;
+    }
+    
+    // Bestehende Highlights löschen
+    clearHighlights();
+    setError(null);
+    setMatches([]);
     
     try {
-      // Stelle den Originalinhalt wieder her, um vorherige Suchergebnisse zu entfernen
-      resetHighlights();
+      const pattern = createSearchPattern(searchTerm);
+      console.log(`SearchPanel: Suche nach "${searchTerm}" in ${contentType}`);
       
-      // Verwende requestIdleCallback oder setTimeout, um die UI nicht zu blockieren
-      setTimeout(() => {
-        try {
-          // Sammle alle Textelemente im Container
-          const allTextElements = collectTextElements(container);
-          console.log(`Gefundene Textelemente: ${allTextElements.length}`);
-          
-          // Suche in diesen Elementen
-          const newMatches = searchInElements(allTextElements, searchTerm);
-          console.log(`Gefundene Übereinstimmungen: ${newMatches.length}`);
-          
-          // Aktualisiere Zustände
-          currentMatches.current = newMatches;
-          setMatches(newMatches);
-          setMatchCount(newMatches.length);
-          
-          if (newMatches.length === 0) {
-            setError(`Keine Treffer für "${searchTerm}" gefunden`);
-            setCurrentMatchIndex(0);
-          } else {
-            if (options.highlightAll) {
-              highlightAllMatches(newMatches);
-            }
-            highlightMatch(0, newMatches);
-            if (onSearch) onSearch(searchTerm);
-          }
-        } catch (error: any) {
-          console.error('Fehler bei der Suche:', error);
-          setError(`Fehler bei der Suche: ${error.message}`);
-          resetHighlights();
-        } finally {
-          setIsSearching(false);
-        }
-      }, 50);
-    } catch (error: any) {
-      console.error('Fehler bei der Suche-Initialisierung:', error);
-      setError(`Fehler bei der Suche: ${error.message}`);
-      resetHighlights();
-      setIsSearching(false);
+      // Durchführen der optimierten Suche
+      const results = indexContentForSearch(targetRef.current, pattern);
+      
+      console.log(`SearchPanel: ${results.length} Treffer gefunden`);
+      setMatches(results);
+      setMatchCount(results.length);
+      
+      if (results.length > 0) {
+        highlightMatch(0, results);
+      } else {
+        setError(`Keine Treffer für "${searchTerm}" gefunden`);
+      }
+    } catch (err: any) {
+      console.error('Fehler bei der Suche:', err);
+      setError(`Fehler bei der Suche: ${err.message}`);
+      if (originalContent.current && targetRef.current) {
+        targetRef.current.innerHTML = originalContent.current;
+      }
     }
   }, [
-    searchTerm, 
-    targetRef, 
-    onSearch, 
-    resetHighlights, 
-    collectTextElements, 
-    searchInElements, 
-    highlightMatch, 
-    highlightAllMatches,
-    options.highlightAll
+    targetRef,
+    searchTerm,
+    searchHistory,
+    onSearch,
+    clearHighlights,
+    createSearchPattern,
+    contentType,
+    indexContentForSearch,
+    highlightMatch
   ]);
-  
-  // Nächste/vorherige Übereinstimmung
+
+  // Suchfeld beim Laden fokussieren
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
+
+  // Debounced Suche bei Änderungen
+  useEffect(() => {
+    if (!searchTerm || !targetRef.current) {
+      clearHighlights();
+      setMatchCount(0);
+      setCurrentMatchIndex(0);
+      return;
+    }
+    
+    const debounceTimer = setTimeout(() => {
+      performSearch();
+    }, 300);
+    
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, clearHighlights, performSearch, targetRef, options]);
+
+  // Zur nächsten Übereinstimmung navigieren
   const goToNextMatch = useCallback(() => {
     if (matches.length === 0) return;
     const nextIndex = (currentMatchIndex + 1) % matches.length;
     highlightMatch(nextIndex, matches);
-  }, [matches, currentMatchIndex, highlightMatch]);
-  
+  }, [currentMatchIndex, highlightMatch, matches]);
+
+  // Zur vorherigen Übereinstimmung navigieren
   const goToPrevMatch = useCallback(() => {
     if (matches.length === 0) return;
     const prevIndex = (currentMatchIndex - 1 + matches.length) % matches.length;
     highlightMatch(prevIndex, matches);
-  }, [matches, currentMatchIndex, highlightMatch]);
-  
-  // Verzögerte Suche bei Änderung der Suche oder Optionen
-  useEffect(() => {
-    if (!targetRef.current) return;
-    
-    if (!searchTerm.trim()) {
-      resetHighlights();
-      setMatches([]);
-      setMatchCount(0);
-      setCurrentMatchIndex(0);
-      setError(null);
-      return;
-    }
-    
-    const timer = setTimeout(() => {
-      performSearch();
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [searchTerm, performSearch, resetHighlights, targetRef, options]);
-  
-  // Fokussiere das Suchfeld beim Laden
-  useEffect(() => {
-    searchInputRef.current?.focus();
-  }, []);
-  
-  // Tastaturkürzel für die Suche
+  }, [currentMatchIndex, highlightMatch, matches]);
+
+  // Tastatur-Navigationsfunktionen
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Nur reagieren, wenn das Suchfeld fokussiert ist
       if (document.activeElement === searchInputRef.current) {
         if (e.key === 'Enter') {
           if (e.shiftKey) {
@@ -490,82 +459,88 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
             goToNextMatch();
           }
         } else if (e.key === 'Escape') {
+          // Suchfeld leeren
           setSearchTerm('');
-        } else if (e.key === 'F3' || (e.key === 'g' && e.ctrlKey)) {
+          clearHighlights();
+        } else if (e.key === 'ArrowUp' && e.altKey) {
+          // In der Such-Historie zurückgehen
           e.preventDefault();
-          if (e.shiftKey) {
-            goToPrevMatch();
-          } else {
-            goToNextMatch();
+          if (searchHistory.length > 0 && historyIndex < searchHistory.length - 1) {
+            const newIndex = historyIndex + 1;
+            setHistoryIndex(newIndex);
+            setSearchTerm(searchHistory[newIndex]);
+          }
+        } else if (e.key === 'ArrowDown' && e.altKey) {
+          // In der Such-Historie vorwärtsgehen
+          e.preventDefault();
+          if (historyIndex > 0) {
+            const newIndex = historyIndex - 1;
+            setHistoryIndex(newIndex);
+            setSearchTerm(searchHistory[newIndex]);
+          } else if (historyIndex === 0) {
+            setHistoryIndex(-1);
+            setSearchTerm('');
           }
         }
       }
     };
-    
+
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [goToNextMatch, goToPrevMatch]);
-  
+  }, [clearHighlights, goToNextMatch, goToPrevMatch, searchHistory, historyIndex]);
+
   return (
-    <div className={`search-panel-container flex flex-col p-2 mb-2 rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-      {/* Eingabefeld mit Buttons */}
+    <div className={`flex flex-col p-2 mb-2 rounded-md ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+      {/* Sucheingabe mit Historie und Optionen */}
       <div className="flex items-center">
         <div className="relative flex-grow">
-          <div className="flex">
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={`${options.regexSearch ? 'Regex' : 'Text'} in ${contentType} suchen...`}
-              className={`w-full px-2 py-1 text-sm rounded-l-md border-l border-t border-b outline-none ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-600 text-gray-200 focus:border-blue-500' 
-                  : 'border-gray-300 focus:border-blue-500'
-              }`}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  if (e.shiftKey) {
-                    goToPrevMatch();
-                  } else {
-                    goToNextMatch();
-                  }
+          <input
+            ref={searchInputRef}
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder={`Suchen in ${contentType}...`}
+            className={`w-full px-2 py-1 text-sm rounded-md border outline-none ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-600 text-gray-200 focus:border-blue-500' 
+                : 'border-gray-300 focus:border-blue-500'
+            }`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (e.shiftKey) {
+                  goToPrevMatch();
+                } else {
+                  goToNextMatch();
                 }
-              }}
-            />
-            <button
-              onClick={performSearch}
-              disabled={isSearching || !searchTerm.trim()}
-              className={`px-2 py-1 rounded-r-md border-r border-t border-b ${
-                isDarkMode 
-                  ? 'bg-blue-600 border-blue-700 text-white hover:bg-blue-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:border-gray-600' 
-                  : 'bg-blue-500 border-blue-600 text-white hover:bg-blue-600 disabled:bg-gray-300 disabled:text-gray-500 disabled:border-gray-300'
+              }
+            }}
+          />
+          {searchHistory.length > 0 && (
+            <button 
+              onClick={() => setHistoryIndex(0)}
+              className={`absolute right-2 top-1/2 transform -translate-y-1/2 ${
+                isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
               }`}
+              title="Suchverlauf anzeigen (Alt+↑/↓)"
             >
-              {isSearching ? (
-                <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              )}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
-          </div>
+          )}
         </div>
         
         <div className="flex items-center ml-2">
           <button 
             onClick={goToPrevMatch}
-            disabled={matchCount === 0 || isSearching}
+            disabled={matchCount === 0}
             className={`p-1 rounded-md ${
               isDarkMode 
                 ? 'text-gray-300 hover:bg-gray-600 disabled:text-gray-500' 
                 : 'text-gray-600 hover:bg-gray-200 disabled:text-gray-400'
             }`}
-            title="Vorheriger Treffer (Shift+Enter oder Shift+F3)"
+            title="Vorheriger Treffer (Shift+Enter)"
+            aria-label="Vorheriger Treffer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -574,13 +549,14 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           
           <button
             onClick={goToNextMatch}
-            disabled={matchCount === 0 || isSearching}
+            disabled={matchCount === 0}
             className={`p-1 rounded-md ${
               isDarkMode 
                 ? 'text-gray-300 hover:bg-gray-600 disabled:text-gray-500' 
                 : 'text-gray-600 hover:bg-gray-200 disabled:text-gray-400'
             }`}
-            title="Nächster Treffer (Enter oder F3)"
+            title="Nächster Treffer (Enter)"
+            aria-label="Nächster Treffer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -595,6 +571,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
                 : 'text-gray-600 hover:bg-gray-200'
             } ${showOptions ? (isDarkMode ? 'bg-gray-600' : 'bg-gray-200') : ''}`}
             title="Suchoptionen"
+            aria-label="Suchoptionen anzeigen/ausblenden"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -602,15 +579,15 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           </button>
           
           <span className={`ml-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-            {isSearching ? 'Suche...' : (matchCount > 0 ? `${currentMatchIndex + 1} von ${matchCount}` : 'Keine Treffer')}
+            {matchCount > 0 ? `${currentMatchIndex + 1} von ${matchCount}` : 'Keine Treffer'}
           </span>
         </div>
       </div>
       
-      {/* Erweiterte Optionen */}
+      {/* Erweiterte Suchoptionen */}
       {showOptions && (
         <div className={`mt-2 p-2 rounded-md text-xs ${isDarkMode ? 'bg-gray-800' : 'bg-gray-200'}`}>
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2">
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -618,7 +595,17 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
                 onChange={(e) => setOptions({...options, caseSensitive: e.target.checked})}
                 className="mr-1"
               />
-              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Groß-/Kleinschreibung</span>
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Groß-/Kleinschreibung beachten</span>
+            </label>
+            
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={options.useRegex}
+                onChange={(e) => setOptions({...options, useRegex: e.target.checked})}
+                className="mr-1"
+              />
+              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Reguläre Ausdrücke</span>
             </label>
             
             <label className="flex items-center">
@@ -642,40 +629,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
                 <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>In Schlüsseln suchen</span>
               </label>
             )}
-            
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={options.highlightAll}
-                onChange={(e) => setOptions({...options, highlightAll: e.target.checked})}
-                className="mr-1"
-              />
-              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Alle hervorheben</span>
-            </label>
-            
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={options.regexSearch}
-                onChange={(e) => setOptions({...options, regexSearch: e.target.checked})}
-                className="mr-1"
-              />
-              <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>Regex-Suche</span>
-            </label>
           </div>
-          
-          {/* Schnellhilfe für Regex */}
-          {options.regexSearch && (
-            <div className={`mt-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              <p className="font-medium mb-1">Regex-Hilfe:</p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                <div><code>\\w+</code> - Wort</div>
-                <div><code>\\d+</code> - Zahlen</div>
-                <div><code>^bid</code> - Beginnt mit "bid"</div>
-                <div><code>price$</code> - Endet mit "price"</div>
-              </div>
-            </div>
-          )}
         </div>
       )}
       

@@ -99,7 +99,7 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
           </span>
         );
       } else {
-        setError(`Fehler bei der KI-Analyse: ${err.message || 'Unbekannter Fehler'}`);
+      setError(`Fehler bei der KI-Analyse: ${err.message || 'Unbekannter Fehler'}`);
       }
     } finally {
       setIsLoading(false);

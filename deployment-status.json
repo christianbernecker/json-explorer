@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 11:39:07 CEST 2025", "commit": "Komplett neue Implementierung der Volltextsuche für bessere Ergebnisse"}
+{"deployment": "staging", "timestamp": "Thu May  8 12:21:56 CEST 2025", "commit": "Entfernung der SearchPanel-Komponente aus dem JSON-Explorer UI für eine schlankere Oberfläche"}

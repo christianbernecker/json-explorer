@@ -46,7 +46,7 @@ const queryApiRoute = async (request: LLMAnalysisRequest): Promise<LLMAnalysisRe
       },
       body: JSON.stringify(request)
     });
-
+    
     if (!response.ok) {
       // Versuche, die Fehlermeldung vom Backend zu parsen
       let errorMessage = `API route error: ${response.status} ${response.statusText}`;
@@ -140,7 +140,7 @@ export async function sendMessageToClaude(messages: Message[]): Promise<string> 
   try {
     const CLAUDE_API_KEY = process.env.REACT_APP_ANTHROPIC_API_KEY || '';
     if (!CLAUDE_API_KEY) throw new Error('Claude API Key fehlt (REACT_APP_)');
-
+    
     // ... restlicher alter Code ...
 
   } catch (error) {

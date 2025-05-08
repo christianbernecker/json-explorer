@@ -77,3 +77,26 @@ export interface AggregatedData {
 }
 
 export type ChartType = 'bar' | 'line' | 'pie' | 'radar' | 'area'; 
+
+// Neue Typen für die Suchfunktionalität
+export enum ContentType {
+  JSON = 'JSON',
+  XML = 'XML',
+  TEXT = 'TEXT'
+}
+
+export interface SearchResult {
+  type: string;
+  path: string;
+  line: number;
+  context: string;
+  match: string;
+  contentType: ContentType;
+}
+
+export interface SearchOptions {
+  caseSensitive: boolean;
+  inKeys: boolean;
+  inValues: boolean;
+  useRegex: boolean;
+} 
