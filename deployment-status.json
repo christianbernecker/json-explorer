@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 10:40:37 CEST 2025", "commit": "Komplette Überarbeitung der Suchfunktion und API-Route für bessere Fehlerbehandlung"}
+{"deployment": "staging", "timestamp": "Thu May  8 10:55:39 CEST 2025", "commit": "Behebt zwei Probleme: 1. Anthropic API Header-Format geändert und 2. Verbesserte Suche für technische Begriffe"}

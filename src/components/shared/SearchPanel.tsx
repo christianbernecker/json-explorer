@@ -5,7 +5,7 @@ import { SearchPanelProps } from '../../types';
 interface SearchOptions {
   caseSensitive: boolean;
   useRegex: boolean;
-  searchInKeys: boolean; // Nur für JSON relevant
+  searchInKeys: boolean;
   wholeWord: boolean;
 }
 
@@ -17,9 +17,6 @@ interface SearchResult {
   context?: string;
   isKey?: boolean;
 }
-
-// Spezielle technische Terme, die besondere Behandlung benötigen
-const SPECIAL_TERMS = ['bid', 'dsa', 'id', 'key', 'uuid', 'adId', 'adid', 'ad_id', 'campaign', 'price', 'auction', 'creative', 'adunit', 'adUnit', 'ad_unit', 'advertiser'];
 
 const SearchPanel: React.FC<SearchPanelProps> = ({ 
   contentType, 
@@ -82,8 +79,6 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   const clearHighlights = useCallback(() => {
     if (!targetRef.current) return;
     
-    // Wenn ein Fehler aufgetreten ist oder keine Suche stattgefunden hat,
-    // stellen wir den Original-Inhalt wieder her
     if (error || matches.length === 0) {
       if (originalContent.current) {
         targetRef.current.innerHTML = originalContent.current;
@@ -112,7 +107,6 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       }
     } catch (err) {
       console.error('Fehler beim Entfernen der Hervorhebungen:', err);
-      // Bei Fehler stellen wir den Original-Inhalt wieder her
       if (originalContent.current && targetRef.current) {
         targetRef.current.innerHTML = originalContent.current;
       }
@@ -130,7 +124,6 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         element.classList.remove('current-match');
         element.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
         element.style.color = isDarkMode ? 'white' : 'black';
-        // Entferne zusätzliche Styling-Eigenschaften
         element.style.padding = '';
         element.style.borderRadius = '';
         element.style.outline = '';
@@ -178,128 +171,113 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     }
   }, [isDarkMode]);
 
-  // JSON-spezifische direkte Attribut- und Wertsuche für bessere Erkennung
-  const searchInJsonDirectAttributes = useCallback((root: HTMLElement, pattern: RegExp, results: SearchResult[]) => {
-    // Suche nach data-* Attributen
-    const attributeNodes = root.querySelectorAll('[data-key], [data-value], [data-type]');
-    
-    attributeNodes.forEach(node => {
-      const element = node as HTMLElement;
-      
-      // Prüfe jeden data-* Attributwert
-      for (const attr of ['data-key', 'data-value', 'data-type']) {
-        const attrValue = element.getAttribute(attr);
-        if (!attrValue) continue;
-        
-        // Direkter String-Vergleich für sehr kurze Begriffe (3-4 Zeichen)
-        const isShortTermMatch = searchTerm.length <= 4 && 
-          (attrValue.toLowerCase() === searchTerm.toLowerCase() || 
-           attrValue.toLowerCase().includes(`.${searchTerm.toLowerCase()}`) ||
-           attrValue.toLowerCase().includes(`_${searchTerm.toLowerCase()}`) ||
-           attrValue.toLowerCase().includes(`-${searchTerm.toLowerCase()}`));
-        
-        // Regulärer Ausdruck für normale Suche
-        const isRegexMatch = pattern.test(attrValue);
-        
-        // Reset pattern.lastIndex, die durch test() verändert wurde
-        pattern.lastIndex = 0;
-        
-        if (isShortTermMatch || isRegexMatch) {
-          // Erzeuge ein Highlight-Element
-          const span = document.createElement('span');
-          span.className = 'search-match';
-          span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
-          span.style.color = isDarkMode ? 'white' : 'black';
-          
-          // Kopiere den Inhalt des Elements
-          const originalContent = element.innerHTML;
-          span.innerHTML = originalContent;
-          
-          // Leere das Element und füge das Highlight ein
-          element.innerHTML = '';
-          element.appendChild(span);
-          
-          // Füge das Ergebnis hinzu
-          const isKey = attr === 'data-key' || element.classList.contains('json-key');
-          results.push({
-            match: attrValue,
-            element: span,
-            context: originalContent,
-            line: getLineNumber(element),
-            isKey: isKey
-          });
-        }
-      }
-    });
-  }, [isDarkMode, searchTerm]);
-
-  // Hilfsfunktion für Zeilennummer
-  const getLineNumber = (element: HTMLElement): number => {
+  // Hilfsfunktion für Zeilennummer in useCallback verpackt
+  const getLineNumber = useCallback((element: HTMLElement): number => {
     const row = element.closest('tr');
     if (row && row.firstChild && row.firstChild.textContent) {
       const num = parseInt(row.firstChild.textContent.trim(), 10);
       return isNaN(num) ? 0 : num;
     }
     return 0;
-  };
+  }, []);
 
-  // Verbesserte JSON-Suche mit spezieller Unterstützung für technische Begriffe
-  const searchInJsonContent = useCallback((contentElement: HTMLElement, pattern: RegExp, results: SearchResult[]) => {
-    // Optimierte Suche für spezielle Begriffe wie "bid", "dsa", etc.
-    const searchTermLower = searchTerm.toLowerCase();
-    const isSpecialTerm = SPECIAL_TERMS.some(term => 
-      searchTermLower === term || 
-      searchTermLower.includes(term) || 
-      term.includes(searchTermLower)
-    );
+  // Neue verbesserte Volltextsuche - kombiniert für JSON und andere Inhalte
+  const indexContentForSearch = useCallback((container: HTMLElement, pattern: RegExp): SearchResult[] => {
+    const results: SearchResult[] = [];
     
-    // Bei speziellen Begriffen erst direkt in data-Attributen suchen
-    if (isSpecialTerm) {
-      searchInJsonDirectAttributes(contentElement, pattern, results);
+    // 1. Erzeugen einer flachen Liste aller Textknoten
+    const getAllTextNodes = (node: Node): Text[] => {
+      const textNodes: Text[] = [];
       
-      // Zusätzlich: Suche in Klassen-Namen (oft beinhalten Elemente semantische Klassen)
-      const allElements = contentElement.querySelectorAll('*');
-      allElements.forEach(node => {
-        const element = node as HTMLElement;
-        const className = element.className;
-        
-        if (typeof className === 'string' && pattern.test(className)) {
-          pattern.lastIndex = 0; // Reset
-          
-          // Erzeuge ein Highlight-Element für den Klassennamen-Treffer
-          const span = document.createElement('span');
-          span.className = 'search-match';
-          span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
-          span.style.color = isDarkMode ? 'white' : 'black';
-          
-          const originalContent = element.innerHTML;
-          span.innerHTML = originalContent;
-          
-          element.innerHTML = '';
-          element.appendChild(span);
-          
-          results.push({
-            match: className,
-            element: span,
-            context: originalContent
-          });
+      const traverse = (n: Node) => {
+        // Ignoriere Suchpanel selbst
+        if (n instanceof HTMLElement && 
+            (n.classList.contains('search-panel-container') || 
+             n.classList.contains('search-match'))) {
+          return;
         }
-      });
-    }
+        
+        if (n.nodeType === Node.TEXT_NODE && n.textContent && n.textContent.trim()) {
+          textNodes.push(n as Text);
+        } else if (n.nodeType === Node.ELEMENT_NODE) {
+          for (let i = 0; i < n.childNodes.length; i++) {
+            traverse(n.childNodes[i]);
+          }
+        }
+      };
+      
+      traverse(node);
+      return textNodes;
+    };
     
-    // Verbesserte Rekursion für komplexere Texttreffer
-    const processNode = (node: Node, parentSpans: HTMLElement[] = []) => {
-      // Für Text-Knoten
-      if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-        const text = node.textContent.trim();
-        if (!text) return; // Leere Textknoten überspringen
+    // 2. Spezielle Indexierung für JSON-Attribute
+    const indexJsonAttributes = () => {
+      // Finde alle Attribute, die für JSON wichtig sein könnten
+      const jsonElems = container.querySelectorAll('[data-key], [data-value], [data-path], .json-key, .json-value');
+      
+      jsonElems.forEach(elem => {
+        const element = elem as HTMLElement;
+        const isKey = element.classList.contains('json-key') || 
+                     element.hasAttribute('data-key') || 
+                     element.getAttribute('data-type') === 'key';
         
-        // Prüfe, ob der Text dem Suchmuster entspricht
-        pattern.lastIndex = 0; // Manuell zurücksetzen für jede Iteration
+        // Nur in Schlüsseln suchen, wenn die Option aktiviert ist
+        if (isKey && !options.searchInKeys) return;
+        
+        // Suche in Attributen und Textinhalt
+        let searchTargets: string[] = [];
+        
+        // Textinhalt hinzufügen
+        if (element.textContent) {
+          searchTargets.push(element.textContent);
+        }
+        
+        // Attribute hinzufügen
+        ['data-key', 'data-value', 'data-path'].forEach(attr => {
+          const attrValue = element.getAttribute(attr);
+          if (attrValue) searchTargets.push(attrValue);
+        });
+        
+        // Überprüfen, ob einer der Targets dem Suchmuster entspricht
+        searchTargets.forEach(target => {
+          pattern.lastIndex = 0; // Reset für jede Suche
+          if (pattern.test(target)) {
+            const span = document.createElement('span');
+            span.className = 'search-match';
+            span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+            span.style.color = isDarkMode ? 'white' : 'black';
+            
+            // Kopiere den Inhalt des Elements
+            const originalContent = element.innerHTML;
+            span.innerHTML = originalContent;
+            
+            // Ersetze den Inhalt des Elements
+            element.innerHTML = '';
+            element.appendChild(span);
+            
+            results.push({
+              match: target.match(pattern)?.[0] || target,
+              element: span,
+              context: target,
+              line: getLineNumber(element),
+              isKey
+            });
+          }
+        });
+      });
+    };
+    
+    // 3. Allgemeine Textsuche in normalen Textknoten
+    const searchTextNodes = () => {
+      const textNodes = getAllTextNodes(container);
+      
+      textNodes.forEach(textNode => {
+        const text = textNode.textContent || '';
+        pattern.lastIndex = 0;
+        
         let match = pattern.exec(text);
-        
         if (match) {
-          // Text enthält Match, erstelle Document Fragment
+          // Erstelle ein Fragment für die Ersetzung
           const fragment = document.createDocumentFragment();
           
           // Text vor dem Match
@@ -307,7 +285,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
             fragment.appendChild(document.createTextNode(text.substring(0, match.index)));
           }
           
-          // Highlight-Element erstellen
+          // Highlight-Element
           const span = document.createElement('span');
           span.className = 'search-match';
           span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
@@ -315,105 +293,57 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           span.textContent = match[0];
           fragment.appendChild(span);
           
-          // Bestimme den übergeordneten Kontext
-          const parentElement = parentSpans[parentSpans.length - 1] || node.parentElement as HTMLElement;
-          
-          // Bestimme ob es ein Schlüssel ist
-          const isKey = parentElement?.classList.contains('token-key') || 
-                       parentElement?.classList.contains('text-blue-300') ||
-                       parentElement?.classList.contains('json-key') ||
-                        parentElement?.getAttribute('data-type') === 'key';
-          
-          // Ergebnis nur hinzufügen, wenn Option aktiviert oder kein Schlüssel
-          if (options.searchInKeys || !isKey) {
-            results.push({
-              match: match[0],
-              element: span,
-              context: text.substring(Math.max(0, match.index - 20), 
-                                   Math.min(text.length, match.index + match[0].length + 20)),
-              line: getLineNumber(parentElement || document.createElement('div')),
-              isKey
-            });
-          }
-          
-          // Restlichen Text nach dem Match hinzufügen
+          // Text nach dem Match
           if (match.index + match[0].length < text.length) {
             fragment.appendChild(document.createTextNode(text.substring(match.index + match[0].length)));
           }
           
-          // Ersetze den ursprünglichen Textknoten
-          node.parentNode?.replaceChild(fragment, node);
-        }
-      } 
-      // Für Element-Knoten
-      else if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as HTMLElement;
-        
-        // Ignoriere bestimmte Elemente
-        if (element.tagName === 'SCRIPT' || 
-            element.tagName === 'STYLE' || 
-            element.classList.contains('search-panel-container') ||
-            element.classList.contains('search-match')) {
-          return;
-        }
-        
-        // Spezielle Behandlung für JSON-Elemente
-        const newParentSpans = [...parentSpans];
-        if (element.tagName === 'SPAN' || 
-            element.classList.contains('json-pair') || 
-            element.classList.contains('token-key') ||
-            element.classList.contains('token-value')) {
-          newParentSpans.push(element);
-        }
-        
-        // Spezialbehandlung für bekannte Problembegriffe
-        if (isSpecialTerm) {
-          // Prüfe data-key Attribute für Schlüssel
-          if (element.hasAttribute('data-key')) {
-            const keyValue = element.getAttribute('data-key');
-            if (keyValue && pattern.test(keyValue)) {
-              pattern.lastIndex = 0; // Reset lastIndex
-              // Nur hervorheben, wenn keine bestehenden Highlights
-              if (!element.querySelector('.search-match')) {
-                const span = document.createElement('span');
-                span.className = 'search-match';
-                span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
-                span.style.color = isDarkMode ? 'white' : 'black';
-                span.textContent = element.textContent || '';
-                
-                // Speichere originalen Inhalt
-                const originalContent = element.innerHTML;
-                element.innerHTML = '';
-                element.appendChild(span);
-                
-                // Ergebnis hinzufügen
-                results.push({
-                  match: searchTerm,
-                  element: span,
-                  context: originalContent,
-                  line: getLineNumber(element),
-                  isKey: true
-                });
-                
-                // Nicht weiter in diesem Element suchen
-                return;
-              }
+          // Element, das den Textknoten enthält
+          const parentElement = textNode.parentElement as HTMLElement;
+          
+          // Überprüfe, ob es sich um einen JSON-Schlüssel handelt
+          const isKey = parentElement?.classList.contains('json-key') || 
+                        parentElement?.getAttribute('data-type') === 'key';
+          
+          // Nur hinzufügen, wenn es kein Schlüssel ist oder Keys durchsucht werden sollen
+          if (!isKey || options.searchInKeys) {
+            // Ersetze den Textknoten mit dem Fragment
+            if (textNode.parentNode) {
+              textNode.parentNode.replaceChild(fragment, textNode);
+              
+              // Füge das Ergebnis hinzu
+              results.push({
+                match: match[0],
+                element: span,
+                context: text.substring(
+                  Math.max(0, match.index - 20), 
+                  Math.min(text.length, match.index + match[0].length + 20)
+                ),
+                line: getLineNumber(parentElement),
+                isKey
+              });
             }
           }
         }
-        
-        // Rekursiv alle Kindelemente durchlaufen
-        for (let i = 0; i < element.childNodes.length; i++) {
-          processNode(element.childNodes[i], newParentSpans);
-        }
-      }
+      });
     };
     
-    // Starte die Traversierung
-    processNode(contentElement);
-  }, [isDarkMode, searchTerm, options.searchInKeys, searchInJsonDirectAttributes]);
+    // Führe beide Suchtypen durch
+    if (contentType === 'JSON') {
+      indexJsonAttributes(); // Spezifisch für JSON
+    }
+    searchTextNodes(); // Immer durchführen
+    
+    // Sortiere nach Zeilennummern
+    return results.sort((a, b) => {
+      if (a.line !== undefined && b.line !== undefined) {
+        return a.line - b.line;
+      }
+      return 0;
+    });
+  }, [getLineNumber, isDarkMode, options.searchInKeys, contentType]);
 
-  // Durchführung der Suche mit verbesserter Leistung für komplexe Terme
+  // Durchführung der Suche
   const performSearch = useCallback(() => {
     if (!targetRef.current || !searchTerm) {
       clearHighlights();
@@ -449,102 +379,20 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     
     try {
       const pattern = createSearchPattern(searchTerm);
-      const results: SearchResult[] = [];
+      console.log(`SearchPanel: Suche nach "${searchTerm}" in ${contentType}`);
       
-      // Debug-Ausgabe für bessere Diagnose
-      console.log(`SearchPanel: Suche "${searchTerm}" in ${contentType}, Optionen:`, options);
+      // Durchführen der optimierten Suche
+      const results = indexContentForSearch(targetRef.current, pattern);
       
-      // Suchstrategie je nach ContentType wählen
-      if (contentType === 'JSON') {
-        searchInJsonContent(targetRef.current, pattern, results);
-      } else {
-        // Standardsuche für VAST und andere Inhalte
-        const collectTextNodes = (node: Node, textNodes: Node[]) => {
-          if (node.nodeType === Node.TEXT_NODE && node.textContent && node.textContent.trim()) {
-            textNodes.push(node);
-          } else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName !== 'SCRIPT' && node.nodeName !== 'STYLE') {
-            for (let i = 0; i < node.childNodes.length; i++) {
-              collectTextNodes(node.childNodes[i], textNodes);
-            }
-          }
-        };
-        
-        const textNodes: Node[] = [];
-        collectTextNodes(targetRef.current, textNodes);
-        
-        // Durch Textknoten iterieren und Treffer sammeln
-        textNodes.forEach(textNode => {
-          const text = textNode.textContent || '';
-          pattern.lastIndex = 0; // Reset pattern for each node
-          let match;
-          
-          // Alle Matches in diesem Textknoten finden
-          while ((match = pattern.exec(text)) !== null) {
-            const parent = textNode.parentNode as HTMLElement;
-            if (parent) { 
-              // Fragment erstellen für bessere Textmanipulation
-              const fragment = document.createDocumentFragment();
-              
-              // Text vor dem Match
-              if (match.index > 0) {
-                fragment.appendChild(document.createTextNode(text.substring(0, match.index)));
-              }
-              
-              // Highlight-Element
-              const span = document.createElement('span');
-              span.className = 'search-match';
-              span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
-              span.style.color = isDarkMode ? 'white' : 'black';
-              span.textContent = match[0];
-              fragment.appendChild(span);
-              
-              // Text nach dem Match
-              if (match.index + match[0].length < text.length) {
-                fragment.appendChild(document.createTextNode(text.substring(match.index + match[0].length)));
-              }
-              
-              // Ersetze den Textknoten durch das Fragment
-              parent.replaceChild(fragment, textNode);
-              
-              // Ergebnis hinzufügen
-              results.push({
-                match: match[0],
-                element: span,
-                context: text.substring(Math.max(0, match.index - 20), 
-                                      Math.min(text.length, match.index + match[0].length + 20)),
-                line: 0
-              });
-              
-              // Nur ein Match pro Textknoten, weil wir den Knoten verändern
-              break;
-            }
-          }
-        });
-      }
-      
-      // Sortiere Ergebnisse
-      results.sort((a, b) => {
-        // Nach Zeilennummern sortieren
-        if (a.line && b.line) {
-          return a.line - b.line;
-        }
-        return 0;
-      });
-      
-      // Debug-Info
-      console.log(`SearchPanel: ${results.length} Treffer für "${searchTerm}" gefunden`);
-      
-      // Ergebnisse speichern
+      console.log(`SearchPanel: ${results.length} Treffer gefunden`);
       setMatches(results);
       setMatchCount(results.length);
       
-      // Zum ersten Treffer navigieren
       if (results.length > 0) {
         highlightMatch(0, results);
       } else {
         setError(`Keine Treffer für "${searchTerm}" gefunden`);
       }
-      
     } catch (err: any) {
       console.error('Fehler bei der Suche:', err);
       setError(`Fehler bei der Suche: ${err.message}`);
@@ -553,17 +401,15 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       }
     }
   }, [
-    clearHighlights, 
-    createSearchPattern,
-    highlightMatch, 
-    isDarkMode, 
-    onSearch, 
-    options,
+    targetRef,
+    searchTerm,
     searchHistory,
-    searchInJsonContent, 
-    searchTerm, 
-    targetRef, 
-    contentType
+    onSearch,
+    clearHighlights,
+    createSearchPattern,
+    contentType,
+    indexContentForSearch,
+    highlightMatch
   ]);
 
   // Suchfeld beim Laden fokussieren
