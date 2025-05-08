@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 22:25:58 CEST 2025", "commit": "Fix: Verbessere die Tab-Navigation bei geöffnetem Suchfenster"}
+{"deployment": "staging", "timestamp": "Wed May  7 22:27:40 CEST 2025", "commit": "Fix: Verbesserte JSON-Suche für generische Begriffe wie 'bid'"}

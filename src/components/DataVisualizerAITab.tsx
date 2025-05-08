@@ -38,7 +38,7 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
   isDarkMode
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | React.ReactNode | null>(null);
   const [insights, setInsights] = useState<LLMAnalysisResponse | null>(null);
   const [provider, setProvider] = useState<'openai' | 'anthropic'>('anthropic');
 
@@ -66,14 +66,26 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
       
       if (anthropicKeyMissing) {
         console.error('Kein Claude API-Schlüssel gefunden. Bitte stellen Sie sicher, dass REACT_APP_ANTHROPIC_API_KEY konfiguriert ist.');
-        setError('Claude API-Schlüssel fehlt. Bitte konfigurieren Sie die Umgebungsvariable REACT_APP_ANTHROPIC_API_KEY oder wählen Sie einen anderen Anbieter.');
+        setError(
+          <span>
+            <strong>Claude API-Schlüssel fehlt.</strong> Bitte konfigurieren Sie die Umgebungsvariable <code>REACT_APP_ANTHROPIC_API_KEY</code> oder wählen Sie einen anderen Anbieter.
+            <br />
+            <small>Siehe Dokumentation unter <code>src/docs/API_KEY_CONFIG.md</code> für weitere Details.</small>
+          </span>
+        );
         setIsLoading(false);
         return;
       }
       
       if (openaiKeyMissing) {
         console.error('Kein OpenAI API-Schlüssel gefunden. Bitte stellen Sie sicher, dass REACT_APP_OPENAI_API_KEY konfiguriert ist.');
-        setError('OpenAI API-Schlüssel fehlt. Bitte konfigurieren Sie die Umgebungsvariable REACT_APP_OPENAI_API_KEY oder wählen Sie einen anderen Anbieter.');
+        setError(
+          <span>
+            <strong>OpenAI API-Schlüssel fehlt.</strong> Bitte konfigurieren Sie die Umgebungsvariable <code>REACT_APP_OPENAI_API_KEY</code> oder wählen Sie einen anderen Anbieter.
+            <br />
+            <small>Siehe Dokumentation unter <code>src/docs/API_KEY_CONFIG.md</code> für weitere Details.</small>
+          </span>
+        );
         setIsLoading(false);
         return;
       }

@@ -60,6 +60,13 @@ const CLAUDE_API_KEY = process.env.REACT_APP_ANTHROPIC_API_KEY || '';
 const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 
+// Debug-Info zur API-Key-Konfiguration, ohne den Key selbst zu loggen
+console.log('Anthropic API-Key:', CLAUDE_API_KEY ? 'vorhanden' : 'fehlt');
+if (!CLAUDE_API_KEY) {
+  console.warn('⚠️ Kein Anthropic API-Key in den Umgebungsvariablen gefunden.');
+  console.info('📝 Lies die Dokumentation in src/docs/API_KEY_CONFIG.md zur korrekten Konfiguration.');
+}
+
 /**
  * Generiert einen Prompt für das LLM basierend auf den Daten
  */
