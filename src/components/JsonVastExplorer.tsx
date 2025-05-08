@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
-import SearchPanel from './shared/SearchPanel'; // Import wieder aktiviert
 import JsonHistoryPanel from './shared/JsonHistoryPanel';
 
 // VastInfo type for internal use
@@ -901,15 +900,7 @@ const JsonVastExplorer = React.memo(({
                     className={`flex-1 p-2 sm:p-3 md:p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
                     style={{ height: 'calc(100vh - 300px)' }}
                   >
-                    {showJsonSearch && jsonOutputRef.current && (
-                      <SearchPanel
-                        contentType="JSON"
-                        targetRef={jsonOutputRef}
-                        isDarkMode={isDarkMode}
-                        key={`json-search-panel-${Date.now()}`}
-                        onSearch={(term) => console.log('Searching JSON for:', term)}
-                      />
-                    )}
+                    {/* SearchPanel für JSON entfernt */}
                     <div 
                       dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
                       className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
@@ -1053,9 +1044,7 @@ const JsonVastExplorer = React.memo(({
                 {showVastStructure ? (
                   <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
                     <div className="text-xs font-mono">
-                      {generateVastOutline(activeVastTabIndex === 0 
-                        ? rawVastContent 
-                        : vastChain[activeVastTabIndex - 1]?.content || null)}
+                      {generateVastOutline(rawVastContent)}
                     </div>
                   </div>
                 ) : (
@@ -1081,20 +1070,9 @@ const JsonVastExplorer = React.memo(({
                       </div>
                     </div>
                     
-                    {/* Search Panel */}
-                    {showVastSearch && 
-                      ((activeVastTabIndex === 0 && embeddedVastOutputRef.current) || 
-                       (activeVastTabIndex > 0 && getFetchedVastRef(activeVastTabIndex - 1)?.current)) && (
-                      <SearchPanel
-                        contentType="VAST"
-                        targetRef={activeVastTabIndex === 0 ? embeddedVastOutputRef : getFetchedVastRef(activeVastTabIndex - 1)}
-                        isDarkMode={isDarkMode}
-                        key={`vast-search-panel-${activeVastTabIndex}-${Date.now()}`}
-                        onSearch={(term) => console.log('Searching VAST for:', term)}
-                      />
-                    )}
+                    {/* SearchPanel für VAST entfernt */}
                     
-                    {/* VAST Content Display - wurde versehentlich entfernt */}
+                    {/* VAST Content Display */}
                     <div className="text-sm p-4 overflow-x-auto" 
                       ref={activeVastTabIndex === 0 ? embeddedVastOutputRef : getFetchedVastRef(activeVastTabIndex - 1)}
                       key={`vast-content-${activeVastTabIndex}-${vastChain.length}`}
