@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 09:58:33 CEST 2025", "commit": "Verbesserte Suchfunktion mit Unterstützung für komplexe JSON-Schlüssel und Lokalisierung"}
+{"deployment": "staging", "timestamp": "Thu May  8 10:24:54 CEST 2025", "commit": "Fix der Suchfunktion durch Vereinheitlichung der SearchPanel-Komponente"}

@@ -88,53 +88,74 @@ Antworte NUR im folgenden JSON-Format, ohne umschließenden Text oder Markdown:
 const queryAnthropicClaude = async (prompt: string, apiKey: string): Promise<LLMAnalysisResponse> => {
   console.log('API-Route: Sende Anfrage an Anthropic Claude API...');
     
-  const response = await fetch(CLAUDE_API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01' // Empfohlene Version
-    },
-    body: JSON.stringify({
-      model: CLAUDE_MODEL,
-      max_tokens: 1500, // Etwas höher für komplexere Analysen
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.3
-    })
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.text();
-    console.error('API-Route: Claude API Fehler:', response.status, errorData);
-    throw new Error(`Claude API error: ${response.status} ${response.statusText} - ${errorData}`);
-  }
-  
-  const data = await response.json();
-  console.log('API-Route: Anthropic Claude Antwort erhalten.'); // Logge nicht die gesamte Antwort
-  
-  const rawResponse = data.content[0]?.text;
-  if (!rawResponse) {
-    throw new Error('Claude API response format error: No text content found.');
-  }
-  
-  // Parse die JSON-Antwort
   try {
-    // Suche nach JSON in der Antwort (Claude gibt manchmal Text um das JSON herum aus)
-    const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
-    if (jsonMatch && jsonMatch[0]) {
-      return JSON.parse(jsonMatch[0]) as LLMAnalysisResponse;
-    } else {
-      console.error('API-Route: Kein JSON in Claude-Antwort gefunden. Raw:', rawResponse);
-      throw new Error('Kein gültiges JSON-Objekt in der Claude-Antwort gefunden.');
+    const response = await fetch(CLAUDE_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01' // Empfohlene Version
+      },
+      body: JSON.stringify({
+        model: CLAUDE_MODEL,
+        max_tokens: 1500, // Etwas höher für komplexere Analysen
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.3
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('API-Route: Claude API Fehler:', response.status, errorData);
+      
+      // Detailliertere Fehlermeldung erstellen
+      let errorMessage = `Claude API error: ${response.status} ${response.statusText}`;
+      
+      if (response.status === 401) {
+        errorMessage = `API-Authentifizierungsfehler: Ungültiger API-Schlüssel. Bitte ANTHROPIC_API_KEY in den Vercel-Umgebungsvariablen überprüfen.`;
+      } else if (response.status === 400) {
+        errorMessage = `Claude API Bad Request: ${errorData}`;
+      } else if (response.status === 429) {
+        errorMessage = `Claude API Rate Limit überschritten. Bitte später erneut versuchen.`;
+      } else if (response.status >= 500) {
+        errorMessage = `Claude API Server-Fehler: ${response.status}. Bitte später erneut versuchen.`;
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    const data = await response.json();
+    console.log('API-Route: Anthropic Claude Antwort erhalten.'); // Logge nicht die gesamte Antwort
+    
+    const rawResponse = data.content[0]?.text;
+    if (!rawResponse) {
+      throw new Error('Claude API response format error: No text content found.');
+    }
+    
+    // Parse die JSON-Antwort
+    try {
+      // Suche nach JSON in der Antwort (Claude gibt manchmal Text um das JSON herum aus)
+      const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch && jsonMatch[0]) {
+        return JSON.parse(jsonMatch[0]) as LLMAnalysisResponse;
+      } else {
+        console.error('API-Route: Kein JSON in Claude-Antwort gefunden. Raw:', rawResponse);
+        throw new Error('Kein gültiges JSON-Objekt in der Claude-Antwort gefunden.');
+      }
+    } catch (error: any) {
+      console.error('API-Route: Fehler beim Parsen der Claude-Antwort:', error);
+      throw new Error(`Fehler beim Parsen der LLM-Antwort: ${error.message}`);
     }
   } catch (error: any) {
-    console.error('API-Route: Fehler beim Parsen der Claude-Antwort:', error);
-    throw new Error(`Fehler beim Parsen der LLM-Antwort: ${error.message}`);
+    // Verbesserte Fehlerbehandlung
+    console.error('API-Route: Netzwerkfehler bei Claude API-Anfrage:', error);
+    const errorMessage = error.message || 'Unbekannter Fehler bei Claude API-Anfrage';
+    throw new Error(errorMessage);
   }
 };
 
@@ -164,10 +185,13 @@ export default async function handler(
     const apiKey = process.env.ANTHROPIC_API_KEY || process.env.REACT_APP_ANTHROPIC_API_KEY;
 
     if (!apiKey) {
-      console.error('API-Route: Weder ANTHROPIC_API_KEY noch REACT_APP_ANTHROPIC_API_KEY konfiguriert!');
+      console.error('API-Route: Kein API-Schlüssel gefunden!');
+      console.error('ANTHROPIC_API_KEY in Vercel-Umgebungsvariablen konfigurieren');
+      console.error('Verfügbare Umgebungsvariablen:', Object.keys(process.env).filter(key => !key.includes('NODE') && !key.includes('npm')).join(', '));
+      
       return response.status(500).json({ 
-        message: 'Server configuration error: API key missing',
-        details: 'Bitte konfigurieren Sie ANTHROPIC_API_KEY in den Vercel-Umgebungsvariablen.'
+        message: 'API key missing',
+        details: 'Bitte konfigurieren Sie ANTHROPIC_API_KEY in den Vercel-Einstellungen unter "Environment Variables".'
       });
     }
 
@@ -176,8 +200,30 @@ export default async function handler(
     let llmResult: LLMAnalysisResponse;
 
     if (analysisRequest.provider === 'anthropic') {
+      try {
         const prompt = generatePrompt(analysisRequest);
         llmResult = await queryAnthropicClaude(prompt, apiKey);
+      } catch (apiError: any) {
+        console.error('API-Route: Fehler bei der Claude API-Anfrage:', apiError);
+        
+        // Prüfen, ob es ein API-Schlüssel-Problem ist
+        if (apiError.message && (
+          apiError.message.includes('API-Authentifizierungsfehler') || 
+          apiError.message.includes('401') ||
+          apiError.message.includes('authentication')
+        )) {
+          return response.status(401).json({ 
+            message: 'API key invalid',
+            details: 'Der konfigurierte API-Schlüssel ist ungültig oder abgelaufen. Bitte aktualisieren Sie den ANTHROPIC_API_KEY in den Vercel-Einstellungen.'
+          });
+        }
+        
+        // Andere API-Fehler
+        return response.status(500).json({ 
+          message: 'Error querying Claude API',
+          details: apiError.message
+        });
+      }
     } else {
         // TODO: OpenAI implementieren, falls benötigt
         console.warn('API-Route: OpenAI Provider noch nicht implementiert.');
@@ -190,11 +236,16 @@ export default async function handler(
   } catch (error: any) {
     console.error('API-Route Fehler:', error);
     // Sende spezifischere Fehlermeldung, wenn möglich
-    const statusCode = error.message?.includes('Claude API error: 4') ? 400 : 500; // 4xx Fehler von Claude als Bad Request behandeln
-    return response.status(statusCode).json({ 
-        message: error.message || 'Internal Server Error', 
-        // Detaillierten Fehler nur loggen, nicht unbedingt zurückgeben
-        // error: error.toString() 
-    });
+    const statusCode = error.message?.includes('Bad Request') ? 400 : 500;
+
+    // Verbesserte Fehlerdetails
+    const errorDetails = {
+      message: error.message || 'Internal Server Error',
+      timestamp: new Date().toISOString(),
+      requestId: Math.random().toString(36).substring(2, 15),
+      errorType: error.name || 'UnknownError'
+    };
+    
+    return response.status(statusCode).json(errorDetails);
   }
 } 
