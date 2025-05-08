@@ -51,9 +51,7 @@ const JsonVastExplorer = React.memo(({
   
   // Suche und Tab-Verwaltung
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState(0);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
-  const [showDirectSearch, setShowDirectSearch] = useState(false); // Neue Suche
   const [directSearchTerm, setDirectSearchTerm] = useState('');
   const [directSearchResults, setDirectSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
   const [currentDirectResultIndex, setCurrentDirectResultIndex] = useState(-1);
@@ -780,7 +778,7 @@ const JsonVastExplorer = React.memo(({
     console.log("Searching in container:", activeTabIndex === 0 ? "JSON Panel" : "VAST Panel");
     
     // Verwende die neue Suchfunktion aus SearchFix
-    const { matches, cleanup, highlightMatch } = performSearch(
+    const { matches, cleanup } = performSearch(
       directSearchTerm,
       containerToSearch,
       directSearchCleanup
@@ -790,12 +788,11 @@ const JsonVastExplorer = React.memo(({
     setDirectSearchResults(matches);
     setDirectSearchCleanup(() => cleanup);
     
-    // Update search results count
-    setSearchResults(matches.length);
-    
     // Go to first result if there are any
     if (matches.length > 0) {
       setCurrentDirectResultIndex(0);
+      // Verwende die zurückgegebene highlightMatch Funktion
+      const { highlightMatch } = performSearch(directSearchTerm, containerToSearch, null);
       highlightMatch(0, matches);
     }
   }, [directSearchTerm, activeTabIndex, jsonRef, vastRef, directSearchCleanup]);
@@ -848,102 +845,6 @@ const JsonVastExplorer = React.memo(({
 
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
-      {/* Emergency Search Button - Immer sichtbar in der oberen rechten Ecke */}
-      <button
-        className="fixed top-4 right-4 z-50 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full shadow-lg text-base flex items-center animate-pulse"
-        onClick={() => {
-          console.log("EMERGENCY SEARCH BUTTON CLICKED");
-          setShowDirectSearch(!showDirectSearch);
-        }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-        {showDirectSearch ? "Close Search" : "Search!"}
-      </button>
-
-      {/* Notfall-Suchformular */}
-      {showDirectSearch && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
-          <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl p-6 border-4 border-red-600 ${isDarkMode ? 'text-white' : 'text-black'}`}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Direct Search</h2>
-              <button 
-                onClick={() => setShowDirectSearch(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Search Text
-              </label>
-              <input
-                type="text"
-                className={`w-full px-3 py-2 border rounded-md ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'border-gray-300'}`}
-                placeholder="Enter search term..."
-                value={directSearchTerm}
-                onChange={(e) => setDirectSearchTerm(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    performDirectSearch();
-                  }
-                }}
-                autoFocus
-              />
-            </div>
-
-            <div className="mt-4 flex space-x-3">
-              <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                onClick={performDirectSearch}
-              >
-                Search
-              </button>
-              <button
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-700"
-                onClick={() => setShowDirectSearch(false)}
-              >
-                Cancel
-              </button>
-            </div>
-            
-            {directSearchResults.length > 0 && (
-              <div className="mt-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">
-                    {directSearchResults.length} results found • 
-                    Result {currentDirectResultIndex + 1} of {directSearchResults.length}
-                  </span>
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={goToPrevDirectResult}
-                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                    <button 
-                      onClick={goToNextDirectResult}
-                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Original search component - keeping this for reference */}
       {console.log("Rendering with isSearchOpen:", isSearchOpen)}
       <JsonSearch 
@@ -957,8 +858,9 @@ const JsonVastExplorer = React.memo(({
           setIsSearchOpen(false);
         }}
         onSearchComplete={(count) => {
+          // count Parameter beibehalten, aber nicht verwenden
           console.log(`Search completed with ${count} results`);
-          setSearchResults(count);
+          // Die Variable searchResults wurde entfernt und wird hier nicht mehr gesetzt
         }}
       />
     
@@ -1072,28 +974,72 @@ const JsonVastExplorer = React.memo(({
                       </svg>
                       Wrap
                     </button>
-                    {/* Search button im JSON-Bereich - neuer direkter Button */}
-                    <button 
-                      id="json-search-button"
-                      onClick={() => {
-                        console.log("Direct JSON search button clicked");
-                        setSearchDebugMessage("Search button clicked!");
-                        setIsSearchOpen(true);
-                      }}
-                      className={`flex items-center px-2 py-1 rounded-md text-xs bg-green-600 hover:bg-green-700 text-white`}
-                    >
-                      <div className="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {/* Integrierte Suchleiste direkt im UI */}
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        className={`w-32 sm:w-48 px-2 py-1 text-xs rounded-l-md search-input ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500' 
+                            : 'border-gray-300 focus:border-blue-500'
+                        } outline-none`}
+                        placeholder="Suchen..."
+                        value={directSearchTerm}
+                        onChange={(e) => setDirectSearchTerm(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') performDirectSearch();
+                        }}
+                      />
+                      <button
+                        onClick={performDirectSearch}
+                        className={`px-2 py-1 text-xs rounded-r-md ${
+                          isDarkMode 
+                            ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                        }`}
+                        title="Suche (Enter)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        Search (NEW)
-                        {searchResults > 0 && (
-                          <span className="ml-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                            {searchResults}
+                      </button>
+                      
+                      {directSearchResults.length > 0 && (
+                        <div className="flex items-center ml-1">
+                          <span className="text-xs text-gray-600 dark:text-gray-300 mr-1">
+                            {currentDirectResultIndex + 1}/{directSearchResults.length}
                           </span>
-                        )}
-                      </div>
-                    </button>
+                          
+                          <button 
+                            onClick={goToPrevDirectResult}
+                            className={`p-1 rounded ${
+                              isDarkMode 
+                                ? 'text-gray-300 hover:bg-gray-700' 
+                                : 'text-gray-600 hover:bg-gray-200'
+                            }`}
+                            title="Vorheriges Ergebnis"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          
+                          <button 
+                            onClick={goToNextDirectResult}
+                            className={`p-1 rounded ${
+                              isDarkMode 
+                                ? 'text-gray-300 hover:bg-gray-700' 
+                                : 'text-gray-600 hover:bg-gray-200'
+                            }`}
+                            title="Nächstes Ergebnis"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <button 
                       onClick={copyJsonToClipboard} 
                       className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
@@ -1219,28 +1165,72 @@ const JsonVastExplorer = React.memo(({
                         Wrap
                       </div>
                     </button>
-                    {/* VAST Search button - neuer direkter Button */}
-                    <button 
-                      id="vast-search-button"
-                      onClick={() => {
-                        console.log("Direct VAST search button clicked");
-                        setSearchDebugMessage("VAST search button clicked!");
-                        setIsSearchOpen(true);
-                      }}
-                      className={`px-2 py-1 text-xs font-medium rounded bg-green-600 hover:bg-green-700 text-white`}
-                    >
-                      <div className="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {/* Integrierte Suchleiste auch im VAST-Panel */}
+                    <div className="relative flex items-center">
+                      <input
+                        type="text"
+                        className={`w-32 sm:w-48 px-2 py-1 text-xs rounded-l-md search-input ${
+                          isDarkMode 
+                            ? 'bg-gray-700 border-gray-600 text-gray-200 focus:border-blue-500' 
+                            : 'border-gray-300 focus:border-blue-500'
+                        } outline-none`}
+                        placeholder="Suchen..."
+                        value={directSearchTerm}
+                        onChange={(e) => setDirectSearchTerm(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') performDirectSearch();
+                        }}
+                      />
+                      <button
+                        onClick={performDirectSearch}
+                        className={`px-2 py-1 text-xs rounded-r-md ${
+                          isDarkMode 
+                            ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                            : 'bg-blue-500 text-white hover:bg-blue-600'
+                        }`}
+                        title="Suche (Enter)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        Search (NEW)
-                        {searchResults > 0 && (
-                          <span className="ml-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                            {searchResults}
+                      </button>
+                      
+                      {directSearchResults.length > 0 && (
+                        <div className="flex items-center ml-1">
+                          <span className="text-xs text-gray-600 dark:text-gray-300 mr-1">
+                            {currentDirectResultIndex + 1}/{directSearchResults.length}
                           </span>
-                        )}
-                      </div>
-                    </button>
+                          
+                          <button 
+                            onClick={goToPrevDirectResult}
+                            className={`p-1 rounded ${
+                              isDarkMode 
+                                ? 'text-gray-300 hover:bg-gray-700' 
+                                : 'text-gray-600 hover:bg-gray-200'
+                            }`}
+                            title="Vorheriges Ergebnis"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          
+                          <button 
+                            onClick={goToNextDirectResult}
+                            className={`p-1 rounded ${
+                              isDarkMode 
+                                ? 'text-gray-300 hover:bg-gray-700' 
+                                : 'text-gray-600 hover:bg-gray-200'
+                            }`}
+                            title="Nächstes Ergebnis"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <button
                       onClick={copyVastToClipboard}
                       className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
