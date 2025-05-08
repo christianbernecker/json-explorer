@@ -882,7 +882,7 @@ const JsonVastExplorer = React.memo(({
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
-                        Suchen
+                        Search
                         {searchResults > 0 && (
                           <span className="ml-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                             {searchResults}
@@ -1024,7 +1024,7 @@ const JsonVastExplorer = React.memo(({
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        Suchen
+                        Search
                         {searchResults > 0 && (
                           <span className="ml-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                             {searchResults}
@@ -1125,7 +1125,7 @@ const JsonVastExplorer = React.memo(({
       {/* JSON Viewer mit korrekter Ref für Suche */}
       <div 
         ref={jsonRef}
-        className={`hidden`} // Versteckte Referenz für die Suche (durch andere Display-Container ersetzt)
+        className={`absolute left-0 top-0 w-0 h-0 overflow-hidden opacity-0 pointer-events-none`}
       >
         {/* Kopie des JSON-Inhalts für Suche */}
         {parsedJson && (
@@ -1134,15 +1134,13 @@ const JsonVastExplorer = React.memo(({
       </div>
       
       {/* VAST Viewer mit korrekter Ref für Suche */}
-      {rawVastContent && (
-        <div 
-          ref={vastRef}
-          className={`hidden`} // Versteckte Referenz für die Suche (durch andere Display-Container ersetzt)
-        >
-          {/* Kopie des VAST-Inhalts für Suche */}
-          {renderVastContent(rawVastContent)}
-        </div>
-      )}
+      <div 
+        ref={vastRef}
+        className={`absolute left-0 top-0 w-0 h-0 overflow-hidden opacity-0 pointer-events-none`}
+      >
+        {/* Kopie des VAST-Inhalts für Suche */}
+        {rawVastContent && renderVastContent(rawVastContent)}
+      </div>
     </div>
   );
 });
