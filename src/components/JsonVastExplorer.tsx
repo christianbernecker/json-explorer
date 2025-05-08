@@ -52,6 +52,10 @@ const JsonVastExplorer = React.memo(({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState(0);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
+  const [showDirectSearch, setShowDirectSearch] = useState(false); // Neue Suche
+  const [directSearchTerm, setDirectSearchTerm] = useState('');
+  const [directSearchResults, setDirectSearchResults] = useState<{element: HTMLElement, text: string}[]>([]);
+  const [currentDirectResultIndex, setCurrentDirectResultIndex] = useState(-1);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTabIndex, _setActiveTabIndex] = useState(0);
   const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
@@ -758,9 +762,217 @@ const JsonVastExplorer = React.memo(({
     return () => clearTimeout(timer);
   }, [isSearchOpen]);
 
+  // Highlight and scroll to a match
+  const highlightAndScrollToMatch = useCallback((element: HTMLElement) => {
+    // Remove previous highlights
+    document.querySelectorAll('.direct-search-highlight').forEach(el => {
+      el.classList.remove('direct-search-highlight');
+      el.classList.remove('direct-search-current');
+    });
+    
+    // Add highlight to current element
+    element.classList.add('direct-search-highlight');
+    element.classList.add('direct-search-current');
+    
+    // Scroll to element
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }, []);
+
+  // Simple direct search function
+  const performDirectSearch = useCallback(() => {
+    // Reset previous search results
+    setDirectSearchResults([]);
+    setCurrentDirectResultIndex(-1);
+    
+    if (!directSearchTerm.trim()) return;
+    
+    console.log("Performing direct search for:", directSearchTerm);
+    
+    try {
+      // Container to search in depends on active tab
+      const containerToSearch = activeTabIndex === 0 ? jsonRef.current : vastRef.current;
+      
+      if (!containerToSearch) {
+        console.log("No container found to search in");
+        return;
+      }
+      
+      // Find all elements with text content containing the search term
+      const allElements = containerToSearch.querySelectorAll('*');
+      const matches: {element: HTMLElement, text: string}[] = [];
+      
+      Array.from(allElements).forEach(el => {
+        if (!(el instanceof HTMLElement)) return;
+        
+        const textContent = el.textContent?.trim();
+        if (!textContent) return;
+        
+        // Case insensitive search
+        if (textContent.toLowerCase().includes(directSearchTerm.toLowerCase())) {
+          matches.push({
+            element: el,
+            text: textContent
+          });
+        }
+      });
+      
+      console.log(`Direct search found ${matches.length} results`);
+      setDirectSearchResults(matches);
+      
+      // Go to first result if there are any
+      if (matches.length > 0) {
+        setCurrentDirectResultIndex(0);
+        highlightAndScrollToMatch(matches[0].element);
+      }
+    } catch (err) {
+      console.error("Error in direct search:", err);
+    }
+  }, [directSearchTerm, activeTabIndex, jsonRef, vastRef, highlightAndScrollToMatch]);
+  
+  // Navigate to next/previous result
+  const goToNextDirectResult = useCallback(() => {
+    if (directSearchResults.length === 0) return;
+    
+    const nextIndex = (currentDirectResultIndex + 1) % directSearchResults.length;
+    setCurrentDirectResultIndex(nextIndex);
+    highlightAndScrollToMatch(directSearchResults[nextIndex].element);
+  }, [directSearchResults, currentDirectResultIndex, highlightAndScrollToMatch]);
+  
+  const goToPrevDirectResult = useCallback(() => {
+    if (directSearchResults.length === 0) return;
+    
+    const prevIndex = (currentDirectResultIndex - 1 + directSearchResults.length) % directSearchResults.length;
+    setCurrentDirectResultIndex(prevIndex);
+    highlightAndScrollToMatch(directSearchResults[prevIndex].element);
+  }, [directSearchResults, currentDirectResultIndex, highlightAndScrollToMatch]);
+
+  // Add CSS for search highlighting
+  useEffect(() => {
+    // Create a style element
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .direct-search-highlight {
+        background-color: rgba(59, 130, 246, 0.3);
+        padding: 1px;
+        border-radius: 2px;
+      }
+      .direct-search-current {
+        background-color: rgba(239, 68, 68, 0.7);
+        color: white;
+        padding: 1px;
+        border-radius: 2px;
+        outline: 2px solid rgba(239, 68, 68, 0.9);
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    }
+  }, []);
+
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
-      {/* Verbesserte Suche mit JsonSearch */}
+      {/* Emergency Search Button - Immer sichtbar in der oberen rechten Ecke */}
+      <button
+        className="fixed top-4 right-4 z-50 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full shadow-lg text-base flex items-center animate-pulse"
+        onClick={() => {
+          console.log("EMERGENCY SEARCH BUTTON CLICKED");
+          setShowDirectSearch(!showDirectSearch);
+        }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        {showDirectSearch ? "Close Search" : "Search!"}
+      </button>
+
+      {/* Notfall-Suchformular */}
+      {showDirectSearch && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
+          <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl p-6 border-4 border-red-600 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Direct Search</h2>
+              <button 
+                onClick={() => setShowDirectSearch(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Search Text
+              </label>
+              <input
+                type="text"
+                className={`w-full px-3 py-2 border rounded-md ${isDarkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : 'border-gray-300'}`}
+                placeholder="Enter search term..."
+                value={directSearchTerm}
+                onChange={(e) => setDirectSearchTerm(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    performDirectSearch();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+
+            <div className="mt-4 flex space-x-3">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                onClick={performDirectSearch}
+              >
+                Search
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-700"
+                onClick={() => setShowDirectSearch(false)}
+              >
+                Cancel
+              </button>
+            </div>
+            
+            {directSearchResults.length > 0 && (
+              <div className="mt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm">
+                    {directSearchResults.length} results found • 
+                    Result {currentDirectResultIndex + 1} of {directSearchResults.length}
+                  </span>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={goToPrevDirectResult}
+                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <button 
+                      onClick={goToNextDirectResult}
+                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Original search component - keeping this for reference */}
       {console.log("Rendering with isSearchOpen:", isSearchOpen)}
       <JsonSearch 
         isDarkMode={isDarkMode}
