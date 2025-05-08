@@ -24,8 +24,9 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
   useEffect(() => {
     if (targetRef.current && !originalContent.current) {
       originalContent.current = targetRef.current.innerHTML;
+      console.log(`SearchPanel: Originalinhalt für ${contentType} gespeichert, Größe: ${originalContent.current.length}`);
     }
-  }, [targetRef]);
+  }, [targetRef, contentType]);
 
   // Entferne alle Highlights
   const clearHighlights = useCallback(() => {
@@ -36,6 +37,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
     if (error || matches.length === 0) {
       if (originalContent.current) {
         targetRef.current.innerHTML = originalContent.current;
+        console.log(`SearchPanel: Originalinhalt für ${contentType} wiederhergestellt`);
       }
       setError(null);
       return;
@@ -65,7 +67,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
         targetRef.current.innerHTML = originalContent.current;
       }
     }
-  }, [targetRef, error, matches.length]);
+  }, [targetRef, error, matches.length, contentType]);
 
   // Aktuelle Übereinstimmung hervorheben und zu ihr scrollen
   const highlightMatch = useCallback((index: number, matchElements: HTMLElement[]) => {
@@ -99,6 +101,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
   const performSearch = useCallback(() => {
     if (!targetRef.current || !searchTerm) return;
     
+    console.log(`SearchPanel: Starte Suche nach "${searchTerm}" in ${contentType}`);
+    
     // Aktuellen Inhalt speichern, falls noch nicht getan
     if (!originalContent.current) {
       originalContent.current = targetRef.current.innerHTML;
@@ -112,32 +116,66 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
     setError(null);
     
     try {
-      // Regulärer Ausdruck für Suche erstellen
+      // Regulärer Ausdruck für Suche erstellen - Wortgrenze deaktivieren um auch Teilwörter zu finden
       const regex = new RegExp(escapeRegExp(searchTerm), 'gi');
       
       // HTML in temporäres Element parsen, um Textknoten zu finden
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = originalContent.current;
       
-      // Funktion zum Sammeln der Textknoten
-      const collectTextNodes = (node: Node, textNodes: Node[]) => {
+      // Funktion zum Sammeln der Textknoten mit besserem Kontext-Handling
+      const collectTextNodes = (node: Node, textNodes: Node[], depth: number = 0) => {
+        // Nur Inhalte vom entsprechenden Content-Typ verarbeiten
+        if (depth === 0 && contentType === 'JSON') {
+          // Bei JSON nur im JSON-Bereich suchen, nicht im VAST-Bereich
+          const jsonContainer = Array.from(node.childNodes).find(child => 
+            child.nodeType === Node.ELEMENT_NODE && 
+            (child as HTMLElement).classList.contains('json-content')
+          );
+          
+          if (jsonContainer) {
+            collectTextNodes(jsonContainer, textNodes, depth + 1);
+          }
+          return;
+        } else if (depth === 0 && contentType === 'VAST') {
+          // Bei VAST nur im VAST-Bereich suchen, nicht im JSON-Bereich
+          const vastContainer = Array.from(node.childNodes).find(child => 
+            child.nodeType === Node.ELEMENT_NODE && 
+            (child as HTMLElement).classList.contains('vast-content')
+          );
+          
+          if (vastContainer) {
+            collectTextNodes(vastContainer, textNodes, depth + 1);
+          }
+          return;
+        }
+        
+        // Text-Knoten sammeln
         if (node.nodeType === Node.TEXT_NODE && node.textContent && node.textContent.trim()) {
-          // Nur nicht-leere Textknoten hinzufügen
           textNodes.push(node);
         } else if (node.nodeType === Node.ELEMENT_NODE) {
+          // Verbesserte Verarbeitung von Elementen, die tatsächlich sichtbaren Text enthalten
+          const element = node as HTMLElement;
+          
+          // Bestimmte Elemente überspringen, die keine Textsuche unterstützen sollten
+          const skipElements = ['SCRIPT', 'STYLE'];
+          if (skipElements.includes(element.tagName)) {
+            return;
+          }
+          
           // Alle Kindelemente durchlaufen
           const childNodes = node.childNodes;
           for (let i = 0; i < childNodes.length; i++) {
-            collectTextNodes(childNodes[i], textNodes);
+            collectTextNodes(childNodes[i], textNodes, depth + 1);
           }
         }
       };
       
-      // Sammle alle Textknoten
+      // Sammle alle Textknoten mit verbesserter Kontext-Berücksichtigung
       const textNodes: Node[] = [];
-      for (let i = 0; i < tempDiv.childNodes.length; i++) {
-        collectTextNodes(tempDiv.childNodes[i], textNodes);
-      }
+      collectTextNodes(tempDiv, textNodes);
+      
+      console.log(`SearchPanel: ${textNodes.length} Textknoten für die Suche in ${contentType} gefunden`);
       
       // Matches zählen
       let matchesFound = 0;
@@ -145,7 +183,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
       // Durch Textknoten iterieren und Treffer markieren
       textNodes.forEach(textNode => {
         const text = textNode.textContent || '';
-        // Prüfen, ob der Text den Suchbegriff enthält
+        
+        // Prüfen, ob der Text den Suchbegriff enthält (ohne Wortgrenzen)
         if (text.toLowerCase().includes(searchTerm.toLowerCase())) {
           const parent = textNode.parentNode as HTMLElement;
           if (!parent) return;
@@ -164,6 +203,8 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
           parent.replaceChild(replacementNode, textNode);
         }
       });
+      
+      console.log(`SearchPanel: ${matchesFound} Übereinstimmungen für "${searchTerm}" in ${contentType} gefunden`);
       
       // Übernehme den geänderten Inhalt zurück in das Original-Element
       targetRef.current.innerHTML = tempDiv.innerHTML;
@@ -190,7 +231,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({ contentType, targetRef, isDar
         targetRef.current.innerHTML = originalContent.current;
       }
     }
-  }, [clearHighlights, escapeRegExp, highlightMatch, isDarkMode, searchTerm, targetRef]);
+  }, [clearHighlights, escapeRegExp, highlightMatch, isDarkMode, searchTerm, targetRef, contentType]);
 
   // Fokussiere das Suchfeld beim Mounten
   useEffect(() => {

@@ -160,11 +160,15 @@ export default async function handler(
     }
 
     // Lese den sicheren API-Key aus den Umgebungsvariablen
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    // Unterstützt sowohl ANTHROPIC_API_KEY (Backend) als auch REACT_APP_ANTHROPIC_API_KEY (für lokale Entwicklung)
+    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.REACT_APP_ANTHROPIC_API_KEY;
 
     if (!apiKey) {
-      console.error('API-Route: ANTHROPIC_API_KEY nicht konfiguriert!');
-      return response.status(500).json({ message: 'Server configuration error: API key missing' });
+      console.error('API-Route: Weder ANTHROPIC_API_KEY noch REACT_APP_ANTHROPIC_API_KEY konfiguriert!');
+      return response.status(500).json({ 
+        message: 'Server configuration error: API key missing',
+        details: 'Bitte konfigurieren Sie ANTHROPIC_API_KEY in den Vercel-Umgebungsvariablen.'
+      });
     }
 
     console.log(`API-Route: Empfange Anfrage für Provider ${analysisRequest.provider}...`);

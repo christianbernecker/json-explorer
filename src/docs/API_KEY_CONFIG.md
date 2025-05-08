@@ -23,22 +23,33 @@ Für Staging und Production:
    - "adtech-toolbox-staging" für Staging
    - "adtech-toolbox" für Production
 3. Navigiere zu "Settings" > "Environment Variables"
-4. Füge einen neuen Eintrag hinzu:
-   - Name: `REACT_APP_ANTHROPIC_API_KEY`
+4. Füge diese Umgebungsvariable hinzu:
+   - Name: `ANTHROPIC_API_KEY` (WICHTIG: Für Vercel-Deployments wird dieser Name benötigt!)
    - Value: Dein Claude API-Key
    - Environment: Wähle die entsprechende Umgebung (Staging/Production)
 5. Klicke auf "Save"
 
-## 3. Überprüfen der Konfiguration
+## 3. API-Schlüssel für Frontend und Backend
+
+Wichtig zu verstehen:
+- Frontend (React-App) verwendet: `REACT_APP_ANTHROPIC_API_KEY`
+- Backend (API-Routen) verwendet: `ANTHROPIC_API_KEY`
+
+Für Vercel-Deployments wird empfohlen, **nur** `ANTHROPIC_API_KEY` zu konfigurieren, da:
+1. Die API-Route auf dem Server benötigt diese Variable
+2. Das Frontend sollte API-Schlüssel nicht direkt verwenden (Sicherheitsrisiko)
+
+Das Backend (api/analyze-data.ts) ist so konfiguriert, dass es beide Variablennamen akzeptiert, aber für Produktionsumgebungen sollte `ANTHROPIC_API_KEY` verwendet werden.
+
+## 4. Überprüfen der Konfiguration
 
 Nach dem Deployment kannst du prüfen, ob der API-Key verfügbar ist:
 
-1. Öffne in deinem Browser die Developer Console
-2. Prüfe die Logs - ein Hinweis wie "Anthropic API-Key: vorhanden" sollte zu sehen sein
+1. Öffne die Data Visualizer AI-Tab
+2. Ein Fehler mit "API-Schlüssel fehlt" bedeutet, dass die Umgebungsvariable nicht korrekt konfiguriert wurde
+3. Prüfe die Server-Logs in der Vercel-Konsole für weitere Details
 
-Wenn stattdessen "Anthropic API-Key: fehlt" erscheint, wurde die Environment Variable nicht korrekt konfiguriert.
-
-## 4. Sicherheitshinweise
+## 5. Sicherheitshinweise
 
 - Commit NIE deinen API-Key direkt in den Quellcode
 - Teile die `.env.local` Datei NICHT mit anderen (nicht per E-Mail, Chat, etc.)

@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
         </svg>
       ),
-      path: '/apps/json-explorer',
+      path: '/json-explorer',
     },
     {
       name: 'Data Visualizer',
@@ -37,7 +37,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
-      path: '/apps/data-visualizer',
+      path: '/data-visualizer',
     },
     {
       name: 'Hilfe',
@@ -49,6 +49,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
       path: '/guide',
     }
   ];
+
+  // Hilfsfunktion für korrekte Pfadgenerierung
+  const getCorrectPath = (path: string): string => {
+    // Wenn es der Root-Pfad ist, so belassen
+    if (path === '/') return path;
+    
+    // Ansonsten '/apps' voranstellen, falls nicht bereits vorhanden
+    return path.startsWith('/apps') ? path : `/apps${path}`;
+  };
 
   // Farbschema basierend auf dem Dark Mode
   const bgColor = isDarkMode ? 'bg-slate-800' : 'bg-slate-100';
@@ -85,15 +94,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
       {/* Navigation Items */}
       <nav className="flex flex-col items-center space-y-4 w-full px-2">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path || 
-                          (item.path !== '/' && location.pathname.startsWith(item.path) && item.path.length > 1) ||
-                          (item.path === '/' && location.pathname === '/');
+          const correctPath = getCorrectPath(item.path);
+          const currentPath = location.pathname;
+          
+          // Ist der aktuelle Pfad gleich dem korrekten Pfad oder startet damit?
+          const isActive = currentPath === correctPath || 
+                         (correctPath !== '/' && currentPath.startsWith(correctPath) && correctPath.length > 1) ||
+                         (correctPath === '/' && currentPath === '/');
+          
+          console.log(`Sidebar: Vergleiche ${currentPath} mit ${correctPath} - Aktiv: ${isActive}`);
+          
           const isExpanded = expandedItem === item.name;
           
           return (
             <div key={item.name} className="relative w-full group" onMouseEnter={() => handleMouseEnter(item.name)} onMouseLeave={handleMouseLeave}>
               <Link
-                to={item.path}
+                to={correctPath}
                 className={`flex flex-col items-center justify-center w-full h-14 rounded-md transition-all duration-200 ease-in-out 
                   ${isActive 
                     ? `${activeItemBg} shadow-md scale-105` 
