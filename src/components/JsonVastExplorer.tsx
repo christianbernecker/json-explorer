@@ -474,6 +474,36 @@ const JsonVastExplorer = React.memo(({
     }
   }, []);
 
+  // Stelle sicher, dass die Refs korrekt initialisiert werden, wenn Daten verfügbar sind
+  useEffect(() => {
+    // Refs-Status loggen
+    if (parsedJson && jsonOutputRef.current) {
+      console.log("JsonOutputRef ist initialisiert und bereit für die Suche");
+    }
+    
+    if (rawVastContent && embeddedVastOutputRef.current) {
+      console.log("EmbeddedVastOutputRef ist initialisiert und bereit für die Suche");
+    }
+    
+    // Aktive Suche deaktivieren, wenn keine gültigen Refs mehr vorhanden sind
+    if (showJsonSearch && !jsonOutputRef.current) {
+      console.warn("JSON-Suche ist aktiv, aber Ref ist nicht mehr gültig - deaktiviere Suche");
+      setShowJsonSearch(false);
+    }
+    
+    if (showVastSearch) {
+      const currentVastRef = activeVastTabIndex === 0 
+        ? embeddedVastOutputRef.current 
+        : getFetchedVastRef(activeVastTabIndex - 1)?.current;
+      
+      if (!currentVastRef) {
+        console.warn("VAST-Suche ist aktiv, aber Ref ist nicht mehr gültig - deaktiviere Suche");
+        setShowVastSearch(false);
+      }
+    }
+  }, [parsedJson, rawVastContent, jsonOutputRef, embeddedVastOutputRef, showJsonSearch, 
+      showVastSearch, activeVastTabIndex, getFetchedVastRef]);
+
   // Format JSON and initiate VAST chain fetching
   const handleFormat = useCallback(() => {
     // Reset fetch states on new format
@@ -718,32 +748,6 @@ const JsonVastExplorer = React.memo(({
     );
   }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
-  // Neuer State für den aktiven Such-Referenz
-  const [activeSearchRef, setActiveSearchRef] = useState<React.RefObject<HTMLDivElement> | null>(null);
-
-  // Initialisiere den activeSearchRef, wenn sich die Refs ändern
-  useEffect(() => {
-    if (showJsonSearch && jsonOutputRef.current) {
-      setActiveSearchRef(jsonOutputRef);
-    } else if (showVastSearch) {
-      if (activeVastTabIndex === 0 && embeddedVastOutputRef.current) {
-        setActiveSearchRef(embeddedVastOutputRef);
-      } else if (activeVastTabIndex > 0) {
-        const vastRef = getFetchedVastRef(activeVastTabIndex - 1);
-        if (vastRef && vastRef.current) {
-          setActiveSearchRef(vastRef);
-        } else {
-          setActiveSearchRef(null); // Fallback if ref is not available
-        }
-      } else {
-        setActiveSearchRef(null); // VAST search shown, but no valid tab/ref
-      }
-    } else {
-      // No search is active
-      setActiveSearchRef(null);
-    }
-  }, [showJsonSearch, showVastSearch, activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, jsonOutputRef]);
-
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* History Panel */}
@@ -862,9 +866,12 @@ const JsonVastExplorer = React.memo(({
                         setShowJsonSearch(newShowJsonSearch);
                         if (newShowJsonSearch) {
                           setShowVastSearch(false); // Close VAST search if open
-                          setActiveSearchRef(jsonOutputRef);
-                        } else {
-                          setActiveSearchRef(null);
+                          // Direkter Zugriff auf Ref statt indirekt über activeSearchRef
+                          if (jsonOutputRef.current) {
+                            console.log("JSON-Suche aktiviert mit gültiger Ref");
+                          } else {
+                            console.warn("JSON-Suche aktiviert, aber Ref ist nicht initialisiert");
+                          }
                         }
                       }} 
                       className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? (showJsonSearch ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200') : (showJsonSearch ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')}`}
@@ -898,15 +905,16 @@ const JsonVastExplorer = React.memo(({
                 ) : (
                   <div 
                     ref={jsonOutputRef}
+                    key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
                     className={`flex-1 p-2 sm:p-3 md:p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
                     style={{ height: 'calc(100vh - 300px)' }}
                   >
-                    {showJsonSearch && activeSearchRef && activeSearchRef === jsonOutputRef && (
+                    {showJsonSearch && jsonOutputRef.current && (
                       <SearchPanel
                         contentType="JSON"
                         targetRef={jsonOutputRef}
                         isDarkMode={isDarkMode}
-                        key="json-search-panel"
+                        key={`json-search-panel-${Date.now()}`}
                         onSearch={(term) => console.log('Searching JSON for:', term)}
                       />
                     )}
@@ -935,9 +943,9 @@ const JsonVastExplorer = React.memo(({
                             <button
                               onClick={() => {
                                 setActiveVastTabIndex(0);
-                                // Setze aktiven Such-Ref auf embeddedVastOutputRef wenn VAST-Suche aktiv ist
-                                if (showVastSearch) {
-                                  setActiveSearchRef(embeddedVastOutputRef);
+                                // Aktualisierte Logik: Prüfen statt setActiveSearchRef
+                                if (showVastSearch && embeddedVastOutputRef.current) {
+                                  console.log("Wechsel zu Embedded VAST Tab mit gültiger Ref");
                                 }
                               }}
                               className={`${
@@ -953,9 +961,12 @@ const JsonVastExplorer = React.memo(({
                                 key={index}
                                 onClick={() => {
                                   setActiveVastTabIndex(index + 1);
-                                  // Setze aktiven Such-Ref auf den entsprechenden Ref des VAST Items
+                                  // Aktualisierte Logik: Prüfen statt setActiveSearchRef
                                   if (showVastSearch) {
-                                    setActiveSearchRef(getFetchedVastRef(index));
+                                    const vastRef = getFetchedVastRef(index);
+                                    if (vastRef.current) {
+                                      console.log(`Wechsel zu VAST Chain Item ${index + 1} mit gültiger Ref`);
+                                    }
                                   }
                                 }}
                                 className={`${
@@ -1011,10 +1022,16 @@ const JsonVastExplorer = React.memo(({
                         setShowVastSearch(newShowVastSearch);
                         if (newShowVastSearch) {
                           setShowJsonSearch(false); // Close JSON search if open
-                          // activeSearchRef wird durch den useEffect oben gesetzt
-                          // basierend auf activeVastTabIndex
-                        } else {
-                          setActiveSearchRef(null);
+                          // Prüfe, ob aktuelle VAST-Refs gültig sind
+                          const currentRef = activeVastTabIndex === 0 
+                            ? embeddedVastOutputRef.current 
+                            : getFetchedVastRef(activeVastTabIndex - 1)?.current;
+                          
+                          if (currentRef) {
+                            console.log("VAST-Suche aktiviert mit gültiger Ref");
+                          } else {
+                            console.warn("VAST-Suche aktiviert, aber aktuelle Ref ist nicht initialisiert");
+                          }
                         }
                       }}
                       className={`px-2 py-1 text-xs font-medium rounded ${isDarkMode ? (showVastSearch ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500 text-gray-200') : (showVastSearch ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')}`}
@@ -1073,20 +1090,23 @@ const JsonVastExplorer = React.memo(({
                     </div>
                     
                     {/* Search Panel */}
-                    {showVastSearch && activeSearchRef && activeSearchRef !== jsonOutputRef && (
+                    {showVastSearch && 
+                      ((activeVastTabIndex === 0 && embeddedVastOutputRef.current) || 
+                       (activeVastTabIndex > 0 && getFetchedVastRef(activeVastTabIndex - 1)?.current)) && (
                       <SearchPanel
                         contentType="VAST"
-                        targetRef={activeSearchRef}
+                        targetRef={activeVastTabIndex === 0 ? embeddedVastOutputRef : getFetchedVastRef(activeVastTabIndex - 1)}
                         isDarkMode={isDarkMode}
-                        key={`vast-search-panel-${activeVastTabIndex}`}
+                        key={`vast-search-panel-${activeVastTabIndex}-${Date.now()}`}
                         onSearch={(term) => console.log('Searching VAST for:', term)}
                       />
                     )}
                     
                     {/* VAST Content Display - wurde versehentlich entfernt */}
-                    <div className="text-sm p-4 overflow-x-auto" ref={activeVastTabIndex === 0 
-                        ? embeddedVastOutputRef 
-                        : (getFetchedVastRef(activeVastTabIndex - 1) || null)}>
+                    <div className="text-sm p-4 overflow-x-auto" 
+                      ref={activeVastTabIndex === 0 ? embeddedVastOutputRef : getFetchedVastRef(activeVastTabIndex - 1)}
+                      key={`vast-content-${activeVastTabIndex}-${vastChain.length}`}
+                    >
                       {activeVastTabIndex === 0 ? (
                         renderVastContent(rawVastContent)
                       ) : vastChain[activeVastTabIndex - 1]?.isLoading ? (

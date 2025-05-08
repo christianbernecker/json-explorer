@@ -70,19 +70,30 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   // Speichere den originalen Inhalt beim ersten Laden
   useEffect(() => {
     if (targetRef.current && !originalContent.current) {
-      originalContent.current = targetRef.current.innerHTML;
-      console.log(`SearchPanel: Originalinhalt für ${contentType} gespeichert, Größe: ${originalContent.current.length}`);
+      try {
+        originalContent.current = targetRef.current.innerHTML;
+        console.log(`SearchPanel: Originalinhalt für ${contentType} gespeichert, Größe: ${originalContent.current.length}`);
+      } catch (error) {
+        console.error(`SearchPanel: Fehler beim Speichern des Originalinhalts:`, error);
+      }
     }
   }, [targetRef, contentType]);
 
-  // Entferne alle Highlights
+  // Entferne alle Highlights mit verbesserter Fehlerbehandlung
   const clearHighlights = useCallback(() => {
-    if (!targetRef.current) return;
+    if (!targetRef.current) {
+      console.warn(`SearchPanel: targetRef ist nicht initialisiert, Highlights können nicht entfernt werden`);
+      return;
+    }
     
     if (error || matches.length === 0) {
       if (originalContent.current) {
-        targetRef.current.innerHTML = originalContent.current;
-        console.log(`SearchPanel: Originalinhalt für ${contentType} wiederhergestellt`);
+        try {
+          targetRef.current.innerHTML = originalContent.current;
+          console.log(`SearchPanel: Originalinhalt für ${contentType} wiederhergestellt`);
+        } catch (err) {
+          console.error(`SearchPanel: Fehler beim Wiederherstellen des Originalinhalts:`, err);
+        }
       }
       setError(null);
       return;
@@ -108,7 +119,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     } catch (err) {
       console.error('Fehler beim Entfernen der Hervorhebungen:', err);
       if (originalContent.current && targetRef.current) {
-        targetRef.current.innerHTML = originalContent.current;
+        try {
+          targetRef.current.innerHTML = originalContent.current;
+        } catch (restoreErr) {
+          console.error('Konnte Originalinhalt nicht wiederherstellen:', restoreErr);
+        }
       }
     }
   }, [targetRef, error, matches.length, contentType]);
@@ -343,7 +358,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     });
   }, [getLineNumber, isDarkMode, options.searchInKeys, contentType]);
 
-  // Durchführung der Suche
+  // Durchführung der Suche mit verbesserter Fehlerbehandlung
   const performSearch = useCallback(() => {
     if (!targetRef.current || !searchTerm) {
       clearHighlights();
@@ -364,20 +379,20 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       onSearch(searchTerm);
     }
     
-    // Aktuellen Inhalt speichern, falls noch nicht getan
-    if (!originalContent.current) {
-      originalContent.current = targetRef.current.innerHTML;
-    } else {
-      // Stelle den Originalinhalt wieder her, bevor neue Suche durchgeführt wird
-      targetRef.current.innerHTML = originalContent.current;
-    }
-    
-    // Bestehende Highlights löschen
-    clearHighlights();
-    setError(null);
-    setMatches([]);
-    
     try {
+      // Aktuellen Inhalt speichern, falls noch nicht getan
+      if (!originalContent.current) {
+        originalContent.current = targetRef.current.innerHTML;
+      } else {
+        // Stelle den Originalinhalt wieder her, bevor neue Suche durchgeführt wird
+        targetRef.current.innerHTML = originalContent.current;
+      }
+      
+      // Bestehende Highlights löschen
+      clearHighlights();
+      setError(null);
+      setMatches([]);
+      
       const pattern = createSearchPattern(searchTerm);
       console.log(`SearchPanel: Suche nach "${searchTerm}" in ${contentType}`);
       
@@ -397,7 +412,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       console.error('Fehler bei der Suche:', err);
       setError(`Fehler bei der Suche: ${err.message}`);
       if (originalContent.current && targetRef.current) {
-        targetRef.current.innerHTML = originalContent.current;
+        try {
+          targetRef.current.innerHTML = originalContent.current;
+        } catch (restoreErr) {
+          console.error('Konnte Originalinhalt nicht wiederherstellen:', restoreErr);
+        }
       }
     }
   }, [
