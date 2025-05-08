@@ -833,58 +833,42 @@ const JsonVastExplorer = React.memo(({
     setVastTabSearches(initialSearches);
   }, [vastChain.length]);
 
-  // VAST search navigation - jetzt mit Tab-spezifischen Ergebnissen
-  const goToNextVastResult = useCallback(() => {
-    // Hole den aktuellen Tab-Suchstatus
-    const currentTabSearch = vastTabSearches[activeVastTabIndex];
-    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
-    
-    // Berechne den nächsten Index
-    const nextIndex = (currentTabSearch.currentIndex + 1) % currentTabSearch.results.length;
-    
-    // Aktualisiere den Index im Array
-    const updatedSearches = [...vastTabSearches];
-    updatedSearches[activeVastTabIndex] = {
-      ...updatedSearches[activeVastTabIndex],
-      currentIndex: nextIndex
+  // Cleanup beim Tab-Wechsel
+  useEffect(() => {
+    // Wenn wir unsere VAST-Tabs wechseln, rufen wir die Cleanup-Funktion 
+    // des aktuellen Tabs auf, um Hervorhebungen zu entfernen
+    return () => {
+      if (vastTabSearches[activeVastTabIndex]?.cleanup) {
+        vastTabSearches[activeVastTabIndex].cleanup?.();
+      }
     };
-    setVastTabSearches(updatedSearches);
-    
-    // Hole den richtigen Container
-    const vastContainer = activeVastTabIndex === 0 
-      ? embeddedVastOutputRef.current 
-      : getFetchedVastRef(activeVastTabIndex - 1).current;
-      
-    // Hervorhebe das neue Ergebnis
-    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
-    highlightMatch(nextIndex, currentTabSearch.results);
-  }, [vastTabSearches, activeVastTabIndex, vastSearchTerm, embeddedVastOutputRef, getFetchedVastRef]);
-  
-  const goToPrevVastResult = useCallback(() => {
-    // Hole den aktuellen Tab-Suchstatus
-    const currentTabSearch = vastTabSearches[activeVastTabIndex];
-    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
-    
-    // Berechne den vorherigen Index
-    const prevIndex = (currentTabSearch.currentIndex - 1 + currentTabSearch.results.length) % currentTabSearch.results.length;
-    
-    // Aktualisiere den Index im Array
-    const updatedSearches = [...vastTabSearches];
-    updatedSearches[activeVastTabIndex] = {
-      ...updatedSearches[activeVastTabIndex],
-      currentIndex: prevIndex
+  }, [activeVastTabIndex, vastTabSearches]);
+
+  // Aktiver Tab hat sich geändert - saubere Trennung der Tabs sicherstellen
+  useEffect(() => {
+    // Entferne alle Hervorhebungen im DOM, wenn sich der Tab ändert
+    const removeAllHighlights = () => {
+      document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+        if (el instanceof HTMLElement) {
+          // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
+          const text = el.textContent || '';
+          const textNode = document.createTextNode(text);
+          // Und ersetzen das hervorgehobene Element durch diesen TextNode
+          if (el.parentNode) {
+            el.parentNode.replaceChild(textNode, el);
+          }
+        }
+      });
     };
-    setVastTabSearches(updatedSearches);
     
-    // Hole den richtigen Container
-    const vastContainer = activeVastTabIndex === 0 
-      ? embeddedVastOutputRef.current 
-      : getFetchedVastRef(activeVastTabIndex - 1).current;
-      
-    // Hervorhebe das neue Ergebnis
-    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
-    highlightMatch(prevIndex, currentTabSearch.results);
-  }, [vastTabSearches, activeVastTabIndex, vastSearchTerm, embeddedVastOutputRef, getFetchedVastRef]);
+    // Rufe die Bereinigungsfunktion auf
+    removeAllHighlights();
+    
+    // Setze auch die Tab-spezifischen Such-Statuswerte zurück
+    if (vastTabSearches.length > 0) {
+      performVastSearch();
+    }
+  }, [activeVastTabIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Perform JSON search function
   const performJsonSearch = useCallback(() => {
@@ -913,16 +897,142 @@ const JsonVastExplorer = React.memo(({
       setJsonSearchStatus('results');
       setJsonCurrentResultIndex(0);
       highlightMatch(0, matches);
+      
+      // Scroll zum ersten Ergebnis (auch horizontal)
+      if (matches[0] && matches[0].element) {
+        const element = matches[0].element;
+        
+        // Verbesserte Scroll-Funktion mit horizontalem Scrollen
+        scrollToElement(element);
+      }
     } else {
       setJsonSearchStatus('no-results');
     }
   }, [jsonSearchTerm, jsonRef, jsonSearchCleanup]);
+
+  // Hilfsfunktion zum Scrollen zu einem Element (vertikal UND horizontal)
+  const scrollToElement = useCallback((element: HTMLElement) => {
+    // Prüfen, ob das Element existiert
+    if (!element) return;
+    
+    // Finde das nächste scrollbare Elternelement
+    let scrollContainer = element.parentElement;
+    while (scrollContainer) {
+      // Prüfe, ob das Element scrollbar ist
+      const hasVerticalScroll = scrollContainer.scrollHeight > scrollContainer.clientHeight;
+      const hasHorizontalScroll = scrollContainer.scrollWidth > scrollContainer.clientWidth;
+      
+      if (hasVerticalScroll || hasHorizontalScroll) {
+        break;
+      }
+      scrollContainer = scrollContainer.parentElement;
+    }
+    
+    if (scrollContainer) {
+      // Element-Position im Container ermitteln
+      const elementRect = element.getBoundingClientRect();
+      const containerRect = scrollContainer.getBoundingClientRect();
+      
+      // Berechne die Scroll-Positionen
+      const verticalScroll = 
+        element.offsetTop - scrollContainer.offsetTop - (containerRect.height / 2) + (elementRect.height / 2);
+      
+      const horizontalScroll = 
+        element.offsetLeft - scrollContainer.offsetLeft - (containerRect.width / 2) + (elementRect.width / 2);
+      
+      // Scrolle vertikal und horizontal
+      scrollContainer.scrollTo({
+        top: verticalScroll,
+        left: Math.max(0, horizontalScroll), // Sicherstellen, dass wir nicht negativ scrollen
+        behavior: 'smooth'
+      });
+    } else {
+      // Fallback zur normalen scrollIntoView-Methode
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center' // Zentrieren auch horizontal
+      });
+    }
+  }, []);
+
+  // Navigation für die VAST-Tabs
+  const goToNextVastResult = useCallback(() => {
+    const currentTabSearch = vastTabSearches[activeVastTabIndex];
+    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
+    
+    const nextIndex = (currentTabSearch.currentIndex + 1) % currentTabSearch.results.length;
+    
+    // Aktualisiere den Index im Tab-spezifischen Zustand
+    const updatedSearches = [...vastTabSearches];
+    updatedSearches[activeVastTabIndex] = {
+      ...updatedSearches[activeVastTabIndex],
+      currentIndex: nextIndex
+    };
+    setVastTabSearches(updatedSearches);
+    
+    // Get the appropriate VAST container for the current tab
+    const vastContainer = activeVastTabIndex === 0 
+      ? embeddedVastOutputRef.current 
+      : getFetchedVastRef(activeVastTabIndex - 1).current;
+    
+    // Perform the highlight
+    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
+    highlightMatch(nextIndex, currentTabSearch.results);
+    
+    // Scroll zum Ergebnis
+    if (currentTabSearch.results[nextIndex]?.element) {
+      scrollToElement(currentTabSearch.results[nextIndex].element);
+    }
+  }, [vastTabSearches, activeVastTabIndex, vastSearchTerm, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
+
+  const goToPrevVastResult = useCallback(() => {
+    const currentTabSearch = vastTabSearches[activeVastTabIndex];
+    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
+    
+    const prevIndex = (currentTabSearch.currentIndex - 1 + currentTabSearch.results.length) % currentTabSearch.results.length;
+    
+    // Aktualisiere den Index im Tab-spezifischen Zustand
+    const updatedSearches = [...vastTabSearches];
+    updatedSearches[activeVastTabIndex] = {
+      ...updatedSearches[activeVastTabIndex],
+      currentIndex: prevIndex
+    };
+    setVastTabSearches(updatedSearches);
+    
+    // Get the appropriate VAST container for the current tab
+    const vastContainer = activeVastTabIndex === 0 
+      ? embeddedVastOutputRef.current 
+      : getFetchedVastRef(activeVastTabIndex - 1).current;
+    
+    // Perform the highlight
+    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
+    highlightMatch(prevIndex, currentTabSearch.results);
+    
+    // Scroll zum Ergebnis
+    if (currentTabSearch.results[prevIndex]?.element) {
+      scrollToElement(currentTabSearch.results[prevIndex].element);
+    }
+  }, [vastTabSearches, activeVastTabIndex, vastSearchTerm, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
 
   // Perform VAST search function - jetzt tabspezifisch
   const performVastSearch = useCallback(() => {
     // Hole den aktuellen Tab-Suchstatus
     const currentTabSearch = vastTabSearches[activeVastTabIndex];
     if (!currentTabSearch) return;
+    
+    // Entferne zuerst alle vorherigen Hervorhebungen
+    document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+      if (el instanceof HTMLElement) {
+        // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
+        const text = el.textContent || '';
+        const textNode = document.createTextNode(text);
+        // Und ersetzen das hervorgehobene Element durch diesen TextNode
+        if (el.parentNode) {
+          el.parentNode.replaceChild(textNode, el);
+        }
+      }
+    });
     
     // Aktualisiere das Array mit leeren Ergebnissen für die aktuelle Suche
     const updatedSearches = [...vastTabSearches];
@@ -969,6 +1079,11 @@ const JsonVastExplorer = React.memo(({
       
       // Highlight first match
       highlightMatch(0, matches);
+      
+      // Scroll zum ersten Ergebnis (auch horizontal)
+      if (matches[0] && matches[0].element) {
+        scrollToElement(matches[0].element);
+      }
     } else {
       newUpdatedSearches[activeVastTabIndex] = {
         results: [],
@@ -979,18 +1094,75 @@ const JsonVastExplorer = React.memo(({
     }
     
     setVastTabSearches(newUpdatedSearches);
-  }, [vastSearchTerm, activeVastTabIndex, vastTabSearches, embeddedVastOutputRef, getFetchedVastRef]);
+  }, [vastSearchTerm, activeVastTabIndex, vastTabSearches, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
 
-  // Cleanup beim Tab-Wechsel
-  useEffect(() => {
-    // Wenn wir unsere VAST-Tabs wechseln, rufen wir die Cleanup-Funktion 
-    // des aktuellen Tabs auf, um Hervorhebungen zu entfernen
-    return () => {
-      if (vastTabSearches[activeVastTabIndex]?.cleanup) {
-        vastTabSearches[activeVastTabIndex].cleanup?.();
+  // WICHTIG: Tab-Wechsel-Handler um Hervorhebungen zu aktualisieren
+  const handleVastTabChange = useCallback((newTabIndex: number) => {
+    // Wenn der aktuelle Tab mit dem neuen Tab identisch ist, nichts tun
+    if (activeVastTabIndex === newTabIndex) return;
+    
+    // Entferne alle Hervorhebungen
+    document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+      if (el instanceof HTMLElement) {
+        // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
+        const text = el.textContent || '';
+        const textNode = document.createTextNode(text);
+        // Und ersetzen das hervorgehobene Element durch diesen TextNode
+        if (el.parentNode) {
+          el.parentNode.replaceChild(textNode, el);
+        }
       }
-    };
-  }, [activeVastTabIndex, vastTabSearches]);
+    });
+    
+    // Führe die Cleanup-Funktion für den aktuellen Tab aus
+    if (vastTabSearches[activeVastTabIndex]?.cleanup) {
+      vastTabSearches[activeVastTabIndex].cleanup?.();
+    }
+    
+    // Setze den neuen Tab-Index
+    setActiveVastTabIndex(newTabIndex);
+    
+    // Verzögert die Hervorhebung neu erstellen, wenn der neue Tab gerendert wurde
+    setTimeout(() => {
+      // Wenn es Ergebnisse im neuen Tab gibt, hervorheben
+      if (vastTabSearches[newTabIndex]?.results.length > 0) {
+        const vastContainer = newTabIndex === 0 
+          ? embeddedVastOutputRef.current 
+          : getFetchedVastRef(newTabIndex - 1).current;
+        
+        // Hervorhebe das letzte aktive Ergebnis im neuen Tab
+        const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
+        const currentIndex = vastTabSearches[newTabIndex].currentIndex;
+        
+        if (currentIndex >= 0 && vastTabSearches[newTabIndex].results.length > currentIndex) {
+          highlightMatch(currentIndex, vastTabSearches[newTabIndex].results);
+          
+          // Scroll zum Ergebnis
+          if (vastTabSearches[newTabIndex].results[currentIndex]?.element) {
+            scrollToElement(vastTabSearches[newTabIndex].results[currentIndex].element);
+          }
+        }
+      }
+    }, 100);
+  }, [activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, scrollToElement, vastSearchTerm, vastTabSearches]);
+
+  // Wenn sich die Tab-Struktur ändert, müssen wir die VAST-Tabs-Suche neu initialisieren
+  useEffect(() => {
+    if (vastChain.length > 0) {
+      // Beim Ändern der VAST-Kette die Suchhervorhebungen entfernen
+      document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+        if (el instanceof HTMLElement) {
+          // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
+          const text = el.textContent || '';
+          const textNode = document.createTextNode(text);
+          // Und ersetzen das hervorgehobene Element durch diesen TextNode
+          if (el.parentNode) {
+            el.parentNode.replaceChild(textNode, el);
+          }
+        }
+      });
+    }
+  }, [vastChain]);
 
   // Add CSS for search highlighting - jetzt mit Hervorhebung aller Treffer
   useEffect(() => {
@@ -1291,13 +1463,7 @@ const JsonVastExplorer = React.memo(({
                         {vastChain.length > 0 ? (
                           <>
                             <button
-                              onClick={() => {
-                                setActiveVastTabIndex(0);
-                                // Aktualisierte Logik: Prüfen statt setActiveSearchRef
-                                if (isSearchOpen && embeddedVastOutputRef.current) {
-                                  console.log("Wechsel zu Embedded VAST Tab mit gültiger Ref");
-                                }
-                              }}
+                              onClick={() => handleVastTabChange(0)}
                               className={`${
                                 activeVastTabIndex === 0
                                   ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
@@ -1310,14 +1476,7 @@ const JsonVastExplorer = React.memo(({
                               <button
                                 key={index}
                                 onClick={() => {
-                                  setActiveVastTabIndex(index + 1);
-                                  // Aktualisierte Logik: Prüfen statt setActiveSearchRef
-                                  if (isSearchOpen) {
-                                    const vastRef = getFetchedVastRef(index);
-                                    if (vastRef.current) {
-                                      console.log(`Wechsel zu VAST Chain Item ${index + 1} mit gültiger Ref`);
-                                    }
-                                  }
+                                  handleVastTabChange(index + 1);
                                 }}
                                 className={`${
                                   activeVastTabIndex === index + 1
@@ -1508,7 +1667,10 @@ const JsonVastExplorer = React.memo(({
                       ref={activeVastTabIndex === 0 ? embeddedVastOutputRef : getFetchedVastRef(activeVastTabIndex - 1)}
                       key={`vast-output-${activeVastTabIndex}`}
                     >
-                      {renderVastContent(rawVastContent)}
+                      {activeVastTabIndex === 0 
+                        ? renderVastContent(rawVastContent)
+                        : renderVastContent(vastChain[activeVastTabIndex - 1]?.content || null)
+                      }
                     </div>
                   </div>
                 )}

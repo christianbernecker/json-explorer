@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 15:26:16 CEST 2025", "commit": "Suchfunktionalität verbessert: Separierte Suchfelder für JSON und VAST, Navigation mit Enter-Taste und bessere Statusanzeigen"}
+{"deployment": "staging", "timestamp": "Thu May  8 15:33:09 CEST 2025", "commit": "Unabhängige Suche für VAST-Tabs implementiert: Jeder Tab hat jetzt seinen eigenen Suchzustand"}
