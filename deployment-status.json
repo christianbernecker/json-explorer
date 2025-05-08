@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 09:28:58 CEST 2025", "commit": "Fix: Remove unused code in llmService"}
+{"deployment": "staging", "timestamp": "Thu May  8 09:37:53 CEST 2025", "commit": "Behebung der drei Hauptprobleme: 1) API-Key-Konfiguration verbessert 2) JSON-Suchfunktion optimiert 3) Sidebar-Navigation korrigiert"}
