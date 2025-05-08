@@ -171,127 +171,77 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     }
   }, [isDarkMode]);
 
-  const searchInJsonContent = useCallback((content: Node, pattern: RegExp, results: SearchResult[]) => {
-    // Verbesserte JSON-Suche, die auch die Struktur des DOMs berücksichtigt
-    const searchNode = (node: Node, isKey: boolean = false) => {
-      // Direkte Textsuche in allen Textknoten, unabhängig vom Typ
-      if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-        const text = node.textContent.trim();
-        if (text) {
-          // Erstelle eine neue RegExp-Instanz für jede Suche, um lastIndex-Probleme zu vermeiden
-          const localPattern = new RegExp(pattern.source, pattern.flags);
-          let match;
-          
-          while ((match = localPattern.exec(text)) !== null) {
-            if (node.parentElement) {
-              // Ermittle, ob es sich um einen Schlüssel handelt
-              const isKeyElement = 
-                node.parentElement.classList.contains('text-blue-300') || 
-                node.parentElement.classList.contains('text-indigo-600') ||
-                node.parentElement.className.includes('blue');
-              
-              results.push({
-                match: match[0],
-                element: node.parentElement,
-                context: isKeyElement 
-                  ? `Key: ${text}` 
-                  : text.substring(Math.max(0, match.index - 20), match.index + match[0].length + 20),
-                line: getLineNumber(node.parentElement),
-                isKey: isKeyElement
-              });
-            }
-          }
-        }
-      }
-      
-      // Spezialfall für JSON-Schlüssel in SPAN-Elementen
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        const element = node as HTMLElement;
-        const isJsonKey = 
-          element.classList.contains('text-blue-300') || 
-          element.classList.contains('text-indigo-600') ||
-          element.className.includes('blue');
-        
-        // Direkte Suche im HTML-Inhalt für alle Elemente
-        if (element.textContent) {
-          const text = element.textContent.trim();
-          
-          // Bei JSON-Schlüssel-Suche
-          if (options.searchInKeys && isJsonKey && text) {
-            // Erstelle eine neue RegExp-Instanz
-            const keyPattern = new RegExp(pattern.source, pattern.flags);
-            let match;
-            
-            while ((match = keyPattern.exec(text)) !== null) {
-              results.push({
-                match: match[0],
-                element: element,
-                context: `Key: ${text}`,
-                line: getLineNumber(element),
-                isKey: true
-              });
-            }
-          }
-          
-          // Universal-Suche in allen Elementen
-          // Erstelle eine neue RegExp-Instanz
-          const universalPattern = new RegExp(pattern.source, pattern.flags);
-          if (universalPattern.test(text)) {
-            const parentElement = element.tagName === 'SPAN' ? element : element.closest('span');
-            if (parentElement && !results.some(r => r.element === parentElement)) {
-              results.push({
-                match: pattern.source.replace(/\\b|\\B|\^|\$/g, ''),
-                element: parentElement as HTMLElement,
-                context: text,
-                line: getLineNumber(parentElement as HTMLElement),
-                isKey: isJsonKey
-              });
-            }
-          }
-        }
-        
-        // Rekursiv durch alle Kinder durchsuchen
-        const childNodes = element.childNodes;
-        for (let i = 0; i < childNodes.length; i++) {
-          searchNode(childNodes[i], isJsonKey);
-        }
-      }
-    };
-    
-    // Funktion zur Bestimmung der Zeilennummer eines Elements
+  const searchInJsonContent = useCallback((contentElement: HTMLElement, pattern: RegExp, results: SearchResult[]) => {
+    // Funktion zur Rekursion durch Knoten und Sammlung von Textinhalten
+
     const getLineNumber = (element: HTMLElement): number => {
-      // Finde die nächste Zeilennummer-Zelle
-      const lineNumberCell = element.closest('tr')?.querySelector('td:first-child');
-      if (lineNumberCell && lineNumberCell.textContent) {
-        return parseInt(lineNumberCell.textContent) || 0;
+      const row = element.closest('tr');
+      if (row && row.firstChild && row.firstChild.textContent) {
+        return parseInt(row.firstChild.textContent, 10) || 0;
       }
       return 0;
     };
-    
-    // Starte Suche im Inhalt
-    searchNode(content);
-    
-    // Vereinfachte globale Suche nach dem Text in allen span-Elementen (Fallback)
-    if (results.length === 0) {
-      const searchTermClean = pattern.source.replace(/\\b|\\B|\^|\$/g, '');
-      
-      // Durchsuche alle span-Elemente im Dokument
-      const allSpans = content.parentElement?.querySelectorAll('span') || [];
-      allSpans.forEach(span => {
-        if (span.textContent && 
-            span.textContent.toLowerCase().includes(searchTermClean.toLowerCase()) && 
-            !span.classList.contains('search-match')) {
-          results.push({
-            match: searchTermClean,
-            element: span as HTMLElement,
-            context: span.textContent,
-            line: getLineNumber(span as HTMLElement),
-            isKey: span.classList.contains('text-blue-300') || span.classList.contains('text-indigo-600')
-          });
+
+    const collectTextAndSpans = (node: Node, parentSpans: HTMLElement[] = []) => {
+      if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+        const text = node.textContent;
+        let matchInstance: RegExpExecArray | null;
+        // Lokale RegExp-Instanz für jeden Textknoten, um lastIndex-Probleme zu vermeiden
+        const localPattern = new RegExp(pattern.source, pattern.flags);
+        while ((matchInstance = localPattern.exec(text)) !== null) {
+          // Finde das umschließende Span-Element für das Highlighting
+          // Das kann der direkte Parent sein oder ein Vorfahre, falls Textknoten direkt in divs liegen
+          let highlightTargetElement = parentSpans[parentSpans.length - 1] || (node.parentElement as HTMLElement);
+          
+          // Wenn der Textknoten direkt in einem TD oder TR ist (von Zeilennummern-Tabelle),
+          // versuche ein kindliches Span zu finden, das den Text enthält, falls möglich.
+          if (highlightTargetElement && (highlightTargetElement.tagName === 'TD' || highlightTargetElement.tagName === 'TR')) {
+            // Finde das innerste Span, das diesen Textknoten umschließt oder direkt enthält.
+             const childSpans = Array.from(highlightTargetElement.getElementsByTagName('span'));
+             let bestSpan : HTMLElement | null = null;
+             for(const span of childSpans) {
+                if(span.contains(node)) {
+                    bestSpan = span;
+                    break; // Innerstes gefunden
+                }
+             }
+             if(bestSpan) highlightTargetElement = bestSpan;
+          }
+
+          const currentMatchText = matchInstance![0];
+          const matchIndex = matchInstance!.index;
+
+          if (highlightTargetElement && !results.some(r => r.element === highlightTargetElement && r.match === currentMatchText)) {
+            const isKey = highlightTargetElement.className.includes('token-key') || highlightTargetElement.className.includes('text-blue-300'); // Anpassung an Syntax-Highlighter-Klassen
+            results.push({
+              match: currentMatchText,
+              element: highlightTargetElement,
+              context: text.substring(Math.max(0, matchIndex - 20), matchIndex + currentMatchText.length + 20),
+              line: getLineNumber(highlightTargetElement),
+              isKey: isKey,
+            });
+          }
         }
-      });
-    }
-  }, [options.searchInKeys]);
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        const element = node as HTMLElement;
+        // Ignoriere Skript- und Style-Tags sowie das SearchPanel selbst
+        if (element.tagName === 'SCRIPT' || element.tagName === 'STYLE' || element.classList.contains('search-panel-container')) {
+          return;
+        }
+        
+        const newParentSpans = [...parentSpans];
+        if (element.tagName === 'SPAN') {
+          newParentSpans.push(element);
+        }
+
+        element.childNodes.forEach(child => collectTextAndSpans(child, newParentSpans));
+      }
+    };
+
+    // Starte die Traversierung vom Wurzelelement des Inhalts
+    collectTextAndSpans(contentElement);
+
+  }, []); // options.searchInKeys entfernt, da es nicht direkt verwendet wird, um die Funktion zu ändern
 
   // Durchführung der Suche mit verbesserter Performance
   const performSearch = useCallback(() => {

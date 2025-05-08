@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 22:27:40 CEST 2025", "commit": "Fix: Verbesserte JSON-Suche für generische Begriffe wie 'bid'"}
+{"deployment": "staging", "timestamp": "Thu May  8 09:00:08 CEST 2025", "commit": "Verbesserte API-Key-Konfiguration und -Dokumentation"}

@@ -409,19 +409,35 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   const [aggregationType, setAggregationType] = useState<'sum' | 'average'>('sum');
 
   // Column defs generieren (mit Debug-Info)
-  const generateColumnDefsWithDebug = useCallback((data: DataRow[], nonEmptyColumns: string[]): ColDef[] => {
+  const generateColumnDefsWithDebug = useCallback((dataToRender: DataRow[], nonEmptyCols: string[]): ColDef[] => {
     console.log('Generiere Spaltendefinitionen für Tabelle:', {
-      rowCount: data.length,
-      columnCount: nonEmptyColumns.length,
-      sampleRow: data.length > 0 ? data[0] : null
+      rowCount: dataToRender.length,
+      nonEmptyCols: nonEmptyCols,
+      sampleRow: dataToRender.length > 0 ? dataToRender[0] : null
     });
 
-    return nonEmptyColumns.map(key => {
-      let columnType = 'string';
-      if (data.length > 0) {
-        const values = data.map(row => row[key]).filter(Boolean);
-        columnType = identifyColumnType(values);
+    if (dataToRender.length === 0) {
+      console.warn('generateColumnDefsWithDebug: Keine Daten zum Generieren von Spalten.');
+      return [];
+    }
+
+    if (nonEmptyCols.length === 0) {
+      console.warn('generateColumnDefsWithDebug: Keine nicht-leeren Spalten gefunden. Versuche alle Spalten aus der ersten Zeile zu verwenden.');
+      nonEmptyCols = dataToRender.length > 0 ? Object.keys(dataToRender[0]) : [];
+      if (nonEmptyCols.length === 0) {
+        console.error('generateColumnDefsWithDebug: Konnte auch keine Spalten aus der ersten Zeile extrahieren.');
+        return [];
       }
+    }
+
+    return nonEmptyCols.map(key => {
+      let columnType = 'string';
+      const values = dataToRender.map(row => row[key]).filter(val => val !== null && val !== undefined && val !== '');
+      if (values.length > 0) {
+        columnType = identifyColumnType(values); // identifyColumnType muss existieren und korrekt arbeiten
+      }
+      
+      console.log(`Spalte: ${key}, Typ: ${columnType}`);
     
       return {
         field: key,
@@ -452,9 +468,9 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
   // Calculate chart data 
   const computedChartData = useMemo(() => {
     // Debug log to see the current dimensions and selected values
-    console.log('Current dimensions:', dimensions);
-    console.log('Selected dimension:', selectedDimension);
-    console.log('Selected metric:', selectedMetric);
+    console.log('Current dimensions for chart:', dimensions);
+    console.log('Selected dimension for chart:', selectedDimension);
+    console.log('Selected metric for chart:', selectedMetric);
     
     if (!selectedDimension || !selectedMetric) {
       console.warn('Missing dimension or metric selection');
@@ -918,11 +934,12 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
 
   // Tabelle rendern (mit Debug-Ausgabe)
   const renderTableWithDebug = useCallback(() => {
-    console.log('Tabelle wird gerendert:', {
+    console.log('Tabelle wird gerendert mit (renderTableWithDebug):', {
       rowCount: data.length,
-      columnCount: columnDefs.length,
-      firstRow: data.length > 0 ? data[0] : null,
-      gridApi: gridApi ? 'verfügbar' : 'nicht initialisiert'
+      columnDefsLength: columnDefs.length,
+      firstRowData: data.length > 0 ? data[0] : 'Keine Daten',
+      firstColDef: columnDefs.length > 0 ? columnDefs[0] : 'Keine Spaltendefinitionen',
+      gridApiAvailable: !!gridApi
     });
     
     if (data.length === 0) {
@@ -944,13 +961,18 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       <div className={`h-[400px] w-full ${isDarkMode ? 'ag-theme-alpine-dark' : 'ag-theme-alpine'}`}>
         <AgGridReact
           onGridReady={(params: GridReadyEvent) => {
-            console.log('Grid ist bereit, API wird initialisiert');
+            console.log('Grid ist bereit (onGridReady), API wird initialisiert');
             const api = params.api;
             setGridApi(api);
-            api.sizeColumnsToFit();
+            // api.sizeColumnsToFit(); // Deaktiviert für besseres Debugging von Spaltenbreiten
             
             // Prüfen ob Daten sichtbar sind
-            console.log('Grid wurde initialisiert mit', api.getDisplayedRowCount(), 'sichtbaren Zeilen');
+            console.log('Grid initialisiert (onGridReady). Sichtbare Zeilen:', api.getDisplayedRowCount());
+            if (api.getDisplayedRowCount() === 0 && data.length > 0) {
+              console.warn('AG-Grid zeigt 0 Zeilen an, obwohl Daten vorhanden sind. Überprüfe columnDefs und Grid-Optionen.');
+              console.log('Row Data an Grid übergeben:', data.slice(0,5));
+              console.log('Column Defs an Grid übergeben:', columnDefs);
+            }
           }}
           defaultColDef={{
             resizable: true,

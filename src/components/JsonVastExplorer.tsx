@@ -730,12 +730,19 @@ const JsonVastExplorer = React.memo(({
         setActiveSearchRef(embeddedVastOutputRef);
       } else if (activeVastTabIndex > 0) {
         const vastRef = getFetchedVastRef(activeVastTabIndex - 1);
-        if (vastRef.current) {
+        if (vastRef && vastRef.current) {
           setActiveSearchRef(vastRef);
+        } else {
+          setActiveSearchRef(null); // Fallback if ref is not available
         }
+      } else {
+        setActiveSearchRef(null); // VAST search shown, but no valid tab/ref
       }
+    } else {
+      // No search is active
+      setActiveSearchRef(null);
     }
-  }, [showJsonSearch, showVastSearch, activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef]);
+  }, [showJsonSearch, showVastSearch, activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, jsonOutputRef]);
 
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
@@ -854,10 +861,13 @@ const JsonVastExplorer = React.memo(({
                         const newShowJsonSearch = !showJsonSearch;
                         setShowJsonSearch(newShowJsonSearch);
                         if (newShowJsonSearch) {
+                          setShowVastSearch(false); // Close VAST search if open
                           setActiveSearchRef(jsonOutputRef);
+                        } else {
+                          setActiveSearchRef(null);
                         }
                       }} 
-                      className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
+                      className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? (showJsonSearch ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200') : (showJsonSearch ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')}`}
                       title="Find in JSON"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -891,12 +901,13 @@ const JsonVastExplorer = React.memo(({
                     className={`flex-1 p-2 sm:p-3 md:p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
                     style={{ height: 'calc(100vh - 300px)' }}
                   >
-                    {showJsonSearch && (
+                    {showJsonSearch && activeSearchRef && activeSearchRef === jsonOutputRef && (
                       <SearchPanel
                         contentType="JSON"
                         targetRef={jsonOutputRef}
                         isDarkMode={isDarkMode}
-                        key="json-search"
+                        key="json-search-panel"
+                        onSearch={(term) => console.log('Searching JSON for:', term)}
                       />
                     )}
                     <div 
@@ -998,18 +1009,15 @@ const JsonVastExplorer = React.memo(({
                       onClick={() => {
                         const newShowVastSearch = !showVastSearch;
                         setShowVastSearch(newShowVastSearch);
-                        // Setze den aktiven Such-Ref basierend auf dem aktuellen Tab
                         if (newShowVastSearch) {
-                          if (activeVastTabIndex === 0) {
-                            setActiveSearchRef(embeddedVastOutputRef);
-                          } else {
-                            setActiveSearchRef(getFetchedVastRef(activeVastTabIndex - 1));
-                          }
+                          setShowJsonSearch(false); // Close JSON search if open
+                          // activeSearchRef wird durch den useEffect oben gesetzt
+                          // basierend auf activeVastTabIndex
                         } else {
                           setActiveSearchRef(null);
                         }
                       }}
-                      className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
+                      className={`px-2 py-1 text-xs font-medium rounded ${isDarkMode ? (showVastSearch ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500 text-gray-200') : (showVastSearch ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')}`}
                     >
                       <div className="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1065,13 +1073,13 @@ const JsonVastExplorer = React.memo(({
                     </div>
                     
                     {/* Search Panel */}
-                    {showVastSearch && activeSearchRef && activeSearchRef.current && (
+                    {showVastSearch && activeSearchRef && activeSearchRef !== jsonOutputRef && (
                       <SearchPanel
                         contentType="VAST"
                         targetRef={activeSearchRef}
                         isDarkMode={isDarkMode}
-                        // Einen Key hinzufügen, der sich ändert, wenn der Tab wechselt
-                        key={`vast-search-${activeVastTabIndex}`}
+                        key={`vast-search-panel-${activeVastTabIndex}`}
+                        onSearch={(term) => console.log('Searching VAST for:', term)}
                       />
                     )}
                     
