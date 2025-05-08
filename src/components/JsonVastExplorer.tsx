@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
-import SearchPanel from './shared/SearchPanel';
+// import SearchPanel from './shared/SearchPanel'; // Temporär auskommentiert für Test
 import JsonHistoryPanel from './shared/JsonHistoryPanel';
 
 // VastInfo type for internal use
@@ -861,28 +861,6 @@ const JsonVastExplorer = React.memo(({
                       Wrap
                     </button>
                     <button 
-                      onClick={() => {
-                        const newShowJsonSearch = !showJsonSearch;
-                        setShowJsonSearch(newShowJsonSearch);
-                        if (newShowJsonSearch) {
-                          setShowVastSearch(false); // Close VAST search if open
-                          // Direkter Zugriff auf Ref statt indirekt über activeSearchRef
-                          if (jsonOutputRef.current) {
-                            console.log("JSON-Suche aktiviert mit gültiger Ref");
-                          } else {
-                            console.warn("JSON-Suche aktiviert, aber Ref ist nicht initialisiert");
-                          }
-                        }
-                      }} 
-                      className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? (showJsonSearch ? 'bg-blue-600 text-white' : 'bg-gray-700 hover:bg-gray-600 text-gray-200') : (showJsonSearch ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')}`}
-                      title="Find in JSON"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      Find
-                    </button>
-                    <button 
                       onClick={copyJsonToClipboard} 
                       className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
                       title="Copy JSON"
@@ -909,15 +887,6 @@ const JsonVastExplorer = React.memo(({
                     className={`flex-1 p-2 sm:p-3 md:p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
                     style={{ height: 'calc(100vh - 300px)' }}
                   >
-                    {showJsonSearch && jsonOutputRef.current && (
-                      <SearchPanel
-                        contentType="JSON"
-                        targetRef={jsonOutputRef}
-                        isDarkMode={isDarkMode}
-                        key={`json-search-panel-${Date.now()}`}
-                        onSearch={(term) => console.log('Searching JSON for:', term)}
-                      />
-                    )}
                     <div 
                       dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
                       className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
@@ -1017,33 +986,6 @@ const JsonVastExplorer = React.memo(({
                       </div>
                     </button>
                     <button
-                      onClick={() => {
-                        const newShowVastSearch = !showVastSearch;
-                        setShowVastSearch(newShowVastSearch);
-                        if (newShowVastSearch) {
-                          setShowJsonSearch(false); // Close JSON search if open
-                          // Prüfe, ob aktuelle VAST-Refs gültig sind
-                          const currentRef = activeVastTabIndex === 0 
-                            ? embeddedVastOutputRef.current 
-                            : getFetchedVastRef(activeVastTabIndex - 1)?.current;
-                          
-                          if (currentRef) {
-                            console.log("VAST-Suche aktiviert mit gültiger Ref");
-                          } else {
-                            console.warn("VAST-Suche aktiviert, aber aktuelle Ref ist nicht initialisiert");
-                          }
-                        }
-                      }}
-                      className={`px-2 py-1 text-xs font-medium rounded ${isDarkMode ? (showVastSearch ? 'bg-blue-600 text-white' : 'bg-gray-600 hover:bg-gray-500 text-gray-200') : (showVastSearch ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')}`}
-                    >
-                      <div className="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        Find
-                      </div>
-                    </button>
-                    <button
                       onClick={copyVastToClipboard}
                       className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
                     >
@@ -1088,19 +1030,6 @@ const JsonVastExplorer = React.memo(({
                           ))}
                       </div>
                     </div>
-                    
-                    {/* Search Panel */}
-                    {showVastSearch && 
-                      ((activeVastTabIndex === 0 && embeddedVastOutputRef.current) || 
-                       (activeVastTabIndex > 0 && getFetchedVastRef(activeVastTabIndex - 1)?.current)) && (
-                      <SearchPanel
-                        contentType="VAST"
-                        targetRef={activeVastTabIndex === 0 ? embeddedVastOutputRef : getFetchedVastRef(activeVastTabIndex - 1)}
-                        isDarkMode={isDarkMode}
-                        key={`vast-search-panel-${activeVastTabIndex}-${Date.now()}`}
-                        onSearch={(term) => console.log('Searching VAST for:', term)}
-                      />
-                    )}
                     
                     {/* VAST Content Display - wurde versehentlich entfernt */}
                     <div className="text-sm p-4 overflow-x-auto" 
