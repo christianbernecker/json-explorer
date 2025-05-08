@@ -798,6 +798,52 @@ const JsonVastExplorer = React.memo(({
     return () => clearTimeout(timer);
   }, [isSearchOpen]);
 
+  // Hilfsfunktion zum Scrollen zu einem Element (vertikal UND horizontal)
+  const scrollToElement = useCallback((element: HTMLElement) => {
+    // Prüfen, ob das Element existiert
+    if (!element) return;
+    
+    // Finde das nächste scrollbare Elternelement
+    let scrollContainer = element.parentElement;
+    while (scrollContainer) {
+      // Prüfe, ob das Element scrollbar ist
+      const hasVerticalScroll = scrollContainer.scrollHeight > scrollContainer.clientHeight;
+      const hasHorizontalScroll = scrollContainer.scrollWidth > scrollContainer.clientWidth;
+      
+      if (hasVerticalScroll || hasHorizontalScroll) {
+        break;
+      }
+      scrollContainer = scrollContainer.parentElement;
+    }
+    
+    if (scrollContainer) {
+      // Element-Position im Container ermitteln
+      const elementRect = element.getBoundingClientRect();
+      const containerRect = scrollContainer.getBoundingClientRect();
+      
+      // Berechne die Scroll-Positionen
+      const verticalScroll = 
+        element.offsetTop - scrollContainer.offsetTop - (containerRect.height / 2) + (elementRect.height / 2);
+      
+      const horizontalScroll = 
+        element.offsetLeft - scrollContainer.offsetLeft - (containerRect.width / 2) + (elementRect.width / 2);
+      
+      // Scrolle vertikal und horizontal
+      scrollContainer.scrollTo({
+        top: verticalScroll,
+        left: Math.max(0, horizontalScroll), // Sicherstellen, dass wir nicht negativ scrollen
+        behavior: 'smooth'
+      });
+    } else {
+      // Fallback zur normalen scrollIntoView-Methode
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center' // Zentrieren auch horizontal
+      });
+    }
+  }, []);
+
   // Navigate to next/previous result - jetzt ohne zirkuläre Abhängigkeit
   const goToNextJsonResult = useCallback(() => {
     if (jsonSearchResults.length === 0) return;
@@ -908,53 +954,7 @@ const JsonVastExplorer = React.memo(({
     } else {
       setJsonSearchStatus('no-results');
     }
-  }, [jsonSearchTerm, jsonRef, jsonSearchCleanup]);
-
-  // Hilfsfunktion zum Scrollen zu einem Element (vertikal UND horizontal)
-  const scrollToElement = useCallback((element: HTMLElement) => {
-    // Prüfen, ob das Element existiert
-    if (!element) return;
-    
-    // Finde das nächste scrollbare Elternelement
-    let scrollContainer = element.parentElement;
-    while (scrollContainer) {
-      // Prüfe, ob das Element scrollbar ist
-      const hasVerticalScroll = scrollContainer.scrollHeight > scrollContainer.clientHeight;
-      const hasHorizontalScroll = scrollContainer.scrollWidth > scrollContainer.clientWidth;
-      
-      if (hasVerticalScroll || hasHorizontalScroll) {
-        break;
-      }
-      scrollContainer = scrollContainer.parentElement;
-    }
-    
-    if (scrollContainer) {
-      // Element-Position im Container ermitteln
-      const elementRect = element.getBoundingClientRect();
-      const containerRect = scrollContainer.getBoundingClientRect();
-      
-      // Berechne die Scroll-Positionen
-      const verticalScroll = 
-        element.offsetTop - scrollContainer.offsetTop - (containerRect.height / 2) + (elementRect.height / 2);
-      
-      const horizontalScroll = 
-        element.offsetLeft - scrollContainer.offsetLeft - (containerRect.width / 2) + (elementRect.width / 2);
-      
-      // Scrolle vertikal und horizontal
-      scrollContainer.scrollTo({
-        top: verticalScroll,
-        left: Math.max(0, horizontalScroll), // Sicherstellen, dass wir nicht negativ scrollen
-        behavior: 'smooth'
-      });
-    } else {
-      // Fallback zur normalen scrollIntoView-Methode
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'center' // Zentrieren auch horizontal
-      });
-    }
-  }, []);
+  }, [jsonSearchTerm, jsonRef, jsonSearchCleanup, scrollToElement]);
 
   // Navigation für die VAST-Tabs
   const goToNextVastResult = useCallback(() => {
