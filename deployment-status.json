@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 13:35:26 CEST 2025", "commit": "Fix ESLint-Warnungen in JsonSearch und JsonVastExplorer Komponenten"}
+{"deployment": "staging", "timestamp": "Thu May  8 13:46:55 CEST 2025", "commit": "Suchfunktion verbessert: Englischer Button-Text und Referenz-DOM-Elemente für die Suche optimiert"}

@@ -748,17 +748,29 @@ const JsonVastExplorer = React.memo(({
   const jsonRef = useRef<HTMLDivElement>(null);
   const vastRef = useRef<HTMLDivElement>(null);
 
+  // Log search state changes
+  useEffect(() => {
+    console.log("Search state changed:", isSearchOpen);
+  }, [isSearchOpen]);
+
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* Verbesserte Suche mit JsonSearch */}
+      {console.log("Rendering with isSearchOpen:", isSearchOpen)}
       <JsonSearch 
         isDarkMode={isDarkMode}
         jsonRef={jsonRef}
         vastRef={vastRef}
         activeTabIndex={activeTabIndex}
         isVisible={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onSearchComplete={(count) => setSearchResults(count)}
+        onClose={() => {
+          console.log("Closing search panel");
+          setIsSearchOpen(false);
+        }}
+        onSearchComplete={(count) => {
+          console.log(`Search completed with ${count} results`);
+          setSearchResults(count);
+        }}
       />
     
       {/* History Panel */}
@@ -872,11 +884,14 @@ const JsonVastExplorer = React.memo(({
                       Wrap
                     </button>
                     <button 
-                      onClick={() => setIsSearchOpen(true)}
+                      onClick={() => {
+                        console.log("Search button clicked, setting isSearchOpen to true");
+                        setIsSearchOpen(true);
+                      }}
                       className={`flex items-center px-2 py-1 rounded-md text-xs ${
                         isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
                       }`}
-                      title="Suche öffnen (Ctrl+F)"
+                      title="Open search (Ctrl+F)"
                     >
                       <div className="flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1016,9 +1031,12 @@ const JsonVastExplorer = React.memo(({
                       </div>
                     </button>
                     <button
-                      onClick={() => setIsSearchOpen(true)}
+                      onClick={() => {
+                        console.log("VAST Search button clicked, setting isSearchOpen to true");
+                        setIsSearchOpen(true);
+                      }}
                       className={`px-2 py-1 text-xs font-medium rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                      title="Suche öffnen (Ctrl+F)"
+                      title="Open search (Ctrl+F)"
                     >
                       <div className="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
