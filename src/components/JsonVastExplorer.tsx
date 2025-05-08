@@ -3,6 +3,7 @@ import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types'
 import useHighlighter from '../utils/highlighter';
 import JsonHistoryPanel from './shared/JsonHistoryPanel';
 import JsonSearch from './search/JsonSearch';
+import { performSearch } from './search/SearchFix';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -54,8 +55,9 @@ const JsonVastExplorer = React.memo(({
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
   const [showDirectSearch, setShowDirectSearch] = useState(false); // Neue Suche
   const [directSearchTerm, setDirectSearchTerm] = useState('');
-  const [directSearchResults, setDirectSearchResults] = useState<{element: HTMLElement, text: string}[]>([]);
+  const [directSearchResults, setDirectSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
   const [currentDirectResultIndex, setCurrentDirectResultIndex] = useState(-1);
+  const [directSearchCleanup, setDirectSearchCleanup] = useState<(() => void) | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTabIndex, _setActiveTabIndex] = useState(0);
   const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
@@ -762,26 +764,7 @@ const JsonVastExplorer = React.memo(({
     return () => clearTimeout(timer);
   }, [isSearchOpen]);
 
-  // Highlight and scroll to a match
-  const highlightAndScrollToMatch = useCallback((element: HTMLElement) => {
-    // Remove previous highlights
-    document.querySelectorAll('.direct-search-highlight').forEach(el => {
-      el.classList.remove('direct-search-highlight');
-      el.classList.remove('direct-search-current');
-    });
-    
-    // Add highlight to current element
-    element.classList.add('direct-search-highlight');
-    element.classList.add('direct-search-current');
-    
-    // Scroll to element
-    element.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
-    });
-  }, []);
-
-  // Simple direct search function
+  // Verbesserte Suche mit präzisem Highlighting
   const performDirectSearch = useCallback(() => {
     // Reset previous search results
     setDirectSearchResults([]);
@@ -791,63 +774,52 @@ const JsonVastExplorer = React.memo(({
     
     console.log("Performing direct search for:", directSearchTerm);
     
-    try {
-      // Container to search in depends on active tab
-      const containerToSearch = activeTabIndex === 0 ? jsonRef.current : vastRef.current;
-      
-      if (!containerToSearch) {
-        console.log("No container found to search in");
-        return;
-      }
-      
-      // Find all elements with text content containing the search term
-      const allElements = containerToSearch.querySelectorAll('*');
-      const matches: {element: HTMLElement, text: string}[] = [];
-      
-      Array.from(allElements).forEach(el => {
-        if (!(el instanceof HTMLElement)) return;
-        
-        const textContent = el.textContent?.trim();
-        if (!textContent) return;
-        
-        // Case insensitive search
-        if (textContent.toLowerCase().includes(directSearchTerm.toLowerCase())) {
-          matches.push({
-            element: el,
-            text: textContent
-          });
-        }
-      });
-      
-      console.log(`Direct search found ${matches.length} results`);
-      setDirectSearchResults(matches);
-      
-      // Go to first result if there are any
-      if (matches.length > 0) {
-        setCurrentDirectResultIndex(0);
-        highlightAndScrollToMatch(matches[0].element);
-      }
-    } catch (err) {
-      console.error("Error in direct search:", err);
+    // Container to search in depends on active tab
+    const containerToSearch = activeTabIndex === 0 ? jsonRef.current : vastRef.current;
+    
+    console.log("Searching in container:", activeTabIndex === 0 ? "JSON Panel" : "VAST Panel");
+    
+    // Verwende die neue Suchfunktion aus SearchFix
+    const { matches, cleanup, highlightMatch } = performSearch(
+      directSearchTerm,
+      containerToSearch,
+      directSearchCleanup
+    );
+    
+    // Set the results and cleanup function
+    setDirectSearchResults(matches);
+    setDirectSearchCleanup(() => cleanup);
+    
+    // Update search results count
+    setSearchResults(matches.length);
+    
+    // Go to first result if there are any
+    if (matches.length > 0) {
+      setCurrentDirectResultIndex(0);
+      highlightMatch(0, matches);
     }
-  }, [directSearchTerm, activeTabIndex, jsonRef, vastRef, highlightAndScrollToMatch]);
+  }, [directSearchTerm, activeTabIndex, jsonRef, vastRef, directSearchCleanup]);
   
-  // Navigate to next/previous result
+  // Navigate to next/previous result - jetzt ohne zirkuläre Abhängigkeit
   const goToNextDirectResult = useCallback(() => {
     if (directSearchResults.length === 0) return;
     
     const nextIndex = (currentDirectResultIndex + 1) % directSearchResults.length;
     setCurrentDirectResultIndex(nextIndex);
-    highlightAndScrollToMatch(directSearchResults[nextIndex].element);
-  }, [directSearchResults, currentDirectResultIndex, highlightAndScrollToMatch]);
+    
+    const { highlightMatch } = performSearch(directSearchTerm, activeTabIndex === 0 ? jsonRef.current : vastRef.current, null);
+    highlightMatch(nextIndex, directSearchResults);
+  }, [directSearchResults, currentDirectResultIndex, directSearchTerm, activeTabIndex, jsonRef, vastRef]);
   
   const goToPrevDirectResult = useCallback(() => {
     if (directSearchResults.length === 0) return;
     
     const prevIndex = (currentDirectResultIndex - 1 + directSearchResults.length) % directSearchResults.length;
     setCurrentDirectResultIndex(prevIndex);
-    highlightAndScrollToMatch(directSearchResults[prevIndex].element);
-  }, [directSearchResults, currentDirectResultIndex, highlightAndScrollToMatch]);
+    
+    const { highlightMatch } = performSearch(directSearchTerm, activeTabIndex === 0 ? jsonRef.current : vastRef.current, null);
+    highlightMatch(prevIndex, directSearchResults);
+  }, [directSearchResults, currentDirectResultIndex, directSearchTerm, activeTabIndex, jsonRef, vastRef]);
 
   // Add CSS for search highlighting
   useEffect(() => {

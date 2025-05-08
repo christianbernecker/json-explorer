@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 14:06:58 CEST 2025", "commit": "Suchprobleme behoben: Debug-Elemente hinzugefügt, frühe Rückgabe mit 'return null' entfernt, neue Such-Buttons für direkten Zugriff"}
+{"deployment": "staging", "timestamp": "Thu May  8 14:18:46 CEST 2025", "commit": "Komplett neue Suchfunktion implementiert: Notfall-Suchbutton, direktes Suchfenster mit eigener Funktionalität"}
