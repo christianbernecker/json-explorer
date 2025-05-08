@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 13:46:55 CEST 2025", "commit": "Suchfunktion verbessert: Englischer Button-Text und Referenz-DOM-Elemente für die Suche optimiert"}
+{"deployment": "staging", "timestamp": "Thu May  8 13:58:47 CEST 2025", "commit": "Suchfunktion verbessert: Debug-Logging und direktes Rendering statt Transition für bessere Stabilität"}

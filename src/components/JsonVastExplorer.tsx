@@ -54,6 +54,7 @@ const JsonVastExplorer = React.memo(({
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTabIndex, _setActiveTabIndex] = useState(0);
+  const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
   
   // State für die VAST Kette (Wrapper)
   interface VastChainItem {
@@ -751,6 +752,10 @@ const JsonVastExplorer = React.memo(({
   // Log search state changes
   useEffect(() => {
     console.log("Search state changed:", isSearchOpen);
+    setSearchDebugMessage(`Search state: ${isSearchOpen ? 'OPEN' : 'CLOSED'}`);
+    // Clear message after 3 seconds
+    const timer = setTimeout(() => setSearchDebugMessage(null), 3000);
+    return () => clearTimeout(timer);
   }, [isSearchOpen]);
 
   return (
@@ -883,21 +888,21 @@ const JsonVastExplorer = React.memo(({
                       </svg>
                       Wrap
                     </button>
+                    {/* Search button im JSON-Bereich - neuer direkter Button */}
                     <button 
+                      id="json-search-button"
                       onClick={() => {
-                        console.log("Search button clicked, setting isSearchOpen to true");
+                        console.log("Direct JSON search button clicked");
+                        setSearchDebugMessage("Search button clicked!");
                         setIsSearchOpen(true);
                       }}
-                      className={`flex items-center px-2 py-1 rounded-md text-xs ${
-                        isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-                      }`}
-                      title="Open search (Ctrl+F)"
+                      className={`flex items-center px-2 py-1 rounded-md text-xs bg-green-600 hover:bg-green-700 text-white`}
                     >
                       <div className="flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                        Search
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Search (NEW)
                         {searchResults > 0 && (
                           <span className="ml-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                             {searchResults}
@@ -1030,19 +1035,21 @@ const JsonVastExplorer = React.memo(({
                         Wrap
                       </div>
                     </button>
-                    <button
+                    {/* VAST Search button - neuer direkter Button */}
+                    <button 
+                      id="vast-search-button"
                       onClick={() => {
-                        console.log("VAST Search button clicked, setting isSearchOpen to true");
+                        console.log("Direct VAST search button clicked");
+                        setSearchDebugMessage("VAST search button clicked!");
                         setIsSearchOpen(true);
                       }}
-                      className={`px-2 py-1 text-xs font-medium rounded ${isDarkMode ? 'bg-gray-600 hover:bg-gray-500 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                      title="Open search (Ctrl+F)"
+                      className={`px-2 py-1 text-xs font-medium rounded bg-green-600 hover:bg-green-700 text-white`}
                     >
                       <div className="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        Search
+                        Search (NEW)
                         {searchResults > 0 && (
                           <span className="ml-1 bg-blue-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
                             {searchResults}
@@ -1137,6 +1144,13 @@ const JsonVastExplorer = React.memo(({
           }`}
         >
           {copyMessage}
+        </div>
+      )}
+
+      {/* Debug-Nachricht für direkte Sichtbarkeit von Events */}
+      {searchDebugMessage && (
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg">
+          {searchDebugMessage}
         </div>
       )}
 
