@@ -186,42 +186,49 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       if (node.nodeType === Node.TEXT_NODE && node.textContent) {
         const text = node.textContent;
         let matchInstance: RegExpExecArray | null;
-        // Lokale RegExp-Instanz für jeden Textknoten, um lastIndex-Probleme zu vermeiden
         const localPattern = new RegExp(pattern.source, pattern.flags);
+        let lastIndex = 0;
+        const fragment = document.createDocumentFragment();
+
         while ((matchInstance = localPattern.exec(text)) !== null) {
-          // Finde das umschließende Span-Element für das Highlighting
-          // Das kann der direkte Parent sein oder ein Vorfahre, falls Textknoten direkt in divs liegen
+          // Text vor dem Match hinzufügen
+          if (matchInstance.index > lastIndex) {
+            fragment.appendChild(document.createTextNode(text.substring(lastIndex, matchInstance.index)));
+          }
+
+          // Das Highlight-Span erstellen
+          const matchText = matchInstance[0];
+          const span = document.createElement('span');
+          span.className = 'search-match'; // Klasse für spätere Bereinigung
+          span.style.backgroundColor = isDarkMode ? '#3b82f680' : '#93c5fd80';
+          span.style.color = isDarkMode ? 'white' : 'black';
+          span.textContent = matchText;
+          fragment.appendChild(span);
+
+          // Das Span-Element zum Ergebnis hinzufügen (wichtig für highlightMatch)
           let highlightTargetElement = parentSpans[parentSpans.length - 1] || (node.parentElement as HTMLElement);
-          
-          // Wenn der Textknoten direkt in einem TD oder TR ist (von Zeilennummern-Tabelle),
-          // versuche ein kindliches Span zu finden, das den Text enthält, falls möglich.
-          if (highlightTargetElement && (highlightTargetElement.tagName === 'TD' || highlightTargetElement.tagName === 'TR')) {
-            // Finde das innerste Span, das diesen Textknoten umschließt oder direkt enthält.
-             const childSpans = Array.from(highlightTargetElement.getElementsByTagName('span'));
-             let bestSpan : HTMLElement | null = null;
-             for(const span of childSpans) {
-                if(span.contains(node)) {
-                    bestSpan = span;
-                    break; // Innerstes gefunden
-                }
-             }
-             if(bestSpan) highlightTargetElement = bestSpan;
-          }
+          const isKey = highlightTargetElement?.className.includes('token-key') || highlightTargetElement?.className.includes('text-blue-300');
+          results.push({
+              match: matchText,
+              element: span, // Das Span selbst ist jetzt das Element
+              context: text.substring(Math.max(0, matchInstance.index - 20), matchInstance.index + matchText.length + 20),
+              line: getLineNumber(highlightTargetElement || span),
+              isKey: !!isKey, // Stelle sicher, dass es boolean ist
+          });
 
-          const currentMatchText = matchInstance![0];
-          const matchIndex = matchInstance!.index;
-
-          if (highlightTargetElement && !results.some(r => r.element === highlightTargetElement && r.match === currentMatchText)) {
-            const isKey = highlightTargetElement.className.includes('token-key') || highlightTargetElement.className.includes('text-blue-300'); // Anpassung an Syntax-Highlighter-Klassen
-            results.push({
-              match: currentMatchText,
-              element: highlightTargetElement,
-              context: text.substring(Math.max(0, matchIndex - 20), matchIndex + currentMatchText.length + 20),
-              line: getLineNumber(highlightTargetElement),
-              isKey: isKey,
-            });
-          }
+          lastIndex = matchInstance.index + matchText.length;
         }
+
+        // Restlichen Text nach dem letzten Match hinzufügen
+        if (lastIndex < text.length) {
+          fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+        }
+
+        // Ersetze den ursprünglichen Textknoten durch das Fragment, wenn Matches gefunden wurden
+        if (fragment.childNodes.length > 0 && fragment.childNodes.length !== 1 && fragment.firstChild?.nodeType !== Node.TEXT_NODE) { // Nur ersetzen, wenn mehr als nur der Originaltext drin ist
+             node.parentNode?.replaceChild(fragment, node);
+        }
+
       } else if (node.nodeType === Node.ELEMENT_NODE) {
         const element = node as HTMLElement;
         // Ignoriere Skript- und Style-Tags sowie das SearchPanel selbst
@@ -241,11 +248,19 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
     // Starte die Traversierung vom Wurzelelement des Inhalts
     collectTextAndSpans(contentElement);
 
-  }, []); // options.searchInKeys entfernt, da es nicht direkt verwendet wird, um die Funktion zu ändern
+  }, [isDarkMode]); // isDarkMode hinzugefügt, da es im Styling verwendet wird
 
   // Durchführung der Suche mit verbesserter Performance
   const performSearch = useCallback(() => {
-    if (!targetRef.current || !searchTerm) return;
+    if (!targetRef.current || !searchTerm) {
+      console.warn("performSearch: targetRef nicht vorhanden oder Suchbegriff leer.");
+      clearHighlights(); // Stelle sicher, dass Highlights entfernt werden
+      setMatchCount(0);
+      setCurrentMatchIndex(0);
+      setMatches([]);
+      setError(null);
+      return;
+    }
     
     // In Such-Historie speichern
     if (!searchHistory.includes(searchTerm)) {
@@ -278,11 +293,11 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         // Spezialisierte Suche für JSON
         searchInJsonContent(targetRef.current, pattern, results);
       } else {
-        // Allgemeine Textsuche für andere Inhalte
+        // Allgemeine Textsuche für andere Inhalte (VAST)
         const collectTextNodes = (node: Node, textNodes: Node[]) => {
           if (node.nodeType === Node.TEXT_NODE && node.textContent && node.textContent.trim()) {
             textNodes.push(node);
-          } else if (node.nodeType === Node.ELEMENT_NODE) {
+          } else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName !== 'SCRIPT' && node.nodeName !== 'STYLE') {
             for (let i = 0; i < node.childNodes.length; i++) {
               collectTextNodes(node.childNodes[i], textNodes);
             }
@@ -290,41 +305,28 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         };
         
         const textNodes: Node[] = [];
-        collectTextNodes(targetRef.current, textNodes);
+        // Füge einen Check hinzu, bevor auf targetRef.current zugegriffen wird
+        if (targetRef.current) {
+             collectTextNodes(targetRef.current, textNodes);
+        }
         
-        // Durch Textknoten iterieren und Treffer markieren
+        // Durch Textknoten iterieren und Treffer NUR sammeln (KEINE DOM-Manipulation hier)
         textNodes.forEach(textNode => {
           const text = textNode.textContent || '';
-          // Prüfe, ob Text Treffer enthält (abhängig von der Case-Sensitivity)
-          if ((options.caseSensitive ? text.includes(searchTerm) : text.toLowerCase().includes(searchTerm.toLowerCase())) ||
-              (options.useRegex && pattern.test(text))) {
-            const parent = textNode.parentNode as HTMLElement;
-            if (!parent) return;
-            
-            // Ersetze den Text mit markierten Treffern
-            let newHTML = '';
-            const processedText = text.replace(pattern, (match) => {
-              // Erstelle einen Ergebniseintrag für die Navigation
-              results.push({
-                match: match,
-                element: parent,
-                context: text.substring(Math.max(0, text.indexOf(match) - 20), text.indexOf(match) + match.length + 20)
-              });
-              
-              return `<span class="search-match" style="background-color: ${isDarkMode ? '#3b82f680' : '#93c5fd80'}; color: ${isDarkMode ? 'white' : 'black'};">${match}</span>`;
-            });
-            
-            // Nur ersetzen, wenn tatsächlich Treffer gefunden wurden
-            if (processedText !== text) {
-              newHTML = processedText;
-              
-              // Neues Element mit den markierten Treffern erstellen
-              const replacementNode = document.createElement('span');
-              replacementNode.innerHTML = newHTML;
-              
-              // Altes Textnode ersetzen
-              parent.replaceChild(replacementNode, textNode);
-            }
+          // Verwende eine lokale Kopie des Musters für jede Iteration
+          const localPattern = new RegExp(pattern.source, pattern.flags);
+          let matchInstance;
+          
+          while ((matchInstance = localPattern.exec(text)) !== null) {
+              const parent = textNode.parentNode as HTMLElement;
+              if (parent) { // Nur hinzufügen, wenn ein Elternelement existiert
+                results.push({
+                  match: matchInstance[0],
+                  element: parent, // Das Elternelement wird das Ziel für highlightMatch sein
+                  context: text.substring(Math.max(0, matchInstance.index - 20), matchInstance.index + matchInstance[0].length + 20),
+                  line: 0 // Zeilennummer für VAST wird hier nicht ermittelt, kann später hinzugefügt werden
+                });
+              }
           }
         });
       }
@@ -377,7 +379,18 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
         targetRef.current.innerHTML = originalContent.current;
       }
     }
-  }, [clearHighlights, createSearchPattern, highlightMatch, isDarkMode, onSearch, options.caseSensitive, options.useRegex, searchHistory, searchInJsonContent, searchTerm, targetRef, contentType]);
+  }, [
+    clearHighlights, 
+    createSearchPattern, // createSearchPattern hat die Optionen als Abhängigkeit
+    highlightMatch, 
+    isDarkMode, 
+    onSearch, 
+    searchHistory, 
+    searchInJsonContent, 
+    searchTerm, 
+    targetRef, 
+    contentType
+  ]);
 
   // Suchfeld beim Laden fokussieren
   useEffect(() => {
