@@ -53,14 +53,35 @@ const JsonVastExplorer = React.memo(({
   // Suche und Tab-Verwaltung
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
+  
+  // Für Debugging-Nachrichten
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
+  
+  // Separate Suchvariablen für JSON und VAST
+  const [jsonSearchTerm, setJsonSearchTerm] = useState('');
+  const [jsonSearchResults, setJsonSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
+  const [jsonCurrentResultIndex, setJsonCurrentResultIndex] = useState(-1);
+  const [jsonSearchCleanup, setJsonSearchCleanup] = useState<(() => void) | null>(null);
+  const [jsonSearchStatus, setJsonSearchStatus] = useState<'idle' | 'no-results' | 'results'>('idle');
+  
+  const [vastSearchTerm, setVastSearchTerm] = useState('');
+  const [vastSearchResults, setVastSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
+  const [vastCurrentResultIndex, setVastCurrentResultIndex] = useState(-1);
+  const [vastSearchCleanup, setVastSearchCleanup] = useState<(() => void) | null>(null);
+  const [vastSearchStatus, setVastSearchStatus] = useState<'idle' | 'no-results' | 'results'>('idle');
+  
+  // Alte Variablen für Abwärtskompatibilität - markiert als unbenutzt
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [directSearchTerm, setDirectSearchTerm] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [directSearchResults, setDirectSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentDirectResultIndex, setCurrentDirectResultIndex] = useState(-1);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [directSearchCleanup, setDirectSearchCleanup] = useState<(() => void) | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTabIndex, _setActiveTabIndex] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
   
   // State für die VAST Kette (Wrapper)
   interface VastChainItem {
@@ -764,79 +785,143 @@ const JsonVastExplorer = React.memo(({
     return () => clearTimeout(timer);
   }, [isSearchOpen]);
 
-  // Verbesserte Suche mit präzisem Highlighting
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const performDirectSearch = useCallback(() => {
+  // Navigate to next/previous result - jetzt ohne zirkuläre Abhängigkeit
+  const goToNextJsonResult = useCallback(() => {
+    if (jsonSearchResults.length === 0) return;
+    
+    const nextIndex = (jsonCurrentResultIndex + 1) % jsonSearchResults.length;
+    setJsonCurrentResultIndex(nextIndex);
+    
+    const { highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
+    highlightMatch(nextIndex, jsonSearchResults);
+  }, [jsonSearchResults, jsonCurrentResultIndex, jsonSearchTerm, jsonRef]);
+  
+  const goToPrevJsonResult = useCallback(() => {
+    if (jsonSearchResults.length === 0) return;
+    
+    const prevIndex = (jsonCurrentResultIndex - 1 + jsonSearchResults.length) % jsonSearchResults.length;
+    setJsonCurrentResultIndex(prevIndex);
+    
+    const { highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
+    highlightMatch(prevIndex, jsonSearchResults);
+  }, [jsonSearchResults, jsonCurrentResultIndex, jsonSearchTerm, jsonRef]);
+
+  // VAST search navigation
+  const goToNextVastResult = useCallback(() => {
+    if (vastSearchResults.length === 0) return;
+    
+    const nextIndex = (vastCurrentResultIndex + 1) % vastSearchResults.length;
+    setVastCurrentResultIndex(nextIndex);
+    
+    const vastContainer = activeVastTabIndex === 0 
+      ? embeddedVastOutputRef.current 
+      : getFetchedVastRef(activeVastTabIndex - 1).current;
+      
+    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
+    highlightMatch(nextIndex, vastSearchResults);
+  }, [vastSearchResults, vastCurrentResultIndex, vastSearchTerm, activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef]);
+  
+  const goToPrevVastResult = useCallback(() => {
+    if (vastSearchResults.length === 0) return;
+    
+    const prevIndex = (vastCurrentResultIndex - 1 + vastSearchResults.length) % vastSearchResults.length;
+    setVastCurrentResultIndex(prevIndex);
+    
+    const vastContainer = activeVastTabIndex === 0 
+      ? embeddedVastOutputRef.current 
+      : getFetchedVastRef(activeVastTabIndex - 1).current;
+      
+    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
+    highlightMatch(prevIndex, vastSearchResults);
+  }, [vastSearchResults, vastCurrentResultIndex, vastSearchTerm, activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef]);
+
+  // Perform JSON search function
+  const performJsonSearch = useCallback(() => {
     // Reset previous search results
-    setDirectSearchResults([]);
-    setCurrentDirectResultIndex(-1);
+    setJsonSearchResults([]);
+    setJsonCurrentResultIndex(-1);
     
-    if (!directSearchTerm.trim()) return;
+    if (!jsonSearchTerm.trim()) {
+      setJsonSearchStatus('idle');
+      return;
+    }
     
-    console.log("Performing direct search for:", directSearchTerm);
-    
-    // Container to search in depends on active tab
-    const containerToSearch = activeTabIndex === 0 ? jsonRef.current : vastRef.current;
-    
-    console.log("Searching in container:", activeTabIndex === 0 ? "JSON Panel" : "VAST Panel");
-    
-    // Verwende die neue Suchfunktion aus SearchFix
-    const { matches, cleanup } = performSearch(
-      directSearchTerm,
-      containerToSearch,
-      directSearchCleanup
+    // Perform the search
+    const { matches, cleanup, highlightMatch } = performSearch(
+      jsonSearchTerm,
+      jsonRef.current,
+      jsonSearchCleanup
     );
     
     // Set the results and cleanup function
-    setDirectSearchResults(matches);
-    setDirectSearchCleanup(() => cleanup);
+    setJsonSearchResults(matches);
+    setJsonSearchCleanup(() => cleanup);
     
-    // Go to first result if there are any
+    // Set appropriate status
     if (matches.length > 0) {
-      setCurrentDirectResultIndex(0);
-      // Verwende die zurückgegebene highlightMatch Funktion
-      const { highlightMatch } = performSearch(directSearchTerm, containerToSearch, null);
+      setJsonSearchStatus('results');
+      setJsonCurrentResultIndex(0);
       highlightMatch(0, matches);
+    } else {
+      setJsonSearchStatus('no-results');
     }
-  }, [directSearchTerm, activeTabIndex, jsonRef, vastRef, directSearchCleanup]);
-  
-  // Navigate to next/previous result - jetzt ohne zirkuläre Abhängigkeit
-  const goToNextDirectResult = useCallback(() => {
-    if (directSearchResults.length === 0) return;
-    
-    const nextIndex = (currentDirectResultIndex + 1) % directSearchResults.length;
-    setCurrentDirectResultIndex(nextIndex);
-    
-    const { highlightMatch } = performSearch(directSearchTerm, activeTabIndex === 0 ? jsonRef.current : vastRef.current, null);
-    highlightMatch(nextIndex, directSearchResults);
-  }, [directSearchResults, currentDirectResultIndex, directSearchTerm, activeTabIndex, jsonRef, vastRef]);
-  
-  const goToPrevDirectResult = useCallback(() => {
-    if (directSearchResults.length === 0) return;
-    
-    const prevIndex = (currentDirectResultIndex - 1 + directSearchResults.length) % directSearchResults.length;
-    setCurrentDirectResultIndex(prevIndex);
-    
-    const { highlightMatch } = performSearch(directSearchTerm, activeTabIndex === 0 ? jsonRef.current : vastRef.current, null);
-    highlightMatch(prevIndex, directSearchResults);
-  }, [directSearchResults, currentDirectResultIndex, directSearchTerm, activeTabIndex, jsonRef, vastRef]);
+  }, [jsonSearchTerm, jsonRef, jsonSearchCleanup]);
 
-  // Add CSS for search highlighting
+  // Perform VAST search function
+  const performVastSearch = useCallback(() => {
+    // Reset previous search results
+    setVastSearchResults([]);
+    setVastCurrentResultIndex(-1);
+    
+    if (!vastSearchTerm.trim()) {
+      setVastSearchStatus('idle');
+      return;
+    }
+    
+    // Get the appropriate VAST container
+    const vastContainer = activeVastTabIndex === 0 
+      ? embeddedVastOutputRef.current 
+      : getFetchedVastRef(activeVastTabIndex - 1).current;
+    
+    // Perform the search
+    const { matches, cleanup, highlightMatch } = performSearch(
+      vastSearchTerm,
+      vastContainer,
+      vastSearchCleanup
+    );
+    
+    // Set the results and cleanup function
+    setVastSearchResults(matches);
+    setVastSearchCleanup(() => cleanup);
+    
+    // Set appropriate status
+    if (matches.length > 0) {
+      setVastSearchStatus('results');
+      setVastCurrentResultIndex(0);
+      highlightMatch(0, matches);
+    } else {
+      setVastSearchStatus('no-results');
+    }
+  }, [vastSearchTerm, activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, vastSearchCleanup]);
+
+  // Add CSS for search highlighting - jetzt mit Hervorhebung aller Treffer
   useEffect(() => {
     // Create a style element
     const style = document.createElement('style');
     style.innerHTML = `
-      .direct-search-highlight {
+      .search-term-highlight {
         background-color: rgba(59, 130, 246, 0.3);
         padding: 1px;
         border-radius: 2px;
+        font-weight: bold;
       }
-      .direct-search-current {
+      .search-term-current {
         background-color: rgba(239, 68, 68, 0.7);
         color: white;
         padding: 1px;
         border-radius: 2px;
         outline: 2px solid rgba(239, 68, 68, 0.9);
+        font-weight: bold;
       }
     `;
     document.head.appendChild(style);
@@ -854,7 +939,7 @@ const JsonVastExplorer = React.memo(({
         isDarkMode={isDarkMode}
         jsonRef={jsonRef}
         vastRef={vastRef}
-        activeTabIndex={activeTabIndex}
+        activeTabIndex={0}
         isVisible={isSearchOpen}
         onClose={() => {
           console.log("Closing search panel");
@@ -998,45 +1083,31 @@ const JsonVastExplorer = React.memo(({
                               ? 'bg-gray-700 text-gray-200 focus:outline-none' 
                               : 'bg-white text-gray-700 focus:outline-none'
                           }`}
-                          placeholder="Suchen..."
-                          value={directSearchTerm}
-                          onChange={(e) => setDirectSearchTerm(e.target.value)}
+                          placeholder="JSON suchen..."
+                          value={jsonSearchTerm}
+                          onChange={(e) => setJsonSearchTerm(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                              // Explizite Übergabe des JSON-Containers an die Suchfunktion
-                              const { matches, cleanup, highlightMatch } = performSearch(
-                                directSearchTerm,
-                                jsonRef.current,
-                                directSearchCleanup
-                              );
-                              
-                              setDirectSearchResults(matches);
-                              setDirectSearchCleanup(() => cleanup);
-                              
-                              if (matches.length > 0) {
-                                setCurrentDirectResultIndex(0);
-                                highlightMatch(0, matches);
+                              if (e.shiftKey) {
+                                // Shift+Enter für die Suche rückwärts
+                                if (jsonSearchStatus === 'results') {
+                                  goToPrevJsonResult();
+                                } else {
+                                  performJsonSearch();
+                                }
+                              } else {
+                                // Enter für die Suche vorwärts
+                                if (jsonSearchStatus === 'results' && jsonSearchResults.length > 0) {
+                                  goToNextJsonResult();
+                                } else {
+                                  performJsonSearch();
+                                }
                               }
                             }
                           }}
                         />
                         <button
-                          onClick={() => {
-                            // Explizite Übergabe des JSON-Containers an die Suchfunktion
-                            const { matches, cleanup, highlightMatch } = performSearch(
-                              directSearchTerm,
-                              jsonRef.current,
-                              directSearchCleanup
-                            );
-                            
-                            setDirectSearchResults(matches);
-                            setDirectSearchCleanup(() => cleanup);
-                            
-                            if (matches.length > 0) {
-                              setCurrentDirectResultIndex(0);
-                              highlightMatch(0, matches);
-                            }
-                          }}
+                          onClick={performJsonSearch}
                           className={`px-2 py-1 text-xs ${
                             isDarkMode 
                               ? 'bg-blue-600 text-white hover:bg-blue-700' 
@@ -1050,20 +1121,26 @@ const JsonVastExplorer = React.memo(({
                         </button>
                       </div>
                       
-                      {directSearchResults.length > 0 && (
+                      {jsonSearchStatus === 'no-results' && (
+                        <div className="absolute top-full mt-1 right-0 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 text-xs px-2 py-1 rounded">
+                          Keine Treffer
+                        </div>
+                      )}
+                      
+                      {jsonSearchResults.length > 0 && (
                         <div className="flex items-center ml-1">
                           <span className="text-xs text-gray-600 dark:text-gray-300 mr-1">
-                            {currentDirectResultIndex + 1}/{directSearchResults.length}
+                            {jsonCurrentResultIndex + 1}/{jsonSearchResults.length}
                           </span>
                           
                           <button 
-                            onClick={goToPrevDirectResult}
+                            onClick={goToPrevJsonResult}
                             className={`p-1 rounded ${
                               isDarkMode 
                                 ? 'text-gray-300 hover:bg-gray-700' 
                                 : 'text-gray-600 hover:bg-gray-200'
                             }`}
-                            title="Vorheriges Ergebnis"
+                            title="Vorheriges Ergebnis (Shift+Enter)"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1071,13 +1148,13 @@ const JsonVastExplorer = React.memo(({
                           </button>
                           
                           <button 
-                            onClick={goToNextDirectResult}
+                            onClick={goToNextJsonResult}
                             className={`p-1 rounded ${
                               isDarkMode 
                                 ? 'text-gray-300 hover:bg-gray-700' 
                                 : 'text-gray-600 hover:bg-gray-200'
                             }`}
-                            title="Nächstes Ergebnis"
+                            title="Nächstes Ergebnis (Enter)"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
@@ -1223,53 +1300,31 @@ const JsonVastExplorer = React.memo(({
                               ? 'bg-gray-700 text-gray-200 focus:outline-none' 
                               : 'bg-white text-gray-700 focus:outline-none'
                           }`}
-                          placeholder="Suchen..."
-                          value={directSearchTerm}
-                          onChange={(e) => setDirectSearchTerm(e.target.value)}
+                          placeholder="VAST suchen..."
+                          value={vastSearchTerm}
+                          onChange={(e) => setVastSearchTerm(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                              // Explizite Übergabe des VAST-Containers an die Suchfunktion
-                              const vastContainer = activeVastTabIndex === 0 
-                                ? embeddedVastOutputRef.current 
-                                : getFetchedVastRef(activeVastTabIndex - 1).current;
-                              
-                              const { matches, cleanup, highlightMatch } = performSearch(
-                                directSearchTerm,
-                                vastContainer,
-                                directSearchCleanup
-                              );
-                              
-                              setDirectSearchResults(matches);
-                              setDirectSearchCleanup(() => cleanup);
-                              
-                              if (matches.length > 0) {
-                                setCurrentDirectResultIndex(0);
-                                highlightMatch(0, matches);
+                              if (e.shiftKey) {
+                                // Shift+Enter für die Suche rückwärts
+                                if (vastSearchStatus === 'results') {
+                                  goToPrevVastResult();
+                                } else {
+                                  performVastSearch();
+                                }
+                              } else {
+                                // Enter für die Suche vorwärts
+                                if (vastSearchStatus === 'results' && vastSearchResults.length > 0) {
+                                  goToNextVastResult();
+                                } else {
+                                  performVastSearch();
+                                }
                               }
                             }
                           }}
                         />
                         <button
-                          onClick={() => {
-                            // Explizite Übergabe des VAST-Containers an die Suchfunktion
-                            const vastContainer = activeVastTabIndex === 0 
-                              ? embeddedVastOutputRef.current 
-                              : getFetchedVastRef(activeVastTabIndex - 1).current;
-                            
-                            const { matches, cleanup, highlightMatch } = performSearch(
-                              directSearchTerm,
-                              vastContainer,
-                              directSearchCleanup
-                            );
-                            
-                            setDirectSearchResults(matches);
-                            setDirectSearchCleanup(() => cleanup);
-                            
-                            if (matches.length > 0) {
-                              setCurrentDirectResultIndex(0);
-                              highlightMatch(0, matches);
-                            }
-                          }}
+                          onClick={performVastSearch}
                           className={`px-2 py-1 text-xs ${
                             isDarkMode 
                               ? 'bg-blue-600 text-white hover:bg-blue-700' 
@@ -1283,20 +1338,26 @@ const JsonVastExplorer = React.memo(({
                         </button>
                       </div>
                       
-                      {directSearchResults.length > 0 && (
+                      {vastSearchStatus === 'no-results' && (
+                        <div className="absolute top-full mt-1 right-0 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 text-xs px-2 py-1 rounded">
+                          Keine Treffer
+                        </div>
+                      )}
+                      
+                      {vastSearchResults.length > 0 && (
                         <div className="flex items-center ml-1">
                           <span className="text-xs text-gray-600 dark:text-gray-300 mr-1">
-                            {currentDirectResultIndex + 1}/{directSearchResults.length}
+                            {vastCurrentResultIndex + 1}/{vastSearchResults.length}
                           </span>
                           
                           <button 
-                            onClick={goToPrevDirectResult}
+                            onClick={goToPrevVastResult}
                             className={`p-1 rounded ${
                               isDarkMode 
                                 ? 'text-gray-300 hover:bg-gray-700' 
                                 : 'text-gray-600 hover:bg-gray-200'
                             }`}
-                            title="Vorheriges Ergebnis"
+                            title="Vorheriges Ergebnis (Shift+Enter)"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -1304,13 +1365,13 @@ const JsonVastExplorer = React.memo(({
                           </button>
                           
                           <button 
-                            onClick={goToNextDirectResult}
+                            onClick={goToNextVastResult}
                             className={`p-1 rounded ${
                               isDarkMode 
                                 ? 'text-gray-300 hover:bg-gray-700' 
                                 : 'text-gray-600 hover:bg-gray-200'
                             }`}
-                            title="Nächstes Ergebnis"
+                            title="Nächstes Ergebnis (Enter)"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
