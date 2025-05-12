@@ -15,6 +15,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import DataVisualizerPlugin from './DataVisualizerPlugin';
 import ApplicationHeader from './ApplicationHeader';
+import PrimaryContainer from './shared/PrimaryContainer';
 
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
@@ -1275,7 +1276,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
       />
       
       <div className="ml-28 px-10 py-6 mt-24">
-        <div className={`p-6 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <PrimaryContainer isDarkMode={isDarkMode}>
           {data.length === 0 ? (
             renderUploadForm()
           ) : (
@@ -1320,7 +1321,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
               />
             </>
           )}
-        </div>
+        </PrimaryContainer>
       </div>
     </div>
   );

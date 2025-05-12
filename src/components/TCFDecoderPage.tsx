@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
 import TCFDecoder from './TCFDecoder';
 import { Helmet } from 'react-helmet-async';
-import GlobalHeader from './GlobalHeader';
+import ApplicationHeader from './ApplicationHeader';
+import PrimaryContainer from './shared/PrimaryContainer';
+import SectionHeader from './shared/SectionHeader';
 
 // URL parameter for direct decoding
 interface TCFDecoderPageProps {
@@ -37,20 +39,24 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         />
       </Helmet>
       
-      <GlobalHeader 
+      <ApplicationHeader 
         isDarkMode={isDarkMode} 
         toggleDarkMode={toggleDarkMode}
-        activeTab="tcf-decoder"
+        title="TCF Decoder"
+        subtitle="Decode and analyze IAB TCF consent strings"
       />
       
       {/* Container mit konsistenten Abständen zum Header und Rand */}
       <div className="ml-28 px-10 py-6 mt-24">
-        <h1 className="text-3xl font-bold mb-2 dark:text-white">TCF Consent String Decoder</h1>
-        <p className="mb-6 text-gray-600 dark:text-gray-300">
-          Decode and analyze IAB TCF Consent Strings (v2.0 and v2.2). Shows vendor consents, purposes, legitimate interests and more.
-        </p>
+        <SectionHeader 
+          title="TCF Consent String Decoder"
+          description="Decode and analyze IAB TCF Consent Strings (v2.0 and v2.2). Shows vendor consents, purposes, legitimate interests and more."
+          isDarkMode={isDarkMode}
+        />
         
-        <TCFDecoder isDarkMode={isDarkMode} />
+        <PrimaryContainer isDarkMode={isDarkMode}>
+          <TCFDecoder isDarkMode={isDarkMode} />
+        </PrimaryContainer>
       </div>
     </div>
   );

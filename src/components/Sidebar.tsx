@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
     {
       name: 'TCF Decoder',
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
           <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
         </svg>
       ),
@@ -69,12 +69,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
   };
 
   // Farbschema basierend auf dem Dark Mode
-  const bgColor = isDarkMode ? 'bg-slate-800' : 'bg-slate-100';
-  const textColor = isDarkMode ? 'text-slate-200 hover:text-white' : 'text-slate-700 hover:text-slate-900';
+  const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-gray-100';
+  const textColor = isDarkMode ? 'text-gray-200 hover:text-white' : 'text-gray-700 hover:text-gray-900';
   const activeItemBg = isDarkMode 
     ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white' 
     : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white';
-  const hoverBgGeneral = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-200';
+  const hoverBgGeneral = isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200';
 
   const handleMouseEnter = (itemName: string) => {
     setExpandedItem(itemName);
@@ -132,7 +132,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
               
               {/* Erweiterter Tooltip - erscheint rechts von der Sidebar */}
               {isExpanded && !isActive && (
-                <div className={`absolute left-full top-0 ml-2 px-3 py-2 ${isDarkMode ? 'bg-slate-700' : 'bg-white'} ${textColor} rounded-md shadow-md z-10 whitespace-nowrap text-sm font-medium`}>
+                <div className={`absolute left-full top-0 ml-2 px-3 py-2 ${isDarkMode ? 'bg-gray-700' : 'bg-white'} ${textColor} rounded-md shadow-md z-10 whitespace-nowrap text-sm font-medium`}>
                   {item.name}
                   <div className="absolute left-0 top-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-45 w-2 h-2 bg-inherit"></div>
                 </div>

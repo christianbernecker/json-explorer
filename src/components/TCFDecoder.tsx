@@ -51,23 +51,23 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   });
   
   // Color scheme based on dark mode
-  const bgColor = isDarkMode ? 'bg-slate-800' : 'bg-white';
-  const textColor = isDarkMode ? 'text-slate-200' : 'text-slate-800';
-  const borderColor = isDarkMode ? 'border-slate-700' : 'border-slate-200';
-  const sectionBgColor = isDarkMode ? 'bg-slate-700' : 'bg-slate-50';
-  const buttonColor = 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white';
-  const errorColor = 'text-red-500';
-  const inputBgColor = isDarkMode ? 'bg-slate-700' : 'bg-white';
-  const inputBorderColor = isDarkMode ? 'border-slate-600' : 'border-slate-300';
-  const highlightColor = isDarkMode ? 'bg-blue-900' : 'bg-blue-100';
-  const exportBtnColor = 'bg-green-600 hover:bg-green-700 text-white';
-  const secondaryBtnColor = isDarkMode ? 'bg-slate-600 hover:bg-slate-500' : 'bg-gray-200 hover:bg-gray-300';
-  const secondaryTextColor = isDarkMode ? 'text-white' : 'text-gray-700';
+  const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-white';
+  const textColor = isDarkMode ? 'text-gray-100' : 'text-gray-800';
+  const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
+  const sectionBgColor = isDarkMode ? 'bg-gray-700' : 'bg-gray-50';
+  const buttonColor = isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white';
+  const errorColor = isDarkMode ? 'text-red-300' : 'text-red-600';
+  const inputBgColor = isDarkMode ? 'bg-gray-700' : 'bg-gray-50';
+  const inputBorderColor = isDarkMode ? 'border-gray-600' : 'border-gray-300';
+  const highlightColor = isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-800';
+  const exportBtnColor = isDarkMode ? 'bg-green-700 hover:bg-green-800 text-white' : 'bg-green-500 hover:bg-green-600 text-white';
+  const secondaryBtnColor = isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300';
+  const secondaryTextColor = isDarkMode ? 'text-gray-300' : 'text-gray-600';
   const bitTextColor = isDarkMode ? 'text-blue-300' : 'text-blue-600';
-  const tabActiveBg = isDarkMode ? 'bg-blue-800' : 'bg-blue-600';
-  const tabInactiveBg = isDarkMode ? 'bg-slate-700' : 'bg-slate-300';
-  const tableHeaderBg = isDarkMode ? 'bg-slate-700' : 'bg-gray-100';
-  const tableRowBg = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-50';
+  const tabActiveBg = isDarkMode ? 'bg-blue-700' : 'bg-blue-500';
+  const tabInactiveBg = isDarkMode ? 'bg-gray-700' : 'bg-gray-200';
+  const tableHeaderBg = isDarkMode ? 'bg-gray-700' : 'bg-gray-100';
+  const tableRowBg = isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50';
   
   // Load GVL
   useEffect(() => {

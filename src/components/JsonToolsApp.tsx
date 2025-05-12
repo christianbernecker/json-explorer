@@ -7,6 +7,7 @@ import JsonVastExplorer from './JsonVastExplorer';
 import JsonDiffInspector from './JsonDiffInspector';
 import { SEO, StructuredData } from './seo';
 import ApplicationHeader from './ApplicationHeader';
+import PrimaryContainer from './shared/PrimaryContainer';
 import { useLocation } from 'react-router-dom';
 
 // Main Application Component
@@ -114,7 +115,7 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
       
       {/* Container mit konsistenten Abständen zum Layout */}
       <div className="ml-28 px-10 py-6 mt-24">
-        <div className={`p-2 sm:p-3 md:p-4 rounded-lg shadow-md ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+        <PrimaryContainer isDarkMode={isDarkMode} className="p-2 sm:p-3 md:p-4">
           {activeTab === 'explorer' ? (
             <JsonVastExplorer 
               isDarkMode={isDarkMode}
@@ -132,7 +133,7 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
               setShowHistory={setShowDiffInspectorHistory}
             />
           )}
-        </div>
+        </PrimaryContainer>
       </div>
     </div>
   );

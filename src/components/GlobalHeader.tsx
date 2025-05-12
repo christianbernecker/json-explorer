@@ -81,7 +81,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
 
   return (
     <>
-      <header className={`w-full fixed top-0 left-0 right-0 z-30 ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-slate-800'} shadow-md`}>
+      <header className={`w-full fixed top-0 left-0 right-0 z-30 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'} shadow-md`}>
         <div className="relative">
           {/* Top header strip - gradient highlight for branding */}
           <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 to-indigo-600"></div>
@@ -104,7 +104,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
                         {getAppTitle()}
                       </span>
                     </h1>
-                    <p className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       {getAppSubtitle()}
                     </p>
                   </div>
@@ -115,7 +115,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
                 {toggleDarkMode && (
                   <button 
                     onClick={toggleDarkMode}
-                    className={`p-2 rounded-full ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'} transition-colors`}
+                    className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
                     aria-label={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                     title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                   >
@@ -134,7 +134,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
                 {setShowHistory && (
                   <button 
                     onClick={() => setShowHistory(prev => !prev)}
-                    className={`p-2 rounded-full ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'} transition-colors ${showHistory ? 'ring-2 ring-blue-500' : ''}`}
+                    className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors ${showHistory ? 'ring-2 ring-blue-500' : ''}`}
                     aria-label="View History"
                     title="View History"
                   >
@@ -151,7 +151,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
                 
                 <button 
                   onClick={() => setShowInfo(true)}
-                  className={`p-2 rounded-full ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-100 hover:bg-slate-200'} transition-colors`}
+                  className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}
                   aria-label="Information"
                   title="Information"
                 >
@@ -165,11 +165,11 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
           
           {/* Tab navigation for JSON Explorer - Angepasst für links-ausgerichtete Inhalte */}
           {isJSONExplorer && (
-            <div className={`ml-28 px-10 ${isDarkMode ? 'bg-slate-700' : 'bg-slate-50'}`}>
+            <div className={`ml-28 px-10 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <div className="flex border-b border-gray-300">
                 <Link 
                   to="/apps/json-explorer/validator"
-                  className={`py-3 px-4 flex items-center space-x-2 border-b-2 ${location.pathname.includes('/validator') ? `border-blue-500 ${isDarkMode ? 'text-white' : 'text-blue-600'}` : `border-transparent ${isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-blue-600'}`} transition-colors`}
+                  className={`py-3 px-4 flex items-center space-x-2 border-b-2 ${location.pathname.includes('/validator') ? `border-blue-500 ${isDarkMode ? 'text-white' : 'text-blue-600'}` : `border-transparent ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'}`} transition-colors`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -179,7 +179,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
                 
                 <Link 
                   to="/apps/json-explorer/diff"
-                  className={`py-3 px-4 flex items-center space-x-2 border-b-2 ${location.pathname.includes('/diff') ? `border-blue-500 ${isDarkMode ? 'text-white' : 'text-blue-600'}` : `border-transparent ${isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-blue-600'}`} transition-colors`}
+                  className={`py-3 px-4 flex items-center space-x-2 border-b-2 ${location.pathname.includes('/diff') ? `border-blue-500 ${isDarkMode ? 'text-white' : 'text-blue-600'}` : `border-transparent ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'}`} transition-colors`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />

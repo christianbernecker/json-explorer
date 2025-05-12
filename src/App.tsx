@@ -42,7 +42,7 @@ function App() {
 
   return (
     <Router>
-      <div className={`flex min-h-screen ${isDarkMode ? 'dark bg-slate-900' : 'bg-slate-50'}`}>
+      <div className={`flex min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
         <Sidebar isDarkMode={isDarkMode} />
         <div className="flex-1 flex flex-col ml-28 pl-10 pr-12 overflow-x-hidden">
           <main className={`flex-grow overflow-auto`}>
