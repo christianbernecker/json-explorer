@@ -3,7 +3,6 @@ import TCFDecoder from './TCFDecoder';
 import { Helmet } from 'react-helmet-async';
 import ApplicationHeader from './ApplicationHeader';
 import PrimaryContainer from './shared/PrimaryContainer';
-import SectionHeader from './shared/SectionHeader';
 
 // URL parameter for direct decoding
 interface TCFDecoderPageProps {
@@ -46,14 +45,8 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         subtitle="Decode and analyze IAB TCF consent strings"
       />
       
-      {/* Container mit responsiven Abständen ohne seitlichen Abstand */}
-      <div className="py-3 sm:py-4 md:py-6 px-2 sm:px-4 md:px-6 lg:px-10">
-        <SectionHeader 
-          title="TCF Consent String Decoder"
-          description="Decode and analyze IAB TCF Consent Strings (v2.0 and v2.2). Shows vendor consents, purposes, legitimate interests and more."
-          isDarkMode={isDarkMode}
-        />
-        
+      {/* Container mit responsiven Abständen */}
+      <div className="py-2 sm:py-3 md:py-4 px-2 sm:px-4 md:px-6 lg:px-8">
         <PrimaryContainer isDarkMode={isDarkMode}>
           <TCFDecoder isDarkMode={isDarkMode} />
         </PrimaryContainer>

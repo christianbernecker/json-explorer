@@ -298,6 +298,127 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     return vendorResults.find(v => v.id === id);
   };
 
+  // GVL Explorer tab
+  const renderGVLExplorer = () => {
+    if (isLoadingGVL) {
+      return <div className={`p-4 text-center ${textColor}`}>Loading Global Vendor List...</div>;
+    }
+    
+    if (gvlError) {
+      return <div className={`p-4 text-center ${errorColor}`}>Error: {gvlError}</div>;
+    }
+    
+    if (!gvlData) {
+      return <div className={`p-4 text-center ${textColor}`}>GVL data not available</div>;
+    }
+
+    return (
+      <div className={`mt-4 ${textColor}`}>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 space-y-3 md:space-y-0">
+          <div>
+            <h3 className="text-lg font-semibold">Global Vendor List Explorer</h3>
+            <p className={`text-sm ${secondaryTextColor}`}>
+              Version {gvlData.vendorListVersion} ({gvlData.tcfPolicyVersion})
+              <span className="mx-2">•</span>
+              Last Updated: {new Date(gvlData.lastUpdated).toLocaleDateString()}
+            </p>
+          </div>
+          <button 
+            onClick={handleExportGVL} 
+            className={`px-3 py-1.5 rounded text-sm ${exportBtnColor}`}
+          >
+            Export GVL as JSON
+          </button>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
+          <div className="flex-1">
+            <input 
+              type="text"
+              placeholder="Search vendors by name..."
+              className={`w-full px-3 py-2 rounded ${inputBgColor} ${inputBorderColor} border`}
+              value={vendorSearchTerm}
+              onChange={(e) => setVendorSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="w-full sm:w-48">
+            <input 
+              type="text"
+              placeholder="Filter by ID..."
+              className={`w-full px-3 py-2 rounded ${inputBgColor} ${inputBorderColor} border`}
+              value={vendorIdFilter}
+              onChange={(e) => setVendorIdFilter(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <div className={`border ${borderColor} rounded overflow-hidden`}>
+          <div className={`w-full overflow-x-auto`}>
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className={tableHeaderBg}>
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">ID</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Vendor Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Purposes</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Special Features</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider">Policy</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${borderColor}`}>
+                {filteredVendors.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-3 text-center">
+                      No vendors found matching your criteria
+                    </td>
+                  </tr>
+                ) : filteredVendors.map(vendor => (
+                  <tr key={vendor.id} className={tableRowBg}>
+                    <td className="px-4 py-3 whitespace-nowrap">{vendor.id}</td>
+                    <td className="px-4 py-3">
+                      {vendor.name}
+                      {vendor.deletedDate && (
+                        <span className={`ml-2 px-2 py-0.5 rounded text-xs ${errorColor} bg-red-100 dark:bg-red-900`}>
+                          Deleted
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm">
+                        {vendor.purposes.length} consent, {vendor.legIntPurposes.length} legitInt
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-sm">
+                        {vendor.specialFeatures.length}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <a 
+                        href={vendor.policyUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        Privacy Policy
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div className={`mt-4 text-sm ${secondaryTextColor}`}>
+          Found {filteredVendors.length} vendor{filteredVendors.length !== 1 ? 's' : ''}
+          {filteredVendors.length !== Object.keys(gvlData.vendors).length && 
+            ` (of ${Object.keys(gvlData.vendors).length} total)`
+          }
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={`${bgColor} ${textColor} p-6 rounded-lg shadow-lg w-full max-w-full mx-auto`}>
       <h1 className="text-2xl font-bold mb-4 flex items-center justify-between">
@@ -682,103 +803,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       )}
       
       {/* GVL Explorer Tab */}
-      {activeTab === 'gvl-explorer' && (
-        <>
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">Global Vendor List Explorer</h2>
-            
-            {isLoadingGVL ? (
-              <div className="p-4 text-center">
-                Loading Global Vendor List...
-              </div>
-            ) : gvlError ? (
-              <div className={`p-4 my-4 rounded-md bg-red-100 dark:bg-red-900 ${errorColor}`}>
-                <p>Error loading GVL: {gvlError}</p>
-              </div>
-            ) : (
-              <>
-                <div className="mb-4 flex flex-col md:flex-row gap-4">
-                  <div className="w-full md:w-1/2">
-                    <label htmlFor="vendorSearch" className="block font-semibold mb-2">Search by name:</label>
-                    <input 
-                      type="text" 
-                      id="vendorSearch"
-                      value={vendorSearchTerm}
-                      onChange={(e) => setVendorSearchTerm(e.target.value)}
-                      placeholder="Search vendors..."
-                      className={`w-full p-2 rounded-md ${inputBgColor} ${inputBorderColor} border`}
-                    />
-                  </div>
-                  
-                  <div className="w-full md:w-1/2">
-                    <label htmlFor="vendorIdSearch" className="block font-semibold mb-2">Search by ID:</label>
-                    <input 
-                      type="text" 
-                      id="vendorIdSearch"
-                      value={vendorIdFilter}
-                      onChange={(e) => setVendorIdFilter(e.target.value)}
-                      placeholder="Vendor ID..."
-                      className={`w-full p-2 rounded-md ${inputBgColor} ${inputBorderColor} border`}
-                    />
-                  </div>
-                </div>
-                
-                <div className="mt-4 mb-2 flex justify-between items-center">
-                  <div>
-                    <span className="font-semibold">{filteredVendors.length}</span> vendors found
-                    {gvlData && <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">(Total: {getVendors(gvlData).length})</span>}
-                  </div>
-                  
-                  <button 
-                    onClick={handleExportGVL}
-                    className={`px-3 py-1 text-sm ${exportBtnColor} rounded shadow`}
-                  >
-                    Export GVL
-                  </button>
-                </div>
-                
-                <div className="overflow-x-auto mt-4">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead>
-                      <tr className={tableHeaderBg}>
-                        <th className="px-4 py-2 text-left">ID</th>
-                        <th className="px-4 py-2 text-left">Name</th>
-                        <th className="px-4 py-2 text-left">Purposes</th>
-                        <th className="px-4 py-2 text-left">LegInt Purposes</th>
-                        <th className="px-4 py-2 text-left">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {filteredVendors.map(vendor => (
-                        <tr key={vendor.id} className={tableRowBg}>
-                          <td className="px-4 py-2">{vendor.id}</td>
-                          <td className="px-4 py-2">{vendor.name}</td>
-                          <td className="px-4 py-2">
-                            {vendor.purposes?.length ? vendor.purposes.join(', ') : '-'}
-                          </td>
-                          <td className="px-4 py-2">
-                            {vendor.legIntPurposes?.length ? vendor.legIntPurposes.join(', ') : '-'}
-                          </td>
-                          <td className="px-4 py-2">
-                            <a 
-                              href={vendor.policyUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-                            >
-                              Privacy Policy
-                            </a>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </div>
-        </>
-      )}
+      {activeTab === 'gvl-explorer' && renderGVLExplorer()}
       
       {/* Vendor Details Tab */}
       {activeTab === 'vendor-details' && selectedVendor && (
