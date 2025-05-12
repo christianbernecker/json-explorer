@@ -347,28 +347,32 @@ export function getVendorInfo(decodedCore: any, vendorId: number): {
     legitimateInterests = [...decodedCore.purposesLITransparency];
   }
   
+  // Finde alle Restrictions für diesen Vendor
+  const vendorRestrictions = decodedCore.publisherRestrictions
+    .filter((r: any) => r.vendors.includes(vendorId));
+  
   // Verarbeitungszwecke basierend auf Publisher-Einschränkungen anpassen
-  for (const restriction of decodedCore.publisherRestrictions) {
-    if (restriction.vendors.includes(vendorId)) {
-      // Wenn "Nicht erlaubt", dann Purpose aus beiden Listen entfernen
-      if (restriction.restrictionType === "Nicht erlaubt") {
-        purposeConsents = purposeConsents.filter(p => p !== restriction.purposeId);
-        legitimateInterests = legitimateInterests.filter(p => p !== restriction.purposeId);
-      }
-      // Wenn "Zustimmung erforderlich", dann aus Legitimate Interests entfernen
-      else if (restriction.restrictionType === "Zustimmung erforderlich") {
-        legitimateInterests = legitimateInterests.filter(p => p !== restriction.purposeId);
-      }
-      // Wenn "Berechtigtes Interesse erforderlich", dann aus Purpose Consents entfernen
-      else if (restriction.restrictionType === "Berechtigtes Interesse erforderlich") {
-        purposeConsents = purposeConsents.filter(p => p !== restriction.purposeId);
-      }
+  for (const restriction of vendorRestrictions) {
+    const purposeId = restriction.purposeId;
+    
+    // Wenn "Nicht erlaubt", dann Purpose aus beiden Listen entfernen
+    if (restriction.restrictionType === "Nicht erlaubt") {
+      purposeConsents = purposeConsents.filter(p => p !== purposeId);
+      legitimateInterests = legitimateInterests.filter(p => p !== purposeId);
+    }
+    // Wenn "Zustimmung erforderlich", dann aus Legitimate Interests entfernen
+    else if (restriction.restrictionType === "Zustimmung erforderlich") {
+      legitimateInterests = legitimateInterests.filter(p => p !== purposeId);
+    }
+    // Wenn "Berechtigtes Interesse erforderlich", dann aus Purpose Consents entfernen
+    else if (restriction.restrictionType === "Berechtigtes Interesse erforderlich") {
+      purposeConsents = purposeConsents.filter(p => p !== purposeId);
     }
   }
   
   return {
-    hasConsent,
-    hasLegitimateInterest,
+    hasConsent,  // Der Vendor hat grundsätzlich Consent, unabhängig von Purpose-Restrictions
+    hasLegitimateInterest, // Der Vendor hat grundsätzlich Legitimate Interest, unabhängig von Purpose-Restrictions
     purposeConsents,
     legitimateInterests
   };
