@@ -256,15 +256,8 @@ export function decodeTCF2_0(bitString: number[], segments: string[]): any {
   // Debug logging für Offsets
   console.log(`Offset nach PolicyVersion: ${offset}`);
   
-  // Purposes and permissions
-  const isServiceSpecific = bitString[offset]; offset += 1;
-  const useNonStandardStacks = bitString[offset]; offset += 1;
-  const specialFeatureOptIns = parseBitField(bitString, offset, 12); offset += 12;
-  const purposesConsent = parseBitField(bitString, offset, 24); offset += 24;
-  const purposesLITransparency = parseBitField(bitString, offset, 24); offset += 24;
-  
   // Korrigierter Offset für Vendor Consent Section
-  offset = 200;
+  offset = 138;
   console.log(`Korrigierter Offset für Vendor Consent Section: ${offset}`);
 
   // Vendor section
@@ -276,6 +269,13 @@ export function decodeTCF2_0(bitString: number[], segments: string[]): any {
   console.log("Parsing Vendor Legitimate Interest Section...");
   const vendorLIBits = parseVendorSection(bitString, offset);
   offset = vendorLIBits.newOffset;
+  
+  // Jetzt die Felder nach den Vendor-Sections dekodieren
+  const isServiceSpecific = bitString[offset]; offset += 1;
+  const useNonStandardStacks = bitString[offset]; offset += 1;
+  const specialFeatureOptIns = parseBitField(bitString, offset, 12); offset += 12;
+  const purposesConsent = parseBitField(bitString, offset, 24); offset += 24;
+  const purposesLITransparency = parseBitField(bitString, offset, 24); offset += 24;
   
   // Publisher Restrictions section
   const pubRestrictions = parsePubRestrictions(bitString, offset);
