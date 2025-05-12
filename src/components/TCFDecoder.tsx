@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { decodeTCFString, purposeNames, generateBitRepresentation } from '../utils/tcf-decoder';
+import { purposeNames, decodeTCFStringIAB } from '../utils/tcf-decoder';
 import { loadGVL, getVendors, GVLData, GVLVendor, clearGVLCache } from '../utils/gvl-loader';
-import { analyzeTCFWithGVL, EnhancedVendorResult } from '../utils/tcf-decoder-enhanced';
 import Button from './shared/Button';
 
 interface TCFDecoderProps {
@@ -28,7 +27,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const [decodedVersion, setDecodedVersion] = useState<string>('');
   const [decodeError, setDecodeError] = useState<string | null>(null);
   const [decodedData, setDecodedData] = useState<any | null>(null);
-  const [vendorResults, setVendorResults] = useState<EnhancedVendorResult[]>([]);
   const [showBitRepresentation, setShowBitRepresentation] = useState<boolean>(false);
   const [bitRepresentation, setBitRepresentation] = useState<string>('');
   
@@ -44,7 +42,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const [filteredVendors, setFilteredVendors] = useState<GVLVendor[]>([]);
   
   // State for advanced functions
-  const [selectedVendor, setSelectedVendor] = useState<EnhancedVendorResult | null>(null);
+  const [selectedVendor, setSelectedVendor] = useState<any | null>(null);
   const [vendorFilter, setVendorFilter] = useState<VendorFilterOptions>({
     onlyWithConsent: false,
     onlyWithLegitimateInterest: false,
@@ -153,52 +151,22 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
         return;
       }
       
-      // Decode string
-      const result = decodeTCFString(tcfString);
-      setDecodedVersion(result.version);
-      setDecodedData(result.coreData);
-      
-      // Generate bit representation
-      const bits = generateBitRepresentation(result.coreData.fullString);
-      setBitRepresentation(bits);
-      
-      // Log direct vendor consent information from TCF string
-      console.log("Direct vendor consent from TCF string:", result.coreData.vendorConsent);
-      console.log("Direct vendor LI from TCF string:", result.coreData.vendorLI);
-      
-      // Enhanced analysis with GVL
-      if (!gvlData) {
-        // If GVL not loaded yet, load it now
-        setIsLoadingGVL(true);
-        try {
-          const data = await loadGVL();
-          setGvlData(data);
-          const enhancedResult = analyzeTCFWithGVL(tcfString, data);
-          setVendorResults(enhancedResult.vendorResults);
-        } catch (error) {
-          console.error('Error loading GVL:', error);
-          setGvlError(error instanceof Error ? error.message : 'Unknown error loading GVL');
-        } finally {
-          setIsLoadingGVL(false);
-        }
-      } else {
-        // GVL already loaded, perform enhanced analysis
-        const enhancedResult = analyzeTCFWithGVL(tcfString, gvlData);
-        setVendorResults(enhancedResult.vendorResults);
-      }
-      
+      // Neue IAB-Implementierung
+      const tcModel = decodeTCFStringIAB(tcfString);
+      setDecodedVersion(tcModel.version.toString());
+      setDecodedData(tcModel);
+      setBitRepresentation(''); // Optional: kann entfernt werden
     } catch (error) {
       console.error('Error decoding:', error);
       setDecodeError(error instanceof Error ? error.message : 'Unknown error decoding');
       setDecodedData(null);
-      setVendorResults([]);
       setBitRepresentation('');
     }
   };
 
   // Filter for vendors by consent/LegInt
-  const getFilteredVendorResults = (): EnhancedVendorResult[] => {
-    let filtered = [...vendorResults];
+  const getFilteredVendorResults = (): any[] => {
+    let filtered = [...decodedData.vendorResults];
     
     if (vendorFilter.onlyWithConsent) {
       filtered = filtered.filter(v => v.hasConsent);
@@ -209,8 +177,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     }
     
     if (vendorFilter.purposeFilter) {
-      filtered = filtered.filter(v => 
-        v.purposes.some(p => 
+      filtered = filtered.filter((v: any) => 
+        v.purposes.some((p: any) => 
           p.id === vendorFilter.purposeFilter && 
           (p.hasConsent || p.hasLegitimateInterest)
         )
@@ -243,13 +211,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       publisherCC: decodedData.publisherCC,
       tcfPolicyVersion: decodedData.policyVersion,
       
-      vendors: vendorResults.map(v => ({
+      vendors: decodedData.vendorResults.map((v: any) => ({
         id: v.id,
         name: v.name,
         policyUrl: v.policyUrl,
         hasConsent: v.hasConsent,
         hasLegitimateInterest: v.hasLegitimateInterest,
-        purposes: v.purposes.map(p => ({
+        purposes: v.purposes.map((p: any) => ({
           id: p.id,
           name: p.name,
           hasConsent: p.hasConsent,
@@ -258,7 +226,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
           isLegitimateInterestAllowed: p.isLegitimateInterestAllowed,
           restriction: p.restriction
         })),
-        specialFeatures: v.specialFeatures.map(f => ({
+        specialFeatures: v.specialFeatures.map((f: any) => ({
           id: f.id,
           name: f.name,
           hasConsent: f.hasConsent
@@ -294,7 +262,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   };
   
   // Show vendor details
-  const handleViewVendorDetails = (vendor: EnhancedVendorResult) => {
+  const handleViewVendorDetails = (vendor: any) => {
     setSelectedVendor(vendor);
     setActiveTab('vendor-details');
   };
@@ -303,23 +271,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const handleBackToResults = () => {
     setSelectedVendor(null);
     setActiveTab('decoder');
-  };
-
-  // Get specific vendor by ID
-  const getVendorById = (id: number): EnhancedVendorResult | undefined => {
-    // Direkter Zugriff auf die Vendor-Ergebnisse
-    const vendor = vendorResults.find(v => v.id === id);
-    
-    // Zusätzliche Überprüfung für Debugging
-    if (!vendor && decodedData) {
-      console.warn(`Vendor ${id} not found in enhanced results but checking for direct consent.`);
-      // Prüfe direkt, ob der Vendor im vendorConsent-Array des TCF-Strings ist
-      const hasDirectConsent = decodedData.vendorConsent.includes(id);
-      const hasDirectLI = decodedData.vendorLI.includes(id);
-      console.log(`Vendor ${id} - Direct consent: ${hasDirectConsent}, Direct LI: ${hasDirectLI}`);
-    }
-    
-    return vendor;
   };
 
   // GVL Explorer tab
@@ -579,37 +530,24 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
               <div className="mb-6 p-4 border-b border-gray-300 dark:border-gray-700">
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[136, 137, 44].map(id => {
-                    const vendor = getVendorById(id);
+                  {[136, 137, 44].map((id: number) => {
+                    const hasConsent = decodedData?.vendorConsents?.has(id);
+                    const hasLegInt = decodedData?.vendorLegitimateInterests?.has(id);
+                    const name = decodedData?.vendorList?.vendors?.[id]?.name || id;
                     return (
                       <div key={id} className={`p-3 rounded-lg ${sectionBgColor}`}>
-                        {vendor ? (
-                          <>
-                            <div className="flex justify-between items-center mb-2">
-                              <h4 className="font-bold">{vendor.name}</h4>
-                              <span className="text-sm bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">ID: {vendor.id}</span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                              <div className={`px-2 py-1 rounded ${vendor.hasConsent ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
-                                Consent: {vendor.hasConsent ? 'Yes' : 'No'}
-                              </div>
-                              <div className={`px-2 py-1 rounded ${vendor.hasLegitimateInterest ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
-                                Legitimate Interest: {vendor.hasLegitimateInterest ? 'Yes' : 'No'}
-                              </div>
-                            </div>
-                            <Button
-                              onClick={() => handleViewVendorDetails(vendor)}
-                              variant="primary"
-                              isDarkMode={isDarkMode}
-                              size="sm"
-                              fullWidth
-                            >
-                              View Details
-                            </Button>
-                          </>
-                        ) : (
-                          <p className="text-center py-4">Vendor {id} not found in results</p>
-                        )}
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="font-bold">{name}</h4>
+                          <span className="text-sm bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">ID: {id}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className={`px-2 py-1 rounded ${hasConsent ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
+                            Consent: {hasConsent ? 'Yes' : 'No'}
+                          </div>
+                          <div className={`px-2 py-1 rounded ${hasLegInt ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
+                            Legitimate Interest: {hasLegInt ? 'Yes' : 'No'}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}
@@ -691,7 +629,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       {decodedData.purposesConsent.length === 0 ? (
                         <li className="p-2 bg-red-100 dark:bg-red-900 rounded">No purpose consents given</li>
                       ) : (
-                        decodedData.purposesConsent.map((p: number) => (
+                        decodedData.purposesConsent.map((p: any) => (
                           <li key={`consent-${p}`} className="p-2 bg-green-100 dark:bg-green-900 rounded">
                             {p}. {purposeNames[p-1] || `Purpose ${p}`}
                           </li>
@@ -706,7 +644,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       {decodedData.purposesLITransparency.length === 0 ? (
                         <li className="p-2 bg-red-100 dark:bg-red-900 rounded">No legitimate interests declared</li>
                       ) : (
-                        decodedData.purposesLITransparency.map((p: number) => (
+                        decodedData.purposesLITransparency.map((p: any) => (
                           <li key={`li-${p}`} className="p-2 bg-blue-100 dark:bg-blue-900 rounded">
                             {p}. {purposeNames[p-1] || `Purpose ${p}`}
                           </li>
@@ -727,7 +665,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     </div>
                   ) : (
                     <ul className="space-y-1 text-sm">
-                      {decodedData.specialFeatureOptIns.map((f: number) => (
+                      {decodedData.specialFeatureOptIns.map((f: any) => (
                         <li key={`feature-${f}`} className="p-2 bg-purple-100 dark:bg-purple-900 rounded">
                           Special Feature {f}
                         </li>
@@ -790,19 +728,19 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                          {getFilteredVendorResults().map(vendor => (
-                            <tr key={vendor.id} className={tableRowBg}>
-                              <td className="px-4 py-2">{vendor.id}</td>
-                              <td className="px-4 py-2">{vendor.name}</td>
+                          {getFilteredVendorResults().map((v: any) => (
+                            <tr key={v.id} className={tableRowBg}>
+                              <td className="px-4 py-2">{v.id}</td>
+                              <td className="px-4 py-2">{v.name}</td>
                               <td className="px-4 py-2 text-center">
-                                <span className={`inline-block w-4 h-4 rounded-full ${vendor.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                <span className={`inline-block w-4 h-4 rounded-full ${v.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
                               </td>
                               <td className="px-4 py-2 text-center">
-                                <span className={`inline-block w-4 h-4 rounded-full ${vendor.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                <span className={`inline-block w-4 h-4 rounded-full ${v.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
                               </td>
                               <td className="px-4 py-2 text-center">
                                 <Button
-                                  onClick={() => handleViewVendorDetails(vendor)}
+                                  onClick={() => handleViewVendorDetails(v)}
                                   variant="primary"
                                   isDarkMode={isDarkMode}
                                   size="sm"
@@ -878,8 +816,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
               <p><strong>Policy URL:</strong> {selectedVendor.policyUrl}</p>
               <p><strong>Consent:</strong> {selectedVendor.hasConsent ? 'Yes' : 'No'}</p>
               <p><strong>Legitimate Interest:</strong> {selectedVendor.hasLegitimateInterest ? 'Yes' : 'No'}</p>
-              <p><strong>Purposes:</strong> {selectedVendor.purposes.map(p => p.name).join(', ')}</p>
-              <p><strong>Special Features:</strong> {selectedVendor.specialFeatures.map(f => f.name).join(', ')}</p>
+              <p><strong>Purposes:</strong> {selectedVendor.purposes.map((p: any) => p.name).join(', ')}</p>
+              <p><strong>Special Features:</strong> {selectedVendor.specialFeatures.map((f: any) => f.name).join(', ')}</p>
             </div>
           </div>
           
@@ -900,7 +838,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {selectedVendor.purposes.map(purpose => (
+                  {selectedVendor.purposes.map((purpose: any) => (
                     <tr key={purpose.id} className={tableRowBg}>
                       <td className="px-4 py-2">{purpose.id}</td>
                       <td className="px-4 py-2">{purpose.name}</td>
@@ -944,12 +882,12 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {selectedVendor.specialFeatures.map(feature => (
-                      <tr key={feature.id} className={tableRowBg}>
-                        <td className="px-4 py-2">{feature.id}</td>
-                        <td className="px-4 py-2">{feature.name}</td>
+                    {selectedVendor.specialFeatures.map((f: any) => (
+                      <tr key={f.id} className={tableRowBg}>
+                        <td className="px-4 py-2">{f.id}</td>
+                        <td className="px-4 py-2">{f.name}</td>
                         <td className="px-4 py-2 text-center">
-                          <span className={`inline-block w-4 h-4 rounded-full ${feature.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                          <span className={`inline-block w-4 h-4 rounded-full ${f.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
                         </td>
                       </tr>
                     ))}
@@ -971,7 +909,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {selectedVendor.specialPurposes.map(purpose => (
+                    {selectedVendor.specialPurposes.map((purpose: any) => (
                       <tr key={purpose.id} className={tableRowBg}>
                         <td className="px-4 py-2">{purpose.id}</td>
                         <td className="px-4 py-2">{purpose.name}</td>
@@ -995,7 +933,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {selectedVendor.features.map(feature => (
+                    {selectedVendor.features.map((feature: any) => (
                       <tr key={feature.id} className={tableRowBg}>
                         <td className="px-4 py-2">{feature.id}</td>
                         <td className="px-4 py-2">{feature.name}</td>

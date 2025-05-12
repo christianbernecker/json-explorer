@@ -1,5 +1,7 @@
 // TCF String Decoder - Supports TCF v2.0 and v2.2
 
+import { TCString } from '@iabtcf/core';
+
 export const DEFAULT_VENDORS = [136, 137, 44];
 
 /**
@@ -570,4 +572,14 @@ export function handleExportJSON(decodedData: any): any {
     lastUpdated: new Date(decodedData.lastUpdated * 100).toISOString(),
     // ... other fields
   };
-} 
+}
+
+/**
+ * Dekodiert einen TCF-String mit der offiziellen IAB-Bibliothek
+ */
+export function decodeTCFStringIAB(tcString: string) {
+  return TCString.decode(tcString);
+}
+
+// Die alte Bit-Parsing-Logik bleibt vorerst auskommentiert erhalten
+// export function decodeTCFString(...) { ... } 

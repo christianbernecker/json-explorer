@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 17:02:17 CEST 2025", "commit": "Fix: Korrigierter Bit-Offset für Vendor Consent Section im TCF Decoder"}
+{"deployment": "staging", "timestamp": "Mon May 12 17:07:22 CEST 2025", "commit": "Fix: Vendor Consent Section Offset jetzt korrekt bei 138, Felder nach Vendor-Sections"}
