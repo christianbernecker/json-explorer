@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import TCFDecoder from './TCFDecoder';
 import { Helmet } from 'react-helmet-async';
-import AppHeader from './AppHeader';
+import GlobalHeader from './GlobalHeader';
 
 // URL parameter for direct decoding
 interface TCFDecoderPageProps {
@@ -37,13 +37,11 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         />
       </Helmet>
       
-      <AppHeader 
+      <GlobalHeader 
         isDarkMode={isDarkMode} 
         toggleDarkMode={toggleDarkMode}
         activeTab="tcf-decoder"
       />
-      
-      <div className="h-20"></div>
       
       <h1 className="text-3xl font-bold mb-2 dark:text-white">TCF Consent String Decoder</h1>
       <p className="mb-6 text-gray-600 dark:text-gray-300">

@@ -1,4 +1,4 @@
-const GVL_URL = 'https://vendor-list.consensu.org/v2/vendor-list.json';
+const GVL_URL = 'https://vendor-list.consensu.org/v3/vendor-list.json';
 const GVL_URL_FALLBACK = 'https://cmp.cdn-origin.cloudfront.net/vendor-list.json';
 const GVL_LOCAL_FALLBACK = '/vendor-list.json'; // Local fallback for CORS issues
 const GVL_CACHE_KEY = 'iab_gvl_cache';
