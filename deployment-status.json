@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 10:42:59 CEST 2025", "commit": "Verbesserte TCF-Decoder Implementierung mit Bit-Darstellung und korrigierter Vendor-spezifischer Verarbeitung"}
+{"deployment": "staging", "timestamp": "Mon May 12 13:06:33 CEST 2025", "commit": "TCF-Decoder erweitert: GVL-Loader und TCF-Decoder-Enhanced implementiert"}

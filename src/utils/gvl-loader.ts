@@ -1,5 +1,6 @@
 const GVL_URL = 'https://vendor-list.consensu.org/v2/vendor-list.json';
 const GVL_URL_FALLBACK = 'https://cmp.cdn-origin.cloudfront.net/vendor-list.json';
+const GVL_LOCAL_FALLBACK = '/vendor-list.json'; // Lokaler Fallback für CORS-Probleme
 const GVL_CACHE_KEY = 'iab_gvl_cache';
 const GVL_CACHE_TTL = 1000 * 60 * 60 * 12; // 12 Stunden
 
@@ -56,7 +57,13 @@ export async function loadGVL(): Promise<GVLData> {
   // Hole von IAB
   try {
     console.log('Versuche GVL von primärem Endpunkt zu laden...');
-    const resp = await fetch(GVL_URL);
+    const resp = await fetch(GVL_URL, { 
+      mode: 'cors',
+      credentials: 'omit',
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
     if (resp.ok) {
       const data = await resp.json();
       // Cache speichern
@@ -73,7 +80,13 @@ export async function loadGVL(): Promise<GVLData> {
     // Fallback verwenden
     try {
       console.log('Versuche GVL von Fallback-Endpunkt zu laden...');
-      const fallbackResp = await fetch(GVL_URL_FALLBACK);
+      const fallbackResp = await fetch(GVL_URL_FALLBACK, {
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
       if (!fallbackResp.ok) {
         throw new Error(`Fallback GVL-Endpunkt nicht erreichbar (Status: ${fallbackResp.status})`);
       }
@@ -84,8 +97,25 @@ export async function loadGVL(): Promise<GVLData> {
       console.log('GVL erfolgreich vom Fallback geladen.');
       return data;
     } catch (fallbackError) {
-      console.error('Fehler beim Laden der GVL (auch vom Fallback):', fallbackError);
-      throw new Error('Global Vendor List konnte nicht geladen werden. Bitte versuchen Sie es später erneut.');
+      console.warn('Fallback GVL-Endpunkt nicht erreichbar:', fallbackError);
+      
+      // Lokaler Fallback als letzte Option
+      try {
+        console.log('Versuche GVL von lokalem Fallback zu laden...');
+        const localFallbackResp = await fetch(GVL_LOCAL_FALLBACK);
+        if (!localFallbackResp.ok) {
+          throw new Error(`Lokaler Fallback nicht erreichbar (Status: ${localFallbackResp.status})`);
+        }
+        const data = await localFallbackResp.json();
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem(GVL_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+        }
+        console.log('GVL erfolgreich vom lokalen Fallback geladen.');
+        return data;
+      } catch (localFallbackError) {
+        console.error('Fehler beim Laden der GVL (alle Versuche fehlgeschlagen):', localFallbackError);
+        throw new Error('Global Vendor List konnte nicht geladen werden. Bitte versuchen Sie es später erneut.');
+      }
     }
   }
 }
