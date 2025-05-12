@@ -498,4 +498,18 @@ export function generateBitRepresentation(bitString: number[]): string {
     result += bitString[i];
   }
   return result;
+}
+
+/**
+ * JSON export of results
+ */
+export function handleExportJSON(decodedData: any): any {
+  if (!decodedData) return null;
+  
+  return {
+    version: decodedData.version,
+    created: new Date(decodedData.created * 100).toISOString(),
+    lastUpdated: new Date(decodedData.lastUpdated * 100).toISOString(),
+    // ... other fields
+  };
 } 

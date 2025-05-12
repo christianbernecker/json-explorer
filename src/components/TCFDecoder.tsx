@@ -162,6 +162,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       const bits = generateBitRepresentation(result.coreData.fullString);
       setBitRepresentation(bits);
       
+      // Log direct vendor consent information from TCF string
+      console.log("Direct vendor consent from TCF string:", result.coreData.vendorConsent);
+      console.log("Direct vendor LI from TCF string:", result.coreData.vendorLI);
+      
       // Enhanced analysis with GVL
       if (!gvlData) {
         // If GVL not loaded yet, load it now
@@ -303,7 +307,19 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
 
   // Get specific vendor by ID
   const getVendorById = (id: number): EnhancedVendorResult | undefined => {
-    return vendorResults.find(v => v.id === id);
+    // Direkter Zugriff auf die Vendor-Ergebnisse
+    const vendor = vendorResults.find(v => v.id === id);
+    
+    // Zusätzliche Überprüfung für Debugging
+    if (!vendor && decodedData) {
+      console.warn(`Vendor ${id} not found in enhanced results but checking for direct consent.`);
+      // Prüfe direkt, ob der Vendor im vendorConsent-Array des TCF-Strings ist
+      const hasDirectConsent = decodedData.vendorConsent.includes(id);
+      const hasDirectLI = decodedData.vendorLI.includes(id);
+      console.log(`Vendor ${id} - Direct consent: ${hasDirectConsent}, Direct LI: ${hasDirectLI}`);
+    }
+    
+    return vendor;
   };
 
   // GVL Explorer tab
@@ -618,11 +634,11 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Created</td>
-                        <td className="px-4 py-2">{new Date(decodedData.created * 100).toLocaleString()}</td>
+                        <td className="px-4 py-2">{new Date(decodedData.created * 1000).toLocaleString()}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Last Updated</td>
-                        <td className="px-4 py-2">{new Date(decodedData.lastUpdated * 100).toLocaleString()}</td>
+                        <td className="px-4 py-2">{new Date(decodedData.lastUpdated * 1000).toLocaleString()}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">CMP ID</td>

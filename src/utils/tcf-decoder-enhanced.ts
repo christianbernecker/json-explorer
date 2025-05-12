@@ -80,6 +80,10 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
   // Standard TCF decoding
   const result = TCFDecoder.decodeTCFString(tcfString);
   
+  // Log important data for debugging
+  console.log("TCF Decode Result - Vendor Consent:", result.coreData.vendorConsent);
+  console.log("TCF Decode Result - Vendor LI:", result.coreData.vendorLI);
+  
   // Vendor-specific evaluation with GVL
   const vendorResults: EnhancedVendorResult[] = [];
   
@@ -104,9 +108,15 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
     // Skip vendor if not in GVL
     if (!gvlVendor) continue;
     
-    // Basic vendor information
+    // IMPORTANT: Basic vendor consent status is DIRECTLY derived from the TCF string
+    // Check if the vendor ID is present in the vendorConsent array from the TCF string
     const hasConsent = result.coreData.vendorConsent.includes(vendorId);
     const hasLegitimateInterest = result.coreData.vendorLI.includes(vendorId);
+    
+    // Log for key vendors to verify consent
+    if ([136, 137, 44].includes(vendorId)) {
+      console.log(`Vendor ${vendorId} (${gvlVendor.name}) - Direct consent: ${hasConsent}, Direct LI: ${hasLegitimateInterest}`);
+    }
     
     // Restrictions for this vendor
     const restrictions = result.coreData.publisherRestrictions
