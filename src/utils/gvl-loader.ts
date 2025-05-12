@@ -35,6 +35,14 @@ function isCacheValid(cache: { timestamp: number }) {
   return cache && cache.timestamp && (Date.now() - cache.timestamp < GVL_CACHE_TTL);
 }
 
+// Neue Funktion zum Löschen des Caches
+export function clearGVLCache(): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.removeItem(GVL_CACHE_KEY);
+    console.log('GVL cache cleared.');
+  }
+}
+
 export async function loadGVL(): Promise<GVLData> {
   console.log('Loading Global Vendor List...');
   

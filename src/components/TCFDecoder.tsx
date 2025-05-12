@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { decodeTCFString, purposeNames, generateBitRepresentation } from '../utils/tcf-decoder';
-import { loadGVL, getVendors, GVLData, GVLVendor } from '../utils/gvl-loader';
+import { loadGVL, getVendors, GVLData, GVLVendor, clearGVLCache } from '../utils/gvl-loader';
 import { analyzeTCFWithGVL, EnhancedVendorResult } from '../utils/tcf-decoder-enhanced';
 import Button from './shared/Button';
 
@@ -78,6 +78,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   useEffect(() => {
     async function fetchGVL() {
       try {
+        // Clear the GVL cache to ensure we always get the latest data
+        clearGVLCache();
+        
         setIsLoadingGVL(true);
         setGvlError(null);
         const data = await loadGVL();
