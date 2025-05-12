@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { decodeTCFString, purposeNames, generateBitRepresentation } from '../utils/tcf-decoder';
 import { loadGVL, getVendors, GVLData, GVLVendor } from '../utils/gvl-loader';
 import { analyzeTCFWithGVL, EnhancedVendorResult, filterPurposesByStatus } from '../utils/tcf-decoder-enhanced';
@@ -18,7 +18,7 @@ interface VendorFilterOptions {
 }
 
 // Beispiel TCF-String
-const EXAMPLE_TCF_STRING = "CQRTEQAQRTEQAAGABCENBqFgAP_gAEPgAAYgK0pV7G79bWFj6T53aPsEMQgf59hxysQxBgZAA2AFBJOQcIQCkmEzBAygJCACGBIAIERBIQIkCAAABUAAYIgADABMIAQQABAKIgAEgAABAgBIAAgKAAoAEAAIAABEElEAmQEAQBKAFVAAgIAAOAABAKAAAACEAQAAAAAARAAAAQAAggAAkQpAIEAAAAAAARAAEAAAAAAAAAECAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgrTAgAAQAAoAB4AFwANgAkABUAD8AI4AaABHACcAHQAO4AhABEQCOAE0AO2Af8BCACYgFPgKhAWEAtQBcwDFgGTAOdAgmBWkA4JAlAAQAAuACgAKgAcAA8ACCAGQAagA8ACYAFUAPwAhIBEAESAI4ASwAmgBWgDAAHcAPaAfgB-wEiASUAxQBxAFDgKPAUiAtgBcgC8wGXANXAbmA3UByYEIQIWhQAIAGwgAQAjgBKQCaAE7HQLAAFwAUABUADgAIIAZABqADwAJgAVYAuAC6AGIAP0AiACJAEsAJoATgAowBWgDAAGiAO4Ae0A_AD9AItAR0BJQDFAHEAOoAi8BQ4CjwFsALkAXmAvoBlUDLAMuAaqA1cBuoDkwH9gQBAhaBHYeACAB-AREcAFACgARwAlIBOwG5kIB4ACwAKAA1ACqAFwAMQAwAB3AEpAMUAdQBcgDVQH9gQtIAAgAHgEcJQGQAEAALAAoABwAHgATAAqgBcADFAIgAiQBHACjAFaAMAAfgBigDqAIQARMAi8BR4C2AF5gQBAhCSABAEcAZYUgRAALgAoACoAHAAQAA0AB4AEwAKoAYgA_QCIAIkAUYArQBgADRgH4AfoBFoCOgJKAYoA6gCJgEXgKHAWwAuQBeYC-oGWAZcA3UByYD-wIQgQtAjsVAAgAKKACAAZABQAC2AG0AjgBKQEIANzLQBAAagDAAHcAocA.YAAAAAAAAAAA";
+const EXAMPLE_TCF_STRING = "CPBZjR9PBZjR9AKAZADEBUCsAP_AAH_AAAqIHWtf_X_fb39j-_59_9t0eY1f9_7_v-0zjhfds-8Nyf_X_L8X42M7vF36pq4KuR4Eu3LBIQFlHOHUTUmw6okVrTPsak2Mr7NKJ7LEinMbe2dYGHtfn91TuZKY7_78_9fz3_-v_v___9f3r-3_3__59X---_e_V399zLv9__34HlAEmGpfABdiWODJtGlUKIEYVhIdAKACigGFoisIHVwU7K4CP0EDABAagIwIgQYgoxYBAAIBAEhEQEgB4IBEARAIAAQAqQEIACNgEFgBYGAQACgGhYgRQBCBIQZHBUcpgQESLRQT2VgCUXexphCGUUAJAAA.YAAAAAAAAAAA";
 
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   // State für den Decoder
@@ -69,81 +69,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const tableHeaderBg = isDarkMode ? 'bg-slate-700' : 'bg-gray-100';
   const tableRowBg = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-50';
   
-  // TCF String verarbeiten
-  const handleDecode = useCallback(async () => {
-    try {
-      setDecodeError(null);
-      
-      if (!tcfString.trim()) {
-        setDecodeError('Bitte geben Sie einen TCF-String ein');
-        return;
-      }
-      
-      // String dekodieren
-      const result = decodeTCFString(tcfString);
-      setDecodedVersion(result.version);
-      setDecodedData(result.coreData);
-      
-      // Bit-Darstellung generieren
-      const bits = generateBitRepresentation(result.coreData.fullString);
-      setBitRepresentation(bits);
-      
-      // Erweiterte Analyse mit GVL
-      if (!gvlData) {
-        // Falls GVL noch nicht geladen wurde, laden wir sie jetzt
-        setIsLoadingGVL(true);
-        try {
-          const data = await loadGVL();
-          setGvlData(data);
-          try {
-            const enhancedResult = analyzeTCFWithGVL(tcfString, data);
-            setVendorResults(enhancedResult.vendorResults);
-            console.log('TCF Analysis complete. Vendor results:', enhancedResult.vendorResults.length);
-          } catch (analysisError) {
-            console.error('Fehler bei der TCF-Analyse:', analysisError);
-            setGvlError('Fehler bei der Analyse des TCF-Strings mit der GVL');
-          }
-        } catch (error) {
-          console.error('Fehler beim Laden der GVL:', error);
-          setGvlError(error instanceof Error ? error.message : 'Unbekannter Fehler beim Laden der GVL');
-        } finally {
-          setIsLoadingGVL(false);
-        }
-      } else {
-        // GVL bereits geladen, führe erweiterte Analyse durch
-        try {
-          const enhancedResult = analyzeTCFWithGVL(tcfString, gvlData);
-          setVendorResults(enhancedResult.vendorResults);
-          console.log('TCF Analysis complete. Vendor results:', enhancedResult.vendorResults.length);
-        } catch (analysisError) {
-          console.error('Fehler bei der TCF-Analyse:', analysisError);
-          setGvlError('Fehler bei der Analyse des TCF-Strings mit der GVL');
-        }
-      }
-      
-    } catch (error) {
-      console.error('Fehler beim Dekodieren:', error);
-      setDecodeError(error instanceof Error ? error.message : 'Unbekannter Fehler beim Dekodieren');
-      setDecodedData(null);
-      setVendorResults([]);
-      setBitRepresentation('');
-    }
-  }, [tcfString, gvlData]);
-
-  // Beispiel-TCF-String laden
-  const loadExample = useCallback(() => {
-    setTcfString(EXAMPLE_TCF_STRING);
-    // Trigger decoding automatically after loading example
-    setTimeout(() => handleDecode(), 100);
-  }, [handleDecode]);
-
-  // Automatisch den Beispiel-String laden und dekodieren, wenn die Komponente initial geladen wird
-  useEffect(() => {
-    if (!tcfString && !decodedData) {
-      loadExample();
-    }
-  }, [tcfString, decodedData, loadExample]);
-
   // GVL laden
   useEffect(() => {
     async function fetchGVL() {
@@ -192,21 +117,75 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     
     // Nach ID filtern
     if (idFilter) {
-      // Exakter Vergleich statt substring-Vergleich
       const idNumber = parseInt(idFilter, 10);
       if (!isNaN(idNumber)) {
+        // Suche nach exakter ID
         filtered = filtered.filter(v => v.id === idNumber);
       } else {
-        // Fallback auf substring-Vergleich, wenn keine gültige Zahl eingegeben wurde
+        // Fallback auf substring-Vergleich für nicht-numerische Eingaben
         filtered = filtered.filter(v => v.id.toString().includes(idFilter));
       }
     }
     
     setFilteredVendors(filtered);
   }
+  
+  // Beispiel-TCF-String laden
+  const loadExample = () => {
+    setTcfString(EXAMPLE_TCF_STRING);
+  };
+
+  // TCF String verarbeiten
+  const handleDecode = async () => {
+    try {
+      setDecodeError(null);
+      
+      if (!tcfString.trim()) {
+        setDecodeError('Bitte geben Sie einen TCF-String ein');
+        return;
+      }
+      
+      // String dekodieren
+      const result = decodeTCFString(tcfString);
+      setDecodedVersion(result.version);
+      setDecodedData(result.coreData);
+      
+      // Bit-Darstellung generieren
+      const bits = generateBitRepresentation(result.coreData.fullString);
+      setBitRepresentation(bits);
+      
+      // Erweiterte Analyse mit GVL
+      if (!gvlData) {
+        // Falls GVL noch nicht geladen wurde, laden wir sie jetzt
+        setIsLoadingGVL(true);
+        try {
+          const data = await loadGVL();
+          setGvlData(data);
+          const enhancedResult = analyzeTCFWithGVL(tcfString, data);
+          setVendorResults(enhancedResult.vendorResults);
+        } catch (error) {
+          console.error('Fehler beim Laden der GVL:', error);
+          setGvlError(error instanceof Error ? error.message : 'Unbekannter Fehler beim Laden der GVL');
+        } finally {
+          setIsLoadingGVL(false);
+        }
+      } else {
+        // GVL bereits geladen, führe erweiterte Analyse durch
+        const enhancedResult = analyzeTCFWithGVL(tcfString, gvlData);
+        setVendorResults(enhancedResult.vendorResults);
+      }
+      
+    } catch (error) {
+      console.error('Fehler beim Dekodieren:', error);
+      setDecodeError(error instanceof Error ? error.message : 'Unbekannter Fehler beim Dekodieren');
+      setDecodedData(null);
+      setVendorResults([]);
+      setBitRepresentation('');
+    }
+  };
 
   // Filter für Vendors nach Consent/LegInt
-  const getFilteredVendorResults = useCallback((): EnhancedVendorResult[] => {
+  const getFilteredVendorResults = (): EnhancedVendorResult[] => {
     let filtered = [...vendorResults];
     
     if (vendorFilter.onlyWithConsent) {
@@ -227,10 +206,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     }
     
     return filtered;
-  }, [vendorResults, vendorFilter]);
+  };
 
   // JSON-Export der Ergebnisse
-  const handleExportJSON = useCallback(() => {
+  const handleExportJSON = () => {
     if (!decodedData) return;
     
     const exportData = {
@@ -282,15 +261,15 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-  }, [decodedData, decodedVersion, vendorResults]);
+  };
 
   // Tab-Wechsel-Handler
-  const handleTabChange = useCallback((tab: ActiveTab) => {
+  const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
-  }, []);
+  };
   
   // Export der GVL als JSON
-  const handleExportGVL = useCallback(() => {
+  const handleExportGVL = () => {
     if (!gvlData) return;
     
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gvlData, null, 2));
@@ -300,19 +279,19 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-  }, [gvlData]);
+  };
   
   // Vendor Details anzeigen
-  const handleViewVendorDetails = useCallback((vendor: EnhancedVendorResult) => {
+  const handleViewVendorDetails = (vendor: EnhancedVendorResult) => {
     setSelectedVendor(vendor);
     setActiveTab('vendor-details');
-  }, []);
+  };
   
   // Zurück zur Ergebnis-Übersicht
-  const handleBackToResults = useCallback(() => {
+  const handleBackToResults = () => {
     setSelectedVendor(null);
     setActiveTab('decoder');
-  }, []);
+  };
 
   return (
     <div className={`${bgColor} ${textColor} p-6 rounded-lg shadow-lg w-full max-w-full mx-auto`}>
