@@ -202,8 +202,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             const numId = parseInt(id, 10);
             if (!isNaN(numId) && !vendorIds.has(numId)) {
               // Prüfe, ob dieser Vendor Consent oder LegitimateInterest hat
-              const hasConsent = decodedData?.vendorConsents?.has?.(numId) || false;
-              const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.has?.(numId) || false;
+              // WICHTIG: Verwende isSet() statt has() - das ist die korrekte API der IAB-Library
+              const hasConsent = decodedData?.vendorConsents?.isSet?.(numId) || false;
+              const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.isSet?.(numId) || false;
               
               if (hasConsent || hasLegitimateInterest) {
                 vendorIds.add(numId);
@@ -215,8 +216,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
           // Maximal 1000 Vendor-IDs überprüfen (um Endlosschleife zu vermeiden)
           for (let id = 1; id <= 1000; id++) {
             if (!vendorIds.has(id)) {
-              const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
-              const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
+              // WICHTIG: Verwende isSet() statt has() - das ist die korrekte API der IAB-Library
+              const hasConsent = decodedData?.vendorConsents?.isSet?.(id) || false;
+              const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.isSet?.(id) || false;
               
               if (hasConsent || hasLegitimateInterest) {
                 vendorIds.add(id);
@@ -228,9 +230,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       
       // Generiere Vendor-Ergebnisse mit den Daten der IAB-Library
       const results = Array.from(vendorIds).map(id => {
-        // Die IAB-Library verwendet das Vector-Objekt - hier prüfen wir mit der korrekten Methode
-        const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
-        const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
+        // WICHTIG: Verwende isSet() statt has() - das ist die korrekte API der IAB-Library
+        const hasConsent = decodedData?.vendorConsents?.isSet?.(id) || false;
+        const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.isSet?.(id) || false;
         const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
         const policyUrl = decodedData?.gvl?.vendors?.[id]?.policyUrl || '#';
         const isKeyVendor = keyVendorIds.includes(id);
@@ -273,8 +275,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       // Erstelle eine kopierte Version mit serialisierbaren Typen (keine Sets/Maps)
       const serializable = {
         version: decodedVersion,
-        created: new Date(decodedData.created * 1000).toISOString(),
-        lastUpdated: new Date(decodedData.lastUpdated * 1000).toISOString(),
+        created: decodedData.created ? new Date(decodedData.created).toISOString() : null,
+        lastUpdated: decodedData.lastUpdated ? new Date(decodedData.lastUpdated).toISOString() : null,
         // Basis-Informationen
         cmpId: decodedData.cmpId,
         cmpVersion: decodedData.cmpVersion,
@@ -338,9 +340,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       // Erstelle Purpose-Infos
       const purposes = gvlVendor.purposes?.map((purposeId: number) => {
         const purposeName = decodedData?.gvl?.purposes?.[purposeId]?.name || `Purpose ${purposeId}`;
-        // Die IAB-Library verwendet das Vector-Objekt - hier prüfen wir mit der korrekten Methode
-        const hasConsent = decodedData?.purposeConsents?.has?.(purposeId) || false;
-        const hasLegitimateInterest = decodedData?.purposeLegitimateInterests?.has?.(purposeId) || false;
+        // WICHTIG: Verwende isSet() statt has() - das ist die korrekte API der IAB-Library
+        const hasConsent = decodedData?.purposeConsents?.isSet?.(purposeId) || false;
+        const hasLegitimateInterest = decodedData?.purposeLegitimateInterests?.isSet?.(purposeId) || false;
         
         return {
           id: purposeId,
@@ -357,8 +359,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       // Erstelle Special Feature Infos
       const specialFeatures = gvlVendor.specialFeatures?.map((featureId: number) => {
         const featureName = decodedData?.gvl?.specialFeatures?.[featureId]?.name || `Feature ${featureId}`;
-        // Die IAB-Library verwendet das Vector-Objekt - hier prüfen wir mit der korrekten Methode
-        const hasConsent = decodedData?.specialFeatureOptins?.has?.(featureId) || false;
+        // WICHTIG: Verwende isSet() statt has() - das ist die korrekte API der IAB-Library
+        const hasConsent = decodedData?.specialFeatureOptins?.isSet?.(featureId) || false;
         
         return {
           id: featureId,
@@ -662,9 +664,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[136, 137, 44].map((id: number) => {
-                    // Die IAB-Library verwendet das Vector-Objekt - hier prüfen wir mit der korrekten Methode
-                    const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
-                    const hasLegInt = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
+                    // WICHTIG: Verwende isSet() statt has() - das ist die korrekte API der IAB-Library
+                    const hasConsent = decodedData?.vendorConsents?.isSet?.(id) || false;
+                    const hasLegInt = decodedData?.vendorLegitimateInterests?.isSet?.(id) || false;
                     const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
                     return (
                       <div key={id} className={`p-3 rounded-lg ${sectionBgColor}`}>
@@ -705,13 +707,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Created</td>
                         <td className="px-4 py-2">
-                          {decodedData.created ? new Date(decodedData.created * 1000).toLocaleString() : 'N/A'}
+                          {decodedData.created ? new Date(decodedData.created).toLocaleString() : 'N/A'}
                         </td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Last Updated</td>
                         <td className="px-4 py-2">
-                          {decodedData.lastUpdated ? new Date(decodedData.lastUpdated * 1000).toLocaleString() : 'N/A'}
+                          {decodedData.lastUpdated ? new Date(decodedData.lastUpdated).toLocaleString() : 'N/A'}
                         </td>
                       </tr>
                       <tr className={tableRowBg}>

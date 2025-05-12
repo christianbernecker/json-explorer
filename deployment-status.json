@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 17:50:39 CEST 2025", "commit": "Fix TCF Decoder: Korrektur der Abstürze durch Angleichung an IAB-Library API"}
+{"deployment": "staging", "timestamp": "Mon May 12 17:54:52 CEST 2025", "commit": "Verbesserte TCF Decoder Vendor-Anzeige: Key Vendors prominent, alle anderen Vendoren mit Consent zusätzlich anzeigen"}
