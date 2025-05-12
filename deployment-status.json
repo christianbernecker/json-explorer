@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May  8 15:33:09 CEST 2025", "commit": "Unabhängige Suche für VAST-Tabs implementiert: Jeder Tab hat jetzt seinen eigenen Suchzustand"}
+{"deployment": "staging", "timestamp": "Fri May  9 08:26:37 CEST 2025", "commit": "Zurückkehr zu commit 5e00f7c: ESLint-Fehler behoben - scrollToElement nach oben verschoben"}

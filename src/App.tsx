@@ -8,6 +8,7 @@ import PrivacyPage from './components/PrivacyPage';
 import ImprintPage from './components/ImprintPage';
 import NotFound from './components/NotFound';
 import Sidebar from './components/Sidebar';
+import TCFDecoderPage from './components/TCFDecoderPage';
 import { Footer } from './components/shared';
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
               <Route path="/apps/json-explorer/validator" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
               <Route path="/apps/json-explorer/diff" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
               <Route path="/apps/data-visualizer" element={<DataVisualizer isDarkMode={isDarkMode} />} />
+              <Route path="/apps/tcf-decoder" element={<TCFDecoderPage isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
               <Route path="/legal/privacy" element={<PrivacyPage isDarkMode={isDarkMode} />} />
               <Route path="/legal/imprint" element={<ImprintPage isDarkMode={isDarkMode} />} />
               <Route path="*" element={<NotFound isDarkMode={isDarkMode} />} />
