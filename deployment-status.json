@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 17:07:22 CEST 2025", "commit": "Fix: Vendor Consent Section Offset jetzt korrekt bei 138, Felder nach Vendor-Sections"}
+{"deployment": "staging", "timestamp": "Mon May 12 17:28:08 CEST 2025", "commit": "Linter-Fixes: explizite Typen für alle map-Parameter (final)"}
