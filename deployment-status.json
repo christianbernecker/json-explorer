@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 21:55:09 CEST 2025", "commit": "Komplette Überarbeitung des TCF Consent Decoders: Korrekte Verwendung der IAB TCF Bibliothek und Anzeige der Consent-Informationen für Vendors und Purposes"}
+{"deployment": "staging", "timestamp": "Mon May 12 22:03:35 CEST 2025", "commit": "Korrektur des TCF Decoders: Vendor-spezifische Purposes anzeigen, Volltext-Suche für GVL, Fix der vollständigen Vendor-Liste"}

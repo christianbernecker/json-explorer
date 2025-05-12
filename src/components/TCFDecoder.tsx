@@ -38,7 +38,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   
   // State for GVL Explorer
   const [vendorSearchTerm, setVendorSearchTerm] = useState<string>('');
-  const [vendorIdFilter, setVendorIdFilter] = useState<string>('');
   const [filteredVendors, setFilteredVendors] = useState<GVLVendor[]>([]);
   
   // State for advanced functions
@@ -88,7 +87,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
         const data = await loadGVL();
         setGvlData(data);
         if (activeTab === 'gvl-explorer') {
-          updateFilteredVendors(data, vendorSearchTerm, vendorIdFilter);
+          updateFilteredVendors(data, vendorSearchTerm);
         }
       } catch (error) {
         console.error('Error loading GVL:', error);
@@ -99,17 +98,17 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     }
     
     fetchGVL();
-  }, [activeTab, vendorSearchTerm, vendorIdFilter]);
+  }, [activeTab, vendorSearchTerm]);
   
   // Update filtered vendors
   useEffect(() => {
     if (gvlData) {
-      updateFilteredVendors(gvlData, vendorSearchTerm, vendorIdFilter);
+      updateFilteredVendors(gvlData, vendorSearchTerm);
     }
-  }, [gvlData, vendorSearchTerm, vendorIdFilter]);
+  }, [gvlData, vendorSearchTerm]);
   
   // Filter function for vendors
-  function updateFilteredVendors(data: GVLData, searchTerm: string, idFilter: string) {
+  function updateFilteredVendors(data: GVLData, searchTerm: string) {
     if (!data || !data.vendors) {
       setFilteredVendors([]);
       return;
@@ -387,7 +386,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             value={vendorSearchTerm}
             onChange={(e) => {
               setVendorSearchTerm(e.target.value);
-              setVendorIdFilter(''); // Alte ID-Filter zurücksetzen
             }}
           />
         </div>
@@ -609,12 +607,15 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
                     
                     // Für welche Purposes wurde Consent gegeben (global)?
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const globalPurposesWithConsent = decodedData?.purposeConsents || [];
                     
                     // Für welche Purposes wurde Legitimate Interest gegeben (global)?
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const globalPurposesWithLI = decodedData?.purposeLegitimateInterests || [];
                     
                     // Special Features Opt-in (global)
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const globalSpecialFeaturesOptIn = decodedData?.specialFeatureOptins || [];
                     
                     // Vendor spezifische Purposes aus der GVL
@@ -623,16 +624,23 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     const vendorSpecialFeatures = decodedData?.gvl?.vendors?.[id]?.specialFeatureIds || [];
                     
                     // Schnittmenge zwischen globalen Purposes und Vendor Purposes
-                    const purposesWithConsent = globalPurposesWithConsent.filter((purposeId: number) => 
-                      vendorPurposes.includes(purposeId)
+                    const purposesWithConsent = vendorPurposes.filter((purposeId: number) => 
+                      // Prüfen, ob der Vendor den Purpose unterstützt UND der Nutzer global Consent gegeben hat
+                      decodedData?.purposeConsents?.includes(purposeId) &&
+                      // Prüfen, ob der Vendor Consent hat (nur dann darf er die Purposes nutzen)
+                      hasVendorConsent
                     );
                     
-                    const purposesWithLI = globalPurposesWithLI.filter((purposeId: number) => 
-                      vendorLegIntPurposes.includes(purposeId)
+                    const purposesWithLI = vendorLegIntPurposes.filter((purposeId: number) => 
+                      // Prüfen, ob der Vendor den LegInt Purpose unterstützt UND der Nutzer global LegInt gegeben hat
+                      decodedData?.purposeLegitimateInterests?.includes(purposeId) &&
+                      // Prüfen, ob der Vendor Legitimate Interest hat
+                      hasVendorLI
                     );
                     
-                    const specialFeaturesOptIn = globalSpecialFeaturesOptIn.filter((featureId: number) => 
-                      vendorSpecialFeatures.includes(featureId)
+                    const specialFeaturesOptIn = vendorSpecialFeatures.filter((featureId: number) => 
+                      // Prüfen, ob der Vendor das Special Feature unterstützt UND der Nutzer global eingewilligt hat
+                      decodedData?.specialFeatureOptins?.includes(featureId)
                     );
                     
                     return (
@@ -849,11 +857,23 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                         {Object.keys(decodedData.gvl.vendors).map((vendorIdStr) => {
                           const vendorId = parseInt(vendorIdStr, 10);
                           const vendor = decodedData.gvl.vendors[vendorId];
+                          
+                          // Korrektur: Verwende .has() statt .isSet()
                           const hasConsent = decodedData?.vendors?.vendorConsents?.has?.(vendorId) || false;
                           const hasLegitimateInterest = decodedData?.vendors?.vendorLegitimateInterests?.has?.(vendorId) || false;
                           
-                          // Zähle die Purposes für diesen Vendor
-                          const purposeCount = (vendor?.purposeIds?.length || 0) + (vendor?.legIntPurposeIds?.length || 0);
+                          // Korrekte Berechnung der Purpose-Anzahl - zähle wirklich nur die Purposes, 
+                          // die der Vendor registriert hat
+                          const purposeConsents = (vendor?.purposeIds || []).filter((purposeId: number) => 
+                            decodedData?.purposeConsents?.includes(purposeId) && hasConsent
+                          ).length;
+                          
+                          const purposeLegInt = (vendor?.legIntPurposeIds || []).filter((purposeId: number) => 
+                            decodedData?.purposeLegitimateInterests?.includes(purposeId) && hasLegitimateInterest
+                          ).length;
+                          
+                          // Summe der erlaubten Purposes
+                          const purposeCount = purposeConsents + purposeLegInt;
                           
                           return (
                             <tr key={vendorId} className={vendorId % 2 ? tableDarkRowBg : tableLightRowBg}>
