@@ -43,6 +43,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   
   // State for advanced functions
   const [selectedVendor, setSelectedVendor] = useState<any | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [vendorFilter, setVendorFilter] = useState<VendorFilterOptions>({
     onlyWithConsent: false,
     onlyWithLegitimateInterest: false,
@@ -662,25 +663,120 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
               {/* Key Vendors Section */}
               <div className="mb-6 p-4 border-b border-gray-300 dark:border-gray-700">
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   {[136, 137, 44].map((id: number) => {
                     // Korrigierte Implementierung: has() ist die korrekte öffentliche Methode
                     const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
                     const hasLegInt = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
                     const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
+                    
+                    // Hole die genauen Purposes für diesen Vendor
+                    const gvlVendor = decodedData?.gvl?.vendors?.[id];
+                    const consentsForPurposes: number[] = [];
+                    const legIntForPurposes: number[] = [];
+                    const specialFeatures: number[] = [];
+                    const specialPurposes: number[] = [];
+                    
+                    if (gvlVendor) {
+                      // Consent Purposes
+                      gvlVendor.purposes?.forEach((purposeId: number) => {
+                        if (decodedData?.purposeConsents?.has?.(purposeId)) {
+                          consentsForPurposes.push(purposeId);
+                        }
+                      });
+                      
+                      // Legitimate Interest Purposes
+                      gvlVendor.legIntPurposes?.forEach((purposeId: number) => {
+                        if (decodedData?.purposeLegitimateInterests?.has?.(purposeId)) {
+                          legIntForPurposes.push(purposeId);
+                        }
+                      });
+                      
+                      // Special Features
+                      gvlVendor.specialFeatures?.forEach((featureId: number) => {
+                        if (decodedData?.specialFeatureOptins?.has?.(featureId)) {
+                          specialFeatures.push(featureId);
+                        }
+                      });
+                      
+                      // Special Purposes (alle, da diese nicht vom Nutzer abgewählt werden können)
+                      specialPurposes.push(...(gvlVendor.specialPurposes || []));
+                    }
+                    
                     return (
-                      <div key={id} className={`p-3 rounded-lg ${sectionBgColor}`}>
-                        <div className="flex justify-between items-center mb-2">
-                          <h4 className="font-bold">{name}</h4>
+                      <div key={id} className={`p-4 rounded-lg ${sectionBgColor}`}>
+                        <div className="flex justify-between items-center mb-3">
+                          <h4 className="font-bold text-lg">{name}</h4>
                           <span className="text-sm bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">ID: {id}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className={`px-2 py-1 rounded ${hasConsent ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
-                            Consent: {hasConsent ? 'Yes' : 'No'}
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                          <div className={`px-3 py-2 rounded ${hasConsent ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
+                            <span className="font-semibold">Consent:</span> {hasConsent ? 'Yes' : 'No'}
                           </div>
-                          <div className={`px-2 py-1 rounded ${hasLegInt ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
-                            Legitimate Interest: {hasLegInt ? 'Yes' : 'No'}
+                          <div className={`px-3 py-2 rounded ${hasLegInt ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
+                            <span className="font-semibold">Legitimate Interest:</span> {hasLegInt ? 'Yes' : 'No'}
                           </div>
+                        </div>
+                        
+                        <div className="mt-3">
+                          <h5 className="font-semibold mb-2">Purposes mit Consent:</h5>
+                          {consentsForPurposes.length > 0 ? (
+                            <ul className="list-disc pl-5 space-y-1 text-sm">
+                              {consentsForPurposes.map(p => (
+                                <li key={`consent-${id}-${p}`} className="p-1">
+                                  {p}. {decodedData?.gvl?.purposes?.[p]?.name || purposeNames[p-1] || `Purpose ${p}`}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm italic">Keine Purposes mit Consent</p>
+                          )}
+                        </div>
+                        
+                        <div className="mt-3">
+                          <h5 className="font-semibold mb-2">Purposes mit Legitimate Interest:</h5>
+                          {legIntForPurposes.length > 0 ? (
+                            <ul className="list-disc pl-5 space-y-1 text-sm">
+                              {legIntForPurposes.map(p => (
+                                <li key={`legint-${id}-${p}`} className="p-1">
+                                  {p}. {decodedData?.gvl?.purposes?.[p]?.name || purposeNames[p-1] || `Purpose ${p}`}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm italic">Keine Purposes mit Legitimate Interest</p>
+                          )}
+                        </div>
+                        
+                        <div className="mt-3">
+                          <h5 className="font-semibold mb-2">Special Features:</h5>
+                          {specialFeatures.length > 0 ? (
+                            <ul className="list-disc pl-5 space-y-1 text-sm">
+                              {specialFeatures.map(f => (
+                                <li key={`sf-${id}-${f}`} className="p-1">
+                                  {f}. {decodedData?.gvl?.specialFeatures?.[f]?.name || `Special Feature ${f}`}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm italic">Keine Special Features</p>
+                          )}
+                        </div>
+                        
+                        <div className="mt-3">
+                          <h5 className="font-semibold mb-2">Special Purposes:</h5>
+                          {specialPurposes.length > 0 ? (
+                            <ul className="list-disc pl-5 space-y-1 text-sm">
+                              {specialPurposes.map(p => (
+                                <li key={`sp-${id}-${p}`} className="p-1">
+                                  {p}. {decodedData?.gvl?.specialPurposes?.[p]?.name || `Special Purpose ${p}`}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm italic">Keine Special Purposes</p>
+                          )}
                         </div>
                       </div>
                     );
@@ -812,161 +908,97 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                   )}
                 </div>
               </div>
-              
-              {/* Vendors */}
+
+              {/* Vollständige Vendor-Liste */}
               <div className="my-6">
-                <h3 className="text-lg font-semibold mb-3">Vendor Analysis</h3>
+                <h3 className="text-lg font-semibold mb-3">Vollständige Vendor-Liste mit Consent-Status</h3>
                 
                 {isLoadingGVL ? (
                   <div className="p-4 text-center">
-                    Loading Global Vendor List...
+                    Lade Global Vendor List...
                   </div>
                 ) : gvlError ? (
                   <div className={`p-4 my-4 rounded-md bg-red-100 dark:bg-red-900 ${errorColor}`}>
-                    <p>Error loading GVL: {gvlError}</p>
-                    <p className="mt-2">Note: Basic vendor info is still available</p>
+                    <p>Fehler beim Laden der GVL: {gvlError}</p>
+                  </div>
+                ) : !decodedData?.gvl?.vendors ? (
+                  <div className="p-4 text-center">
+                    Keine Vendor-Informationen verfügbar
                   </div>
                 ) : (
-                  <>
-                    {/* Filter controls */}
-                    <div className="mb-4 flex flex-wrap gap-3">
-                      <div className="flex items-center">
-                        <input 
-                          type="checkbox" 
-                          id="consentFilter"
-                          checked={vendorFilter.onlyWithConsent}
-                          onChange={e => setVendorFilter({...vendorFilter, onlyWithConsent: e.target.checked})}
-                          className="mr-2"
-                        />
-                        <label htmlFor="consentFilter">Show only vendors with consent</label>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <input 
-                          type="checkbox" 
-                          id="legIntFilter"
-                          checked={vendorFilter.onlyWithLegitimateInterest}
-                          onChange={e => setVendorFilter({...vendorFilter, onlyWithLegitimateInterest: e.target.checked})}
-                          className="mr-2"
-                        />
-                        <label htmlFor="legIntFilter">Show only vendors with legitimate interest</label>
-                      </div>
-                    </div>
-                    
-                    {/* Vendor list gruppiert nach Key Vendors und anderen Vendors */}
-                    <div className="overflow-x-auto">
-                      {/* Erstelle zwei Gruppen von Vendoren */}
-                      {(() => {
-                        const vendorResults = getFilteredVendorResults();
-                        const keyVendors = vendorResults.filter(v => v.isKeyVendor);
-                        const otherVendors = vendorResults.filter(v => !v.isKeyVendor);
-                        
-                        return (
-                          <>
-                            {/* Keine Ergebnisse Meldung */}
-                            {vendorResults.length === 0 && (
-                              <div className="p-4 text-center">
-                                No vendors matching your criteria found
-                              </div>
-                            )}
-                            
-                            {/* Key Vendors Tabelle */}
-                            {keyVendors.length > 0 && (
-                              <div className="mb-6">
-                                <h4 className="text-md font-semibold mb-2">Key Vendors</h4>
-                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                  <thead>
-                                    <tr className={tableHeaderBg}>
-                                      <th className="px-4 py-2 text-left">ID</th>
-                                      <th className="px-4 py-2 text-left">Name</th>
-                                      <th className="px-4 py-2 text-center">Consent</th>
-                                      <th className="px-4 py-2 text-center">Legitimate Interest</th>
-                                      <th className="px-4 py-2 text-center">Actions</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {keyVendors.map((v: any) => (
-                                      <tr key={v.id} className={tableRowBg}>
-                                        <td className="px-4 py-2">{v.id}</td>
-                                        <td className="px-4 py-2">{v.name}</td>
-                                        <td className="px-4 py-2 text-center">
-                                          <span className={`inline-block w-4 h-4 rounded-full ${v.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                          <span className={`inline-block w-4 h-4 rounded-full ${v.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                          <Button
-                                            onClick={() => handleViewVendorDetails(v)}
-                                            variant="primary"
-                                            isDarkMode={isDarkMode}
-                                            size="sm"
-                                            fullWidth
-                                          >
-                                            View Details
-                                          </Button>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-                            
-                            {/* Alle anderen Vendoren mit Consent/LegInt */}
-                            {otherVendors.length > 0 && (
-                              <div>
-                                <h4 className="text-md font-semibold mb-2">Other Vendors with Consent/Legitimate Interest</h4>
-                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                  <thead>
-                                    <tr className={tableHeaderBg}>
-                                      <th className="px-4 py-2 text-left">ID</th>
-                                      <th className="px-4 py-2 text-left">Name</th>
-                                      <th className="px-4 py-2 text-center">Consent</th>
-                                      <th className="px-4 py-2 text-center">Legitimate Interest</th>
-                                      <th className="px-4 py-2 text-center">Actions</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {otherVendors.map((v: any) => (
-                                      <tr key={v.id} className={tableRowBg}>
-                                        <td className="px-4 py-2">{v.id}</td>
-                                        <td className="px-4 py-2">{v.name}</td>
-                                        <td className="px-4 py-2 text-center">
-                                          <span className={`inline-block w-4 h-4 rounded-full ${v.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                          <span className={`inline-block w-4 h-4 rounded-full ${v.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                          <Button
-                                            onClick={() => handleViewVendorDetails(v)}
-                                            variant="primary"
-                                            isDarkMode={isDarkMode}
-                                            size="sm"
-                                            fullWidth
-                                          >
-                                            View Details
-                                          </Button>
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-                            
-                            {/* Info über die Anzahl der gefundenen Vendoren */}
-                            <div className={`mt-4 text-sm ${secondaryTextColor}`}>
-                              Found {vendorResults.length} vendor{vendorResults.length !== 1 ? 's' : ''} 
-                              ({keyVendors.length} key vendor{keyVendors.length !== 1 ? 's' : ''}, 
-                              {otherVendors.length} other{otherVendors.length !== 1 ? 's' : ''})
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead>
+                        <tr className={tableHeaderBg}>
+                          <th className="px-4 py-2 text-left">ID</th>
+                          <th className="px-4 py-2 text-left">Name</th>
+                          <th className="px-4 py-2 text-center">Consent</th>
+                          <th className="px-4 py-2 text-center">Legitimate Interest</th>
+                          <th className="px-4 py-2 text-left">Purposes</th>
+                          <th className="px-4 py-2 text-center">Aktionen</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {Object.entries(decodedData.gvl.vendors).map(([idStr, vendor]: [string, any]) => {
+                          const id = parseInt(idStr, 10);
+                          const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
+                          const hasLegInt = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
+                          
+                          // Zähle die Anzahl der Purposes mit Consent/LegInt
+                          let consentPurposeCount = 0;
+                          let legIntPurposeCount = 0;
+                          
+                          (vendor?.purposes || []).forEach((purposeId: number) => {
+                            if (decodedData?.purposeConsents?.has?.(purposeId)) {
+                              consentPurposeCount++;
+                            }
+                          });
+                          
+                          (vendor?.legIntPurposes || []).forEach((purposeId: number) => {
+                            if (decodedData?.purposeLegitimateInterests?.has?.(purposeId)) {
+                              legIntPurposeCount++;
+                            }
+                          });
+                          
+                          return (
+                            <tr key={id} className={tableRowBg}>
+                              <td className="px-4 py-2">{id}</td>
+                              <td className="px-4 py-2">{vendor.name}</td>
+                              <td className="px-4 py-2 text-center">
+                                <span className={`inline-block w-4 h-4 rounded-full ${hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                <span className={`inline-block w-4 h-4 rounded-full ${hasLegInt ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                              </td>
+                              <td className="px-4 py-2">
+                                <span className="text-sm">
+                                  {consentPurposeCount} mit Consent, {legIntPurposeCount} mit LegInt
+                                  {(vendor?.specialPurposes?.length > 0) && 
+                                    `, ${vendor.specialPurposes.length} Special Purpose(s)`}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                <Button
+                                  onClick={() => handleViewVendorDetails({
+                                    id,
+                                    name: vendor.name,
+                                    hasConsent,
+                                    hasLegitimateInterest: hasLegInt,
+                                    policyUrl: vendor.policyUrl
+                                  })}
+                                  variant="primary"
+                                  isDarkMode={isDarkMode}
+                                  size="sm"
+                                >
+                                  Details
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
               
