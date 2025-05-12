@@ -192,9 +192,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     
     // Nach ID filtern
     if (idFilter) {
-      filtered = filtered.filter(v => 
-        v.id.toString().includes(idFilter)
-      );
+      // Exakter Vergleich statt substring-Vergleich
+      const idNumber = parseInt(idFilter, 10);
+      if (!isNaN(idNumber)) {
+        filtered = filtered.filter(v => v.id === idNumber);
+      } else {
+        // Fallback auf substring-Vergleich, wenn keine gültige Zahl eingegeben wurde
+        filtered = filtered.filter(v => v.id.toString().includes(idFilter));
+      }
     }
     
     setFilteredVendors(filtered);
