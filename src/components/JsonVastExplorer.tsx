@@ -4,6 +4,7 @@ import useHighlighter from '../utils/highlighter';
 import JsonHistoryPanel from './shared/JsonHistoryPanel';
 import JsonSearch from './search/JsonSearch';
 import { performSearch } from './search/SearchFix';
+import Button from './shared/Button';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -1241,34 +1242,28 @@ const JsonVastExplorer = React.memo(({
         </div>
         
         <div className="flex space-x-3 mt-4">
-          <button
+          <Button
             onClick={handleFormat}
-            className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
-              isDarkMode
-                ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white'
-                : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white'
-            }`}
+            variant="primary"
+            isDarkMode={isDarkMode}
             title="Format JSON (Ctrl+Shift+F)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" /> 
             </svg>
             Format
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleClear}
-            className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
-              isDarkMode
-                ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-600'
-                : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-            }`}
+            variant="secondary"
+            isDarkMode={isDarkMode}
             title="Clear Input (Ctrl+Shift+L)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
             Clear
-          </button>
+          </Button>
         </div>
       </div>
 

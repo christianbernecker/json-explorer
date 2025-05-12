@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { decodeTCFString, purposeNames, generateBitRepresentation } from '../utils/tcf-decoder';
 import { loadGVL, getVendors, GVLData, GVLVendor } from '../utils/gvl-loader';
 import { analyzeTCFWithGVL, EnhancedVendorResult } from '../utils/tcf-decoder-enhanced';
+import Button from './shared/Button';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
@@ -55,12 +56,16 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const textColor = isDarkMode ? 'text-gray-100' : 'text-gray-800';
   const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
   const sectionBgColor = isDarkMode ? 'bg-gray-700' : 'bg-gray-50';
+  // Diese Farben werden jetzt durch die Button-Komponente abgelöst
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const buttonColor = isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white';
   const errorColor = isDarkMode ? 'text-red-300' : 'text-red-600';
   const inputBgColor = isDarkMode ? 'bg-gray-700' : 'bg-gray-50';
   const inputBorderColor = isDarkMode ? 'border-gray-600' : 'border-gray-300';
   const highlightColor = isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-800';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const exportBtnColor = isDarkMode ? 'bg-green-700 hover:bg-green-800 text-white' : 'bg-green-500 hover:bg-green-600 text-white';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const secondaryBtnColor = isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300';
   const secondaryTextColor = isDarkMode ? 'text-gray-300' : 'text-gray-600';
   const bitTextColor = isDarkMode ? 'text-blue-300' : 'text-blue-600';
@@ -323,12 +328,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
               Last Updated: {new Date(gvlData.lastUpdated).toLocaleDateString()}
             </p>
           </div>
-          <button 
+          <Button 
             onClick={handleExportGVL} 
-            className={`px-3 py-1.5 rounded text-sm ${exportBtnColor}`}
+            variant="export"
+            isDarkMode={isDarkMode}
+            size="sm"
           >
             Export GVL as JSON
-          </button>
+          </Button>
         </div>
         
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
@@ -494,19 +501,23 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
               </div>
               
               <div className="self-end flex space-x-2">
-                <button 
+                <Button 
                   onClick={handleDecode}
-                  className={`px-4 py-2 ${buttonColor} rounded-md shadow-md hover:shadow-lg transition-all duration-200`}
+                  variant="primary"
+                  isDarkMode={isDarkMode}
+                  size="md"
                 >
                   Decode TCF String
-                </button>
+                </Button>
                 
-                <button 
+                <Button 
                   onClick={loadExample}
-                  className={`px-4 py-2 ${secondaryBtnColor} ${secondaryTextColor} rounded-md shadow-md hover:shadow-lg transition-all duration-200 text-sm`}
+                  variant="secondary"
+                  isDarkMode={isDarkMode}
+                  size="md"
                 >
                   Load Example
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -525,19 +536,23 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 <h2 className="text-xl font-semibold">Decoding Results</h2>
                 
                 <div className="flex space-x-2">
-                  <button 
+                  <Button 
                     onClick={handleExportJSON}
-                    className={`px-3 py-1 text-sm ${exportBtnColor} rounded shadow`}
+                    variant="export"
+                    isDarkMode={isDarkMode}
+                    size="sm"
                   >
                     Export JSON
-                  </button>
+                  </Button>
                   
-                  <button 
+                  <Button 
                     onClick={() => setShowBitRepresentation(!showBitRepresentation)}
-                    className={`px-3 py-1 text-sm ${secondaryBtnColor} ${secondaryTextColor} rounded shadow`}
+                    variant="secondary"
+                    isDarkMode={isDarkMode}
+                    size="sm"
                   >
                     {showBitRepresentation ? 'Hide Binary' : 'Show Binary'}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -563,12 +578,15 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                 Legitimate Interest: {vendor.hasLegitimateInterest ? 'Yes' : 'No'}
                               </div>
                             </div>
-                            <button
+                            <Button
                               onClick={() => handleViewVendorDetails(vendor)}
-                              className="mt-2 w-full text-center text-sm px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded"
+                              variant="primary"
+                              isDarkMode={isDarkMode}
+                              size="sm"
+                              fullWidth
                             >
                               View Details
-                            </button>
+                            </Button>
                           </>
                         ) : (
                           <p className="text-center py-4">Vendor {id} not found in results</p>
@@ -764,12 +782,15 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                 <span className={`inline-block w-4 h-4 rounded-full ${vendor.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
                               </td>
                               <td className="px-4 py-2 text-center">
-                                <button 
+                                <Button
                                   onClick={() => handleViewVendorDetails(vendor)}
-                                  className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                                  variant="primary"
+                                  isDarkMode={isDarkMode}
+                                  size="sm"
+                                  fullWidth
                                 >
-                                  Details
-                                </button>
+                                  View Details
+                                </Button>
                               </td>
                             </tr>
                           ))}
@@ -809,12 +830,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       {activeTab === 'vendor-details' && selectedVendor && (
         <div className="mb-6">
           <div className="flex items-center mb-4">
-            <button
+            <Button
               onClick={handleBackToResults}
-              className={`mr-3 px-3 py-1 ${secondaryBtnColor} ${secondaryTextColor} rounded-md shadow-sm`}
+              variant="secondary"
+              isDarkMode={isDarkMode}
+              size="sm"
             >
               ← Back
-            </button>
+            </Button>
             <h2 className="text-xl font-semibold">{selectedVendor.name} (ID: {selectedVendor.id})</h2>
           </div>
           
