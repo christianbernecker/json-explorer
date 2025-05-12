@@ -43,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
       name: 'TCF Decoder',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
         </svg>
       ),
       path: '/tcf-decoder',
@@ -86,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode }) => {
 
   return (
     <div className={`w-28 ${bgColor} flex flex-col items-center py-4 shadow-lg fixed left-0 top-0 bottom-0 z-50`}>
-      {/* Logo - Angepasst an den Header-Stil */}
+      {/* Logo */}
       <div className="mb-6 mt-2">
         <Link to="/" className="inline-block">
           <div className="h-12 w-12 relative">
