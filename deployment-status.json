@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 23:01:47 CEST 2025", "commit": "TCF-Decoder: Korrigierte Implementation mit optimierter IAB TCF Library-Integration"}
+{"deployment": "staging", "timestamp": "Mon May 12 23:10:32 CEST 2025", "commit": "TCF-Decoder: Linter-Fixes + Debug-Logging für Consent-Status"}

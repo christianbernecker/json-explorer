@@ -607,113 +607,107 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 <div className="grid grid-cols-1 gap-4">
                   {[136, 137, 44].map((id: number) => {
                     const vendorEntry = decodedData?.vendorResults?.find((v: any) => v.id === id);
-                    const hasVendorConsent = vendorEntry?.info?.hasConsent || false;
+                    const hasVendorConsent = vendorEntry?.hasConsent || false;
                     
                     // DEBUG LOG: Gib den Consent-Status für jeden Key Vendor aus
                     console.log(`DEBUG: Key Vendor ${id}, Consent: ${hasVendorConsent}, Entry:`, vendorEntry);
                     
-                    // Anzeige des Namens und des Consent-Status
-                    const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
+                    // KORREKTUR: Direkter Zugriff auf hasLegitimateInterest
+                    const hasVendorLI = vendorEntry?.hasLegitimateInterest || false;
+                    
+                    // Vendor spezifische Purposes aus der GVL (oder dem Vendor Entry, falls GVL nicht geladen)
+                    const gvlVendorInfo = decodedData?.gvl?.vendors?.[id];
+                    const vendorPurposes = gvlVendorInfo?.purposeIds || vendorEntry?.purposes || [];
+                    const vendorLegIntPurposes = gvlVendorInfo?.legIntPurposeIds || vendorEntry?.legIntPurposes || [];
+                    const vendorSpecialFeatures = gvlVendorInfo?.specialFeatureIds || [];
                     
                     // Für welche Purposes wurde Consent gegeben (global)?
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const globalPurposesWithConsent = decodedData?.purposeConsents || [];
+                    const globalPurposesWithConsent = decodedData?.purposesConsent || [];
                     
                     // Für welche Purposes wurde Legitimate Interest gegeben (global)?
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const globalPurposesWithLI = decodedData?.purposeLegitimateInterests || [];
+                    const globalPurposesWithLI = decodedData?.purposesLITransparency || [];
                     
                     // Special Features Opt-in (global)
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const globalSpecialFeaturesOptIn = decodedData?.specialFeatureOptins || [];
-                    
-                    // Vendor spezifische Purposes aus der GVL
-                    const vendorPurposes = decodedData?.gvl?.vendors?.[id]?.purposeIds || [];
-                    const vendorLegIntPurposes = decodedData?.gvl?.vendors?.[id]?.legIntPurposeIds || [];
-                    const vendorSpecialFeatures = decodedData?.gvl?.vendors?.[id]?.specialFeatureIds || [];
+                    const globalSpecialFeatures = decodedData?.specialFeatureOptIns || [];
                     
                     // Schnittmenge zwischen globalen Purposes und Vendor Purposes
                     const purposesWithConsent = vendorPurposes.filter((purposeId: number) => 
-                      // Prüfen, ob der Vendor den Purpose unterstützt UND der Nutzer global Consent gegeben hat
-                      decodedData?.purposeConsents?.includes(purposeId) &&
-                      // Prüfen, ob der Vendor Consent hat (nur dann darf er die Purposes nutzen)
-                      hasVendorConsent
+                      globalPurposesWithConsent.includes(purposeId) && // Globaler Consent für den Purpose
+                      hasVendorConsent // UND der Vendor hat generellen Consent
                     );
                     
                     const purposesWithLI = vendorLegIntPurposes.filter((purposeId: number) => 
-                      // Prüfen, ob der Vendor den LegInt Purpose unterstützt UND der Nutzer global LegInt gegeben hat
-                      decodedData?.purposeLegitimateInterests?.includes(purposeId) &&
-                      // Prüfen, ob der Vendor Legitimate Interest hat
-                      hasVendorConsent
+                      globalPurposesWithLI.includes(purposeId) && // Globaler LI für den Purpose
+                      hasVendorLI // UND der Vendor hat generelles LI
                     );
                     
-                    const specialFeaturesOptIn = vendorSpecialFeatures.filter((featureId: number) => 
-                      // Prüfen, ob der Vendor das Special Feature unterstützt UND der Nutzer global eingewilligt hat
-                      decodedData?.specialFeatureOptins?.includes(featureId)
+                    const specialFeaturesAllowed = vendorSpecialFeatures.filter((featureId: number) => 
+                      globalSpecialFeatures.includes(featureId)
                     );
+                    
+                    // Name des Vendors aus der GVL
+                    const vendorName = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
+                    
+                    // Hilfsfunktion zum sicheren Abrufen von Purpose-Namen
+                    const getPurposeName = (purposeId: number): string => {
+                      return purposeId in purposeNames 
+                        ? purposeNames[purposeId as keyof typeof purposeNames] 
+                        : `Purpose ${purposeId}`;
+                    };
                     
                     return (
-                      <div key={id} className={`p-4 rounded-lg border ${hasVendorConsent 
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-                        : 'border-red-500 bg-red-50 dark:bg-red-900/20'}`}>
-                        <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold">{name}</h4>
-                          <span className={`px-2 py-1 rounded text-sm ${hasVendorConsent 
-                            ? 'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200'
-                            : 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200'}`}>
-                            {hasVendorConsent ? 'Consent: Ja' : 'Consent: Nein'}
-                          </span>
+                      <div key={id} className="mb-6 p-4 border rounded-lg border-gray-300 dark:border-gray-700">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="text-lg font-semibold">{vendorName}</h3>
+                          <div className={`px-3 py-1 rounded-md text-sm ${hasVendorConsent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+                            Consent: {hasVendorConsent ? 'Ja' : 'Nein'}
+                          </div>
+                        </div>
+                        <p className="text-sm mb-2">Vendor ID: {id}</p>
+                        
+                        <div className="mt-3">
+                          <p className="font-medium">Purposes mit Consent:</p>
+                          {purposesWithConsent.length > 0 ? (
+                            <ul className="list-disc pl-5">
+                              {purposesWithConsent.map((purposeId: number) => (
+                                <li key={`consent-${purposeId}`} className="text-sm">
+                                  {getPurposeName(purposeId)}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm italic">Keine Purposes mit Consent</p>
+                          )}
                         </div>
                         
-                        <div className="text-sm">
-                          <div className="mb-2">
-                            <span className="font-medium">Vendor ID:</span> {id}
-                          </div>
-                          
-                          <div className="mb-2">
-                            <h5 className="font-medium mb-1">Purposes mit Consent:</h5>
-                            {purposesWithConsent.length > 0 ? (
-                              <ul className="list-disc list-inside">
-                                {purposesWithConsent.map((purposeId: number) => (
-                                  <li key={`consent-${purposeId}`}>
-                                    Purpose {purposeId}: {decodedData?.gvl?.purposes?.[purposeId]?.name || `Purpose ${purposeId}`}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="italic">Keine Purposes mit Consent</p>
-                            )}
-                          </div>
-                          
-                          <div className="mb-2">
-                            <h5 className="font-medium mb-1">Purposes mit Legitimate Interest:</h5>
-                            {purposesWithLI.length > 0 ? (
-                              <ul className="list-disc list-inside">
-                                {purposesWithLI.map((purposeId: number) => (
-                                  <li key={`li-${purposeId}`}>
-                                    Purpose {purposeId}: {decodedData?.gvl?.purposes?.[purposeId]?.name || `Purpose ${purposeId}`}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="italic">Keine Purposes mit Legitimate Interest</p>
-                            )}
-                          </div>
-                          
-                          <div className="mb-2">
-                            <h5 className="font-medium mb-1">Special Features (Opt-in):</h5>
-                            {specialFeaturesOptIn.length > 0 ? (
-                              <ul className="list-disc list-inside">
-                                {specialFeaturesOptIn.map((featureId: number) => (
-                                  <li key={`feature-${featureId}`}>
-                                    Feature {featureId}: {decodedData?.gvl?.specialFeatures?.[featureId]?.name || `Feature ${featureId}`}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="italic">Keine Special Features mit Opt-in</p>
-                            )}
-                          </div>
+                        <div className="mt-3">
+                          <p className="font-medium">Purposes mit Legitimate Interest:</p>
+                          {purposesWithLI.length > 0 ? (
+                            <ul className="list-disc pl-5">
+                              {purposesWithLI.map((purposeId: number) => (
+                                <li key={`li-${purposeId}`} className="text-sm">
+                                  {getPurposeName(purposeId)}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm italic">Keine Purposes mit Legitimate Interest</p>
+                          )}
+                        </div>
+                        
+                        <div className="mt-3">
+                          <p className="font-medium">Special Features (Opt-in):</p>
+                          {specialFeaturesAllowed.length > 0 ? (
+                            <ul className="list-disc pl-5">
+                              {specialFeaturesAllowed.map((featureId: number) => (
+                                <li key={`feature-${featureId}`} className="text-sm">
+                                  Special Feature {featureId} {/* Ggf. Namen aus GVL laden */}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm italic">Keine Special Features mit Opt-in</p>
+                          )}
                         </div>
                       </div>
                     );
@@ -864,18 +858,15 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {/* Stelle sicher, dass filteredVendors verwendet wird, um durch die aktuell gefilterte Liste zu iterieren */}
-                        {/* Und dass die Consent-Informationen aus decodedData.coreData gelesen werden */}
                         {filteredVendors.map((vendor) => {
                           const vendorId = vendor.id;
                           const hasVendorConsent = decodedData.coreData?.vendorConsent?.includes(vendorId) || false;
                           const hasVendorLI = decodedData.coreData?.vendorLI?.includes(vendorId) || false;
                           
-                          // Finde die spezifischen Vendor-Ergebnisse für Purposes
                           const vendorSpecificInfo = decodedData.vendorResults?.find((v:any) => v.id === vendorId);
-                          const consentPurposes = vendorSpecificInfo?.info?.purposeConsents || [];
+                          const consentPurposes = vendorSpecificInfo?.purposes || [];
                           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                          const liPurposes = vendorSpecificInfo?.info?.legitimateInterests || [];
+                          const liPurposes = vendorSpecificInfo?.legIntPurposes || [];
                           
                           return (
                             <tr key={vendorId} className={tableRowBg}>
@@ -950,155 +941,68 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             >
               ← Back
             </Button>
-            <h2 className="text-xl font-semibold">{selectedVendor.name} (ID: {selectedVendor.id})</h2>
+            <h2 className="text-xl font-semibold ml-3">{selectedVendor.name} (ID: {selectedVendor.id})</h2>
           </div>
           
-          <div className="flex gap-4 mb-4">
-            <div className={`inline-block px-3 py-1 rounded-full ${selectedVendor.hasConsent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+          {/* Vendor Consent and LI Status Badges */}
+          <div className="flex flex-wrap gap-3 mb-4">
+            <span className={`px-3 py-1 rounded-full text-sm ${selectedVendor.hasConsent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
               Consent: {selectedVendor.hasConsent ? 'Yes' : 'No'}
-            </div>
-            
-            <div className={`inline-block px-3 py-1 rounded-full ${selectedVendor.hasLegitimateInterest ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+            </span>
+            <span className={`px-3 py-1 rounded-full text-sm ${selectedVendor.hasLegitimateInterest ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
               Legitimate Interest: {selectedVendor.hasLegitimateInterest ? 'Yes' : 'No'}
-            </div>
+            </span>
           </div>
           
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <p><strong>ID:</strong> {selectedVendor.id}</p>
-              <p><strong>Name:</strong> {selectedVendor.name}</p>
-              <p><strong>Policy URL:</strong> {selectedVendor.policyUrl}</p>
-              <p><strong>Consent:</strong> {selectedVendor.hasConsent ? 'Yes' : 'No'}</p>
-              <p><strong>Legitimate Interest:</strong> {selectedVendor.hasLegitimateInterest ? 'Yes' : 'No'}</p>
-              <p><strong>Purposes:</strong> {selectedVendor.purposes.map((p: any) => p.name).join(', ')}</p>
-              <p><strong>Special Features:</strong> {selectedVendor.specialFeatures.map((f: any) => f.name).join(', ')}</p>
+          {/* GVL Information (if available) */}
+          {gvlData && gvlData.vendors && gvlData.vendors[selectedVendor.id] && (
+            <div className="mb-6 p-4 border rounded-lg border-gray-300 dark:border-gray-700">
+              <h3 className="text-lg font-semibold mb-3">GVL Information</h3>
+              <p className="text-sm"><strong>Name:</strong> {gvlData.vendors[selectedVendor.id].name}</p>
+              <p className="text-sm"><strong>Policy URL:</strong> 
+                <a href={gvlData.vendors[selectedVendor.id].policyUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                  {gvlData.vendors[selectedVendor.id].policyUrl}
+                </a>
+              </p>
+              {/* Add more GVL details as needed */}
             </div>
-          </div>
+          )}
           
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Purposes</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead>
-                  <tr className={tableHeaderBg}>
-                    <th className="px-4 py-2 text-left">ID</th>
-                    <th className="px-4 py-2 text-left">Name</th>
-                    <th className="px-4 py-2 text-center">Consent</th>
-                    <th className="px-4 py-2 text-center">LegInt</th>
-                    <th className="px-4 py-2 text-center">Allowed</th>
-                    <th className="px-4 py-2 text-center">LegInt Allowed</th>
-                    <th className="px-4 py-2 text-center">Flexible</th>
-                    <th className="px-4 py-2 text-left">Restriction</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {selectedVendor.purposes.map((purpose: any) => (
-                    <tr key={purpose.id} className={tableRowBg}>
-                      <td className="px-4 py-2">{purpose.id}</td>
-                      <td className="px-4 py-2">{purpose.name}</td>
-                      <td className="px-4 py-2 text-center">
-                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.isAllowed ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.isLegitimateInterestAllowed ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                      </td>
-                      <td className="px-4 py-2 text-center">
-                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.isFlexiblePurpose ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                      </td>
-                      <td className="px-4 py-2">{purpose.restriction || '-'}</td>
-                    </tr>
+          {/* Decoded Purposes and Special Features */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-semibold mb-2">Purposes with Consent</h4>
+              {selectedVendor.purposes?.length > 0 ? (
+                <ul className="list-disc pl-5 text-sm">
+                  {selectedVendor.purposes.map((pId: number) => (
+                    <li key={`vd-consent-${pId}`}>{`${pId}. ${purposeNames[pId] || `Purpose ${pId}`}`}</li>
                   ))}
-                </tbody>
-              </table>
+                </ul>
+              ) : <p className="text-sm italic">None</p>}
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Purposes with Legitimate Interest</h4>
+              {selectedVendor.legIntPurposes?.length > 0 ? (
+                <ul className="list-disc pl-5 text-sm">
+                  {selectedVendor.legIntPurposes.map((pId: number) => (
+                    <li key={`vd-li-${pId}`}>{`${pId}. ${purposeNames[pId] || `Purpose ${pId}`}`}</li>
+                  ))}
+                </ul>
+              ) : <p className="text-sm italic">None</p>}
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Special Features with Opt-in</h4>
+              {selectedVendor.specialFeatures?.length > 0 ? (
+                <ul className="list-disc pl-5 text-sm">
+                  {selectedVendor.specialFeatures.map((sfId: number) => (
+                    <li key={`vd-sf-${sfId}`}>{`Special Feature ${sfId}`}</li> // Ggf Namen aus GVL
+                  ))}
+                </ul>
+              ) : <p className="text-sm italic">None</p>}
             </div>
           </div>
           
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Special Features</h3>
-            {selectedVendor.specialFeatures.length === 0 ? (
-              <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded">
-                No special features
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead>
-                    <tr className={tableHeaderBg}>
-                      <th className="px-4 py-2 text-left">ID</th>
-                      <th className="px-4 py-2 text-left">Name</th>
-                      <th className="px-4 py-2 text-center">Has Consent</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {selectedVendor.specialFeatures.map((f: any) => (
-                      <tr key={f.id} className={tableRowBg}>
-                        <td className="px-4 py-2">{f.id}</td>
-                        <td className="px-4 py-2">{f.name}</td>
-                        <td className="px-4 py-2 text-center">
-                          <span className={`inline-block w-4 h-4 rounded-full ${f.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-          
-          {selectedVendor.specialPurposes && selectedVendor.specialPurposes.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-3">Special Purposes</h3>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead>
-                    <tr className={tableHeaderBg}>
-                      <th className="px-4 py-2 text-left">ID</th>
-                      <th className="px-4 py-2 text-left">Name</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {selectedVendor.specialPurposes.map((purpose: any) => (
-                      <tr key={purpose.id} className={tableRowBg}>
-                        <td className="px-4 py-2">{purpose.id}</td>
-                        <td className="px-4 py-2">{purpose.name}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-          
-          {selectedVendor.features && selectedVendor.features.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-3">Features</h3>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead>
-                    <tr className={tableHeaderBg}>
-                      <th className="px-4 py-2 text-left">ID</th>
-                      <th className="px-4 py-2 text-left">Name</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {selectedVendor.features.map((feature: any) => (
-                      <tr key={feature.id} className={tableRowBg}>
-                        <td className="px-4 py-2">{feature.id}</td>
-                        <td className="px-4 py-2">{feature.name}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+          {/* Add more details from `selectedVendor` as needed */}
         </div>
       )}
     </div>
