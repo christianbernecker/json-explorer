@@ -253,6 +253,9 @@ export function decodeTCF2_0(bitString: number[], segments: string[]): any {
   console.log(`Created timestamp: ${created} => ${new Date(created * 100).toISOString()}`);
   console.log(`LastUpdated timestamp: ${lastUpdated} => ${new Date(lastUpdated * 100).toISOString()}`);
   
+  // Debug logging für Offsets
+  console.log(`Offset nach PolicyVersion: ${offset}`);
+  
   // Purposes and permissions
   const isServiceSpecific = bitString[offset]; offset += 1;
   const useNonStandardStacks = bitString[offset]; offset += 1;
@@ -260,6 +263,10 @@ export function decodeTCF2_0(bitString: number[], segments: string[]): any {
   const purposesConsent = parseBitField(bitString, offset, 24); offset += 24;
   const purposesLITransparency = parseBitField(bitString, offset, 24); offset += 24;
   
+  // Korrigierter Offset für Vendor Consent Section
+  offset = 200;
+  console.log(`Korrigierter Offset für Vendor Consent Section: ${offset}`);
+
   // Vendor section
   console.log("Parsing Vendor Consent Section...");
   const vendorConsentBits = parseVendorSection(bitString, offset);

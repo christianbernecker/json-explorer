@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 16:35:55 CEST 2025", "commit": "Fix: Korrektur der TCF-Decoder Logik für Timestamps und Vendor-Consent"}
+{"deployment": "staging", "timestamp": "Mon May 12 16:48:18 CEST 2025", "commit": "Fix: TCF-Decoder Verbesserungen für korrekte Zeitstempel und Vendor-Consent Erkennung"}
