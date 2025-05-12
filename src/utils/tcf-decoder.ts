@@ -590,18 +590,36 @@ export function decodeTCFStringIAB(tcString: string) {
     // Überprüfe spezifische Vendor-Consents für Debugging
     const testVendorIds = [136, 137, 44];
     for (const id of testVendorIds) {
-      // Da 'isSet' eine private Methode ist, müssen wir die öffentliche API von vendorConsents nutzen
-      // Die has() Methode scheint in neueren Versionen verfügbar zu sein
-      const hasVendorConsent = decodedString.vendorConsents ? 
-                           decodedString.vendorConsents.has?.(id) ?? false : false;
-      const hasVendorLI = decodedString.vendorLegitimateInterests ? 
-                      decodedString.vendorLegitimateInterests.has?.(id) ?? false : false;
+      // Erst prüfen, ob der Vendor im vendorConsents enthalten ist
+      const hasVendorConsent = decodedString.vendorConsents?.has?.(id) || false;
+      
+      // Prüfen, ob der Vendor Legitimate Interest hat
+      const hasVendorLI = decodedString.vendorLegitimateInterests?.has?.(id) || false;
+      
+      // Dann prüfen, welche Purposes global Consent haben
+      const purposesConsentList = Array.from(decodedString.purposeConsents || [])
+        .map(id => Number(id))
+        .sort((a, b) => a - b);
+      
+      // Ebenso prüfen, welche Purposes legitimateInterest haben
+      const purposesLIList = Array.from(decodedString.purposeLegitimateInterests || [])
+        .map(id => Number(id))
+        .sort((a, b) => a - b);
       
       console.log(`Vendor ${id} consent check:`, {
-        vendorConsents: hasVendorConsent,
-        vendorLegitimateInterests: hasVendorLI
+        hasVendorConsent,
+        hasVendorLI,
+        purposesWithConsent: purposesConsentList,
+        purposesWithLI: purposesLIList
       });
     }
+    
+    // Für Special Features prüfen (z.B. precise geolocation)
+    const specialFeatures = Array.from(decodedString.specialFeatureOptins || [])
+      .map(id => Number(id))
+      .sort((a, b) => a - b);
+    
+    console.log('Special Features Opt-ins:', specialFeatures);
     
     // Zusätzliche Informationen für Datum/Zeitstempel
     if (decodedString.created) {
