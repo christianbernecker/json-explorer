@@ -576,9 +576,48 @@ export function handleExportJSON(decodedData: any): any {
 
 /**
  * Dekodiert einen TCF-String mit der offiziellen IAB-Bibliothek
+ * Behandelt die Decodierung und fügt zusätzliche Informationen
+ * für eine einfachere Verwendung in der UI hinzu
  */
 export function decodeTCFStringIAB(tcString: string) {
-  return TCString.decode(tcString);
+  try {
+    // Decodieren des TCF-Strings mit der offiziellen IAB-Library
+    const decodedString = TCString.decode(tcString);
+    
+    // Debug-Logging für Debugging-Zwecke
+    console.log('IAB TCString decoded object:', decodedString);
+    
+    // Überprüfe spezifische Vendor-Consents für Debugging
+    const testVendorIds = [136, 137, 44];
+    for (const id of testVendorIds) {
+      // Da 'isSet' eine private Methode ist, müssen wir die öffentliche API von vendorConsents nutzen
+      // Die has() Methode scheint in neueren Versionen verfügbar zu sein
+      const hasVendorConsent = decodedString.vendorConsents ? 
+                           decodedString.vendorConsents.has?.(id) ?? false : false;
+      const hasVendorLI = decodedString.vendorLegitimateInterests ? 
+                      decodedString.vendorLegitimateInterests.has?.(id) ?? false : false;
+      
+      console.log(`Vendor ${id} consent check:`, {
+        vendorConsents: hasVendorConsent,
+        vendorLegitimateInterests: hasVendorLI
+      });
+    }
+    
+    // Zusätzliche Informationen für Datum/Zeitstempel
+    if (decodedString.created) {
+      console.log('Created timestamp:', decodedString.created, 
+                 'as date:', new Date(decodedString.created).toISOString());
+    }
+    if (decodedString.lastUpdated) {
+      console.log('LastUpdated timestamp:', decodedString.lastUpdated, 
+                 'as date:', new Date(decodedString.lastUpdated).toISOString());
+    }
+    
+    return decodedString;
+  } catch (error) {
+    console.error('Error in TCString decoding:', error);
+    throw new Error(`Failed to decode TCF string: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 // Die alte Bit-Parsing-Logik bleibt vorerst auskommentiert erhalten

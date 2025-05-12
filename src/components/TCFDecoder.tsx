@@ -664,9 +664,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[136, 137, 44].map((id: number) => {
-                    // WICHTIG: Verwende isSet() statt has() - das ist die korrekte API der IAB-Library
-                    const hasConsent = decodedData?.vendorConsents?.isSet?.(id) || false;
-                    const hasLegInt = decodedData?.vendorLegitimateInterests?.isSet?.(id) || false;
+                    // Korrigierte Implementierung: has() ist die korrekte öffentliche Methode
+                    const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
+                    const hasLegInt = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
                     const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
                     return (
                       <div key={id} className={`p-3 rounded-lg ${sectionBgColor}`}>

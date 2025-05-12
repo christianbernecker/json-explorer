@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 17:54:52 CEST 2025", "commit": "Verbesserte TCF Decoder Vendor-Anzeige: Key Vendors prominent, alle anderen Vendoren mit Consent zusätzlich anzeigen"}
+{"deployment": "staging", "timestamp": "Mon May 12 18:10:06 CEST 2025", "commit": "Fix TCF Decoder: Korrekte Methode für Vendor-Consent-Prüfung (isSet statt has) und Timestamp-Korrektur"}
