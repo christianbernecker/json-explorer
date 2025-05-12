@@ -1,38 +1,47 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import TCFDecoder from './TCFDecoder';
-import ApplicationHeader from './ApplicationHeader';
+import { Helmet } from 'react-helmet-async';
 
+// URL-Parameter für direktes Dekodieren
 interface TCFDecoderPageProps {
+  location?: {
+    search?: string;
+  };
   isDarkMode: boolean;
   toggleDarkMode: () => void;
 }
 
-const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ isDarkMode, toggleDarkMode }) => {
+const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, toggleDarkMode }) => {
+  // Wenn eine String-URL übergeben wurde, automatisch dekodieren
+  useEffect(() => {
+    if (location?.search) {
+      const params = new URLSearchParams(location.search);
+      const tcString = params.get('tcString');
+      
+      if (tcString) {
+        // Hier könnte man den String automatisch in den Decoder laden
+        console.log('Auto-decode:', tcString);
+        // TODO: Implement auto-decode
+      }
+    }
+  }, [location]);
+
   return (
-    <div className="flex flex-col">
-      <ApplicationHeader 
-        title="TCF Decoder"
-        subtitle="Dekodieren und Analysieren von TCF v2.0 und v2.2 Consent Strings"
-        isDarkMode={isDarkMode}
-        toggleDarkMode={toggleDarkMode}
-      />
+    <div className="mx-auto max-w-full px-4 py-8">
+      <Helmet>
+        <title>TCF Consent String Decoder & Analyzer | AdTech Toolbox</title>
+        <meta 
+          name="description" 
+          content="Decode and analyze IAB TCF consent strings (v2.0 and v2.2). View vendor consents, purposes, legitimate interests, and special features with our comprehensive TCF decoder tool."
+        />
+      </Helmet>
       
-      <div className="mt-6">
-        <TCFDecoder isDarkMode={isDarkMode} />
-      </div>
+      <h1 className="text-3xl font-bold mb-2 dark:text-white">TCF Consent String Decoder</h1>
+      <p className="mb-6 text-gray-600 dark:text-gray-300">
+        Dekodieren und Analysieren von IAB TCF Consent Strings (v2.0 und v2.2). Zeigt Vendor-Consents, Zwecke, berechtigte Interessen und mehr.
+      </p>
       
-      <div className={`mt-8 mb-4 p-4 rounded-md ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>
-        <h2 className="text-lg font-semibold mb-2">Über das TCF Decoder Tool</h2>
-        <p className="mb-3 text-sm">
-          Dieses Tool analysiert und dekodiert Transparency &amp; Consent Framework (TCF) Strings gemäß der IAB-Europa-Spezifikation. 
-          Es unterstützt sowohl TCF v2.0 als auch TCF v2.2 Strings und gibt detaillierte Informationen über Vendor-Zustimmungen, 
-          berechtigte Interessen, Verarbeitungszwecke und Publisher-Einschränkungen.
-        </p>
-        <p className="text-sm">
-          <strong>Datenschutzhinweis:</strong> Die gesamte Verarbeitung erfolgt lokal in Ihrem Browser. Es werden keine TCF-Strings 
-          an externe Server gesendet oder gespeichert.
-        </p>
-      </div>
+      <TCFDecoder isDarkMode={isDarkMode} />
     </div>
   );
 };

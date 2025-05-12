@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 10:32:23 CEST 2025", "commit": "TCF Decoder implementiert - Neues Tool zur Analyse von TCF v2.0 und v2.2 Consent Strings"}
+{"deployment": "staging", "timestamp": "Mon May 12 10:42:59 CEST 2025", "commit": "Verbesserte TCF-Decoder Implementierung mit Bit-Darstellung und korrigierter Vendor-spezifischer Verarbeitung"}
