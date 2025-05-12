@@ -28,7 +28,7 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
   }, [location]);
 
   return (
-    <div className="mx-auto max-w-full px-4 py-8">
+    <div className="w-full h-full flex flex-col p-0">
       <Helmet>
         <title>TCF Consent String Decoder & Analyzer | AdTech Toolbox</title>
         <meta 
@@ -43,12 +43,15 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         activeTab="tcf-decoder"
       />
       
-      <h1 className="text-3xl font-bold mb-2 dark:text-white">TCF Consent String Decoder</h1>
-      <p className="mb-6 text-gray-600 dark:text-gray-300">
-        Decode and analyze IAB TCF Consent Strings (v2.0 and v2.2). Shows vendor consents, purposes, legitimate interests and more.
-      </p>
-      
-      <TCFDecoder isDarkMode={isDarkMode} />
+      {/* Container mit konsistenten Abständen zum Header und Rand */}
+      <div className="ml-28 px-10 py-6 mt-24">
+        <h1 className="text-3xl font-bold mb-2 dark:text-white">TCF Consent String Decoder</h1>
+        <p className="mb-6 text-gray-600 dark:text-gray-300">
+          Decode and analyze IAB TCF Consent Strings (v2.0 and v2.2). Shows vendor consents, purposes, legitimate interests and more.
+        </p>
+        
+        <TCFDecoder isDarkMode={isDarkMode} />
+      </div>
     </div>
   );
 };
