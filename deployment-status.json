@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 16:14:01 CEST 2025", "commit": "Fix: Aktualisierten Global Vendor List von IAB laden"}
+{"deployment": "staging", "timestamp": "Mon May 12 16:35:55 CEST 2025", "commit": "Fix: Korrektur der TCF-Decoder Logik für Timestamps und Vendor-Consent"}

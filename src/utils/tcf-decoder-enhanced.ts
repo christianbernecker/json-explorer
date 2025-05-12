@@ -84,6 +84,14 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
   console.log("TCF Decode Result - Vendor Consent:", result.coreData.vendorConsent);
   console.log("TCF Decode Result - Vendor LI:", result.coreData.vendorLI);
   
+  // Special handling for our test vendors
+  const testVendors = [136, 137, 44];
+  for (const vendorId of testVendors) {
+    console.log(`Checking consent for Vendor ${vendorId}:`);
+    console.log(`- Direct consent from TCF string: ${result.coreData.vendorConsent.includes(vendorId)}`);
+    console.log(`- Legitimate Interest from TCF string: ${result.coreData.vendorLI.includes(vendorId)}`);
+  }
+  
   // Vendor-specific evaluation with GVL
   const vendorResults: EnhancedVendorResult[] = [];
   
@@ -94,6 +102,8 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
     ...result.coreData.vendorLI
   ]);
   const vendorIds = Array.from(vendorIdsSet);
+  
+  console.log("Total vendors to evaluate:", vendorIds.length);
   
   // Purposes, Special Features, etc. from GVL
   const purposes: { [id: string]: PurposeInfo } = gvl.purposes || {};
@@ -106,7 +116,10 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
     const gvlVendor = gvl.vendors[vendorId.toString()];
     
     // Skip vendor if not in GVL
-    if (!gvlVendor) continue;
+    if (!gvlVendor) {
+      console.log(`Vendor ${vendorId} not found in GVL, skipping`);
+      continue;
+    }
     
     // IMPORTANT: Basic vendor consent status is DIRECTLY derived from the TCF string
     // Check if the vendor ID is present in the vendorConsent array from the TCF string

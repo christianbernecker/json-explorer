@@ -634,11 +634,11 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Created</td>
-                        <td className="px-4 py-2">{new Date(decodedData.created * 1000).toLocaleString()}</td>
+                        <td className="px-4 py-2">{new Date(decodedData.created * 100).toLocaleString()}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Last Updated</td>
-                        <td className="px-4 py-2">{new Date(decodedData.lastUpdated * 1000).toLocaleString()}</td>
+                        <td className="px-4 py-2">{new Date(decodedData.lastUpdated * 100).toLocaleString()}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">CMP ID</td>

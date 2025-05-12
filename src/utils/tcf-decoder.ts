@@ -6,24 +6,39 @@ export const DEFAULT_VENDORS = [136, 137, 44];
  * Converts a Base64-encoded TCF string to bits
  */
 export function base64ToBits(base64String: string): number[] {
+  console.log("Decoding Base64 string:", base64String);
+  
   // Base64-URL decoding to binary data
-  const decodedString = atob(
-    base64String
-      .replace(/-/g, '+')
-      .replace(/_/g, '/')
-      .padEnd(base64String.length + (4 - (base64String.length % 4)) % 4, '=')
-  );
+  const normalizedBase64 = base64String
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .padEnd(base64String.length + (4 - (base64String.length % 4)) % 4, '=');
   
-  // Convert binary data to bit array
-  const bits: number[] = [];
-  for (let i = 0; i < decodedString.length; i++) {
-    const byte = decodedString.charCodeAt(i);
-    for (let j = 7; j >= 0; j--) {
-      bits.push((byte >> j) & 1);
+  console.log("Normalized Base64 string:", normalizedBase64);
+  
+  try {
+    const decodedString = atob(normalizedBase64);
+    console.log("Decoded binary length:", decodedString.length);
+    
+    // Convert binary data to bit array
+    const bits: number[] = [];
+    for (let i = 0; i < decodedString.length; i++) {
+      const byte = decodedString.charCodeAt(i);
+      for (let j = 7; j >= 0; j--) {
+        bits.push((byte >> j) & 1);
+      }
     }
+    
+    console.log(`Converted to ${bits.length} bits`);
+    
+    // Debug: show first 32 bits for validation
+    console.log("First 32 bits:", bits.slice(0, 32).join(''));
+    
+    return bits;
+  } catch (e) {
+    console.error("Error decoding Base64 string:", e);
+    throw new Error(`Failed to decode TCF string: ${e}`);
   }
-  
-  return bits;
 }
 
 /**
@@ -78,10 +93,15 @@ export function parseVendorSection(bitString: number[], startOffset: number): { 
   
   let vendors: number[] = [];
   
+  // Debug logging
+  console.log(`Vendor Section - MaxVendorId: ${maxVendorId}, IsRangeEncoding: ${isRangeEncoding}`);
+  
   if (isRangeEncoding) {
     // Range encoding
     const numEntries = bitsToInt(bitString.slice(offset, offset + 12));
     offset += 12;
+    
+    console.log(`Range encoding with ${numEntries} entries`);
     
     for (let i = 0; i < numEntries; i++) {
       const isRange = bitString[offset];
@@ -93,23 +113,38 @@ export function parseVendorSection(bitString: number[], startOffset: number): { 
         const endVendorId = bitsToInt(bitString.slice(offset, offset + 16));
         offset += 16;
         
+        console.log(`Range ${i+1}/${numEntries}: VendorIds ${startVendorId}-${endVendorId}`);
+        
         for (let j = startVendorId; j <= endVendorId; j++) {
           vendors.push(j);
         }
       } else {
         const vendorId = bitsToInt(bitString.slice(offset, offset + 16));
         offset += 16;
+        console.log(`Single entry ${i+1}/${numEntries}: VendorId ${vendorId}`);
         vendors.push(vendorId);
       }
     }
   } else {
     // Bitfield encoding
+    console.log(`Bitfield encoding with ${maxVendorId} vendors`);
     for (let i = 1; i <= maxVendorId; i++) {
       if (bitString[offset]) {
         vendors.push(i);
       }
       offset += 1;
     }
+  }
+  
+  // Debug: Check for key vendors
+  if (vendors.includes(136)) {
+    console.log('Vendor 136 found in vendor list');
+  }
+  if (vendors.includes(137)) {
+    console.log('Vendor 137 found in vendor list');
+  }
+  if (vendors.includes(44)) {
+    console.log('Vendor 44 found in vendor list');
   }
   
   return {
@@ -214,6 +249,10 @@ export function decodeTCF2_0(bitString: number[], segments: string[]): any {
   const vendorListVersion = bitsToInt(bitString.slice(offset, offset + 12)); offset += 12;
   const policyVersion = bitsToInt(bitString.slice(offset, offset + 6)); offset += 6;
   
+  // Debug logging for dates
+  console.log(`Created timestamp: ${created} => ${new Date(created * 100).toISOString()}`);
+  console.log(`LastUpdated timestamp: ${lastUpdated} => ${new Date(lastUpdated * 100).toISOString()}`);
+  
   // Purposes and permissions
   const isServiceSpecific = bitString[offset]; offset += 1;
   const useNonStandardStacks = bitString[offset]; offset += 1;
@@ -222,10 +261,12 @@ export function decodeTCF2_0(bitString: number[], segments: string[]): any {
   const purposesLITransparency = parseBitField(bitString, offset, 24); offset += 24;
   
   // Vendor section
+  console.log("Parsing Vendor Consent Section...");
   const vendorConsentBits = parseVendorSection(bitString, offset);
   offset = vendorConsentBits.newOffset;
   
   // Vendor Legitimate Interest section
+  console.log("Parsing Vendor Legitimate Interest Section...");
   const vendorLIBits = parseVendorSection(bitString, offset);
   offset = vendorLIBits.newOffset;
   
@@ -273,6 +314,10 @@ export function decodeTCF2_2(bitString: number[], segments: string[]): any {
   const vendorListVersion = bitsToInt(bitString.slice(offset, offset + 12)); offset += 12;
   const policyVersion = bitsToInt(bitString.slice(offset, offset + 6)); offset += 6;
   
+  // Debug logging for dates
+  console.log(`Created timestamp (2.2): ${created} => ${new Date(created * 100).toISOString()}`);
+  console.log(`LastUpdated timestamp (2.2): ${lastUpdated} => ${new Date(lastUpdated * 100).toISOString()}`);
+  
   // New in 2.2: Fields for Global Consent
   const isServiceSpecific = bitString[offset]; offset += 1;
   const useNonStandardStacks = bitString[offset]; offset += 1;
@@ -285,10 +330,12 @@ export function decodeTCF2_2(bitString: number[], segments: string[]): any {
   const publisherCC = bitStringToString(bitString.slice(offset, offset + 12)); offset += 12;
   
   // Vendor section - identical to 2.0
+  console.log("Parsing Vendor Consent Section (2.2)...");
   const vendorConsentBits = parseVendorSection(bitString, offset);
   offset = vendorConsentBits.newOffset;
   
   // Vendor Legitimate Interest section - identical to 2.0
+  console.log("Parsing Vendor Legitimate Interest Section (2.2)...");
   const vendorLIBits = parseVendorSection(bitString, offset);
   offset = vendorLIBits.newOffset;
   
@@ -420,6 +467,8 @@ export function decodeTCFString(tcfString: string): {
     }[];
   }[];
 } {
+  console.log("Decoding TCF string:", tcfString);
+
   // Split the string into segments
   const segments = tcfString.split('.');
   
@@ -431,6 +480,8 @@ export function decodeTCFString(tcfString: string): {
   const versionNumber = bitsToInt(bitString.slice(0, 6));
   let decodedCore;
   let versionString = '';
+  
+  console.log(`TCF Version Number: ${versionNumber}`);
   
   if (versionNumber === 2) {
     // TCF v2.0 decoding
