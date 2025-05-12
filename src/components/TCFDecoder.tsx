@@ -186,18 +186,54 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     // Erstelle UI-freundliche Vendor-Ergebnisse, falls sie noch nicht existieren
     if (!decodedData.vendorResults || decodedData.vendorResults.length === 0) {
       // Default Vendors anzeigen (136, 137, 44) und zusätzlichen Vendor
-      const vendorIds = [136, 137, 44];
-      if (additionalVendorId && !vendorIds.includes(additionalVendorId)) {
-        vendorIds.push(additionalVendorId);
+      const keyVendorIds = [136, 137, 44];
+      if (additionalVendorId && !keyVendorIds.includes(additionalVendorId)) {
+        keyVendorIds.push(additionalVendorId);
+      }
+      
+      // Sammle alle Vendoren mit Consent oder LegitimateInterest
+      const vendorIds = new Set(keyVendorIds);
+      
+      // Durchlaufe alle möglichen Vendor-IDs aus dem TCString-Objekt
+      if (decodedData?.vendorConsents || decodedData?.vendorLegitimateInterests) {
+        // Bei GVL-Daten können wir tatsächlich vorhandene Vendor-IDs überprüfen
+        if (decodedData?.gvl?.vendors) {
+          Object.keys(decodedData.gvl.vendors).forEach(id => {
+            const numId = parseInt(id, 10);
+            if (!isNaN(numId) && !vendorIds.has(numId)) {
+              // Prüfe, ob dieser Vendor Consent oder LegitimateInterest hat
+              const hasConsent = decodedData?.vendorConsents?.has?.(numId) || false;
+              const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.has?.(numId) || false;
+              
+              if (hasConsent || hasLegitimateInterest) {
+                vendorIds.add(numId);
+              }
+            }
+          });
+        } else {
+          // Wenn keine GVL-Daten, dann prüfen wir die Bitfelder direkt
+          // Maximal 1000 Vendor-IDs überprüfen (um Endlosschleife zu vermeiden)
+          for (let id = 1; id <= 1000; id++) {
+            if (!vendorIds.has(id)) {
+              const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
+              const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
+              
+              if (hasConsent || hasLegitimateInterest) {
+                vendorIds.add(id);
+              }
+            }
+          }
+        }
       }
       
       // Generiere Vendor-Ergebnisse mit den Daten der IAB-Library
-      const results = vendorIds.map(id => {
+      const results = Array.from(vendorIds).map(id => {
         // Die IAB-Library verwendet das Vector-Objekt - hier prüfen wir mit der korrekten Methode
         const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
         const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
         const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
         const policyUrl = decodedData?.gvl?.vendors?.[id]?.policyUrl || '#';
+        const isKeyVendor = keyVendorIds.includes(id);
         
         return {
           id,
@@ -205,6 +241,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
           policyUrl,
           hasConsent,
           hasLegitimateInterest,
+          isKeyVendor, // Flag für Key Vendors
           // Dummy-Structures für die UI-Anzeige
           purposes: [],
           specialFeatures: []
@@ -814,44 +851,118 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       </div>
                     </div>
                     
-                    {/* Vendor list */}
+                    {/* Vendor list gruppiert nach Key Vendors und anderen Vendors */}
                     <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead>
-                          <tr className={tableHeaderBg}>
-                            <th className="px-4 py-2 text-left">ID</th>
-                            <th className="px-4 py-2 text-left">Name</th>
-                            <th className="px-4 py-2 text-center">Consent</th>
-                            <th className="px-4 py-2 text-center">Legitimate Interest</th>
-                            <th className="px-4 py-2 text-center">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                          {getFilteredVendorResults().map((v: any) => (
-                            <tr key={v.id} className={tableRowBg}>
-                              <td className="px-4 py-2">{v.id}</td>
-                              <td className="px-4 py-2">{v.name}</td>
-                              <td className="px-4 py-2 text-center">
-                                <span className={`inline-block w-4 h-4 rounded-full ${v.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                              </td>
-                              <td className="px-4 py-2 text-center">
-                                <span className={`inline-block w-4 h-4 rounded-full ${v.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                              </td>
-                              <td className="px-4 py-2 text-center">
-                                <Button
-                                  onClick={() => handleViewVendorDetails(v)}
-                                  variant="primary"
-                                  isDarkMode={isDarkMode}
-                                  size="sm"
-                                  fullWidth
-                                >
-                                  View Details
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      {/* Erstelle zwei Gruppen von Vendoren */}
+                      {(() => {
+                        const vendorResults = getFilteredVendorResults();
+                        const keyVendors = vendorResults.filter(v => v.isKeyVendor);
+                        const otherVendors = vendorResults.filter(v => !v.isKeyVendor);
+                        
+                        return (
+                          <>
+                            {/* Keine Ergebnisse Meldung */}
+                            {vendorResults.length === 0 && (
+                              <div className="p-4 text-center">
+                                No vendors matching your criteria found
+                              </div>
+                            )}
+                            
+                            {/* Key Vendors Tabelle */}
+                            {keyVendors.length > 0 && (
+                              <div className="mb-6">
+                                <h4 className="text-md font-semibold mb-2">Key Vendors</h4>
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                  <thead>
+                                    <tr className={tableHeaderBg}>
+                                      <th className="px-4 py-2 text-left">ID</th>
+                                      <th className="px-4 py-2 text-left">Name</th>
+                                      <th className="px-4 py-2 text-center">Consent</th>
+                                      <th className="px-4 py-2 text-center">Legitimate Interest</th>
+                                      <th className="px-4 py-2 text-center">Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {keyVendors.map((v: any) => (
+                                      <tr key={v.id} className={tableRowBg}>
+                                        <td className="px-4 py-2">{v.id}</td>
+                                        <td className="px-4 py-2">{v.name}</td>
+                                        <td className="px-4 py-2 text-center">
+                                          <span className={`inline-block w-4 h-4 rounded-full ${v.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                        </td>
+                                        <td className="px-4 py-2 text-center">
+                                          <span className={`inline-block w-4 h-4 rounded-full ${v.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                        </td>
+                                        <td className="px-4 py-2 text-center">
+                                          <Button
+                                            onClick={() => handleViewVendorDetails(v)}
+                                            variant="primary"
+                                            isDarkMode={isDarkMode}
+                                            size="sm"
+                                            fullWidth
+                                          >
+                                            View Details
+                                          </Button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                            
+                            {/* Alle anderen Vendoren mit Consent/LegInt */}
+                            {otherVendors.length > 0 && (
+                              <div>
+                                <h4 className="text-md font-semibold mb-2">Other Vendors with Consent/Legitimate Interest</h4>
+                                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                  <thead>
+                                    <tr className={tableHeaderBg}>
+                                      <th className="px-4 py-2 text-left">ID</th>
+                                      <th className="px-4 py-2 text-left">Name</th>
+                                      <th className="px-4 py-2 text-center">Consent</th>
+                                      <th className="px-4 py-2 text-center">Legitimate Interest</th>
+                                      <th className="px-4 py-2 text-center">Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                    {otherVendors.map((v: any) => (
+                                      <tr key={v.id} className={tableRowBg}>
+                                        <td className="px-4 py-2">{v.id}</td>
+                                        <td className="px-4 py-2">{v.name}</td>
+                                        <td className="px-4 py-2 text-center">
+                                          <span className={`inline-block w-4 h-4 rounded-full ${v.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                        </td>
+                                        <td className="px-4 py-2 text-center">
+                                          <span className={`inline-block w-4 h-4 rounded-full ${v.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                        </td>
+                                        <td className="px-4 py-2 text-center">
+                                          <Button
+                                            onClick={() => handleViewVendorDetails(v)}
+                                            variant="primary"
+                                            isDarkMode={isDarkMode}
+                                            size="sm"
+                                            fullWidth
+                                          >
+                                            View Details
+                                          </Button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                            
+                            {/* Info über die Anzahl der gefundenen Vendoren */}
+                            <div className={`mt-4 text-sm ${secondaryTextColor}`}>
+                              Found {vendorResults.length} vendor{vendorResults.length !== 1 ? 's' : ''} 
+                              ({keyVendors.length} key vendor{keyVendors.length !== 1 ? 's' : ''}, 
+                              {otherVendors.length} other{otherVendors.length !== 1 ? 's' : ''})
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </>
                 )}

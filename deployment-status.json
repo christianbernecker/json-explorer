@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 17:44:25 CEST 2025", "commit": "TCF Decoder: Vollständige Umstellung auf IAB-Library, UI-Review & Quality-Check"}
+{"deployment": "staging", "timestamp": "Mon May 12 17:50:39 CEST 2025", "commit": "Fix TCF Decoder: Korrektur der Abstürze durch Angleichung an IAB-Library API"}
