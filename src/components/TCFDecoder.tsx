@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { decodeTCFString, purposeNames, DEFAULT_VENDORS } from '../utils/tcf-decoder';
+import { decodeTCFString, purposeNames, DEFAULT_VENDORS, generateBitRepresentation } from '../utils/tcf-decoder';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
@@ -20,6 +20,9 @@ interface VendorResult {
   }[];
 }
 
+// Beispiel TCF-String
+const EXAMPLE_TCF_STRING = "CPBZjR9PBZjR9AKAZADEBUCsAP_AAH_AAAqIHWtf_X_fb39j-_59_9t0eY1f9_7_v-0zjhfds-8Nyf_X_L8X42M7vF36pq4KuR4Eu3LBIQFlHOHUTUmw6okVrTPsak2Mr7NKJ7LEinMbe2dYGHtfn91TuZKY7_78_9fz3_-v_v___9f3r-3_3__59X---_e_V399zLv9__34HlAEmGpfABdiWODJtGlUKIEYVhIdAKACigGFoisIHVwU7K4CP0EDABAagIwIgQYgoxYBAAIBAEhEQEgB4IBEARAIAAQAqQEIACNgEFgBYGAQACgGhYgRQBCBIQZHBUcpgQESLRQT2VgCUXexphCGUUAJAAA.YAAAAAAAAAAA";
+
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const [tcfString, setTcfString] = useState('');
   const [additionalVendorId, setAdditionalVendorId] = useState<number>(136);
@@ -27,6 +30,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const [decodeError, setDecodeError] = useState<string | null>(null);
   const [decodedData, setDecodedData] = useState<any | null>(null);
   const [vendorResults, setVendorResults] = useState<VendorResult[]>([]);
+  const [showBitRepresentation, setShowBitRepresentation] = useState<boolean>(false);
+  const [bitRepresentation, setBitRepresentation] = useState<string>('');
   
   // Farbschema basierend auf Dark-Mode
   const bgColor = isDarkMode ? 'bg-slate-800' : 'bg-white';
@@ -39,6 +44,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const inputBorderColor = isDarkMode ? 'border-slate-600' : 'border-slate-300';
   const highlightColor = isDarkMode ? 'bg-blue-900' : 'bg-blue-100';
   const exportBtnColor = 'bg-green-600 hover:bg-green-700 text-white';
+  const secondaryBtnColor = isDarkMode ? 'bg-slate-600 hover:bg-slate-500' : 'bg-gray-200 hover:bg-gray-300';
+  const secondaryTextColor = isDarkMode ? 'text-white' : 'text-gray-700';
+  const bitTextColor = isDarkMode ? 'text-blue-300' : 'text-blue-600';
+
+  // Beispiel-TCF-String laden
+  const loadExample = () => {
+    setTcfString(EXAMPLE_TCF_STRING);
+  };
 
   // TCF String verarbeiten
   const handleDecode = () => {
@@ -54,6 +67,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       const result = decodeTCFString(tcfString);
       setDecodedVersion(result.version);
       setDecodedData(result.coreData);
+      
+      // Bit-Darstellung generieren
+      const bits = generateBitRepresentation(result.coreData.fullString);
+      setBitRepresentation(bits);
       
       // Vendor-Ergebnisse verarbeiten
       const vendors = [...result.vendorResults];
@@ -88,6 +105,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       setDecodeError(error instanceof Error ? error.message : 'Unbekannter Fehler beim Dekodieren');
       setDecodedData(null);
       setVendorResults([]);
+      setBitRepresentation('');
     }
   };
 
@@ -158,12 +176,19 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             />
           </div>
           
-          <div className="self-end">
+          <div className="self-end flex space-x-2">
             <button 
               onClick={handleDecode}
               className={`px-4 py-2 ${buttonColor} rounded-md shadow-md hover:shadow-lg transition-all duration-200`}
             >
               TCF String dekodieren
+            </button>
+            
+            <button 
+              onClick={loadExample}
+              className={`px-4 py-2 ${secondaryBtnColor} ${secondaryTextColor} rounded-md shadow-md hover:shadow-lg transition-all duration-200 text-sm`}
+            >
+              Beispiel laden
             </button>
           </div>
         </div>
@@ -181,13 +206,29 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
         <div id="results" className={`my-6 p-5 border ${borderColor} rounded-md`}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Decodierungs-Ergebnisse</h2>
-            <button 
-              onClick={handleExportJSON}
-              className={`px-3 py-1 ${exportBtnColor} rounded-md text-sm shadow-sm`}
-            >
-              Als JSON exportieren
-            </button>
+            <div className="flex space-x-2">
+              <button 
+                onClick={() => setShowBitRepresentation(!showBitRepresentation)}
+                className={`px-3 py-1 ${secondaryBtnColor} ${secondaryTextColor} rounded-md text-sm shadow-sm`}
+              >
+                {showBitRepresentation ? 'Bits ausblenden' : 'Bits anzeigen'}
+              </button>
+              <button 
+                onClick={handleExportJSON}
+                className={`px-3 py-1 ${exportBtnColor} rounded-md text-sm shadow-sm`}
+              >
+                Als JSON exportieren
+              </button>
+            </div>
           </div>
+          
+          {/* Bit-Darstellung */}
+          {showBitRepresentation && (
+            <div className={`p-3 mb-5 rounded-md overflow-x-auto border ${borderColor}`}>
+              <h3 className="text-sm font-semibold mb-2">Bit-Darstellung:</h3>
+              <pre className={`text-xs ${bitTextColor} font-mono whitespace-pre-wrap`}>{bitRepresentation}</pre>
+            </div>
+          )}
           
           {/* Allgemeine Informationen */}
           <div className={`p-4 mb-5 rounded-md ${sectionBgColor}`}>
@@ -200,6 +241,15 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
               <p><strong>CMP Version:</strong> {decodedData.cmpVersion}</p>
               <p><strong>Consent Screen:</strong> {decodedData.consentScreen}</p>
               <p><strong>Consent Language:</strong> {decodedData.consentLanguage}</p>
+              <p><strong>Vendor List Version:</strong> {decodedData.vendorListVersion}</p>
+              <p><strong>Policy Version:</strong> {decodedData.policyVersion}</p>
+              <p><strong>Service-spezifisch:</strong> {decodedData.isServiceSpecific ? 'Ja' : 'Nein'}</p>
+              {decodedData.purposeOneTreatment !== undefined && (
+                <p><strong>Purpose One Treatment:</strong> {decodedData.purposeOneTreatment ? 'Ja' : 'Nein'}</p>
+              )}
+              {decodedData.publisherCC && (
+                <p><strong>Publisher Country Code:</strong> {decodedData.publisherCC}</p>
+              )}
             </div>
           </div>
           

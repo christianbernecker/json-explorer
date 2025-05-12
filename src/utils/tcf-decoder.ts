@@ -333,19 +333,36 @@ export function getVendorInfo(decodedCore: any, vendorId: number): {
   const hasConsent = decodedCore.vendorConsent.includes(vendorId);
   const hasLegitimateInterest = decodedCore.vendorLI.includes(vendorId);
   
-  // Ermittelt Purpose Consents
-  const purposeConsents = [];
-  for (let i = 1; i <= 24; i++) {
-    if (decodedCore.purposesConsent.includes(i)) {
-      purposeConsents.push(i);
-    }
+  // Der Vendor hat nur Zugriff auf die Purposes, für die global Consent gegeben wurde
+  // UND für den der Vendor explizit Consent hat
+  let purposeConsents: number[] = [];
+  if (hasConsent) {
+    // Wir nehmen die globalen Purposes, wenn der Vendor Consent hat
+    purposeConsents = [...decodedCore.purposesConsent];
   }
   
-  // Ermittelt Legitimate Interests
-  const legitimateInterests = [];
-  for (let i = 1; i <= 24; i++) {
-    if (decodedCore.purposesLITransparency.includes(i)) {
-      legitimateInterests.push(i);
+  // Nur Legitimate Interests anzeigen, wenn der Vendor dafür Berechtigung hat
+  let legitimateInterests: number[] = [];
+  if (hasLegitimateInterest) {
+    legitimateInterests = [...decodedCore.purposesLITransparency];
+  }
+  
+  // Verarbeitungszwecke basierend auf Publisher-Einschränkungen anpassen
+  for (const restriction of decodedCore.publisherRestrictions) {
+    if (restriction.vendors.includes(vendorId)) {
+      // Wenn "Nicht erlaubt", dann Purpose aus beiden Listen entfernen
+      if (restriction.restrictionType === "Nicht erlaubt") {
+        purposeConsents = purposeConsents.filter(p => p !== restriction.purposeId);
+        legitimateInterests = legitimateInterests.filter(p => p !== restriction.purposeId);
+      }
+      // Wenn "Zustimmung erforderlich", dann aus Legitimate Interests entfernen
+      else if (restriction.restrictionType === "Zustimmung erforderlich") {
+        legitimateInterests = legitimateInterests.filter(p => p !== restriction.purposeId);
+      }
+      // Wenn "Berechtigtes Interesse erforderlich", dann aus Purpose Consents entfernen
+      else if (restriction.restrictionType === "Berechtigtes Interesse erforderlich") {
+        purposeConsents = purposeConsents.filter(p => p !== restriction.purposeId);
+      }
     }
   }
   
@@ -460,4 +477,21 @@ export const purposeNames = [
   "Produkte entwickeln und verbessern",
   "Spezielles Profilziel (2.2)",
   "Personalisierungssicherheit (2.2)"
-]; 
+];
+
+/**
+ * Generiert eine Bit-Darstellung eines TCF-Strings für Debug-Zwecke
+ */
+export function generateBitRepresentation(bitString: number[]): string {
+  let result = '';
+  for (let i = 0; i < bitString.length; i++) {
+    if (i > 0 && i % 8 === 0) {
+      result += ' ';
+    }
+    if (i > 0 && i % 64 === 0) {
+      result += '\n';
+    }
+    result += bitString[i];
+  }
+  return result;
+} 
