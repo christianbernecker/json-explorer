@@ -1275,7 +1275,7 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
         subtitle="Visualisiere und analysiere CSV, XLSX und JSON Daten mit KI-Unterstützung"
       />
       
-      <div className="ml-28 px-10 py-6 mt-24">
+      <div className="mt-16 sm:mt-20 md:mt-24 px-2 sm:px-4 md:px-6 lg:px-10 py-3 sm:py-4 md:py-6">
         <PrimaryContainer isDarkMode={isDarkMode}>
           {data.length === 0 ? (
             renderUploadForm()

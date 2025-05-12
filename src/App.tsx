@@ -44,7 +44,7 @@ function App() {
     <Router>
       <div className={`flex min-h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
         <Sidebar isDarkMode={isDarkMode} />
-        <div className="flex-1 flex flex-col ml-28 pl-10 pr-12 overflow-x-hidden">
+        <div className="flex-1 flex flex-col pl-4 sm:pl-6 md:pl-8 lg:pl-10 pr-4 sm:pr-6 md:pr-8 lg:pr-10 xl:pr-12 overflow-x-hidden" style={{ marginLeft: 'var(--sidebar-width, 7rem)' }}>
           <main className={`flex-grow overflow-auto`}>
             <Routes>
               <Route path="/" element={<Homepage isDarkMode={isDarkMode} />} />

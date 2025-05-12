@@ -6,6 +6,23 @@
 /* @import '../node_modules/highlight.js/styles/github.css'; */
 /* @import '../node_modules/highlight.js/styles/github-dark.css'; */
 
+/* Responsive Sidebar-Breite */
+:root {
+  --sidebar-width: 5rem; /* 80px - Standard für kleine Bildschirme */
+}
+
+@media (min-width: 640px) {
+  :root {
+    --sidebar-width: 6rem; /* 96px - sm Breakpoint */
+  }
+}
+
+@media (min-width: 768px) {
+  :root {
+    --sidebar-width: 7rem; /* 112px - md Breakpoint */
+  }
+}
+
 /* Allgemeine Body-Styles */
 body {
   margin: 0;

@@ -46,8 +46,8 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         subtitle="Decode and analyze IAB TCF consent strings"
       />
       
-      {/* Container mit konsistenten Abständen zum Header und Rand */}
-      <div className="ml-28 px-10 py-6 mt-24">
+      {/* Container mit responsiven Abständen ohne seitlichen Abstand */}
+      <div className="py-3 sm:py-4 md:py-6 px-2 sm:px-4 md:px-6 lg:px-10">
         <SectionHeader 
           title="TCF Consent String Decoder"
           description="Decode and analyze IAB TCF Consent Strings (v2.0 and v2.2). Shows vendor consents, purposes, legitimate interests and more."

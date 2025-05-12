@@ -86,8 +86,8 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
           {/* Top header strip - gradient highlight for branding */}
           <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 to-indigo-600"></div>
           
-          {/* Main header content - Angepasst für links-ausgerichtete Inhalte */}
-          <div className="ml-28 py-3 px-10 max-w-full">
+          {/* Main header content - Angepasst für responsives Layout */}
+          <div className="ml-20 sm:ml-24 md:ml-28 py-2 sm:py-3 px-2 sm:px-4 md:px-6 lg:px-10 max-w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 {/* App-specific content - Das Toolbox Logo entfernen, da wir das bereits in der Sidebar haben */}
@@ -163,9 +163,9 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
             </div>
           </div>
           
-          {/* Tab navigation for JSON Explorer - Angepasst für links-ausgerichtete Inhalte */}
+          {/* Tab navigation for JSON Explorer - Angepasst für responsives Layout */}
           {isJSONExplorer && (
-            <div className={`ml-28 px-10 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <div className={`ml-20 sm:ml-24 md:ml-28 px-2 sm:px-4 md:px-6 lg:px-10 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
               <div className="flex border-b border-gray-300">
                 <Link 
                   to="/apps/json-explorer/validator"
