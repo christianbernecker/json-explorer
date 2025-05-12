@@ -1,12 +1,12 @@
-// TCF String Decoder - Unterstützt TCF v2.0 und v2.2
+// TCF String Decoder - Supports TCF v2.0 and v2.2
 
-export const DEFAULT_VENDORS = [136, 137];
+export const DEFAULT_VENDORS = [136, 137, 44];
 
 /**
- * Wandelt eine Base64-codierte TCF-Zeichenfolge in Bits um
+ * Converts a Base64-encoded TCF string to bits
  */
 export function base64ToBits(base64String: string): number[] {
-  // Base64-URL Dekodierung zu Binärdaten
+  // Base64-URL decoding to binary data
   const decodedString = atob(
     base64String
       .replace(/-/g, '+')
@@ -14,7 +14,7 @@ export function base64ToBits(base64String: string): number[] {
       .padEnd(base64String.length + (4 - (base64String.length % 4)) % 4, '=')
   );
   
-  // Binärdaten in Bit-Array konvertieren
+  // Convert binary data to bit array
   const bits: number[] = [];
   for (let i = 0; i < decodedString.length; i++) {
     const byte = decodedString.charCodeAt(i);
@@ -27,7 +27,7 @@ export function base64ToBits(base64String: string): number[] {
 }
 
 /**
- * Konvertiert Bits in eine Ganzzahl
+ * Converts bits to an integer
  */
 export function bitsToInt(bits: number[]): number {
   let result = 0;
@@ -38,20 +38,20 @@ export function bitsToInt(bits: number[]): number {
 }
 
 /**
- * Parst ein Bitfeld und gibt die gesetzten Bits als 1-basierte Indices zurück
+ * Parses a bitfield and returns the set bits as 1-based indices
  */
 export function parseBitField(bitString: number[], offset: number, length: number): number[] {
   const result: number[] = [];
   for (let i = 0; i < length; i++) {
     if (bitString[offset + i]) {
-      result.push(i + 1);  // 1-basierter Index
+      result.push(i + 1);  // 1-based index
     }
   }
   return result;
 }
 
 /**
- * Konvertiert eine Bitfolge in ein String (für Sprachcodes etc.)
+ * Converts a bit sequence to a string (for language codes etc.)
  */
 export function bitStringToString(bits: number[]): string {
   let result = '';
@@ -63,7 +63,7 @@ export function bitStringToString(bits: number[]): string {
 }
 
 /**
- * Parst einen Vendor-Abschnitt im TCF-String
+ * Parses a vendor section in the TCF string
  */
 export function parseVendorSection(bitString: number[], startOffset: number): { vendors: number[], newOffset: number } {
   let offset = startOffset;
@@ -119,7 +119,7 @@ export function parseVendorSection(bitString: number[], startOffset: number): { 
 }
 
 /**
- * Parst den Publisher Restrictions-Abschnitt
+ * Parses the Publisher Restrictions section
  */
 export function parsePubRestrictions(bitString: number[], startOffset: number): { 
   restrictions: {
@@ -136,7 +136,7 @@ export function parsePubRestrictions(bitString: number[], startOffset: number): 
     vendors: number[];
   }[] = [];
   
-  // Anzahl der Einschränkungen
+  // Number of restrictions
   const numRestrictions = bitsToInt(bitString.slice(offset, offset + 12));
   offset += 12;
   
@@ -151,13 +151,13 @@ export function parsePubRestrictions(bitString: number[], startOffset: number): 
     
     let restrictionTypeString;
     switch (restrictionType) {
-      case 0: restrictionTypeString = "Nicht erlaubt"; break;
-      case 1: restrictionTypeString = "Zustimmung erforderlich"; break;
-      case 2: restrictionTypeString = "Berechtigtes Interesse erforderlich"; break;
-      default: restrictionTypeString = "Unbekannt";
+      case 0: restrictionTypeString = "Not allowed"; break;
+      case 1: restrictionTypeString = "Consent required"; break;
+      case 2: restrictionTypeString = "Legitimate Interest required"; break;
+      default: restrictionTypeString = "Unknown";
     }
     
-    // Vendor-Liste für diese Einschränkung
+    // Vendor list for this restriction
     const numEntries = bitsToInt(bitString.slice(offset, offset + 12));
     offset += 12;
     
@@ -197,13 +197,13 @@ export function parsePubRestrictions(bitString: number[], startOffset: number): 
 }
 
 /**
- * Dekodiert einen TCF 2.0 String
+ * Decodes a TCF 2.0 string
  */
 export function decodeTCF2_0(bitString: number[], segments: string[]): any {
-  // TCF 2.0 Struktur extrahieren
+  // Extract TCF 2.0 structure
   let offset = 0;
   
-  // Core Metadaten
+  // Core metadata
   const version = bitsToInt(bitString.slice(offset, offset + 6)); offset += 6;
   const created = bitsToInt(bitString.slice(offset, offset + 36)); offset += 36;
   const lastUpdated = bitsToInt(bitString.slice(offset, offset + 36)); offset += 36;
@@ -214,22 +214,22 @@ export function decodeTCF2_0(bitString: number[], segments: string[]): any {
   const vendorListVersion = bitsToInt(bitString.slice(offset, offset + 12)); offset += 12;
   const policyVersion = bitsToInt(bitString.slice(offset, offset + 6)); offset += 6;
   
-  // Zwecke und Berechtigungen
+  // Purposes and permissions
   const isServiceSpecific = bitString[offset]; offset += 1;
   const useNonStandardStacks = bitString[offset]; offset += 1;
   const specialFeatureOptIns = parseBitField(bitString, offset, 12); offset += 12;
   const purposesConsent = parseBitField(bitString, offset, 24); offset += 24;
   const purposesLITransparency = parseBitField(bitString, offset, 24); offset += 24;
   
-  // Vendor-Bereich
+  // Vendor section
   const vendorConsentBits = parseVendorSection(bitString, offset);
   offset = vendorConsentBits.newOffset;
   
-  // Vendor Legitimate Interest-Bereich
+  // Vendor Legitimate Interest section
   const vendorLIBits = parseVendorSection(bitString, offset);
   offset = vendorLIBits.newOffset;
   
-  // Publisher Restrictions-Bereich
+  // Publisher Restrictions section
   const pubRestrictions = parsePubRestrictions(bitString, offset);
   
   return {
@@ -256,13 +256,13 @@ export function decodeTCF2_0(bitString: number[], segments: string[]): any {
 }
 
 /**
- * Dekodiert einen TCF 2.2 String
+ * Decodes a TCF 2.2 string
  */
 export function decodeTCF2_2(bitString: number[], segments: string[]): any {
-  // TCF 2.2 Struktur extrahieren - Ähnlich zu 2.0 mit einigen Unterschieden
+  // Extract TCF 2.2 structure - similar to 2.0 with some differences
   let offset = 0;
   
-  // Core Metadaten (identisch zu 2.0)
+  // Core metadata (identical to 2.0)
   const version = bitsToInt(bitString.slice(offset, offset + 6)); offset += 6;
   const created = bitsToInt(bitString.slice(offset, offset + 36)); offset += 36;
   const lastUpdated = bitsToInt(bitString.slice(offset, offset + 36)); offset += 36;
@@ -273,26 +273,26 @@ export function decodeTCF2_2(bitString: number[], segments: string[]): any {
   const vendorListVersion = bitsToInt(bitString.slice(offset, offset + 12)); offset += 12;
   const policyVersion = bitsToInt(bitString.slice(offset, offset + 6)); offset += 6;
   
-  // Neu in 2.2: Felder für Global Consent
+  // New in 2.2: Fields for Global Consent
   const isServiceSpecific = bitString[offset]; offset += 1;
   const useNonStandardStacks = bitString[offset]; offset += 1;
   const specialFeatureOptIns = parseBitField(bitString, offset, 12); offset += 12;
   const purposesConsent = parseBitField(bitString, offset, 24); offset += 24;
   const purposesLITransparency = parseBitField(bitString, offset, 24); offset += 24;
   
-  // Neu in 2.2: Zusätzliche Felder
+  // New in 2.2: Additional fields
   const purposeOneTreatment = bitString[offset]; offset += 1;
   const publisherCC = bitStringToString(bitString.slice(offset, offset + 12)); offset += 12;
   
-  // Vendor-Bereich - identisch zu 2.0
+  // Vendor section - identical to 2.0
   const vendorConsentBits = parseVendorSection(bitString, offset);
   offset = vendorConsentBits.newOffset;
   
-  // Vendor Legitimate Interest-Bereich - identisch zu 2.0
+  // Vendor Legitimate Interest section - identical to 2.0
   const vendorLIBits = parseVendorSection(bitString, offset);
   offset = vendorLIBits.newOffset;
   
-  // Publisher Restrictions-Bereich - identisch zu 2.0
+  // Publisher Restrictions section - identical to 2.0
   const pubRestrictions = parsePubRestrictions(bitString, offset);
   
   return {
@@ -321,7 +321,7 @@ export function decodeTCF2_2(bitString: number[], segments: string[]): any {
 }
 
 /**
- * Sammelt Informationen über einen bestimmten Vendor
+ * Collects information about a specific vendor
  */
 export function getVendorInfo(decodedCore: any, vendorId: number): {
   hasConsent: boolean;
@@ -329,63 +329,63 @@ export function getVendorInfo(decodedCore: any, vendorId: number): {
   purposeConsents: number[];
   legitimateInterests: number[];
 } {
-  // Prüft Zustimmung und berechtigtes Interesse für einen Vendor
+  // Check consent and legitimate interest for a vendor
   const hasConsent = decodedCore.vendorConsent.includes(vendorId);
   const hasLegitimateInterest = decodedCore.vendorLI.includes(vendorId);
   
-  // Der Vendor hat nur Zugriff auf die Purposes, für die global Consent gegeben wurde
-  // UND für den der Vendor explizit Consent hat
+  // The vendor only has access to purposes for which global consent was given
+  // AND for which the vendor explicitly has consent
   let purposeConsents: number[] = [];
   if (hasConsent) {
-    // Wir nehmen die globalen Purposes, wenn der Vendor Consent hat
+    // We take the global purposes if the vendor has consent
     purposeConsents = [...decodedCore.purposesConsent];
   }
   
-  // Nur Legitimate Interests anzeigen, wenn der Vendor dafür Berechtigung hat
+  // Only show legitimate interests if the vendor has permission for them
   let legitimateInterests: number[] = [];
   if (hasLegitimateInterest) {
     legitimateInterests = [...decodedCore.purposesLITransparency];
   }
   
-  // Finde alle Restrictions für diesen Vendor
+  // Find all restrictions for this vendor
   const vendorRestrictions = decodedCore.publisherRestrictions
     .filter((r: any) => r.vendors.includes(vendorId));
   
-  // Verarbeitungszwecke basierend auf Publisher-Einschränkungen anpassen
+  // Adjust processing purposes based on publisher restrictions
   for (const restriction of vendorRestrictions) {
     const purposeId = restriction.purposeId;
     
-    // Wenn "Nicht erlaubt", dann Purpose aus beiden Listen entfernen
-    if (restriction.restrictionType === "Nicht erlaubt") {
+    // If "Not allowed", then remove purpose from both lists
+    if (restriction.restrictionType === "Not allowed") {
       purposeConsents = purposeConsents.filter(p => p !== purposeId);
       legitimateInterests = legitimateInterests.filter(p => p !== purposeId);
     }
-    // Wenn "Zustimmung erforderlich", dann aus Legitimate Interests entfernen
-    else if (restriction.restrictionType === "Zustimmung erforderlich") {
+    // If "Consent required", then remove from Legitimate Interests
+    else if (restriction.restrictionType === "Consent required") {
       legitimateInterests = legitimateInterests.filter(p => p !== purposeId);
     }
-    // Wenn "Berechtigtes Interesse erforderlich", dann aus Purpose Consents entfernen
-    else if (restriction.restrictionType === "Berechtigtes Interesse erforderlich") {
+    // If "Legitimate Interest required", then remove from Purpose Consents
+    else if (restriction.restrictionType === "Legitimate Interest required") {
       purposeConsents = purposeConsents.filter(p => p !== purposeId);
     }
   }
   
   return {
-    hasConsent,  // Der Vendor hat grundsätzlich Consent, unabhängig von Purpose-Restrictions
-    hasLegitimateInterest, // Der Vendor hat grundsätzlich Legitimate Interest, unabhängig von Purpose-Restrictions
+    hasConsent,  // The vendor has basic consent, regardless of purpose restrictions
+    hasLegitimateInterest, // The vendor has basic legitimate interest, regardless of purpose restrictions
     purposeConsents,
     legitimateInterests
   };
 }
 
 /**
- * Sucht Einschränkungen für einen bestimmten Vendor
+ * Finds restrictions for a specific vendor
  */
 export function getVendorRestrictions(decodedCore: any, vendorId: number): {
   purposeId: number;
   restrictionType: string;
 }[] {
-  // Findet Einschränkungen für einen bestimmten Vendor
+  // Finds restrictions for a specific vendor
   const vendorRestrictions = [];
   
   for (const restriction of decodedCore.publisherRestrictions) {
@@ -401,7 +401,7 @@ export function getVendorRestrictions(decodedCore: any, vendorId: number): {
 }
 
 /**
- * Hauptfunktion zum Dekodieren eines TCF-Strings
+ * Main function for decoding a TCF string
  */
 export function decodeTCFString(tcfString: string): {
   version: string;
@@ -420,37 +420,37 @@ export function decodeTCFString(tcfString: string): {
     }[];
   }[];
 } {
-  // Teilt den String in Segmente
+  // Split the string into segments
   const segments = tcfString.split('.');
   
-  // Dekodiert das Core-Segment (erstes Segment)
+  // Decode the core segment (first segment)
   const coreSegment = segments[0];
   const bitString = base64ToBits(coreSegment);
   
-  // Bestimmt die Version (gleiche Position in beiden Versionen)
+  // Determine the version (same position in both versions)
   const versionNumber = bitsToInt(bitString.slice(0, 6));
   let decodedCore;
   let versionString = '';
   
   if (versionNumber === 2) {
-    // TCF v2.0 Dekodierung
+    // TCF v2.0 decoding
     decodedCore = decodeTCF2_0(bitString, segments);
     versionString = "2.0";
   } else if (versionNumber === 3) {
-    // TCF v2.2 Dekodierung (Version 3 im Bitstring)
+    // TCF v2.2 decoding (Version 3 in the bitstring)
     decodedCore = decodeTCF2_2(bitString, segments);
     versionString = "2.2";
   } else {
-    throw new Error(`Nicht unterstützte TCF-Version: ${versionNumber}`);
+    throw new Error(`Unsupported TCF version: ${versionNumber}`);
   }
   
-  // Verarbeitet Default-Vendors
+  // Process default vendors
   const vendorResults = [];
   for (const vendorId of DEFAULT_VENDORS) {
-    // Holt vendor-spezifische Informationen
+    // Get vendor-specific information
     const vendorInfo = getVendorInfo(decodedCore, vendorId);
     
-    // Holt Einschränkungen für diesen Vendor
+    // Get restrictions for this vendor
     const restrictions = getVendorRestrictions(decodedCore, vendorId);
     
     vendorResults.push({
@@ -467,24 +467,24 @@ export function decodeTCFString(tcfString: string): {
   };
 }
 
-// Liste von Purpose-Namen
+// List of purpose names
 export const purposeNames = [
-  "Informationen auf einem Gerät speichern und/oder abrufen",
-  "Einfache Anzeigen",
-  "Personalisiertes Anzeigeprofil erstellen",
-  "Personalisierte Anzeigen auswählen",
-  "Personalisiertes Inhaltsprofil erstellen",
-  "Personalisierte Inhalte auswählen",
-  "Anzeigenleistung messen",
-  "Inhaltsleistung messen",
-  "Marktforschung zur Generierung von Zielgruppeneinblicken",
-  "Produkte entwickeln und verbessern",
-  "Spezielles Profilziel (2.2)",
-  "Personalisierungssicherheit (2.2)"
+  "Store and/or access information on a device",
+  "Basic ads",
+  "Create a personalized ads profile",
+  "Select personalized ads",
+  "Create a personalized content profile",
+  "Select personalized content",
+  "Measure ad performance",
+  "Measure content performance",
+  "Market research to generate audience insights",
+  "Develop and improve products",
+  "Special profile purpose (2.2)",
+  "Personalization security (2.2)"
 ];
 
 /**
- * Generiert eine Bit-Darstellung eines TCF-Strings für Debug-Zwecke
+ * Generates a bit representation of a TCF string for debugging purposes
  */
 export function generateBitRepresentation(bitString: number[]): string {
   let result = '';

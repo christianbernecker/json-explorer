@@ -1,7 +1,7 @@
 import * as TCFDecoder from './tcf-decoder';
 import { GVLData } from './gvl-loader';
 
-// Erweiterter Vendor-Ergebnis-Typ mit GVL-Daten
+// Enhanced vendor result type with GVL data
 export interface EnhancedVendorResult {
   id: number;
   name: string;
@@ -9,34 +9,34 @@ export interface EnhancedVendorResult {
   hasConsent: boolean;
   hasLegitimateInterest: boolean;
   
-  // Purposes aus GVL und TCF-String 
+  // Purposes from GVL and TCF string 
   purposes: {
     id: number;
     name: string;
     description?: string;
-    // Definiert im GVL für diesen Vendor
-    isAllowed: boolean;           // Darf der Vendor diesen Purpose nutzen?
-    isLegitimateInterestAllowed: boolean; // Darf der Vendor Legitimate Interest verwenden?
-    isFlexiblePurpose: boolean;   // Ist der Purpose flexibel (Consent oder LegInt)?
-    // Aus dem TCF-String
-    hasConsent: boolean;          // Hat Consent im String?
-    hasLegitimateInterest: boolean; // Hat LegInt im String?
+    // Defined in GVL for this vendor
+    isAllowed: boolean;           // Is the vendor allowed to use this purpose?
+    isLegitimateInterestAllowed: boolean; // Is the vendor allowed to use Legitimate Interest?
+    isFlexiblePurpose: boolean;   // Is the purpose flexible (Consent or LegInt)?
+    // From the TCF string
+    hasConsent: boolean;          // Has consent in the string?
+    hasLegitimateInterest: boolean; // Has LegInt in the string?
     // Publisher Restrictions
-    restriction?: string;   // Art der Einschränkung
+    restriction?: string;   // Type of restriction
   }[];
   
-  // Special Features aus GVL und TCF-String
+  // Special Features from GVL and TCF string
   specialFeatures: {
     id: number;
     name: string;
     description?: string;
-    // Definiert im GVL für diesen Vendor
+    // Defined in GVL for this vendor
     isAllowed: boolean;
-    // Aus dem TCF-String
+    // From the TCF string
     hasConsent: boolean;
   }[];
   
-  // Special Purposes aus GVL
+  // Special Purposes from GVL
   specialPurposes?: {
     id: number;
     name: string;
@@ -44,7 +44,7 @@ export interface EnhancedVendorResult {
     isAllowed: boolean;
   }[];
   
-  // Features aus GVL
+  // Features from GVL
   features?: {
     id: number;
     name: string;
@@ -53,7 +53,7 @@ export interface EnhancedVendorResult {
   }[];
 }
 
-// GVL-Purpose-Typ
+// GVL Purpose type
 interface PurposeInfo {
   id: number;
   name: string;
@@ -61,7 +61,7 @@ interface PurposeInfo {
   [key: string]: any;
 }
 
-// GVL-Special-Feature-Typ
+// GVL Special Feature type
 interface SpecialFeatureInfo {
   id: number;
   name: string;
@@ -70,20 +70,20 @@ interface SpecialFeatureInfo {
 }
 
 /**
- * Erweiterte TCF-Analyse mit GVL-Integration
+ * Enhanced TCF analysis with GVL integration
  */
 export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
   coreData: any;
   version: string;
   vendorResults: EnhancedVendorResult[];
 } {
-  // Standard TCF-Dekodierung
+  // Standard TCF decoding
   const result = TCFDecoder.decodeTCFString(tcfString);
   
-  // Vendor-spezifische Auswertung mit GVL
+  // Vendor-specific evaluation with GVL
   const vendorResults: EnhancedVendorResult[] = [];
   
-  // Liste der Vendor-IDs, die ausgewertet werden sollen
+  // List of vendor IDs to be evaluated
   const vendorIdsSet = new Set([
     ...result.vendorResults.map(v => v.id),
     ...result.coreData.vendorConsent,
@@ -91,24 +91,24 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
   ]);
   const vendorIds = Array.from(vendorIdsSet);
   
-  // Purposes, Special Features, etc. aus GVL
+  // Purposes, Special Features, etc. from GVL
   const purposes: { [id: string]: PurposeInfo } = gvl.purposes || {};
   const specialFeatures: { [id: string]: SpecialFeatureInfo } = gvl.specialFeatures || {};
   const specialPurposes: { [id: string]: PurposeInfo } = gvl.specialPurposes || {};
   const features: { [id: string]: PurposeInfo } = gvl.features || {};
   
-  // Für jeden Vendor eine erweiterte Auswertung durchführen
+  // Perform an enhanced evaluation for each vendor
   for (const vendorId of vendorIds) {
     const gvlVendor = gvl.vendors[vendorId.toString()];
     
-    // Vendor überspringen, wenn er nicht in der GVL ist
+    // Skip vendor if not in GVL
     if (!gvlVendor) continue;
     
-    // Basis-Vendor-Informationen
+    // Basic vendor information
     const hasConsent = result.coreData.vendorConsent.includes(vendorId);
     const hasLegitimateInterest = result.coreData.vendorLI.includes(vendorId);
     
-    // Restrictions für diesen Vendor
+    // Restrictions for this vendor
     const restrictions = result.coreData.publisherRestrictions
       .filter((r: any) => r.vendors.includes(vendorId))
       .reduce((acc: {[key: number]: string}, r: any) => {
@@ -116,59 +116,59 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
         return acc;
       }, {});
     
-    // Alle Purposes analysieren (1-24)
+    // Analyze all purposes (1-24)
     const enhancedPurposes = [];
     for (let i = 1; i <= 24; i++) {
-      // Purpose-Info aus GVL
+      // Purpose info from GVL
       const purposeInfo = purposes[i.toString()];
       if (!purposeInfo) continue;
       
-      // Darf dieser Vendor diesen Purpose verwenden (laut GVL)?
+      // Is this vendor allowed to use this purpose (according to GVL)?
       const isAllowed = gvlVendor.purposes?.includes(i) || false;
       const isLegitimateInterestAllowed = gvlVendor.legIntPurposes?.includes(i) || false;
       const isFlexiblePurpose = gvlVendor.flexiblePurposes?.includes(i) || false;
       
-      // Hat dieser Vendor Consent/LegInt für diesen Purpose im TCF-String?
+      // Does this vendor have Consent/LegInt for this purpose in the TCF string?
       let purposeHasConsent = false;
       let purposeHasLegitimateInterest = false;
       
-      // Check für Consent (nur relevant, wenn der Vendor generell Consent hat)
+      // Check for Consent (only relevant if the vendor generally has consent)
       if (hasConsent && isAllowed) {
         purposeHasConsent = result.coreData.purposesConsent.includes(i);
       }
       
-      // Check für Legitimate Interest (nur relevant, wenn der Vendor generell LegInt hat)
+      // Check for Legitimate Interest (only relevant if the vendor generally has LegInt)
       if (hasLegitimateInterest && isLegitimateInterestAllowed) {
         purposeHasLegitimateInterest = result.coreData.purposesLITransparency.includes(i);
       }
       
-      // Publisher Restrictions berücksichtigen
+      // Consider publisher restrictions
       const restriction = restrictions[i] || null;
       if (restriction) {
-        // Wenn "Nicht erlaubt", dann Purpose aus beiden Listen entfernen
-        if (restriction === "Nicht erlaubt") {
+        // If "Not allowed", then remove purpose from both lists
+        if (restriction === "Not allowed") {
           purposeHasConsent = false;
           purposeHasLegitimateInterest = false;
         }
-        // Wenn "Zustimmung erforderlich", dann aus Legitimate Interests entfernen
-        else if (restriction === "Zustimmung erforderlich") {
+        // If "Consent required", then remove from Legitimate Interests
+        else if (restriction === "Consent required") {
           purposeHasLegitimateInterest = false;
-          // Bei flexiblen Purposes und Consent: füge Consent hinzu
+          // For flexible purposes with consent: add consent
           if (isFlexiblePurpose && hasConsent && result.coreData.purposesConsent.includes(i)) {
             purposeHasConsent = true;
           }
         }
-        // Wenn "Berechtigtes Interesse erforderlich", dann aus Purpose Consents entfernen
-        else if (restriction === "Berechtigtes Interesse erforderlich") {
+        // If "Legitimate Interest required", then remove from Purpose Consents
+        else if (restriction === "Legitimate Interest required") {
           purposeHasConsent = false;
-          // Bei flexiblen Purposes und LegInt: füge LegInt hinzu
+          // For flexible purposes with LegInt: add LegInt
           if (isFlexiblePurpose && hasLegitimateInterest && result.coreData.purposesLITransparency.includes(i)) {
             purposeHasLegitimateInterest = true;
           }
         }
       }
       
-      // Nur Purposes anzeigen, die für diesen Vendor relevant sind
+      // Only show purposes that are relevant for this vendor
       if (isAllowed || isLegitimateInterestAllowed) {
         enhancedPurposes.push({
           id: i,
@@ -184,13 +184,13 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
       }
     }
     
-    // Special Features analysieren
+    // Analyze Special Features
     const enhancedSpecialFeatures = [];
     for (const featureId of gvlVendor.specialFeatures || []) {
       const featureInfo = specialFeatures[featureId.toString()];
       if (!featureInfo) continue;
       
-      // Hat der User für dieses Special Feature Consent gegeben?
+      // Has the user given consent for this Special Feature?
       const featureHasConsent = result.coreData.specialFeatureOptIns.includes(featureId);
       
       enhancedSpecialFeatures.push({
@@ -202,7 +202,7 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
       });
     }
     
-    // Special Purposes analysieren
+    // Analyze Special Purposes
     const enhancedSpecialPurposes = [];
     for (const purposeId of gvlVendor.specialPurposes || []) {
       const purposeInfo = specialPurposes[purposeId.toString()];
@@ -216,7 +216,7 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
       });
     }
     
-    // Features analysieren
+    // Analyze Features
     const enhancedFeatures = [];
     for (const featureId of gvlVendor.features || []) {
       const featureInfo = features[featureId.toString()];
@@ -230,7 +230,7 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
       });
     }
     
-    // Ergebnisse hinzufügen
+    // Add the vendor to the results
     vendorResults.push({
       id: vendorId,
       name: gvlVendor.name,
@@ -244,9 +244,6 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
     });
   }
   
-  // Nach Vendor-ID sortieren
-  vendorResults.sort((a, b) => a.id - b.id);
-  
   return {
     coreData: result.coreData,
     version: result.version,
@@ -255,7 +252,7 @@ export function analyzeTCFWithGVL(tcfString: string, gvl: GVLData): {
 }
 
 /**
- * Hilfsfunktion zum Filtern von Zwecken nach Status
+ * Filter purposes by status
  */
 export function filterPurposesByStatus(
   purposes: EnhancedVendorResult['purposes'], 
@@ -274,13 +271,13 @@ export function filterPurposesByStatus(
 }
 
 /**
- * Generiert eine zusammenfassende Übersicht der Vendor-Zustimmungen
+ * Generate a summary of vendor consents
  */
 export function generateVendorSummary(vendorResults: EnhancedVendorResult[]): {
   totalVendors: number;
   vendorsWithConsent: number;
   vendorsWithLegitimateInterest: number;
-  purposesWithConsent: { [id: number]: number };  // ID: Anzahl Vendors
+  purposesWithConsent: { [id: number]: number };  // ID: Number of vendors
   purposesWithLegInt: { [id: number]: number };
 } {
   const summary = {
@@ -295,7 +292,7 @@ export function generateVendorSummary(vendorResults: EnhancedVendorResult[]): {
     if (vendor.hasConsent) summary.vendorsWithConsent++;
     if (vendor.hasLegitimateInterest) summary.vendorsWithLegitimateInterest++;
     
-    // Zähle Zwecke mit Zustimmung
+    // Count purposes with consent
     for (const purpose of vendor.purposes) {
       if (purpose.hasConsent) {
         summary.purposesWithConsent[purpose.id] = (summary.purposesWithConsent[purpose.id] || 0) + 1;
@@ -310,17 +307,19 @@ export function generateVendorSummary(vendorResults: EnhancedVendorResult[]): {
 }
 
 /**
- * Prüft, ob ein Vendor Consent für einen bestimmten Zweck hat
+ * Check if a vendor has consent for a specific purpose
  */
 export function vendorHasPurposeConsent(vendor: EnhancedVendorResult, purposeId: number): boolean {
-  const purpose = vendor.purposes.find(p => p.id === purposeId);
-  return purpose ? purpose.hasConsent : false;
+  return vendor.purposes.some(p => 
+    p.id === purposeId && p.hasConsent
+  );
 }
 
 /**
- * Prüft, ob ein Vendor Legitimate Interest für einen bestimmten Zweck hat
+ * Check if a vendor has legitimate interest for a specific purpose
  */
 export function vendorHasPurposeLegitimateInterest(vendor: EnhancedVendorResult, purposeId: number): boolean {
-  const purpose = vendor.purposes.find(p => p.id === purposeId);
-  return purpose ? purpose.hasLegitimateInterest : false;
+  return vendor.purposes.some(p => 
+    p.id === purposeId && p.hasLegitimateInterest
+  );
 } 

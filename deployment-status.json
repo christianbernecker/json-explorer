@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 13:19:49 CEST 2025", "commit": "Vendor-ID-Suche im GVL-Explorer verbessert und Vendor-Details korrigiert"}
+{"deployment": "staging", "timestamp": "Mon May 12 14:07:49 CEST 2025", "commit": "TCF-Decoder: Korrektur der Publisher-Restriction-Verarbeitung für Vendor-Consent"}

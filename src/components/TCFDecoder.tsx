@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { decodeTCFString, purposeNames, generateBitRepresentation } from '../utils/tcf-decoder';
 import { loadGVL, getVendors, GVLData, GVLVendor } from '../utils/gvl-loader';
-import { analyzeTCFWithGVL, EnhancedVendorResult, filterPurposesByStatus } from '../utils/tcf-decoder-enhanced';
+import { analyzeTCFWithGVL, EnhancedVendorResult } from '../utils/tcf-decoder-enhanced';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
 }
 
-// Tabs für die Anzeige
+// Tabs for display
 type ActiveTab = 'decoder' | 'gvl-explorer' | 'vendor-details';
 
-// Filter-Optionen für die Anzeige
+// Filter options for display
 interface VendorFilterOptions {
   onlyWithConsent: boolean;
   onlyWithLegitimateInterest: boolean;
   purposeFilter: number | null;
 }
 
-// Beispiel TCF-String
+// Example TCF string
 const EXAMPLE_TCF_STRING = "CPBZjR9PBZjR9AKAZADEBUCsAP_AAH_AAAqIHWtf_X_fb39j-_59_9t0eY1f9_7_v-0zjhfds-8Nyf_X_L8X42M7vF36pq4KuR4Eu3LBIQFlHOHUTUmw6okVrTPsak2Mr7NKJ7LEinMbe2dYGHtfn91TuZKY7_78_9fz3_-v_v___9f3r-3_3__59X---_e_V399zLv9__34HlAEmGpfABdiWODJtGlUKIEYVhIdAKACigGFoisIHVwU7K4CP0EDABAagIwIgQYgoxYBAAIBAEhEQEgB4IBEARAIAAQAqQEIACNgEFgBYGAQACgGhYgRQBCBIQZHBUcpgQESLRQT2VgCUXexphCGUUAJAAA.YAAAAAAAAAAA";
 
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
-  // State für den Decoder
+  // State for the decoder
   const [tcfString, setTcfString] = useState('');
   const [additionalVendorId, setAdditionalVendorId] = useState<number>(136);
   const [decodedVersion, setDecodedVersion] = useState<string>('');
@@ -31,18 +31,18 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const [showBitRepresentation, setShowBitRepresentation] = useState<boolean>(false);
   const [bitRepresentation, setBitRepresentation] = useState<string>('');
   
-  // State für die GVL und Tabs
+  // State for GVL and tabs
   const [activeTab, setActiveTab] = useState<ActiveTab>('decoder');
   const [gvlData, setGvlData] = useState<GVLData | null>(null);
   const [isLoadingGVL, setIsLoadingGVL] = useState<boolean>(false);
   const [gvlError, setGvlError] = useState<string | null>(null);
   
-  // State für GVL Explorer
+  // State for GVL Explorer
   const [vendorSearchTerm, setVendorSearchTerm] = useState<string>('');
   const [vendorIdFilter, setVendorIdFilter] = useState<string>('');
   const [filteredVendors, setFilteredVendors] = useState<GVLVendor[]>([]);
   
-  // State für erweiterte Funktionen
+  // State for advanced functions
   const [selectedVendor, setSelectedVendor] = useState<EnhancedVendorResult | null>(null);
   const [vendorFilter, setVendorFilter] = useState<VendorFilterOptions>({
     onlyWithConsent: false,
@@ -50,7 +50,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     purposeFilter: null
   });
   
-  // Farbschema basierend auf Dark-Mode
+  // Color scheme based on dark mode
   const bgColor = isDarkMode ? 'bg-slate-800' : 'bg-white';
   const textColor = isDarkMode ? 'text-slate-200' : 'text-slate-800';
   const borderColor = isDarkMode ? 'border-slate-700' : 'border-slate-200';
@@ -69,7 +69,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const tableHeaderBg = isDarkMode ? 'bg-slate-700' : 'bg-gray-100';
   const tableRowBg = isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-50';
   
-  // GVL laden
+  // Load GVL
   useEffect(() => {
     async function fetchGVL() {
       try {
@@ -81,8 +81,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
           updateFilteredVendors(data, vendorSearchTerm, vendorIdFilter);
         }
       } catch (error) {
-        console.error('Fehler beim Laden der GVL:', error);
-        setGvlError(error instanceof Error ? error.message : 'Unbekannter Fehler beim Laden der GVL');
+        console.error('Error loading GVL:', error);
+        setGvlError(error instanceof Error ? error.message : 'Unknown error loading GVL');
       } finally {
         setIsLoadingGVL(false);
       }
@@ -91,14 +91,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     fetchGVL();
   }, [activeTab, vendorSearchTerm, vendorIdFilter]);
   
-  // Gefilterte Vendors aktualisieren
+  // Update filtered vendors
   useEffect(() => {
     if (gvlData) {
       updateFilteredVendors(gvlData, vendorSearchTerm, vendorIdFilter);
     }
   }, [gvlData, vendorSearchTerm, vendorIdFilter]);
   
-  // Filterfunktion für Vendors
+  // Filter function for vendors
   function updateFilteredVendors(data: GVLData, searchTerm: string, idFilter: string) {
     if (!data || !data.vendors) {
       setFilteredVendors([]);
@@ -107,7 +107,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     
     let filtered = getVendors(data);
     
-    // Nach Namen filtern
+    // Filter by name
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(v => 
@@ -115,14 +115,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       );
     }
     
-    // Nach ID filtern
+    // Filter by ID
     if (idFilter) {
       const idNumber = parseInt(idFilter, 10);
       if (!isNaN(idNumber)) {
-        // Suche nach exakter ID
+        // Search for exact ID
         filtered = filtered.filter(v => v.id === idNumber);
       } else {
-        // Fallback auf substring-Vergleich für nicht-numerische Eingaben
+        // Fallback to substring comparison for non-numeric inputs
         filtered = filtered.filter(v => v.id.toString().includes(idFilter));
       }
     }
@@ -130,33 +130,33 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     setFilteredVendors(filtered);
   }
   
-  // Beispiel-TCF-String laden
+  // Load example TCF string
   const loadExample = () => {
     setTcfString(EXAMPLE_TCF_STRING);
   };
 
-  // TCF String verarbeiten
+  // Process TCF string
   const handleDecode = async () => {
     try {
       setDecodeError(null);
       
       if (!tcfString.trim()) {
-        setDecodeError('Bitte geben Sie einen TCF-String ein');
+        setDecodeError('Please enter a TCF string');
         return;
       }
       
-      // String dekodieren
+      // Decode string
       const result = decodeTCFString(tcfString);
       setDecodedVersion(result.version);
       setDecodedData(result.coreData);
       
-      // Bit-Darstellung generieren
+      // Generate bit representation
       const bits = generateBitRepresentation(result.coreData.fullString);
       setBitRepresentation(bits);
       
-      // Erweiterte Analyse mit GVL
+      // Enhanced analysis with GVL
       if (!gvlData) {
-        // Falls GVL noch nicht geladen wurde, laden wir sie jetzt
+        // If GVL not loaded yet, load it now
         setIsLoadingGVL(true);
         try {
           const data = await loadGVL();
@@ -164,27 +164,27 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
           const enhancedResult = analyzeTCFWithGVL(tcfString, data);
           setVendorResults(enhancedResult.vendorResults);
         } catch (error) {
-          console.error('Fehler beim Laden der GVL:', error);
-          setGvlError(error instanceof Error ? error.message : 'Unbekannter Fehler beim Laden der GVL');
+          console.error('Error loading GVL:', error);
+          setGvlError(error instanceof Error ? error.message : 'Unknown error loading GVL');
         } finally {
           setIsLoadingGVL(false);
         }
       } else {
-        // GVL bereits geladen, führe erweiterte Analyse durch
+        // GVL already loaded, perform enhanced analysis
         const enhancedResult = analyzeTCFWithGVL(tcfString, gvlData);
         setVendorResults(enhancedResult.vendorResults);
       }
       
     } catch (error) {
-      console.error('Fehler beim Dekodieren:', error);
-      setDecodeError(error instanceof Error ? error.message : 'Unbekannter Fehler beim Dekodieren');
+      console.error('Error decoding:', error);
+      setDecodeError(error instanceof Error ? error.message : 'Unknown error decoding');
       setDecodedData(null);
       setVendorResults([]);
       setBitRepresentation('');
     }
   };
 
-  // Filter für Vendors nach Consent/LegInt
+  // Filter for vendors by consent/LegInt
   const getFilteredVendorResults = (): EnhancedVendorResult[] => {
     let filtered = [...vendorResults];
     
@@ -208,7 +208,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     return filtered;
   };
 
-  // JSON-Export der Ergebnisse
+  // JSON export of results
   const handleExportJSON = () => {
     if (!decodedData) return;
     
@@ -263,12 +263,12 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     downloadAnchorNode.remove();
   };
 
-  // Tab-Wechsel-Handler
+  // Tab change handler
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
   };
   
-  // Export der GVL als JSON
+  // Export GVL as JSON
   const handleExportGVL = () => {
     if (!gvlData) return;
     
@@ -281,16 +281,21 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     downloadAnchorNode.remove();
   };
   
-  // Vendor Details anzeigen
+  // Show vendor details
   const handleViewVendorDetails = (vendor: EnhancedVendorResult) => {
     setSelectedVendor(vendor);
     setActiveTab('vendor-details');
   };
   
-  // Zurück zur Ergebnis-Übersicht
+  // Back to results overview
   const handleBackToResults = () => {
     setSelectedVendor(null);
     setActiveTab('decoder');
+  };
+
+  // Get specific vendor by ID
+  const getVendorById = (id: number): EnhancedVendorResult | undefined => {
+    return vendorResults.find(v => v.id === id);
   };
 
   return (
@@ -298,11 +303,11 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       <h1 className="text-2xl font-bold mb-4 flex items-center justify-between">
         <span>TCF String Decoder</span>
         <span className={`text-sm font-normal px-2 py-1 rounded ${highlightColor}`}>
-          {decodedVersion ? `Erkannt: TCF v${decodedVersion}` : 'Unterstützt TCF v2.0 & v2.2'}
+          {decodedVersion ? `Detected: TCF v${decodedVersion}` : 'Supports TCF v2.0 & v2.2'}
         </span>
       </h1>
       
-      {/* Tab-Navigation */}
+      {/* Tab navigation */}
       <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
         <button
           className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
@@ -341,13 +346,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       {/* TCF Decoder Tab */}
       {activeTab === 'decoder' && (
         <>
-          {/* Eingabebereich */}
+          {/* Input section */}
           <div className="mb-6">
-            <label htmlFor="tcfInput" className="block font-semibold mb-2">TCF String eingeben:</label>
+            <label htmlFor="tcfInput" className="block font-semibold mb-2">Enter TCF String:</label>
             <textarea 
               id="tcfInput"
               className={`w-full h-24 p-3 rounded-md ${inputBgColor} ${inputBorderColor} border text-sm font-mono mb-4`}
-              placeholder="Fügen Sie Ihren TCF-String hier ein..."
+              placeholder="Paste your TCF string here..."
               value={tcfString}
               onChange={(e) => setTcfString(e.target.value)}
             />
@@ -355,7 +360,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             <div className="flex flex-wrap gap-4 items-center">
               <div>
                 <label htmlFor="vendorIdInput" className="block font-semibold mb-2">
-                  Zusätzliche Vendor ID:
+                  Additional Vendor ID:
                 </label>
                 <input 
                   type="number" 
@@ -372,265 +377,304 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                   onClick={handleDecode}
                   className={`px-4 py-2 ${buttonColor} rounded-md shadow-md hover:shadow-lg transition-all duration-200`}
                 >
-                  TCF String dekodieren
+                  Decode TCF String
                 </button>
                 
                 <button 
                   onClick={loadExample}
                   className={`px-4 py-2 ${secondaryBtnColor} ${secondaryTextColor} rounded-md shadow-md hover:shadow-lg transition-all duration-200 text-sm`}
                 >
-                  Beispiel laden
+                  Load Example
                 </button>
               </div>
             </div>
           </div>
           
-          {/* Fehleranzeige */}
+          {/* Error display */}
           {decodeError && (
             <div className={`p-4 my-4 rounded-md bg-red-100 dark:bg-red-900 ${errorColor}`}>
               <p>{decodeError}</p>
             </div>
           )}
           
-          {/* Ergebnisbereich */}
+          {/* Results section */}
           {decodedData && (
             <div id="results" className={`my-6 p-5 border ${borderColor} rounded-md`}>
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Decodierungs-Ergebnisse</h2>
+                <h2 className="text-xl font-semibold">Decoding Results</h2>
+                
                 <div className="flex space-x-2">
                   <button 
-                    onClick={() => setShowBitRepresentation(!showBitRepresentation)}
-                    className={`px-3 py-1 ${secondaryBtnColor} ${secondaryTextColor} rounded-md text-sm shadow-sm`}
-                  >
-                    {showBitRepresentation ? 'Bits ausblenden' : 'Bits anzeigen'}
-                  </button>
-                  <button 
                     onClick={handleExportJSON}
-                    className={`px-3 py-1 ${exportBtnColor} rounded-md text-sm shadow-sm`}
+                    className={`px-3 py-1 text-sm ${exportBtnColor} rounded shadow`}
                   >
-                    Als JSON exportieren
+                    Export JSON
+                  </button>
+                  
+                  <button 
+                    onClick={() => setShowBitRepresentation(!showBitRepresentation)}
+                    className={`px-3 py-1 text-sm ${secondaryBtnColor} ${secondaryTextColor} rounded shadow`}
+                  >
+                    {showBitRepresentation ? 'Hide Binary' : 'Show Binary'}
                   </button>
                 </div>
               </div>
-              
-              {/* Bit-Darstellung */}
-              {showBitRepresentation && (
-                <div className={`p-3 mb-5 rounded-md overflow-x-auto border ${borderColor}`}>
-                  <h3 className="text-sm font-semibold mb-2">Bit-Darstellung:</h3>
-                  <pre className={`text-xs ${bitTextColor} font-mono whitespace-pre-wrap`}>{bitRepresentation}</pre>
-                </div>
-              )}
-              
-              {/* Allgemeine Informationen */}
-              <div className={`p-4 mb-5 rounded-md ${sectionBgColor}`}>
-                <h3 className="text-lg font-semibold mb-3">Allgemeine Informationen:</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <p><strong>Version:</strong> {decodedVersion}</p>
-                  <p><strong>Erstellt:</strong> {new Date(decodedData.created * 100).toLocaleString()}</p>
-                  <p><strong>Zuletzt aktualisiert:</strong> {new Date(decodedData.lastUpdated * 100).toLocaleString()}</p>
-                  <p><strong>CMP ID:</strong> {decodedData.cmpId}</p>
-                  <p><strong>CMP Version:</strong> {decodedData.cmpVersion}</p>
-                  <p><strong>Consent Screen:</strong> {decodedData.consentScreen}</p>
-                  <p><strong>Consent Language:</strong> {decodedData.consentLanguage}</p>
-                  <p><strong>Vendor List Version:</strong> {decodedData.vendorListVersion}</p>
-                  <p><strong>Policy Version:</strong> {decodedData.policyVersion}</p>
-                  <p><strong>Service-spezifisch:</strong> {decodedData.isServiceSpecific ? 'Ja' : 'Nein'}</p>
-                  {decodedData.purposeOneTreatment !== undefined && (
-                    <p><strong>Purpose One Treatment:</strong> {decodedData.purposeOneTreatment ? 'Ja' : 'Nein'}</p>
-                  )}
-                  {decodedData.publisherCC && (
-                    <p><strong>Publisher Country Code:</strong> {decodedData.publisherCC}</p>
-                  )}
+
+              {/* Key Vendors Section */}
+              <div className="mb-6 p-4 border-b border-gray-300 dark:border-gray-700">
+                <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[136, 137, 44].map(id => {
+                    const vendor = getVendorById(id);
+                    return (
+                      <div key={id} className={`p-3 rounded-lg ${sectionBgColor}`}>
+                        {vendor ? (
+                          <>
+                            <div className="flex justify-between items-center mb-2">
+                              <h4 className="font-bold">{vendor.name}</h4>
+                              <span className="text-sm bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">ID: {vendor.id}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div className={`px-2 py-1 rounded ${vendor.hasConsent ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
+                                Consent: {vendor.hasConsent ? 'Yes' : 'No'}
+                              </div>
+                              <div className={`px-2 py-1 rounded ${vendor.hasLegitimateInterest ? 'bg-green-200 dark:bg-green-900' : 'bg-red-200 dark:bg-red-900'}`}>
+                                Legitimate Interest: {vendor.hasLegitimateInterest ? 'Yes' : 'No'}
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleViewVendorDetails(vendor)}
+                              className="mt-2 w-full text-center text-sm px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded"
+                            >
+                              View Details
+                            </button>
+                          </>
+                        ) : (
+                          <p className="text-center py-4">Vendor {id} not found in results</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               
-              {/* Zusammenfassung der Zwecke */}
-              <div className={`p-4 mb-5 rounded-md ${sectionBgColor}`}>
-                <h3 className="text-lg font-semibold mb-3">Zwecke-Übersicht:</h3>
-                
+              {/* Core metadata */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Core Information</h3>
                 <div className="overflow-x-auto">
-                  <table className={`min-w-full divide-y ${borderColor}`}>
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead>
-                      <tr className={`${tableHeaderBg}`}>
-                        <th className="px-3 py-2 text-left text-xs font-medium">ID</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium">Zweck</th>
-                        <th className="px-3 py-2 text-center text-xs font-medium">Consent</th>
-                        <th className="px-3 py-2 text-center text-xs font-medium">Leg. Interest</th>
+                      <tr className={tableHeaderBg}>
+                        <th className="px-4 py-2 text-left">Field</th>
+                        <th className="px-4 py-2 text-left">Value</th>
                       </tr>
                     </thead>
-                    <tbody className={`divide-y ${borderColor}`}>
-                      {purposeNames.map((purpose, index) => (
-                        <tr key={`purpose-${index + 1}`} className={`${tableRowBg}`}>
-                          <td className="px-3 py-2 text-sm">{index + 1}</td>
-                          <td className="px-3 py-2 text-sm">{purpose}</td>
-                          <td className="px-3 py-2 text-center">
-                            <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full 
-                              ${decodedData.purposesConsent.includes(index + 1) 
-                                ? 'bg-green-500 text-white' 
-                                : 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200'}`}>
-                              {decodedData.purposesConsent.includes(index + 1) ? '✓' : '✕'}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 text-center">
-                            <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full 
-                              ${decodedData.purposesLITransparency.includes(index + 1) 
-                                ? 'bg-blue-500 text-white' 
-                                : 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200'}`}>
-                              {decodedData.purposesLITransparency.includes(index + 1) ? '✓' : '✕'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      <tr className={tableRowBg}>
+                        <td className="px-4 py-2 font-medium">Version</td>
+                        <td className="px-4 py-2">{decodedVersion}</td>
+                      </tr>
+                      <tr className={tableRowBg}>
+                        <td className="px-4 py-2 font-medium">Created</td>
+                        <td className="px-4 py-2">{new Date(decodedData.created * 100).toLocaleString()}</td>
+                      </tr>
+                      <tr className={tableRowBg}>
+                        <td className="px-4 py-2 font-medium">Last Updated</td>
+                        <td className="px-4 py-2">{new Date(decodedData.lastUpdated * 100).toLocaleString()}</td>
+                      </tr>
+                      <tr className={tableRowBg}>
+                        <td className="px-4 py-2 font-medium">CMP ID</td>
+                        <td className="px-4 py-2">{decodedData.cmpId}</td>
+                      </tr>
+                      <tr className={tableRowBg}>
+                        <td className="px-4 py-2 font-medium">CMP Version</td>
+                        <td className="px-4 py-2">{decodedData.cmpVersion}</td>
+                      </tr>
+                      <tr className={tableRowBg}>
+                        <td className="px-4 py-2 font-medium">Consent Screen</td>
+                        <td className="px-4 py-2">{decodedData.consentScreen}</td>
+                      </tr>
+                      <tr className={tableRowBg}>
+                        <td className="px-4 py-2 font-medium">Consent Language</td>
+                        <td className="px-4 py-2">{decodedData.consentLanguage}</td>
+                      </tr>
+                      <tr className={tableRowBg}>
+                        <td className="px-4 py-2 font-medium">Vendor List Version</td>
+                        <td className="px-4 py-2">{decodedData.vendorListVersion}</td>
+                      </tr>
+                      <tr className={tableRowBg}>
+                        <td className="px-4 py-2 font-medium">Policy Version</td>
+                        <td className="px-4 py-2">{decodedData.policyVersion}</td>
+                      </tr>
+                      {decodedVersion === '2.2' && (
+                        <>
+                          <tr className={tableRowBg}>
+                            <td className="px-4 py-2 font-medium">Purpose One Treatment</td>
+                            <td className="px-4 py-2">{decodedData.purposeOneTreatment ? 'Yes' : 'No'}</td>
+                          </tr>
+                          <tr className={tableRowBg}>
+                            <td className="px-4 py-2 font-medium">Publisher Country Code</td>
+                            <td className="px-4 py-2">{decodedData.publisherCC}</td>
+                          </tr>
+                        </>
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
               
-              {/* Vendor-Filter */}
-              <div className={`p-4 mb-5 rounded-md ${sectionBgColor}`}>
-                <h3 className="text-lg font-semibold mb-3">Vendor-Filter:</h3>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      id="consentFilter" 
-                      checked={vendorFilter.onlyWithConsent}
-                      onChange={() => setVendorFilter({
-                        ...vendorFilter,
-                        onlyWithConsent: !vendorFilter.onlyWithConsent
-                      })}
-                      className="mr-2"
-                    />
-                    <label htmlFor="consentFilter">Nur Vendors mit Consent</label>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <input 
-                      type="checkbox" 
-                      id="legIntFilter" 
-                      checked={vendorFilter.onlyWithLegitimateInterest}
-                      onChange={() => setVendorFilter({
-                        ...vendorFilter,
-                        onlyWithLegitimateInterest: !vendorFilter.onlyWithLegitimateInterest
-                      })}
-                      className="mr-2"
-                    />
-                    <label htmlFor="legIntFilter">Nur Vendors mit Legitimate Interest</label>
+              {/* Consent details */}
+              <div className="my-6">
+                <h3 className="text-lg font-semibold mb-3">Consent Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-3">Purpose Consents</h4>
+                    <ul className="space-y-1 text-sm">
+                      {decodedData.purposesConsent.length === 0 ? (
+                        <li className="p-2 bg-red-100 dark:bg-red-900 rounded">No purpose consents given</li>
+                      ) : (
+                        decodedData.purposesConsent.map((p: number) => (
+                          <li key={`consent-${p}`} className="p-2 bg-green-100 dark:bg-green-900 rounded">
+                            {p}. {purposeNames[p-1] || `Purpose ${p}`}
+                          </li>
+                        ))
+                      )}
+                    </ul>
                   </div>
                   
                   <div>
-                    <label htmlFor="purposeFilter" className="block text-sm mb-1">Filter nach Zweck:</label>
-                    <select 
-                      id="purposeFilter"
-                      value={vendorFilter.purposeFilter || ''}
-                      onChange={(e) => setVendorFilter({
-                        ...vendorFilter,
-                        purposeFilter: e.target.value ? Number(e.target.value) : null
-                      })}
-                      className={`p-2 rounded-md ${inputBgColor} ${inputBorderColor} border text-sm`}
-                    >
-                      <option value="">Alle Zwecke</option>
-                      {purposeNames.map((purpose, index) => (
-                        <option key={`purpose-filter-${index + 1}`} value={index + 1}>
-                          Zweck {index + 1}: {purpose}
-                        </option>
-                      ))}
-                    </select>
+                    <h4 className="font-semibold mb-3">Legitimate Interests</h4>
+                    <ul className="space-y-1 text-sm">
+                      {decodedData.purposesLITransparency.length === 0 ? (
+                        <li className="p-2 bg-red-100 dark:bg-red-900 rounded">No legitimate interests declared</li>
+                      ) : (
+                        decodedData.purposesLITransparency.map((p: number) => (
+                          <li key={`li-${p}`} className="p-2 bg-blue-100 dark:bg-blue-900 rounded">
+                            {p}. {purposeNames[p-1] || `Purpose ${p}`}
+                          </li>
+                        ))
+                      )}
+                    </ul>
                   </div>
                 </div>
               </div>
               
-              {/* Vendor-Übersicht */}
-              <h3 className="text-lg font-semibold mb-3">Vendors ({getFilteredVendorResults().length} von {vendorResults.length}):</h3>
+              {/* Special Features */}
+              <div className="my-6">
+                <h3 className="text-lg font-semibold mb-3">Special Features</h3>
+                <div>
+                  {decodedData.specialFeatureOptIns.length === 0 ? (
+                    <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded">
+                      No special features opted in
+                    </div>
+                  ) : (
+                    <ul className="space-y-1 text-sm">
+                      {decodedData.specialFeatureOptIns.map((f: number) => (
+                        <li key={`feature-${f}`} className="p-2 bg-purple-100 dark:bg-purple-900 rounded">
+                          Special Feature {f}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
               
-              <div className="overflow-x-auto">
-                <table className={`min-w-full divide-y ${borderColor}`}>
-                  <thead>
-                    <tr className={`${tableHeaderBg}`}>
-                      <th className="px-3 py-2 text-left text-xs font-medium">ID</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium">Name</th>
-                      <th className="px-3 py-2 text-center text-xs font-medium">Consent</th>
-                      <th className="px-3 py-2 text-center text-xs font-medium">Leg. Interest</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium">Zwecke mit Consent</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium">Zwecke mit Leg. Int.</th>
-                      <th className="px-3 py-2 text-center text-xs font-medium">Details</th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${borderColor}`}>
-                    {getFilteredVendorResults().map((vendor) => (
-                      <tr key={`vendor-${vendor.id}`} className={`${tableRowBg}`}>
-                        <td className="px-3 py-2 text-sm">{vendor.id}</td>
-                        <td className="px-3 py-2 text-sm font-medium">
-                          {vendor.name}
-                          {vendor.policyUrl && (
-                            <a 
-                              href={vendor.policyUrl} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
-                              className="ml-2 text-blue-500 hover:underline text-xs"
-                            >
-                              Policy
-                            </a>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-center">
-                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full 
-                            ${vendor.hasConsent 
-                              ? 'bg-green-500 text-white' 
-                              : 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200'}`}>
-                            {vendor.hasConsent ? '✓' : '✕'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-center">
-                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full 
-                            ${vendor.hasLegitimateInterest 
-                              ? 'bg-blue-500 text-white' 
-                              : 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200'}`}>
-                            {vendor.hasLegitimateInterest ? '✓' : '✕'}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-sm">
-                          {filterPurposesByStatus(vendor.purposes, 'consent').length > 0 
-                            ? filterPurposesByStatus(vendor.purposes, 'consent')
-                                .map(p => p.id)
-                                .join(', ')
-                            : '-'
-                          }
-                        </td>
-                        <td className="px-3 py-2 text-sm">
-                          {filterPurposesByStatus(vendor.purposes, 'legitimate').length > 0 
-                            ? filterPurposesByStatus(vendor.purposes, 'legitimate')
-                                .map(p => p.id)
-                                .join(', ')
-                            : '-'
-                          }
-                        </td>
-                        <td className="px-3 py-2 text-center">
-                          <button
-                            onClick={() => handleViewVendorDetails(vendor)}
-                            className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                          >
-                            Details
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Vendors */}
+              <div className="my-6">
+                <h3 className="text-lg font-semibold mb-3">Vendor Analysis</h3>
                 
-                {getFilteredVendorResults().length === 0 && (
-                  <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                    Keine Vendors mit den ausgewählten Filterkriterien gefunden.
+                {isLoadingGVL ? (
+                  <div className="p-4 text-center">
+                    Loading Global Vendor List...
                   </div>
+                ) : gvlError ? (
+                  <div className={`p-4 my-4 rounded-md bg-red-100 dark:bg-red-900 ${errorColor}`}>
+                    <p>Error loading GVL: {gvlError}</p>
+                    <p className="mt-2">Note: Basic vendor info is still available</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Filter controls */}
+                    <div className="mb-4 flex flex-wrap gap-3">
+                      <div className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          id="consentFilter"
+                          checked={vendorFilter.onlyWithConsent}
+                          onChange={e => setVendorFilter({...vendorFilter, onlyWithConsent: e.target.checked})}
+                          className="mr-2"
+                        />
+                        <label htmlFor="consentFilter">Show only vendors with consent</label>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <input 
+                          type="checkbox" 
+                          id="legIntFilter"
+                          checked={vendorFilter.onlyWithLegitimateInterest}
+                          onChange={e => setVendorFilter({...vendorFilter, onlyWithLegitimateInterest: e.target.checked})}
+                          className="mr-2"
+                        />
+                        <label htmlFor="legIntFilter">Show only vendors with legitimate interest</label>
+                      </div>
+                    </div>
+                    
+                    {/* Vendor list */}
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead>
+                          <tr className={tableHeaderBg}>
+                            <th className="px-4 py-2 text-left">ID</th>
+                            <th className="px-4 py-2 text-left">Name</th>
+                            <th className="px-4 py-2 text-center">Consent</th>
+                            <th className="px-4 py-2 text-center">Legitimate Interest</th>
+                            <th className="px-4 py-2 text-center">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                          {getFilteredVendorResults().map(vendor => (
+                            <tr key={vendor.id} className={tableRowBg}>
+                              <td className="px-4 py-2">{vendor.id}</td>
+                              <td className="px-4 py-2">{vendor.name}</td>
+                              <td className="px-4 py-2 text-center">
+                                <span className={`inline-block w-4 h-4 rounded-full ${vendor.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                <span className={`inline-block w-4 h-4 rounded-full ${vendor.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                              </td>
+                              <td className="px-4 py-2 text-center">
+                                <button 
+                                  onClick={() => handleViewVendorDetails(vendor)}
+                                  className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                                >
+                                  Details
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
+              
+              {/* Bit representation */}
+              {showBitRepresentation && (
+                <div className="my-6 p-4 bg-gray-100 dark:bg-gray-800 rounded-md">
+                  <h3 className="text-lg font-semibold mb-3">Binary Representation</h3>
+                  <div className={`font-mono text-xs whitespace-pre-wrap ${bitTextColor}`}>
+                    {bitRepresentation}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
           {!decodedData && !decodeError && (
             <div className={`p-4 border ${borderColor} rounded-md mt-6`}>
               <p className="text-center text-gray-500 dark:text-gray-400">
-                Ergebnisse werden hier angezeigt...
+                Results will be displayed here...
               </p>
             </div>
           )}
@@ -639,148 +683,261 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       
       {/* GVL Explorer Tab */}
       {activeTab === 'gvl-explorer' && (
-        <div className="gvl-explorer">
-          {isLoadingGVL ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <span className="ml-2">Lade Global Vendor List...</span>
-            </div>
-          ) : gvlError ? (
-            <div className={`p-4 my-4 rounded-md bg-red-100 dark:bg-red-900 ${errorColor}`}>
-              <p>{gvlError}</p>
-              <button 
-                onClick={() => window.location.reload()}
-                className={`mt-2 px-3 py-1 ${buttonColor} rounded-md text-sm`}
-              >
-                Erneut versuchen
-              </button>
-            </div>
-          ) : gvlData ? (
-            <>
-              <div className="flex flex-wrap justify-between items-center mb-4">
-                <div>
-                  <h2 className="text-xl font-semibold">Global Vendor List</h2>
-                  <p className="text-sm">
-                    GVL Version: {gvlData.vendorListVersion} | 
-                    Zuletzt aktualisiert: {new Date(gvlData.lastUpdated).toLocaleDateString()} | 
-                    {gvlData.vendors && Object.keys(gvlData.vendors).length} Vendors
-                  </p>
-                </div>
-                <button 
-                  onClick={handleExportGVL}
-                  className={`px-3 py-1 ${exportBtnColor} rounded-md text-sm shadow-sm`}
-                >
-                  GVL als JSON exportieren
-                </button>
+        <>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-4">Global Vendor List Explorer</h2>
+            
+            {isLoadingGVL ? (
+              <div className="p-4 text-center">
+                Loading Global Vendor List...
               </div>
-              
-              {/* Filter-Optionen */}
-              <div className="mb-4 flex flex-wrap gap-4">
-                <div className="flex-1 min-w-[250px]">
-                  <label htmlFor="vendorSearch" className="block text-sm font-medium mb-1">Vendor-Name suchen:</label>
-                  <input
-                    type="text"
-                    id="vendorSearch"
-                    className={`w-full p-2 rounded-md ${inputBgColor} ${inputBorderColor} border`}
-                    placeholder="Google, Criteo, etc."
-                    value={vendorSearchTerm}
-                    onChange={(e) => setVendorSearchTerm(e.target.value)}
-                  />
-                </div>
-                <div className="w-32">
-                  <label htmlFor="vendorIdFilter" className="block text-sm font-medium mb-1">Vendor-ID:</label>
-                  <input
-                    type="text"
-                    id="vendorIdFilter"
-                    className={`w-full p-2 rounded-md ${inputBgColor} ${inputBorderColor} border`}
-                    placeholder="z.B. 136"
-                    value={vendorIdFilter}
-                    onChange={(e) => setVendorIdFilter(e.target.value)}
-                  />
-                </div>
+            ) : gvlError ? (
+              <div className={`p-4 my-4 rounded-md bg-red-100 dark:bg-red-900 ${errorColor}`}>
+                <p>Error loading GVL: {gvlError}</p>
               </div>
-              
-              {/* Vendor-Tabelle */}
-              <div className={`border ${borderColor} rounded-md overflow-x-auto`}>
+            ) : (
+              <>
+                <div className="mb-4 flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/2">
+                    <label htmlFor="vendorSearch" className="block font-semibold mb-2">Search by name:</label>
+                    <input 
+                      type="text" 
+                      id="vendorSearch"
+                      value={vendorSearchTerm}
+                      onChange={(e) => setVendorSearchTerm(e.target.value)}
+                      placeholder="Search vendors..."
+                      className={`w-full p-2 rounded-md ${inputBgColor} ${inputBorderColor} border`}
+                    />
+                  </div>
+                  
+                  <div className="w-full md:w-1/2">
+                    <label htmlFor="vendorIdSearch" className="block font-semibold mb-2">Search by ID:</label>
+                    <input 
+                      type="text" 
+                      id="vendorIdSearch"
+                      value={vendorIdFilter}
+                      onChange={(e) => setVendorIdFilter(e.target.value)}
+                      placeholder="Vendor ID..."
+                      className={`w-full p-2 rounded-md ${inputBgColor} ${inputBorderColor} border`}
+                    />
+                  </div>
+                </div>
+                
+                <div className="mt-4 mb-2 flex justify-between items-center">
+                  <div>
+                    <span className="font-semibold">{filteredVendors.length}</span> vendors found
+                    {gvlData && <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">(Total: {getVendors(gvlData).length})</span>}
+                  </div>
+                  
+                  <button 
+                    onClick={handleExportGVL}
+                    className={`px-3 py-1 text-sm ${exportBtnColor} rounded shadow`}
+                  >
+                    Export GVL
+                  </button>
+                </div>
+                
+                <div className="overflow-x-auto mt-4">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                      <tr className={tableHeaderBg}>
+                        <th className="px-4 py-2 text-left">ID</th>
+                        <th className="px-4 py-2 text-left">Name</th>
+                        <th className="px-4 py-2 text-left">Purposes</th>
+                        <th className="px-4 py-2 text-left">LegInt Purposes</th>
+                        <th className="px-4 py-2 text-left">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {filteredVendors.map(vendor => (
+                        <tr key={vendor.id} className={tableRowBg}>
+                          <td className="px-4 py-2">{vendor.id}</td>
+                          <td className="px-4 py-2">{vendor.name}</td>
+                          <td className="px-4 py-2">
+                            {vendor.purposes?.length ? vendor.purposes.join(', ') : '-'}
+                          </td>
+                          <td className="px-4 py-2">
+                            {vendor.legIntPurposes?.length ? vendor.legIntPurposes.join(', ') : '-'}
+                          </td>
+                          <td className="px-4 py-2">
+                            <a 
+                              href={vendor.policyUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+                            >
+                              Privacy Policy
+                            </a>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+      
+      {/* Vendor Details Tab */}
+      {activeTab === 'vendor-details' && selectedVendor && (
+        <div className="mb-6">
+          <div className="flex items-center mb-4">
+            <button
+              onClick={handleBackToResults}
+              className={`mr-3 px-3 py-1 ${secondaryBtnColor} ${secondaryTextColor} rounded-md shadow-sm`}
+            >
+              ← Back
+            </button>
+            <h2 className="text-xl font-semibold">{selectedVendor.name} (ID: {selectedVendor.id})</h2>
+          </div>
+          
+          <div className="flex gap-4 mb-4">
+            <div className={`inline-block px-3 py-1 rounded-full ${selectedVendor.hasConsent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+              Consent: {selectedVendor.hasConsent ? 'Yes' : 'No'}
+            </div>
+            
+            <div className={`inline-block px-3 py-1 rounded-full ${selectedVendor.hasLegitimateInterest ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+              Legitimate Interest: {selectedVendor.hasLegitimateInterest ? 'Yes' : 'No'}
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <p><strong>ID:</strong> {selectedVendor.id}</p>
+              <p><strong>Name:</strong> {selectedVendor.name}</p>
+              <p><strong>Policy URL:</strong> {selectedVendor.policyUrl}</p>
+              <p><strong>Consent:</strong> {selectedVendor.hasConsent ? 'Yes' : 'No'}</p>
+              <p><strong>Legitimate Interest:</strong> {selectedVendor.hasLegitimateInterest ? 'Yes' : 'No'}</p>
+              <p><strong>Purposes:</strong> {selectedVendor.purposes.map(p => p.name).join(', ')}</p>
+              <p><strong>Special Features:</strong> {selectedVendor.specialFeatures.map(f => f.name).join(', ')}</p>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-3">Purposes</h3>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead>
+                  <tr className={tableHeaderBg}>
+                    <th className="px-4 py-2 text-left">ID</th>
+                    <th className="px-4 py-2 text-left">Name</th>
+                    <th className="px-4 py-2 text-center">Consent</th>
+                    <th className="px-4 py-2 text-center">LegInt</th>
+                    <th className="px-4 py-2 text-center">Allowed</th>
+                    <th className="px-4 py-2 text-center">LegInt Allowed</th>
+                    <th className="px-4 py-2 text-center">Flexible</th>
+                    <th className="px-4 py-2 text-left">Restriction</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {selectedVendor.purposes.map(purpose => (
+                    <tr key={purpose.id} className={tableRowBg}>
+                      <td className="px-4 py-2">{purpose.id}</td>
+                      <td className="px-4 py-2">{purpose.name}</td>
+                      <td className="px-4 py-2 text-center">
+                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.hasLegitimateInterest ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.isAllowed ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.isLegitimateInterestAllowed ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <span className={`inline-block w-4 h-4 rounded-full ${purpose.isFlexiblePurpose ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      </td>
+                      <td className="px-4 py-2">{purpose.restriction || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-3">Special Features</h3>
+            {selectedVendor.specialFeatures.length === 0 ? (
+              <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded">
+                No special features
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className={`${tableHeaderBg}`}>
-                    <tr>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">ID</th>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Name</th>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Purposes</th>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Leg.Int.</th>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Special Features</th>
-                      <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider">Policy</th>
+                  <thead>
+                    <tr className={tableHeaderBg}>
+                      <th className="px-4 py-2 text-left">ID</th>
+                      <th className="px-4 py-2 text-left">Name</th>
+                      <th className="px-4 py-2 text-center">Has Consent</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {filteredVendors.map((vendor) => (
-                      <tr key={vendor.id} className={`${tableRowBg}`}>
-                        <td className="px-3 py-2 whitespace-nowrap text-sm">{vendor.id}</td>
-                        <td className="px-3 py-2 whitespace-nowrap text-sm font-medium">{vendor.name}</td>
-                        <td className="px-3 py-2 text-sm">
-                          {vendor.purposes.length > 0 ? vendor.purposes.join(', ') : '-'}
-                        </td>
-                        <td className="px-3 py-2 text-sm">
-                          {vendor.legIntPurposes.length > 0 ? vendor.legIntPurposes.join(', ') : '-'}
-                        </td>
-                        <td className="px-3 py-2 text-sm">
-                          {vendor.specialFeatures.length > 0 ? vendor.specialFeatures.join(', ') : '-'}
-                        </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-sm">
-                          <a 
-                            href={vendor.policyUrl} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            Richtlinie
-                          </a>
+                    {selectedVendor.specialFeatures.map(feature => (
+                      <tr key={feature.id} className={tableRowBg}>
+                        <td className="px-4 py-2">{feature.id}</td>
+                        <td className="px-4 py-2">{feature.name}</td>
+                        <td className="px-4 py-2 text-center">
+                          <span className={`inline-block w-4 h-4 rounded-full ${feature.hasConsent ? 'bg-green-500' : 'bg-red-500'}`}></span>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                
-                {filteredVendors.length === 0 && (
-                  <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                    Keine Vendors gefunden.
-                  </div>
-                )}
               </div>
-            </>
-          ) : null}
-        </div>
-      )}
-      
-      {/* Vendor Details Tab */}
-      {activeTab === 'vendor-details' && (
-        <div className="vendor-details">
-          {selectedVendor ? (
-            <>
-              <h2 className="text-xl font-semibold mb-4">Vendor Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <p><strong>ID:</strong> {selectedVendor.id}</p>
-                <p><strong>Name:</strong> {selectedVendor.name}</p>
-                <p><strong>Policy URL:</strong> {selectedVendor.policyUrl}</p>
-                <p><strong>Consent:</strong> {selectedVendor.hasConsent ? 'Ja' : 'Nein'}</p>
-                <p><strong>Legitimate Interest:</strong> {selectedVendor.hasLegitimateInterest ? 'Ja' : 'Nein'}</p>
-                <p><strong>Purposes:</strong> {selectedVendor.purposes.map(p => p.name).join(', ')}</p>
-                <p><strong>Special Features:</strong> {selectedVendor.specialFeatures.map(f => f.name).join(', ')}</p>
+            )}
+          </div>
+          
+          {selectedVendor.specialPurposes && selectedVendor.specialPurposes.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">Special Purposes</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead>
+                    <tr className={tableHeaderBg}>
+                      <th className="px-4 py-2 text-left">ID</th>
+                      <th className="px-4 py-2 text-left">Name</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {selectedVendor.specialPurposes.map(purpose => (
+                      <tr key={purpose.id} className={tableRowBg}>
+                        <td className="px-4 py-2">{purpose.id}</td>
+                        <td className="px-4 py-2">{purpose.name}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="mt-4">
-                <button 
-                  onClick={handleBackToResults}
-                  className={`px-4 py-2 ${buttonColor} rounded-md text-sm`}
-                >
-                  Zurück zur Ergebnis-Übersicht
-                </button>
+            </div>
+          )}
+          
+          {selectedVendor.features && selectedVendor.features.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-3">Features</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead>
+                    <tr className={tableHeaderBg}>
+                      <th className="px-4 py-2 text-left">ID</th>
+                      <th className="px-4 py-2 text-left">Name</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {selectedVendor.features.map(feature => (
+                      <tr key={feature.id} className={tableRowBg}>
+                        <td className="px-4 py-2">{feature.id}</td>
+                        <td className="px-4 py-2">{feature.name}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </>
-          ) : (
-            <p className="text-center text-gray-500 dark:text-gray-400">
-              Kein Vendor ausgewählt.
-            </p>
+            </div>
           )}
         </div>
       )}

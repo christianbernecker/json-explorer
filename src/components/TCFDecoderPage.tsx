@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import TCFDecoder from './TCFDecoder';
 import { Helmet } from 'react-helmet-async';
+import AppHeader from './AppHeader';
 
-// URL-Parameter für direktes Dekodieren
+// URL parameter for direct decoding
 interface TCFDecoderPageProps {
   location?: {
     search?: string;
@@ -12,14 +13,14 @@ interface TCFDecoderPageProps {
 }
 
 const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, toggleDarkMode }) => {
-  // Wenn eine String-URL übergeben wurde, automatisch dekodieren
+  // Auto-decode if string is passed in URL
   useEffect(() => {
     if (location?.search) {
       const params = new URLSearchParams(location.search);
       const tcString = params.get('tcString');
       
       if (tcString) {
-        // Hier könnte man den String automatisch in den Decoder laden
+        // Here you could automatically load the string into the decoder
         console.log('Auto-decode:', tcString);
         // TODO: Implement auto-decode
       }
@@ -36,9 +37,17 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         />
       </Helmet>
       
+      <AppHeader 
+        isDarkMode={isDarkMode} 
+        toggleDarkMode={toggleDarkMode}
+        activeTab="tcf-decoder"
+      />
+      
+      <div className="h-20"></div>
+      
       <h1 className="text-3xl font-bold mb-2 dark:text-white">TCF Consent String Decoder</h1>
       <p className="mb-6 text-gray-600 dark:text-gray-300">
-        Dekodieren und Analysieren von IAB TCF Consent Strings (v2.0 und v2.2). Zeigt Vendor-Consents, Zwecke, berechtigte Interessen und mehr.
+        Decode and analyze IAB TCF Consent Strings (v2.0 and v2.2). Shows vendor consents, purposes, legitimate interests and more.
       </p>
       
       <TCFDecoder isDarkMode={isDarkMode} />
