@@ -598,10 +598,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
                 <div className="grid grid-cols-1 gap-4">
                   {[136, 137, 44].map((id: number) => {
-                    // Vendor-Consent prüfen mit korrekter Methode
-                    const hasVendorConsent = decodedData?.vendors?.vendorConsents?.has?.(id) || false;
+                    // Vendor-Consent prüfen mit korrekter Methode - WICHTIG: Verwende isSet() statt has()
+                    const hasVendorConsent = decodedData?.vendors?.vendorConsents?.isSet?.(id) || false;
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const hasVendorLI = decodedData?.vendors?.vendorLegitimateInterests?.has?.(id) || false;
+                    const hasVendorLI = decodedData?.vendors?.vendorLegitimateInterests?.isSet?.(id) || false;
                     
                     // Anzeige des Namens und des Consent-Status
                     const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
@@ -858,9 +858,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                           const vendorId = parseInt(vendorIdStr, 10);
                           const vendor = decodedData.gvl.vendors[vendorId];
                           
-                          // Korrektur: Verwende .has() statt .isSet()
-                          const hasConsent = decodedData?.vendors?.vendorConsents?.has?.(vendorId) || false;
-                          const hasLegitimateInterest = decodedData?.vendors?.vendorLegitimateInterests?.has?.(vendorId) || false;
+                          // Korrektur: Verwende .isSet() statt .has()
+                          const hasConsent = decodedData?.vendors?.vendorConsents?.isSet?.(vendorId) || false;
+                          const hasLegitimateInterest = decodedData?.vendors?.vendorLegitimateInterests?.isSet?.(vendorId) || false;
                           
                           // Korrekte Berechnung der Purpose-Anzahl - zähle wirklich nur die Purposes, 
                           // die der Vendor registriert hat
