@@ -592,6 +592,9 @@ export function decodeTCStringIAB(tcString: string) {
     // Dekodieren mit der offiziellen IAB-Library
     const decoded = TCString.decode(tcString);
     
+    // DEBUG LOG: Prüfe Vendor Consent direkt nach dem Dekodieren
+    console.log('DEBUG: Decoded Vendor Consents for 136:', decoded.vendorConsents?.has?.(136));
+    
     // Ergebnisse für die Key-Vendors extrahieren
     const vendorResults = DEFAULT_VENDORS.map(vendorId => {
       const hasConsent = Boolean(decoded.vendorConsents?.has?.(vendorId));
@@ -624,6 +627,9 @@ export function decodeTCStringIAB(tcString: string) {
       };
     });
     
+    // DEBUG LOG: Gib die berechneten Vendor Results aus
+    console.log('DEBUG: Calculated Vendor Results:', vendorResults);
+
     // Vendor Consent Liste erstellen
     const vendorConsent: number[] = [];
     if (decoded.vendorConsents) {

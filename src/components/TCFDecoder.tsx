@@ -72,7 +72,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const tabInactiveBg = isDarkMode ? 'bg-gray-700' : 'bg-gray-200';
   const tableHeaderBg = isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-800';
   const tableRowBg = isDarkMode ? 'bg-gray-900' : 'bg-white';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const tableLightRowBg = isDarkMode ? 'bg-gray-800' : 'bg-white';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const tableDarkRowBg = isDarkMode ? 'bg-gray-900' : 'bg-gray-50';
   
   // Load GVL
@@ -150,6 +152,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       // Neue IAB-Implementierung
       const tcModel = decodeTCStringIAB(tcfString);
       
+      // DEBUG LOG: Gib das empfangene tcModel aus
+      console.log('DEBUG: Received tcModel from decodeTCStringIAB:', tcModel);
+      
       // Prüfe, ob das Decodieren erfolgreich war
       if (!tcModel) {
         setDecodeError('Failed to decode TCF string. The string may be invalid or corrupted.');
@@ -171,6 +176,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
         // Verwende die vorhandenen Vendor-Ergebnisse
         vendorResults: tcModel.vendorResults || []
       };
+      
+      // DEBUG LOG: Gib das processierte Model vor dem Setzen des States aus
+      console.log('DEBUG: Processed Model for State:', processedModel);
       
       // Statt Probleme mit Typen zu haben, verwenden wir die originalen Referenzen
       // auf die Daten der IAB-Library
@@ -598,10 +606,11 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
                 <div className="grid grid-cols-1 gap-4">
                   {[136, 137, 44].map((id: number) => {
-                    // Vendor-Consent prüfen mit korrekter Methode - WICHTIG: Verwende isSet() statt has()
-                    const hasVendorConsent = decodedData?.vendors?.vendorConsents?.isSet?.(id) || false;
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const hasVendorLI = decodedData?.vendors?.vendorLegitimateInterests?.isSet?.(id) || false;
+                    const vendorEntry = decodedData?.vendorResults?.find((v: any) => v.id === id);
+                    const hasVendorConsent = vendorEntry?.info?.hasConsent || false;
+                    
+                    // DEBUG LOG: Gib den Consent-Status für jeden Key Vendor aus
+                    console.log(`DEBUG: Key Vendor ${id}, Consent: ${hasVendorConsent}, Entry:`, vendorEntry);
                     
                     // Anzeige des Namens und des Consent-Status
                     const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
@@ -635,7 +644,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       // Prüfen, ob der Vendor den LegInt Purpose unterstützt UND der Nutzer global LegInt gegeben hat
                       decodedData?.purposeLegitimateInterests?.includes(purposeId) &&
                       // Prüfen, ob der Vendor Legitimate Interest hat
-                      hasVendorLI
+                      hasVendorConsent
                     );
                     
                     const specialFeaturesOptIn = vendorSpecialFeatures.filter((featureId: number) => 
@@ -726,53 +735,54 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Version</td>
-                        <td className="px-4 py-2">{decodedVersion}</td>
+                        <td className="px-4 py-2">{decodedData.version || 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Created</td>
                         <td className="px-4 py-2">
-                          {decodedData.created ? new Date(decodedData.created).toLocaleString() : 'N/A'}
+                          {decodedData.coreData?.created ? new Date(decodedData.coreData.created).toLocaleString() : 'N/A'}
                         </td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Last Updated</td>
                         <td className="px-4 py-2">
-                          {decodedData.lastUpdated ? new Date(decodedData.lastUpdated).toLocaleString() : 'N/A'}
+                          {decodedData.coreData?.lastUpdated ? new Date(decodedData.coreData.lastUpdated).toLocaleString() : 'N/A'}
                         </td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">CMP ID</td>
-                        <td className="px-4 py-2">{decodedData.cmpId}</td>
+                        <td className="px-4 py-2">{decodedData.coreData?.cmpId ?? 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">CMP Version</td>
-                        <td className="px-4 py-2">{decodedData.cmpVersion}</td>
+                        <td className="px-4 py-2">{decodedData.coreData?.cmpVersion ?? 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Consent Screen</td>
-                        <td className="px-4 py-2">{decodedData.consentScreen}</td>
+                        <td className="px-4 py-2">{decodedData.coreData?.consentScreen ?? 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Consent Language</td>
-                        <td className="px-4 py-2">{decodedData.consentLanguage}</td>
+                        <td className="px-4 py-2">{decodedData.coreData?.consentLanguage || 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Vendor List Version</td>
-                        <td className="px-4 py-2">{decodedData.vendorListVersion}</td>
+                        <td className="px-4 py-2">{decodedData.coreData?.vendorListVersion ?? 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Policy Version</td>
-                        <td className="px-4 py-2">{decodedData.policyVersion}</td>
+                        <td className="px-4 py-2">{decodedData.coreData?.policyVersion ?? 'N/A'}</td>
                       </tr>
-                      {decodedVersion === '2.2' && (
+                      {/* Spezifische Felder für TCF v2.2 */}
+                      {decodedData.version === '2.2' && (
                         <>
                           <tr className={tableRowBg}>
                             <td className="px-4 py-2 font-medium">Purpose One Treatment</td>
-                            <td className="px-4 py-2">{decodedData.purposeOneTreatment ? 'Yes' : 'No'}</td>
+                            <td className="px-4 py-2">{decodedData.coreData?.purposeOneTreatment ? 'Yes' : 'No'}</td>
                           </tr>
                           <tr className={tableRowBg}>
                             <td className="px-4 py-2 font-medium">Publisher Country Code</td>
-                            <td className="px-4 py-2">{decodedData.publisherCC}</td>
+                            <td className="px-4 py-2">{decodedData.coreData?.publisherCC || 'N/A'}</td>
                           </tr>
                         </>
                       )}
@@ -791,9 +801,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       {decodedData.purposesConsent?.length === 0 ? (
                         <li className="p-2 bg-red-100 dark:bg-red-900 rounded">No purpose consents given</li>
                       ) : (
-                        decodedData.purposesConsent?.map((p: any) => (
+                        decodedData.purposesConsent?.map((p: number) => (
                           <li key={`consent-${p}`} className="p-2 bg-green-100 dark:bg-green-900 rounded">
-                            {p}. {purposeNames[p-1] || `Purpose ${p}`}
+                            {`${p}. ${purposeNames[p] || `Purpose ${p}`}`}
                           </li>
                         ))
                       )}
@@ -806,9 +816,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       {decodedData.purposesLITransparency?.length === 0 ? (
                         <li className="p-2 bg-red-100 dark:bg-red-900 rounded">No legitimate interests declared</li>
                       ) : (
-                        decodedData.purposesLITransparency?.map((p: any) => (
+                        decodedData.purposesLITransparency?.map((p: number) => (
                           <li key={`li-${p}`} className="p-2 bg-blue-100 dark:bg-blue-900 rounded">
-                            {p}. {purposeNames[p-1] || `Purpose ${p}`}
+                            {`${p}. ${purposeNames[p] || `Purpose ${p}`}`}
                           </li>
                         ))
                       )}
@@ -827,7 +837,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     </div>
                   ) : (
                     <ul className="space-y-1 text-sm">
-                      {decodedData.specialFeatureOptIns?.map((f: any) => (
+                      {decodedData.specialFeatureOptIns?.map((f: number) => (
                         <li key={`feature-${f}`} className="p-2 bg-purple-100 dark:bg-purple-900 rounded">
                           Special Feature {f}
                         </li>
@@ -850,46 +860,50 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                           <th className="px-4 py-2 text-left">Name</th>
                           <th className="px-4 py-2 text-left">Consent</th>
                           <th className="px-4 py-2 text-left">Legitimate Interest</th>
-                          <th className="px-4 py-2 text-left">Anzahl Purposes</th>
+                          <th className="px-4 py-2 text-left">Purposes</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {Object.keys(decodedData.gvl.vendors).map((vendorIdStr) => {
-                          const vendorId = parseInt(vendorIdStr, 10);
-                          const vendor = decodedData.gvl.vendors[vendorId];
+                        {/* Stelle sicher, dass filteredVendors verwendet wird, um durch die aktuell gefilterte Liste zu iterieren */}
+                        {/* Und dass die Consent-Informationen aus decodedData.coreData gelesen werden */}
+                        {filteredVendors.map((vendor) => {
+                          const vendorId = vendor.id;
+                          const hasVendorConsent = decodedData.coreData?.vendorConsent?.includes(vendorId) || false;
+                          const hasVendorLI = decodedData.coreData?.vendorLI?.includes(vendorId) || false;
                           
-                          // Korrektur: Verwende .isSet() statt .has()
-                          const hasConsent = decodedData?.vendors?.vendorConsents?.isSet?.(vendorId) || false;
-                          const hasLegitimateInterest = decodedData?.vendors?.vendorLegitimateInterests?.isSet?.(vendorId) || false;
-                          
-                          // Korrekte Berechnung der Purpose-Anzahl - zähle wirklich nur die Purposes, 
-                          // die der Vendor registriert hat
-                          const purposeConsents = (vendor?.purposeIds || []).filter((purposeId: number) => 
-                            decodedData?.purposeConsents?.includes(purposeId) && hasConsent
-                          ).length;
-                          
-                          const purposeLegInt = (vendor?.legIntPurposeIds || []).filter((purposeId: number) => 
-                            decodedData?.purposeLegitimateInterests?.includes(purposeId) && hasLegitimateInterest
-                          ).length;
-                          
-                          // Summe der erlaubten Purposes
-                          const purposeCount = purposeConsents + purposeLegInt;
+                          // Finde die spezifischen Vendor-Ergebnisse für Purposes
+                          const vendorSpecificInfo = decodedData.vendorResults?.find((v:any) => v.id === vendorId);
+                          const consentPurposes = vendorSpecificInfo?.info?.purposeConsents || [];
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                          const liPurposes = vendorSpecificInfo?.info?.legitimateInterests || [];
                           
                           return (
-                            <tr key={vendorId} className={vendorId % 2 ? tableDarkRowBg : tableLightRowBg}>
+                            <tr key={vendorId} className={tableRowBg}>
                               <td className="px-4 py-2">{vendorId}</td>
                               <td className="px-4 py-2">{vendor.name}</td>
                               <td className="px-4 py-2">
-                                <span className={hasConsent ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400'}>
-                                  {hasConsent ? 'Ja' : 'Nein'}
+                                <span className={hasVendorConsent ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400'}>
+                                  {hasVendorConsent ? 'Ja' : 'Nein'}
                                 </span>
                               </td>
                               <td className="px-4 py-2">
-                                <span className={hasLegitimateInterest ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400'}>
-                                  {hasLegitimateInterest ? 'Ja' : 'Nein'}
+                                <span className={hasVendorLI ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400'}>
+                                  {hasVendorLI ? 'Ja' : 'Nein'}
                                 </span>
                               </td>
-                              <td className="px-4 py-2">{purposeCount}</td>
+                              <td className="px-4 py-2">
+                                {consentPurposes.length > 0 ? (
+                                  <ul className="list-disc list-inside">
+                                    {consentPurposes.map((purposeId: number) => (
+                                      <li key={`consent-${purposeId}`}>
+                                        Purpose {purposeId}: {decodedData?.gvl?.purposes?.[purposeId]?.name || `Purpose ${purposeId}`}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <p className="italic">Keine Purposes mit Consent</p>
+                                )}
+                              </td>
                             </tr>
                           );
                         })}
