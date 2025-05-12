@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { purposeNames, decodeTCFStringIAB } from '../utils/tcf-decoder';
+import { purposeNames, decodeTCStringIAB } from '../utils/tcf-decoder';
 import { loadGVL, getVendors, GVLData, GVLVendor, clearGVLCache } from '../utils/gvl-loader';
 import Button from './shared/Button';
 
@@ -148,7 +148,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       }
       
       // Neue IAB-Implementierung
-      const tcModel = decodeTCFStringIAB(tcfString);
+      const tcModel = decodeTCStringIAB(tcfString);
       
       // Prüfe, ob das Decodieren erfolgreich war
       if (!tcModel) {
@@ -164,12 +164,12 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       // TCString-Objekte als JSON kopieren, um UI-freundliche Strukturen zu erstellen
       const processedModel = {
         ...tcModel,
-        // Konvertiere Sets zu Arrays für einfachere Handhabung in der UI
-        purposesConsent: Array.from(tcModel.purposeConsents || []),
-        purposesLITransparency: Array.from(tcModel.purposeLegitimateInterests || []),
-        specialFeatureOptIns: Array.from(tcModel.specialFeatureOptins || []),
-        // Erstelle leere Vendor-Ergebnisse für die UI
-        vendorResults: []
+        // Die Struktur ist jetzt anders in unserer neuen Implementierung
+        purposesConsent: tcModel.coreData.purposesConsent || [],
+        purposesLITransparency: tcModel.coreData.purposesLITransparency || [],
+        specialFeatureOptIns: tcModel.coreData.specialFeatureOptIns || [],
+        // Verwende die vorhandenen Vendor-Ergebnisse
+        vendorResults: tcModel.vendorResults || []
       };
       
       // Statt Probleme mit Typen zu haben, verwenden wir die originalen Referenzen

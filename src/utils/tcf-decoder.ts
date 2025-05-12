@@ -527,21 +527,21 @@ export function decodeTCFString(tcfString: string): {
   };
 }
 
-// List of purpose names
-export const purposeNames = [
-  "Store and/or access information on a device",
-  "Basic ads",
-  "Create a personalized ads profile",
-  "Select personalized ads",
-  "Create a personalized content profile",
-  "Select personalized content",
-  "Measure ad performance",
-  "Measure content performance",
-  "Market research to generate audience insights",
-  "Develop and improve products",
-  "Special profile purpose (2.2)",
-  "Personalization security (2.2)"
-];
+/**
+ * Namen von TCF Purposes für bessere Lesbarkeit
+ */
+export const purposeNames: Record<number, string> = {
+  1: 'Geräte-Informationen speichern und/oder darauf zugreifen',
+  2: 'Grundlegende Werbung',
+  3: 'Personalisierte Werbung',
+  4: 'Personalisierte Inhalte',
+  5: 'Werbemessung',
+  6: 'Inhaltsmessung',
+  7: 'Marktforschung',
+  8: 'Produktentwicklung',
+  9: 'Notwendige Funktionen',
+  10: 'Produktverbesserung'
+};
 
 /**
  * Generates a bit representation of a TCF string for debugging purposes
@@ -575,100 +575,137 @@ export function handleExportJSON(decodedData: any): any {
 }
 
 /**
- * Dekodiert einen TCF-String mit der offiziellen IAB-Bibliothek
- * Behandelt die Decodierung und fügt zusätzliche Informationen
- * für eine einfachere Verwendung in der UI hinzu
+ * Basis-Dekodierung eines TCF-Strings mit der offiziellen IAB-Library
+ * 
+ * @param tcString Der zu dekodierende TCF-String
+ * @returns Ein Objekt mit den dekodierten Daten oder null bei Fehlern
  */
-export function decodeTCFStringIAB(tcString: string) {
+export function decodeTCStringIAB(tcString: string) {
+  if (!tcString) {
+    console.error("Kein TCF-String übergeben");
+    return null;
+  }
+
   try {
-    // Decodieren des TCF-Strings mit der offiziellen IAB-Library
-    const decodedString = TCString.decode(tcString);
+    console.log("Dekodiere TCF-String:", tcString);
     
-    // Debug-Logging für Entwicklungszwecke
-    console.log('IAB TCString decoded:', decodedString);
+    // Dekodieren mit der offiziellen IAB-Library
+    const decoded = TCString.decode(tcString);
     
-    // Extrahieren der Purpose-Consents
-    const purposeConsents = Array.from(
-      new Array(24).keys()
-    ).reduce((consents, id) => {
-      const purposeId = id + 1;
-      if (decodedString.purposeConsents?.has?.(purposeId)) {
-        consents.push(purposeId);
+    // Ergebnisse für die Key-Vendors extrahieren
+    const vendorResults = DEFAULT_VENDORS.map(vendorId => {
+      const hasConsent = Boolean(decoded.vendorConsents?.has?.(vendorId));
+      const hasLegitimateInterest = Boolean(decoded.vendorLegitimateInterests?.has?.(vendorId));
+      
+      // Purposes für die der Vendor Consent hat filtern
+      const purposeConsents: number[] = [];
+      for (let i = 1; i <= 10; i++) {
+        if (Boolean(decoded.purposeConsents?.has?.(i)) && hasConsent) {
+          purposeConsents.push(i);
+        }
       }
-      return consents;
-    }, [] as number[]);
-    
-    // Extrahieren der Legitimate Interests
-    const purposeLegitimateInterests = Array.from(
-      new Array(24).keys()
-    ).reduce((consents, id) => {
-      const purposeId = id + 1;
-      if (decodedString.purposeLegitimateInterests?.has?.(purposeId)) {
-        consents.push(purposeId);
+      
+      // Legitimate Interests für die der Vendor LI hat filtern
+      const legitimateInterests: number[] = [];
+      for (let i = 1; i <= 10; i++) {
+        if (Boolean(decoded.purposeLegitimateInterests?.has?.(i)) && hasLegitimateInterest) {
+          legitimateInterests.push(i);
+        }
       }
-      return consents;
-    }, [] as number[]);
+      
+      return {
+        id: vendorId,
+        info: {
+          hasConsent: hasConsent,
+          hasLegitimateInterest: hasLegitimateInterest,
+          purposeConsents: purposeConsents,
+          legitimateInterests: legitimateInterests
+        }
+      };
+    });
     
-    // Extrahieren der Special Features
-    const specialFeatureOptins = Array.from(
-      new Array(12).keys()
-    ).reduce((optins, id) => {
-      const featureId = id + 1;
-      if (decodedString.specialFeatureOptins?.has?.(featureId)) {
-        optins.push(featureId);
+    // Vendor Consent Liste erstellen
+    const vendorConsent: number[] = [];
+    if (decoded.vendorConsents) {
+      const maxVendorId = Number(decoded.vendorConsents.maxId) || 0;
+      for (let i = 1; i <= maxVendorId; i++) {
+        if (Boolean(decoded.vendorConsents.has(i))) {
+          vendorConsent.push(i);
+        }
       }
-      return optins;
-    }, [] as number[]);
-
-    // CMP Details
-    const cmp = {
-      id: decodedString.cmpId,
-      version: decodedString.cmpVersion,
-      screen: decodedString.consentScreen,
-    };
-
-    // Grundlegende Eigenschaften
-    const base = {
-      version: decodedString.version,
-      created: decodedString.created,
-      lastUpdated: decodedString.lastUpdated,
-      tcfPolicyVersion: decodedString.policyVersion,
-    };
-
-    // Vendor-Informationen
-    const vendors = {
-      vendorListVersion: decodedString.vendorListVersion,
-      vendorConsents: decodedString.vendorConsents,
-      vendorLegitimateInterests: decodedString.vendorLegitimateInterests,
-    };
-
-    // Publisher-Spezifische Einstellungen
-    const publisher = {
-      consents: decodedString.publisherConsents,
-      legitimateInterests: decodedString.publisherLegitimateInterests,
-      customConsents: decodedString.publisherCustomConsents,
-      customLegitimateInterests: decodedString.publisherCustomLegitimateInterests,
-      restrictions: decodedString.publisherRestrictions,
-    };
-
+    }
+    
+    // Vendor Legitimate Interest Liste erstellen
+    const vendorLI: number[] = [];
+    if (decoded.vendorLegitimateInterests) {
+      const maxVendorId = Number(decoded.vendorLegitimateInterests.maxId) || 0;
+      for (let i = 1; i <= maxVendorId; i++) {
+        if (Boolean(decoded.vendorLegitimateInterests.has(i))) {
+          vendorLI.push(i);
+        }
+      }
+    }
+    
+    // Purposes mit Consent
+    const purposesConsent: number[] = [];
+    for (let i = 1; i <= 24; i++) {
+      if (Boolean(decoded.purposeConsents?.has?.(i))) {
+        purposesConsent.push(i);
+      }
+    }
+    
+    // Purposes mit Legitimate Interest
+    const purposesLI: number[] = [];
+    for (let i = 1; i <= 24; i++) {
+      if (Boolean(decoded.purposeLegitimateInterests?.has?.(i))) {
+        purposesLI.push(i);
+      }
+    }
+    
+    // Special Features
+    const specialFeatures: number[] = [];
+    for (let i = 1; i <= 12; i++) {
+      if (Boolean(decoded.specialFeatureOptins?.has?.(i))) {
+        specialFeatures.push(i);
+      }
+    }
+    
+    // Ergebnis zusammenstellen
     return {
-      raw: decodedString,
-      ...base,
-      cmp,
-      vendors,
-      publisher,
-      purposeConsents,
-      purposeLegitimateInterests,
-      specialFeatureOptins,
-      isServiceSpecific: decodedString.isServiceSpecific,
-      useNonStandardStacks: decodedString.useNonStandardStacks,
-      supportOOB: decodedString.supportOOB,
-      purposeOneTreatment: decodedString.purposeOneTreatment,
-      publisherCountryCode: decodedString.publisherCountryCode,
+      version: decoded.version === 2 ? "2.0" : "2.2",
+      coreData: {
+        created: decoded.created ? decoded.created.getTime() / 100 : 0,
+        lastUpdated: decoded.lastUpdated ? decoded.lastUpdated.getTime() / 100 : 0,
+        cmpId: decoded.cmpId,
+        cmpVersion: decoded.cmpVersion,
+        consentScreen: decoded.consentScreen,
+        purposesConsent: purposesConsent,
+        purposesLITransparency: purposesLI,
+        vendorConsent: vendorConsent,
+        vendorLI: vendorLI,
+        specialFeatureOptIns: specialFeatures
+      },
+      vendorResults: vendorResults
     };
   } catch (error) {
-    console.error('Error decoding TCF string with IAB library:', error);
+    console.error("Fehler bei der Dekodierung:", error);
     return null;
+  }
+}
+
+/**
+ * Prüft ob ein Vendor Consent hat
+ * @param tcString TCF-String
+ * @param vendorId Vendor-ID
+ * @returns true wenn der Vendor Consent hat, false sonst oder bei Fehlern
+ */
+export function checkVendorConsent(tcString: string, vendorId: number): boolean {
+  try {
+    const decoded = TCString.decode(tcString);
+    return Boolean(decoded.vendorConsents?.has?.(vendorId));
+  } catch (e) {
+    console.error("Fehler bei der Vendor-Consent-Prüfung:", e);
+    return false;
   }
 }
 
