@@ -117,24 +117,17 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     
     let filtered = getVendors(data);
     
-    // Filter by name
+    // Kombinierte Suche für Namen und ID
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(v => 
-        v.name.toLowerCase().includes(term)
-      );
-    }
-    
-    // Filter by ID
-    if (idFilter) {
-      const idNumber = parseInt(idFilter, 10);
-      if (!isNaN(idNumber)) {
-        // Search for exact ID
-        filtered = filtered.filter(v => v.id === idNumber);
-      } else {
-        // Fallback to substring comparison for non-numeric inputs
-        filtered = filtered.filter(v => v.id.toString().includes(idFilter));
-      }
+      filtered = filtered.filter(v => {
+        // Suche nach ID
+        const idMatch = v.id.toString().includes(term);
+        // Suche nach Name
+        const nameMatch = v.name.toLowerCase().includes(term);
+        
+        return idMatch || nameMatch;
+      });
     }
     
     setFilteredVendors(filtered);
@@ -373,7 +366,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             <p className={`text-sm ${secondaryTextColor}`}>
               Version {gvlData.vendorListVersion} ({gvlData.tcfPolicyVersion})
               <span className="mx-2">•</span>
-              Last Updated: {new Date(gvlData.lastUpdated).toLocaleDateString()}
+              Last Updated: {gvlData.lastUpdated ? new Date(gvlData.lastUpdated).toLocaleDateString() : 'N/A'}
             </p>
           </div>
           <Button 
@@ -386,25 +379,17 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
           </Button>
         </div>
         
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
-          <div className="flex-1">
-            <input 
-              type="text"
-              placeholder="Search vendors by name..."
-              className={`w-full px-3 py-2 rounded ${inputBgColor} ${inputBorderColor} border`}
-              value={vendorSearchTerm}
-              onChange={(e) => setVendorSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="w-full sm:w-48">
-            <input 
-              type="text"
-              placeholder="Filter by ID..."
-              className={`w-full px-3 py-2 rounded ${inputBgColor} ${inputBorderColor} border`}
-              value={vendorIdFilter}
-              onChange={(e) => setVendorIdFilter(e.target.value)}
-            />
-          </div>
+        <div className="mb-4">
+          <input 
+            type="text"
+            placeholder="Suche nach Vendor Namen oder ID..."
+            className={`w-full px-3 py-2 rounded ${inputBgColor} ${inputBorderColor} border`}
+            value={vendorSearchTerm}
+            onChange={(e) => {
+              setVendorSearchTerm(e.target.value);
+              setVendorIdFilter(''); // Alte ID-Filter zurücksetzen
+            }}
+          />
         </div>
         
         <div className={`border ${borderColor} rounded overflow-hidden`}>
@@ -420,7 +405,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 </tr>
               </thead>
               <tbody className={`divide-y ${borderColor}`}>
-                {filteredVendors.length === 0 ? (
+                {isLoadingGVL ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-3 text-center">
+                      Loading Global Vendor List...
+                    </td>
+                  </tr>
+                ) : filteredVendors.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-3 text-center">
                       No vendors found matching your criteria
@@ -466,8 +457,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
         
         <div className={`mt-4 text-sm ${secondaryTextColor}`}>
           Found {filteredVendors.length} vendor{filteredVendors.length !== 1 ? 's' : ''}
-          {filteredVendors.length !== Object.keys(gvlData.vendors).length && 
-            ` (of ${Object.keys(gvlData.vendors).length} total)`
+          {filteredVendors.length !== Object.keys(gvlData?.vendors || {}).length && 
+            ` (of ${Object.keys(gvlData?.vendors || {}).length} total)`
           }
         </div>
       </div>
@@ -618,13 +609,31 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
                     
                     // Für welche Purposes wurde Consent gegeben (global)?
-                    const purposesWithConsent = decodedData?.purposeConsents || [];
+                    const globalPurposesWithConsent = decodedData?.purposeConsents || [];
                     
                     // Für welche Purposes wurde Legitimate Interest gegeben (global)?
-                    const purposesWithLI = decodedData?.purposeLegitimateInterests || [];
+                    const globalPurposesWithLI = decodedData?.purposeLegitimateInterests || [];
                     
                     // Special Features Opt-in (global)
-                    const specialFeaturesOptIn = decodedData?.specialFeatureOptins || [];
+                    const globalSpecialFeaturesOptIn = decodedData?.specialFeatureOptins || [];
+                    
+                    // Vendor spezifische Purposes aus der GVL
+                    const vendorPurposes = decodedData?.gvl?.vendors?.[id]?.purposeIds || [];
+                    const vendorLegIntPurposes = decodedData?.gvl?.vendors?.[id]?.legIntPurposeIds || [];
+                    const vendorSpecialFeatures = decodedData?.gvl?.vendors?.[id]?.specialFeatureIds || [];
+                    
+                    // Schnittmenge zwischen globalen Purposes und Vendor Purposes
+                    const purposesWithConsent = globalPurposesWithConsent.filter((purposeId: number) => 
+                      vendorPurposes.includes(purposeId)
+                    );
+                    
+                    const purposesWithLI = globalPurposesWithLI.filter((purposeId: number) => 
+                      vendorLegIntPurposes.includes(purposeId)
+                    );
+                    
+                    const specialFeaturesOptIn = globalSpecialFeaturesOptIn.filter((featureId: number) => 
+                      vendorSpecialFeatures.includes(featureId)
+                    );
                     
                     return (
                       <div key={id} className={`p-4 rounded-lg border ${hasVendorConsent 
@@ -844,7 +853,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                           const hasLegitimateInterest = decodedData?.vendors?.vendorLegitimateInterests?.has?.(vendorId) || false;
                           
                           // Zähle die Purposes für diesen Vendor
-                          const purposeCount = vendor?.legIntPurposeIds?.length || 0 + vendor?.purposeIds?.length || 0;
+                          const purposeCount = (vendor?.purposeIds?.length || 0) + (vendor?.legIntPurposeIds?.length || 0);
                           
                           return (
                             <tr key={vendorId} className={vendorId % 2 ? tableDarkRowBg : tableLightRowBg}>
