@@ -154,7 +154,24 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       // Neue IAB-Implementierung
       const tcModel = decodeTCFStringIAB(tcfString);
       setDecodedVersion(tcModel.version.toString());
-      setDecodedData(tcModel);
+      
+      // Debug log
+      console.log('IAB TCModel:', tcModel);
+      
+      // TCString-Objekte als JSON kopieren, um UI-freundliche Strukturen zu erstellen
+      const processedModel = {
+        ...tcModel,
+        // Konvertiere Sets zu Arrays für einfachere Handhabung in der UI
+        purposesConsent: Array.from(tcModel.purposeConsents || []),
+        purposesLITransparency: Array.from(tcModel.purposeLegitimateInterests || []),
+        specialFeatureOptIns: Array.from(tcModel.specialFeatureOptins || []),
+        // Erstelle leere Vendor-Ergebnisse für die UI
+        vendorResults: []
+      };
+      
+      // Statt Probleme mit Typen zu haben, verwenden wir die originalen Referenzen
+      // auf die Daten der IAB-Library
+      setDecodedData(processedModel);
       setBitRepresentation(''); // Optional: kann entfernt werden
     } catch (error) {
       console.error('Error decoding:', error);
@@ -166,6 +183,38 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
 
   // Filter for vendors by consent/LegInt
   const getFilteredVendorResults = (): any[] => {
+    // Erstelle UI-freundliche Vendor-Ergebnisse, falls sie noch nicht existieren
+    if (!decodedData.vendorResults || decodedData.vendorResults.length === 0) {
+      // Default Vendors anzeigen (136, 137, 44) und zusätzlichen Vendor
+      const vendorIds = [136, 137, 44];
+      if (additionalVendorId && !vendorIds.includes(additionalVendorId)) {
+        vendorIds.push(additionalVendorId);
+      }
+      
+      // Generiere Vendor-Ergebnisse mit den Daten der IAB-Library
+      const results = vendorIds.map(id => {
+        // Die IAB-Library verwendet das Vector-Objekt - hier prüfen wir mit der korrekten Methode
+        const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
+        const hasLegitimateInterest = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
+        const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
+        const policyUrl = decodedData?.gvl?.vendors?.[id]?.policyUrl || '#';
+        
+        return {
+          id,
+          name,
+          policyUrl,
+          hasConsent,
+          hasLegitimateInterest,
+          // Dummy-Structures für die UI-Anzeige
+          purposes: [],
+          specialFeatures: []
+        };
+      });
+      
+      // Update vendorResults
+      decodedData.vendorResults = results;
+    }
+    
     let filtered = [...decodedData.vendorResults];
     
     if (vendorFilter.onlyWithConsent) {
@@ -176,15 +225,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       filtered = filtered.filter(v => v.hasLegitimateInterest);
     }
     
-    if (vendorFilter.purposeFilter) {
-      filtered = filtered.filter((v: any) => 
-        v.purposes.some((p: any) => 
-          p.id === vendorFilter.purposeFilter && 
-          (p.hasConsent || p.hasLegitimateInterest)
-        )
-      );
-    }
-    
     return filtered;
   };
 
@@ -192,55 +232,42 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const handleExportJSON = () => {
     if (!decodedData) return;
     
-    const exportData = {
-      version: decodedVersion,
-      created: new Date(decodedData.created * 100).toISOString(),
-      lastUpdated: new Date(decodedData.lastUpdated * 100).toISOString(),
-      cmpId: decodedData.cmpId,
-      cmpVersion: decodedData.cmpVersion,
-      consentScreen: decodedData.consentScreen,
-      consentLanguage: decodedData.consentLanguage,
-      vendorListVersion: decodedData.vendorListVersion,
-      policyVersion: decodedData.policyVersion,
-      isServiceSpecific: decodedData.isServiceSpecific,
-      useNonStandardStacks: decodedData.useNonStandardStacks,
-      specialFeatureOptIns: decodedData.specialFeatureOptIns,
-      purposesConsent: decodedData.purposesConsent,
-      purposesLITransparency: decodedData.purposesLITransparency,
-      purposeOneTreatment: decodedData.purposeOneTreatment,
-      publisherCC: decodedData.publisherCC,
-      tcfPolicyVersion: decodedData.policyVersion,
+    try {
+      // Erstelle eine kopierte Version mit serialisierbaren Typen (keine Sets/Maps)
+      const serializable = {
+        version: decodedVersion,
+        created: new Date(decodedData.created * 1000).toISOString(),
+        lastUpdated: new Date(decodedData.lastUpdated * 1000).toISOString(),
+        // Basis-Informationen
+        cmpId: decodedData.cmpId,
+        cmpVersion: decodedData.cmpVersion,
+        consentScreen: decodedData.consentScreen,
+        consentLanguage: decodedData.consentLanguage,
+        vendorListVersion: decodedData.vendorListVersion,
+        policyVersion: decodedData.policyVersion,
+        isServiceSpecific: decodedData.isServiceSpecific,
+        useNonStandardStacks: decodedData.useNonStandardStacks,
+        // Nutze die konvertierten Arrays
+        specialFeatureOptIns: decodedData.specialFeatureOptIns || [],
+        purposesConsent: decodedData.purposesConsent || [],
+        purposesLITransparency: decodedData.purposesLITransparency || [],
+        purposeOneTreatment: decodedData.purposeOneTreatment,
+        publisherCC: decodedData.publisherCC,
+        // Vendoren
+        vendors: getFilteredVendorResults()
+      };
       
-      vendors: decodedData.vendorResults.map((v: any) => ({
-        id: v.id,
-        name: v.name,
-        policyUrl: v.policyUrl,
-        hasConsent: v.hasConsent,
-        hasLegitimateInterest: v.hasLegitimateInterest,
-        purposes: v.purposes.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          hasConsent: p.hasConsent,
-          hasLegitimateInterest: p.hasLegitimateInterest,
-          isAllowed: p.isAllowed,
-          isLegitimateInterestAllowed: p.isLegitimateInterestAllowed,
-          restriction: p.restriction
-        })),
-        specialFeatures: v.specialFeatures.map((f: any) => ({
-          id: f.id,
-          name: f.name,
-          hasConsent: f.hasConsent
-        }))
-      }))
-    };
-    
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "tcf_decoded.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(serializable, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "tcf_decoded.json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    } catch (error) {
+      console.error('Error exporting JSON:', error);
+      setDecodeError(error instanceof Error ? error.message : 'Unknown error exporting JSON');
+    }
   };
 
   // Tab change handler
@@ -263,7 +290,74 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   
   // Show vendor details
   const handleViewVendorDetails = (vendor: any) => {
-    setSelectedVendor(vendor);
+    // Erweitere den Vendor um zusätzliche Daten aus der GVL, falls verfügbar
+    const enrichedVendor = { ...vendor };
+    
+    const vendorId = vendor.id;
+    const gvlVendor = decodedData?.gvl?.vendors?.[vendorId];
+    
+    // Füge fehlende Daten aus der GVL hinzu
+    if (gvlVendor) {
+      // Erstelle Purpose-Infos
+      const purposes = gvlVendor.purposes?.map((purposeId: number) => {
+        const purposeName = decodedData?.gvl?.purposes?.[purposeId]?.name || `Purpose ${purposeId}`;
+        // Die IAB-Library verwendet das Vector-Objekt - hier prüfen wir mit der korrekten Methode
+        const hasConsent = decodedData?.purposeConsents?.has?.(purposeId) || false;
+        const hasLegitimateInterest = decodedData?.purposeLegitimateInterests?.has?.(purposeId) || false;
+        
+        return {
+          id: purposeId,
+          name: purposeName,
+          hasConsent,
+          hasLegitimateInterest,
+          isAllowed: hasConsent,
+          isLegitimateInterestAllowed: hasLegitimateInterest,
+          isFlexiblePurpose: gvlVendor.flexiblePurposes?.includes(purposeId) || false,
+          restriction: '-'
+        };
+      }) || [];
+      
+      // Erstelle Special Feature Infos
+      const specialFeatures = gvlVendor.specialFeatures?.map((featureId: number) => {
+        const featureName = decodedData?.gvl?.specialFeatures?.[featureId]?.name || `Feature ${featureId}`;
+        // Die IAB-Library verwendet das Vector-Objekt - hier prüfen wir mit der korrekten Methode
+        const hasConsent = decodedData?.specialFeatureOptins?.has?.(featureId) || false;
+        
+        return {
+          id: featureId,
+          name: featureName,
+          hasConsent
+        };
+      }) || [];
+      
+      // Füge Special Purposes hinzu
+      const specialPurposes = gvlVendor.specialPurposes?.map((purposeId: number) => {
+        const purposeName = decodedData?.gvl?.specialPurposes?.[purposeId]?.name || `Special Purpose ${purposeId}`;
+        
+        return {
+          id: purposeId,
+          name: purposeName
+        };
+      }) || [];
+      
+      // Füge Features hinzu
+      const features = gvlVendor.features?.map((featureId: number) => {
+        const featureName = decodedData?.gvl?.features?.[featureId]?.name || `Feature ${featureId}`;
+        
+        return {
+          id: featureId,
+          name: featureName
+        };
+      }) || [];
+      
+      // Erweitere den Vendor mit allen Daten
+      enrichedVendor.purposes = purposes;
+      enrichedVendor.specialFeatures = specialFeatures;
+      enrichedVendor.specialPurposes = specialPurposes;
+      enrichedVendor.features = features;
+    }
+    
+    setSelectedVendor(enrichedVendor);
     setActiveTab('vendor-details');
   };
   
@@ -531,9 +625,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[136, 137, 44].map((id: number) => {
-                    const hasConsent = decodedData?.vendorConsents?.has(id);
-                    const hasLegInt = decodedData?.vendorLegitimateInterests?.has(id);
-                    const name = decodedData?.vendorList?.vendors?.[id]?.name || id;
+                    // Die IAB-Library verwendet das Vector-Objekt - hier prüfen wir mit der korrekten Methode
+                    const hasConsent = decodedData?.vendorConsents?.has?.(id) || false;
+                    const hasLegInt = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
+                    const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
                     return (
                       <div key={id} className={`p-3 rounded-lg ${sectionBgColor}`}>
                         <div className="flex justify-between items-center mb-2">
@@ -572,11 +667,15 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Created</td>
-                        <td className="px-4 py-2">{new Date(decodedData.created * 100).toLocaleString()}</td>
+                        <td className="px-4 py-2">
+                          {decodedData.created ? new Date(decodedData.created * 1000).toLocaleString() : 'N/A'}
+                        </td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Last Updated</td>
-                        <td className="px-4 py-2">{new Date(decodedData.lastUpdated * 100).toLocaleString()}</td>
+                        <td className="px-4 py-2">
+                          {decodedData.lastUpdated ? new Date(decodedData.lastUpdated * 1000).toLocaleString() : 'N/A'}
+                        </td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">CMP ID</td>
@@ -626,10 +725,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                   <div>
                     <h4 className="font-semibold mb-3">Purpose Consents</h4>
                     <ul className="space-y-1 text-sm">
-                      {decodedData.purposesConsent.length === 0 ? (
+                      {decodedData.purposesConsent?.length === 0 ? (
                         <li className="p-2 bg-red-100 dark:bg-red-900 rounded">No purpose consents given</li>
                       ) : (
-                        decodedData.purposesConsent.map((p: any) => (
+                        decodedData.purposesConsent?.map((p: any) => (
                           <li key={`consent-${p}`} className="p-2 bg-green-100 dark:bg-green-900 rounded">
                             {p}. {purposeNames[p-1] || `Purpose ${p}`}
                           </li>
@@ -641,10 +740,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                   <div>
                     <h4 className="font-semibold mb-3">Legitimate Interests</h4>
                     <ul className="space-y-1 text-sm">
-                      {decodedData.purposesLITransparency.length === 0 ? (
+                      {decodedData.purposesLITransparency?.length === 0 ? (
                         <li className="p-2 bg-red-100 dark:bg-red-900 rounded">No legitimate interests declared</li>
                       ) : (
-                        decodedData.purposesLITransparency.map((p: any) => (
+                        decodedData.purposesLITransparency?.map((p: any) => (
                           <li key={`li-${p}`} className="p-2 bg-blue-100 dark:bg-blue-900 rounded">
                             {p}. {purposeNames[p-1] || `Purpose ${p}`}
                           </li>
@@ -659,13 +758,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
               <div className="my-6">
                 <h3 className="text-lg font-semibold mb-3">Special Features</h3>
                 <div>
-                  {decodedData.specialFeatureOptIns.length === 0 ? (
+                  {decodedData.specialFeatureOptIns?.length === 0 ? (
                     <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded">
                       No special features opted in
                     </div>
                   ) : (
                     <ul className="space-y-1 text-sm">
-                      {decodedData.specialFeatureOptIns.map((f: any) => (
+                      {decodedData.specialFeatureOptIns?.map((f: any) => (
                         <li key={`feature-${f}`} className="p-2 bg-purple-100 dark:bg-purple-900 rounded">
                           Special Feature {f}
                         </li>

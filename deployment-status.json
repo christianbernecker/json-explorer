@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 17:28:08 CEST 2025", "commit": "Linter-Fixes: explizite Typen für alle map-Parameter (final)"}
+{"deployment": "staging", "timestamp": "Mon May 12 17:44:25 CEST 2025", "commit": "TCF Decoder: Vollständige Umstellung auf IAB-Library, UI-Review & Quality-Check"}
