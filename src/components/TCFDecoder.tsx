@@ -62,7 +62,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const errorColor = isDarkMode ? 'text-red-300' : 'text-red-600';
   const inputBgColor = isDarkMode ? 'bg-gray-700' : 'bg-gray-50';
   const inputBorderColor = isDarkMode ? 'border-gray-600' : 'border-gray-300';
-  const highlightColor = isDarkMode ? 'bg-blue-800 text-blue-200' : 'bg-blue-100 text-blue-800';
+  const highlightColor = isDarkMode ? 'text-yellow-300' : 'text-yellow-600';
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const exportBtnColor = isDarkMode ? 'bg-green-700 hover:bg-green-800 text-white' : 'bg-green-500 hover:bg-green-600 text-white';
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -71,8 +71,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const bitTextColor = isDarkMode ? 'text-blue-300' : 'text-blue-600';
   const tabActiveBg = isDarkMode ? 'bg-blue-700' : 'bg-blue-500';
   const tabInactiveBg = isDarkMode ? 'bg-gray-700' : 'bg-gray-200';
-  const tableHeaderBg = isDarkMode ? 'bg-gray-700' : 'bg-gray-100';
-  const tableRowBg = isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50';
+  const tableHeaderBg = isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-800';
+  const tableRowBg = isDarkMode ? 'bg-gray-900' : 'bg-white';
+  const tableLightRowBg = isDarkMode ? 'bg-gray-800' : 'bg-white';
+  const tableDarkRowBg = isDarkMode ? 'bg-gray-900' : 'bg-gray-50';
   
   // Load GVL
   useEffect(() => {
@@ -155,7 +157,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       
       // Neue IAB-Implementierung
       const tcModel = decodeTCFStringIAB(tcfString);
-      setDecodedVersion(tcModel.version.toString());
+      
+      // Prüfe, ob das Decodieren erfolgreich war
+      if (!tcModel) {
+        setDecodeError('Failed to decode TCF string. The string may be invalid or corrupted.');
+        return;
+      }
+      
+      setDecodedVersion(tcModel.version?.toString() || '2');
       
       // Debug log
       console.log('IAB TCModel:', tcModel);
@@ -600,156 +609,83 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
                 <div className="grid grid-cols-1 gap-4">
                   {[136, 137, 44].map((id: number) => {
-                    // Vendor-Consent prüfen
-                    const hasVendorConsent = decodedData?.vendorConsents?.has?.(id) || false;
-                    const hasVendorLI = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
+                    // Vendor-Consent prüfen mit korrekter Methode
+                    const hasVendorConsent = decodedData?.vendors?.vendorConsents?.has?.(id) || false;
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const hasVendorLI = decodedData?.vendors?.vendorLegitimateInterests?.has?.(id) || false;
+                    
+                    // Anzeige des Namens und des Consent-Status
                     const name = decodedData?.gvl?.vendors?.[id]?.name || `Vendor ${id}`;
                     
-                    // Sammle alle Purposes, die dieser Vendor nutzen kann (laut GVL)
-                    const vendorPurposes = decodedData?.gvl?.vendors?.[id]?.purposes || [];
-                    const vendorLegIntPurposes = decodedData?.gvl?.vendors?.[id]?.legIntPurposes || [];
-                    const vendorSpecialPurposes = decodedData?.gvl?.vendors?.[id]?.specialPurposes || [];
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const vendorFeatures = decodedData?.gvl?.vendors?.[id]?.features || [];
-                    const vendorSpecialFeatures = decodedData?.gvl?.vendors?.[id]?.specialFeatures || [];
+                    // Für welche Purposes wurde Consent gegeben (global)?
+                    const purposesWithConsent = decodedData?.purposeConsents || [];
                     
-                    // Für welche Purposes wurde im TC String Consent gegeben (global)?
-                    const purposesWithConsent = Array.from(decodedData?.purposeConsents || [])
-                      .map((value: unknown) => Number(value));
-                    
-                    // Für welche Purposes wurde im TC String Legitimate Interest gegeben (global)?
-                    const purposesWithLI = Array.from(decodedData?.purposeLegitimateInterests || [])
-                      .map((value: unknown) => Number(value));
+                    // Für welche Purposes wurde Legitimate Interest gegeben (global)?
+                    const purposesWithLI = decodedData?.purposeLegitimateInterests || [];
                     
                     // Special Features Opt-in (global)
-                    const specialFeaturesOptIn = Array.from(decodedData?.specialFeatureOptins || [])
-                      .map((value: unknown) => Number(value));
-                    
-                    // Welche Purposes haben tatsächlich Consent (Schnittmenge aus vendor purposes und globalen purposes)?
-                    const purposesWithEffectiveConsent = vendorPurposes.filter((p: number) => 
-                      purposesWithConsent.includes(p) && hasVendorConsent
-                    );
-                    
-                    // Welche Purposes haben tatsächlich Legitimate Interest?
-                    const purposesWithEffectiveLI = vendorLegIntPurposes.filter((p: number) => 
-                      purposesWithLI.includes(p) && hasVendorLI
-                    );
-                    
-                    // Welche Special Features haben tatsächlich Opt-in?
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    const specialFeaturesWithEffectiveOptIn = vendorSpecialFeatures.filter((p: number) => 
-                      specialFeaturesOptIn.includes(p)
-                    );
-                    
-                    // Allgemeiner Consent-Status für diesen Vendor
-                    const hasEffectiveConsent = hasVendorConsent && purposesWithEffectiveConsent.length > 0;
-                    const hasEffectiveLI = hasVendorLI && purposesWithEffectiveLI.length > 0;
+                    const specialFeaturesOptIn = decodedData?.specialFeatureOptins || [];
                     
                     return (
-                      <div key={id} className={`p-3 rounded ${hasEffectiveConsent || hasEffectiveLI ? 
-                                                 (isDarkMode ? 'bg-green-900' : 'bg-green-100') : 
-                                                 (isDarkMode ? 'bg-red-900' : 'bg-red-100')}`}>
-                        <h4 className="font-bold">{name} (ID: {id})</h4>
+                      <div key={id} className={`p-4 rounded-lg border ${hasVendorConsent 
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                        : 'border-red-500 bg-red-50 dark:bg-red-900/20'}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-semibold">{name}</h4>
+                          <span className={`px-2 py-1 rounded text-sm ${hasVendorConsent 
+                            ? 'bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200'
+                            : 'bg-red-200 text-red-800 dark:bg-red-800 dark:text-red-200'}`}>
+                            {hasVendorConsent ? 'Consent: Ja' : 'Consent: Nein'}
+                          </span>
+                        </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
-                          {/* Consent & LI Status */}
-                          <div className={`col-span-2 mb-2 p-2 rounded bg-opacity-80 
-                                        ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                            <p className="font-semibold">Status:</p>
-                            <div className="flex flex-wrap gap-2 mt-1">
-                              <span className={`px-2 py-1 rounded text-sm 
-                                            ${hasVendorConsent ? 
-                                              (isDarkMode ? 'bg-green-800 text-white' : 'bg-green-200 text-green-800') : 
-                                              (isDarkMode ? 'bg-red-800 text-white' : 'bg-red-200 text-red-800')}`}>
-                                Vendor Consent: {hasVendorConsent ? 'Yes' : 'No'}
-                              </span>
-                              
-                              <span className={`px-2 py-1 rounded text-sm 
-                                            ${hasVendorLI ? 
-                                              (isDarkMode ? 'bg-blue-800 text-white' : 'bg-blue-200 text-blue-800') : 
-                                              (isDarkMode ? 'bg-gray-600 text-white' : 'bg-gray-200 text-gray-800')}`}>
-                                Vendor LegInt: {hasVendorLI ? 'Yes' : 'No'}
-                              </span>
-                              
-                              <span className={`px-2 py-1 rounded text-sm 
-                                            ${hasEffectiveConsent ? 
-                                              (isDarkMode ? 'bg-green-800 text-white' : 'bg-green-200 text-green-800') : 
-                                              (isDarkMode ? 'bg-red-800 text-white' : 'bg-red-200 text-red-800')}`}>
-                                Effective Consent: {hasEffectiveConsent ? 'Yes' : 'No'}
-                              </span>
-                            </div>
+                        <div className="text-sm">
+                          <div className="mb-2">
+                            <span className="font-medium">Vendor ID:</span> {id}
                           </div>
                           
-                          {/* Purposes mit Consent */}
-                          <div className={`p-2 rounded bg-opacity-80 
-                                        ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                            <p className="font-semibold">Purposes mit Consent:</p>
-                            {purposesWithEffectiveConsent.length > 0 ? (
-                              <ul className="list-disc list-inside text-sm mt-1">
-                                {purposesWithEffectiveConsent.map((purposeId: number) => (
-                                  <li key={`c-${purposeId}`} className="ml-2">
-                                    {decodedData?.gvl?.purposes?.[purposeId]?.name || `Purpose ${purposeId}`}
+                          <div className="mb-2">
+                            <h5 className="font-medium mb-1">Purposes mit Consent:</h5>
+                            {purposesWithConsent.length > 0 ? (
+                              <ul className="list-disc list-inside">
+                                {purposesWithConsent.map((purposeId: number) => (
+                                  <li key={`consent-${purposeId}`}>
+                                    Purpose {purposeId}: {decodedData?.gvl?.purposes?.[purposeId]?.name || `Purpose ${purposeId}`}
                                   </li>
                                 ))}
                               </ul>
                             ) : (
-                              <p className="text-sm italic mt-1">Keine Purposes mit Consent</p>
+                              <p className="italic">Keine Purposes mit Consent</p>
                             )}
                           </div>
                           
-                          {/* Purposes mit Legitimate Interest */}
-                          <div className={`p-2 rounded bg-opacity-80 
-                                        ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                            <p className="font-semibold">Purposes mit Legitimate Interest:</p>
-                            {purposesWithEffectiveLI.length > 0 ? (
-                              <ul className="list-disc list-inside text-sm mt-1">
-                                {purposesWithEffectiveLI.map((purposeId: number) => (
-                                  <li key={`li-${purposeId}`} className="ml-2">
-                                    {decodedData?.gvl?.purposes?.[purposeId]?.name || `Purpose ${purposeId}`}
+                          <div className="mb-2">
+                            <h5 className="font-medium mb-1">Purposes mit Legitimate Interest:</h5>
+                            {purposesWithLI.length > 0 ? (
+                              <ul className="list-disc list-inside">
+                                {purposesWithLI.map((purposeId: number) => (
+                                  <li key={`li-${purposeId}`}>
+                                    Purpose {purposeId}: {decodedData?.gvl?.purposes?.[purposeId]?.name || `Purpose ${purposeId}`}
                                   </li>
                                 ))}
                               </ul>
                             ) : (
-                              <p className="text-sm italic mt-1">Keine Purposes mit Legitimate Interest</p>
+                              <p className="italic">Keine Purposes mit Legitimate Interest</p>
                             )}
                           </div>
                           
-                          {/* Special Purposes */}
-                          <div className={`p-2 rounded bg-opacity-80 
-                                        ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                            <p className="font-semibold">Special Purposes:</p>
-                            {vendorSpecialPurposes.length > 0 ? (
-                              <ul className="list-disc list-inside text-sm mt-1">
-                                {vendorSpecialPurposes.map((purposeId: number) => (
-                                  <li key={`sp-${purposeId}`} className="ml-2">
-                                    {decodedData?.gvl?.specialPurposes?.[purposeId]?.name || `Special Purpose ${purposeId}`}
+                          <div className="mb-2">
+                            <h5 className="font-medium mb-1">Special Features (Opt-in):</h5>
+                            {specialFeaturesOptIn.length > 0 ? (
+                              <ul className="list-disc list-inside">
+                                {specialFeaturesOptIn.map((featureId: number) => (
+                                  <li key={`feature-${featureId}`}>
+                                    Feature {featureId}: {decodedData?.gvl?.specialFeatures?.[featureId]?.name || `Feature ${featureId}`}
                                   </li>
                                 ))}
                               </ul>
                             ) : (
-                              <p className="text-sm italic mt-1">Keine Special Purposes</p>
-                            )}
-                          </div>
-                          
-                          {/* Special Features */}
-                          <div className={`p-2 rounded bg-opacity-80 
-                                        ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                            <p className="font-semibold">Special Features:</p>
-                            {vendorSpecialFeatures.length > 0 ? (
-                              <ul className="list-disc list-inside text-sm mt-1">
-                                {vendorSpecialFeatures.map((featureId: number) => {
-                                  const hasOptIn = specialFeaturesOptIn.includes(featureId);
-                                  return (
-                                    <li key={`sf-${featureId}`} className={`ml-2 ${hasOptIn ? 
-                                                                           'font-semibold' : 'opacity-70'}`}>
-                                      {decodedData?.gvl?.specialFeatures?.[featureId]?.name || `Special Feature ${featureId}`}
-                                      {hasOptIn ? ' (Opt-in)' : ' (Kein Opt-in)'}
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            ) : (
-                              <p className="text-sm italic mt-1">Keine Special Features</p>
+                              <p className="italic">Keine Special Features mit Opt-in</p>
                             )}
                           </div>
                         </div>
@@ -895,78 +831,36 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                         <tr>
                           <th className="px-4 py-2 text-left">Vendor ID</th>
                           <th className="px-4 py-2 text-left">Name</th>
-                          <th className="px-4 py-2 text-left">Vendor Consent</th>
-                          <th className="px-4 py-2 text-left">Vendor LegInt</th>
-                          <th className="px-4 py-2 text-left">Purposes mit Consent</th>
-                          <th className="px-4 py-2 text-left">Purposes mit LegInt</th>
+                          <th className="px-4 py-2 text-left">Consent</th>
+                          <th className="px-4 py-2 text-left">Legitimate Interest</th>
+                          <th className="px-4 py-2 text-left">Anzahl Purposes</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {Object.entries(decodedData.gvl.vendors).map(([idStr, vendor]: [string, any]) => {
-                          const id = parseInt(idStr, 10);
-                          const hasVendorConsent = decodedData?.vendorConsents?.has?.(id) || false;
-                          const hasVendorLI = decodedData?.vendorLegitimateInterests?.has?.(id) || false;
+                        {Object.keys(decodedData.gvl.vendors).map((vendorIdStr) => {
+                          const vendorId = parseInt(vendorIdStr, 10);
+                          const vendor = decodedData.gvl.vendors[vendorId];
+                          const hasConsent = decodedData?.vendors?.vendorConsents?.has?.(vendorId) || false;
+                          const hasLegitimateInterest = decodedData?.vendors?.vendorLegitimateInterests?.has?.(vendorId) || false;
                           
-                          // Globaler Purposes-Consent
-                          const purposesWithConsent = Array.from(decodedData?.purposeConsents || [])
-                            .map((value: unknown) => Number(value));
-                          
-                          // Globaler Purposes-LegInt
-                          const purposesWithLI = Array.from(decodedData?.purposeLegitimateInterests || [])
-                            .map((value: unknown) => Number(value));
-                          
-                          // Sammle alle Purposes, die dieser Vendor nutzen kann (laut GVL)
-                          const vendorPurposes = vendor?.purposes || [];
-                          const vendorLegIntPurposes = vendor?.legIntPurposes || [];
-                          
-                          // Welche Purposes haben tatsächlich Consent (Schnittmenge aus vendor purposes und globalen purposes)?
-                          const purposesWithEffectiveConsent = vendorPurposes.filter((p: number) => 
-                            purposesWithConsent.includes(p) && hasVendorConsent
-                          );
-                          
-                          // Welche Purposes haben tatsächlich Legitimate Interest?
-                          const purposesWithEffectiveLI = vendorLegIntPurposes.filter((p: number) => 
-                            purposesWithLI.includes(p) && hasVendorLI
-                          );
+                          // Zähle die Purposes für diesen Vendor
+                          const purposeCount = vendor?.legIntPurposeIds?.length || 0 + vendor?.purposeIds?.length || 0;
                           
                           return (
-                            <tr key={`vendor-${id}`} className={tableRowBg}>
-                              <td className="px-4 py-2">{id}</td>
-                              <td className="px-4 py-2 font-medium">{vendor.name}</td>
-                              <td className={`px-4 py-2 ${hasVendorConsent ? 
-                                             (isDarkMode ? 'text-green-400' : 'text-green-600') : 
-                                             (isDarkMode ? 'text-red-400' : 'text-red-600')}`}>
-                                {hasVendorConsent ? 'Ja' : 'Nein'}
-                              </td>
-                              <td className={`px-4 py-2 ${hasVendorLI ? 
-                                             (isDarkMode ? 'text-blue-400' : 'text-blue-600') : 
-                                             (isDarkMode ? 'text-gray-500' : 'text-gray-500')}`}>
-                                {hasVendorLI ? 'Ja' : 'Nein'}
+                            <tr key={vendorId} className={vendorId % 2 ? tableDarkRowBg : tableLightRowBg}>
+                              <td className="px-4 py-2">{vendorId}</td>
+                              <td className="px-4 py-2">{vendor.name}</td>
+                              <td className="px-4 py-2">
+                                <span className={hasConsent ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400'}>
+                                  {hasConsent ? 'Ja' : 'Nein'}
+                                </span>
                               </td>
                               <td className="px-4 py-2">
-                                {purposesWithEffectiveConsent.length > 0 ? (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                                    {purposesWithEffectiveConsent.length} Purpose{purposesWithEffectiveConsent.length !== 1 ? 's' : ''}
-                                    <span className="ml-1 text-xs opacity-70">
-                                      [{purposesWithEffectiveConsent.join(', ')}]
-                                    </span>
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-500 text-sm">Keine</span>
-                                )}
+                                <span className={hasLegitimateInterest ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400'}>
+                                  {hasLegitimateInterest ? 'Ja' : 'Nein'}
+                                </span>
                               </td>
-                              <td className="px-4 py-2">
-                                {purposesWithEffectiveLI.length > 0 ? (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
-                                    {purposesWithEffectiveLI.length} Purpose{purposesWithEffectiveLI.length !== 1 ? 's' : ''}
-                                    <span className="ml-1 text-xs opacity-70">
-                                      [{purposesWithEffectiveLI.join(', ')}]
-                                    </span>
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-500 text-sm">Keine</span>
-                                )}
-                              </td>
+                              <td className="px-4 py-2">{purposeCount}</td>
                             </tr>
                           );
                         })}

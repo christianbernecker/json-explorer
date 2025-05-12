@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 21:34:18 CEST 2025", "commit": "Verbesserte TCF Decoder UI - Anzeige von Purposes, Special Features und Special Purposes für Key Vendors und vollständige Vendor-Liste"}
+{"deployment": "staging", "timestamp": "Mon May 12 21:41:22 CEST 2025", "commit": "Verbesserte TCF Decoder für die korrekte Anzeige von Purpose Consents für Vendors"}

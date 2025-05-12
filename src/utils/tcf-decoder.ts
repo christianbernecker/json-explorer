@@ -584,57 +584,91 @@ export function decodeTCFStringIAB(tcString: string) {
     // Decodieren des TCF-Strings mit der offiziellen IAB-Library
     const decodedString = TCString.decode(tcString);
     
-    // Debug-Logging für Debugging-Zwecke
-    console.log('IAB TCString decoded object:', decodedString);
+    // Debug-Logging für Entwicklungszwecke
+    console.log('IAB TCString decoded:', decodedString);
     
-    // Überprüfe spezifische Vendor-Consents für Debugging
-    const testVendorIds = [136, 137, 44];
-    for (const id of testVendorIds) {
-      // Erst prüfen, ob der Vendor im vendorConsents enthalten ist
-      const hasVendorConsent = decodedString.vendorConsents?.has?.(id) || false;
-      
-      // Prüfen, ob der Vendor Legitimate Interest hat
-      const hasVendorLI = decodedString.vendorLegitimateInterests?.has?.(id) || false;
-      
-      // Dann prüfen, welche Purposes global Consent haben
-      const purposesConsentList = Array.from(decodedString.purposeConsents || [])
-        .map(id => Number(id))
-        .sort((a, b) => a - b);
-      
-      // Ebenso prüfen, welche Purposes legitimateInterest haben
-      const purposesLIList = Array.from(decodedString.purposeLegitimateInterests || [])
-        .map(id => Number(id))
-        .sort((a, b) => a - b);
-      
-      console.log(`Vendor ${id} consent check:`, {
-        hasVendorConsent,
-        hasVendorLI,
-        purposesWithConsent: purposesConsentList,
-        purposesWithLI: purposesLIList
-      });
-    }
+    // Extrahieren der Purpose-Consents
+    const purposeConsents = Array.from(
+      new Array(24).keys()
+    ).reduce((consents, id) => {
+      const purposeId = id + 1;
+      if (decodedString.purposeConsents?.has?.(purposeId)) {
+        consents.push(purposeId);
+      }
+      return consents;
+    }, [] as number[]);
     
-    // Für Special Features prüfen (z.B. precise geolocation)
-    const specialFeatures = Array.from(decodedString.specialFeatureOptins || [])
-      .map(id => Number(id))
-      .sort((a, b) => a - b);
+    // Extrahieren der Legitimate Interests
+    const purposeLegitimateInterests = Array.from(
+      new Array(24).keys()
+    ).reduce((consents, id) => {
+      const purposeId = id + 1;
+      if (decodedString.purposeLegitimateInterests?.has?.(purposeId)) {
+        consents.push(purposeId);
+      }
+      return consents;
+    }, [] as number[]);
     
-    console.log('Special Features Opt-ins:', specialFeatures);
-    
-    // Zusätzliche Informationen für Datum/Zeitstempel
-    if (decodedString.created) {
-      console.log('Created timestamp:', decodedString.created, 
-                 'as date:', new Date(decodedString.created).toISOString());
-    }
-    if (decodedString.lastUpdated) {
-      console.log('LastUpdated timestamp:', decodedString.lastUpdated, 
-                 'as date:', new Date(decodedString.lastUpdated).toISOString());
-    }
-    
-    return decodedString;
+    // Extrahieren der Special Features
+    const specialFeatureOptins = Array.from(
+      new Array(12).keys()
+    ).reduce((optins, id) => {
+      const featureId = id + 1;
+      if (decodedString.specialFeatureOptins?.has?.(featureId)) {
+        optins.push(featureId);
+      }
+      return optins;
+    }, [] as number[]);
+
+    // CMP Details
+    const cmp = {
+      id: decodedString.cmpId,
+      version: decodedString.cmpVersion,
+      screen: decodedString.consentScreen,
+    };
+
+    // Grundlegende Eigenschaften
+    const base = {
+      version: decodedString.version,
+      created: decodedString.created,
+      lastUpdated: decodedString.lastUpdated,
+      tcfPolicyVersion: decodedString.policyVersion,
+    };
+
+    // Vendor-Informationen
+    const vendors = {
+      vendorListVersion: decodedString.vendorListVersion,
+      vendorConsents: decodedString.vendorConsents,
+      vendorLegitimateInterests: decodedString.vendorLegitimateInterests,
+    };
+
+    // Publisher-Spezifische Einstellungen
+    const publisher = {
+      consents: decodedString.publisherConsents,
+      legitimateInterests: decodedString.publisherLegitimateInterests,
+      customConsents: decodedString.publisherCustomConsents,
+      customLegitimateInterests: decodedString.publisherCustomLegitimateInterests,
+      restrictions: decodedString.publisherRestrictions,
+    };
+
+    return {
+      raw: decodedString,
+      ...base,
+      cmp,
+      vendors,
+      publisher,
+      purposeConsents,
+      purposeLegitimateInterests,
+      specialFeatureOptins,
+      isServiceSpecific: decodedString.isServiceSpecific,
+      useNonStandardStacks: decodedString.useNonStandardStacks,
+      supportOOB: decodedString.supportOOB,
+      purposeOneTreatment: decodedString.purposeOneTreatment,
+      publisherCountryCode: decodedString.publisherCountryCode,
+    };
   } catch (error) {
-    console.error('Error in TCString decoding:', error);
-    throw new Error(`Failed to decode TCF string: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('Error decoding TCF string with IAB library:', error);
+    return null;
   }
 }
 
