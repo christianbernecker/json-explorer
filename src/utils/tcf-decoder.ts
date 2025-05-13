@@ -1,6 +1,6 @@
 // TCF String Decoder - Supports TCF v2.0 and v2.2
 
-import { TCString } from '@iabtcf/core';
+import { TCString } from '@iabtechlabtcf/core';
 
 export const DEFAULT_VENDORS = [136, 137, 44];
 
