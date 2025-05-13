@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 12 23:10:32 CEST 2025", "commit": "TCF-Decoder: Linter-Fixes + Debug-Logging für Consent-Status"}
+{"deployment": "staging", "timestamp": "Mon May 12 23:18:36 CEST 2025", "commit": "fix: Korrekter Datenzugriff auf Consent/LI-Status in TCFDecoder"}

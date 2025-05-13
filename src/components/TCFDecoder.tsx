@@ -18,7 +18,7 @@ interface VendorFilterOptions {
 }
 
 // Example TCF string
-const EXAMPLE_TCF_STRING = "CPBZjR9PBZjR9AKAZADEBUCsAP_AAH_AAAqIHWtf_X_fb39j-_59_9t0eY1f9_7_v-0zjhfds-8Nyf_X_L8X42M7vF36pq4KuR4Eu3LBIQFlHOHUTUmw6okVrTPsak2Mr7NKJ7LEinMbe2dYGHtfn91TuZKY7_78_9fz3_-v_v___9f3r-3_3__59X---_e_V399zLv9__34HlAEmGpfABdiWODJtGlUKIEYVhIdAKACigGFoisIHVwU7K4CP0EDABAagIwIgQYgoxYBAAIBAEhEQEgB4IBEARAIAAQAqQEIACNgEFgBYGAQACgGhYgRQBCBIQZHBUcpgQESLRQT2VgCUXexphCGUUAJAAA.YAAAAAAAAAAA";
+const EXAMPLE_TCF_STRING = "CO_Uu4_O_Uu4_ADACBENDECsAP_AAAAAAAYgAIAAAA";
 
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   // State for the decoder
@@ -26,6 +26,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const [additionalVendorId, setAdditionalVendorId] = useState<number>(136);
   const [decodedVersion, setDecodedVersion] = useState<string>('');
   const [decodeError, setDecodeError] = useState<string | null>(null);
+  const [decodeWarning, setDecodeWarning] = useState<string | null>(null);
   const [decodedData, setDecodedData] = useState<any | null>(null);
   const [showBitRepresentation, setShowBitRepresentation] = useState<boolean>(false);
   const [bitRepresentation, setBitRepresentation] = useState<string>('');
@@ -143,22 +144,31 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   const handleDecode = async () => {
     try {
       setDecodeError(null);
+      setDecodeWarning(null);
       
       if (!tcfString.trim()) {
         setDecodeError('Please enter a TCF string');
         return;
       }
       
-      // Neue IAB-Implementierung
-      const tcModel = decodeTCStringIAB(tcfString);
+      // Neue IAB-Implementierung mit Status-Check
+      const decodeResult = decodeTCStringIAB(tcfString);
+      const { tcModel, decodingStatus, errorMessage } = decodeResult;
       
-      // DEBUG LOG: Gib das empfangene tcModel aus
-      console.log('DEBUG: Received tcModel from decodeTCStringIAB:', tcModel);
+      // DEBUG LOG: Gib das gesamte Ergebnis von decodeTCStringIAB aus
+      console.log('DEBUG: Received result from decodeTCStringIAB:', decodeResult);
       
-      // Prüfe, ob das Decodieren erfolgreich war
-      if (!tcModel) {
-        setDecodeError('Failed to decode TCF string. The string may be invalid or corrupted.');
+      // Prüfe, ob das Decodieren erfolgreich war (auch wenn 'incomplete')
+      if (decodingStatus === 'error' || !tcModel) {
+        setDecodeError(errorMessage || 'Failed to decode TCF string.');
+        setDecodedData(null);
+        setBitRepresentation('');
         return;
+      }
+      
+      // Setze Warnung, wenn unvollständig
+      if (decodingStatus === 'incomplete') {
+        setDecodeWarning(errorMessage || 'Decoding might be incomplete. Some fields may be missing or have unexpected values.');
       }
       
       setDecodedVersion(tcModel.version?.toString() || '2');
@@ -570,7 +580,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
           {/* Error display */}
           {decodeError && (
             <div className={`p-4 my-4 rounded-md bg-red-100 dark:bg-red-900 ${errorColor}`}>
-              <p>{decodeError}</p>
+              <p><span className="font-semibold">Error:</span> {decodeError}</p>
+            </div>
+          )}
+          
+          {/* Warning display (NEU) */}
+          {decodeWarning && !decodeError && (
+            <div className={`p-4 my-4 rounded-md bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200`}>
+              <p><span className="font-semibold">Warning:</span> {decodeWarning}</p>
             </div>
           )}
           

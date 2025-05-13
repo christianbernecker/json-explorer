@@ -575,127 +575,78 @@ export function handleExportJSON(decodedData: any): any {
 }
 
 /**
- * Basis-Dekodierung eines TCF-Strings mit der offiziellen IAB-Library
- * 
- * @param tcString Der zu dekodierende TCF-String
- * @returns Ein Objekt mit den dekodierten Daten oder null bei Fehlern
+ * Decodes a TCF string using the IAB library (@iabtcf/core) and adds status checks.
  */
-export function decodeTCStringIAB(tcString: string) {
-  if (!tcString) {
-    console.error("Kein TCF-String übergeben");
-    return null;
-  }
-
+export function decodeTCStringIAB(tcString: string): { 
+  tcModel: any | null; // We use 'any' here as TCModel type seems complex for direct use
+  decodingStatus: 'complete' | 'incomplete' | 'error';
+  errorMessage: string | null; 
+} {
   try {
-    console.log("Dekodiere TCF-String:", tcString);
-    
-    // Dekodieren mit der offiziellen IAB-Library
-    const decoded = TCString.decode(tcString);
-    
-    // DEBUG LOG: Prüfe Vendor Consent direkt nach dem Dekodieren
-    console.log('DEBUG: Decoded Vendor Consents for 136:', decoded.vendorConsents?.has?.(136));
-    
-    // Ergebnisse für die Key-Vendors extrahieren
-    const vendorResults = DEFAULT_VENDORS.map(vendorId => {
-      const hasConsent = Boolean(decoded.vendorConsents?.has?.(vendorId));
-      const hasLegitimateInterest = Boolean(decoded.vendorLegitimateInterests?.has?.(vendorId));
-      
-      // Purposes für die der Vendor Consent hat filtern
-      const purposeConsents: number[] = [];
-      for (let i = 1; i <= 10; i++) {
-        if (Boolean(decoded.purposeConsents?.has?.(i)) && hasConsent) {
-          purposeConsents.push(i);
-        }
-      }
-      
-      // Legitimate Interests für die der Vendor LI hat filtern
-      const legitimateInterests: number[] = [];
-      for (let i = 1; i <= 10; i++) {
-        if (Boolean(decoded.purposeLegitimateInterests?.has?.(i)) && hasLegitimateInterest) {
-          legitimateInterests.push(i);
-        }
-      }
-      
-      return {
-        id: vendorId,
-        info: {
-          hasConsent: hasConsent,
-          hasLegitimateInterest: hasLegitimateInterest,
-          purposeConsents: purposeConsents,
-          legitimateInterests: legitimateInterests
-        }
-      };
-    });
-    
-    // DEBUG LOG: Gib die berechneten Vendor Results aus
-    console.log('DEBUG: Calculated Vendor Results:', vendorResults);
+    const tcModel = TCString.decode(tcString);
 
-    // Vendor Consent Liste erstellen
-    const vendorConsent: number[] = [];
-    if (decoded.vendorConsents) {
-      const maxVendorId = Number(decoded.vendorConsents.maxId) || 0;
-      for (let i = 1; i <= maxVendorId; i++) {
-        if (Boolean(decoded.vendorConsents.has(i))) {
-          vendorConsent.push(i);
-        }
-      }
+    // Basic check if decoding itself failed
+    if (!tcModel) {
+      return {
+        tcModel: null,
+        decodingStatus: 'error',
+        errorMessage: 'IAB library failed to decode the string. It might be invalid or corrupted.'
+      };
     }
-    
-    // Vendor Legitimate Interest Liste erstellen
-    const vendorLI: number[] = [];
-    if (decoded.vendorLegitimateInterests) {
-      const maxVendorId = Number(decoded.vendorLegitimateInterests.maxId) || 0;
-      for (let i = 1; i <= maxVendorId; i++) {
-        if (Boolean(decoded.vendorLegitimateInterests.has(i))) {
-          vendorLI.push(i);
-        }
-      }
+
+    // Check for potential incompleteness or issues
+    let status: 'complete' | 'incomplete' = 'complete';
+    let messages: string[] = [];
+
+    // Check common fields that might be missing or have default/unexpected values
+    if (tcModel.cmpId === undefined || tcModel.cmpId === null || tcModel.cmpId === 0) {
+      messages.push('CMP ID is missing or zero.');
+      status = 'incomplete';
     }
-    
-    // Purposes mit Consent
-    const purposesConsent: number[] = [];
-    for (let i = 1; i <= 24; i++) {
-      if (Boolean(decoded.purposeConsents?.has?.(i))) {
-        purposesConsent.push(i);
-      }
+    if (tcModel.vendorListVersion === undefined || tcModel.vendorListVersion === null || tcModel.vendorListVersion === 0) {
+      messages.push('Vendor List Version is missing or zero.');
+      status = 'incomplete';
     }
-    
-    // Purposes mit Legitimate Interest
-    const purposesLI: number[] = [];
-    for (let i = 1; i <= 24; i++) {
-      if (Boolean(decoded.purposeLegitimateInterests?.has?.(i))) {
-        purposesLI.push(i);
-      }
+     if (tcModel.policyVersion === undefined || tcModel.policyVersion === null || tcModel.policyVersion === 0) {
+       messages.push('Policy Version is missing or zero.');
+       status = 'incomplete';
+     }
+    // Standard tools often assume service-specific strings
+    if (tcModel.isServiceSpecific === false) {
+      messages.push('String is globally scoped (not service-specific).');
+      // This might not always be an 'error', but often tools expect service-specific
+      // status = 'incomplete'; // Decide if this should mark as incomplete
     }
-    
-    // Special Features
-    const specialFeatures: number[] = [];
-    for (let i = 1; i <= 12; i++) {
-      if (Boolean(decoded.specialFeatureOptins?.has?.(i))) {
-        specialFeatures.push(i);
-      }
+    // Check for potentially very old dates (like the 1970 one observed)
+    const createdDate = tcModel.created ? new Date(tcModel.created) : null;
+    if (createdDate && createdDate.getFullYear() < 2018) { // TCF v2 launched later
+        messages.push(`Creation date (${createdDate.toLocaleDateString()}) seems unusually old.`);
+        status = 'incomplete';
     }
-    
-    // Ergebnis zusammenstellen
+
+
     return {
-      version: decoded.version === 2 ? "2.0" : "2.2",
-      coreData: {
-        created: decoded.created ? decoded.created.getTime() / 100 : 0,
-        lastUpdated: decoded.lastUpdated ? decoded.lastUpdated.getTime() / 100 : 0,
-        cmpId: decoded.cmpId,
-        cmpVersion: decoded.cmpVersion,
-        consentScreen: decoded.consentScreen,
-        purposesConsent: purposesConsent,
-        purposesLITransparency: purposesLI,
-        vendorConsent: vendorConsent,
-        vendorLI: vendorLI,
-        specialFeatureOptIns: specialFeatures
-      },
-      vendorResults: vendorResults
+      tcModel: tcModel,
+      decodingStatus: status,
+      errorMessage: messages.length > 0 ? `Potential issues found: ${messages.join(' ')}` : null
     };
+
   } catch (error) {
-    console.error("Fehler bei der Dekodierung:", error);
-    return null;
+    console.error('Error during IAB TCF decoding:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error during decoding.';
+    // Add specific checks for common IAB library errors if needed
+    if (message.includes('Unable to parse')) {
+       return { tcModel: null, decodingStatus: 'error', errorMessage: `IAB library error: String is not parseable. (${message})` };
+    }
+     if (message.includes('Invalid')) {
+       return { tcModel: null, decodingStatus: 'error', errorMessage: `IAB library error: String contains invalid data. (${message})` };
+     }
+    
+    return {
+      tcModel: null,
+      decodingStatus: 'error',
+      errorMessage: `An unexpected error occurred: ${message}`
+    };
   }
 }
 
