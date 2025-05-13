@@ -151,6 +151,17 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
         return;
       }
       
+      // Prüfen, ob GVL geladen ist
+      if (isLoadingGVL) {
+        setDecodeError('Global Vendor List (GVL) is still loading. Please wait a moment and try again.');
+        return;
+      }
+      if (!gvlData) {
+        setDecodeError('Global Vendor List (GVL) could not be loaded. Decoding may be incomplete or fail.');
+        // Optional: Hier abbrechen oder trotzdem versuchen?
+        // return; 
+      }
+      
       // Neue IAB-Implementierung mit Status-Check
       const decodeResult = decodeTCStringIAB(tcfString);
       const { tcModel, decodingStatus, errorMessage } = decodeResult;
@@ -176,23 +187,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       // Debug log
       console.log('IAB TCModel:', tcModel);
       
-      // TCString-Objekte als JSON kopieren, um UI-freundliche Strukturen zu erstellen
-      const processedModel = {
-        ...tcModel,
-        // Die Struktur ist jetzt anders in unserer neuen Implementierung
-        purposesConsent: tcModel.coreData.purposesConsent || [],
-        purposesLITransparency: tcModel.coreData.purposesLITransparency || [],
-        specialFeatureOptIns: tcModel.coreData.specialFeatureOptIns || [],
-        // Verwende die vorhandenen Vendor-Ergebnisse
-        vendorResults: tcModel.vendorResults || []
-      };
-      
-      // DEBUG LOG: Gib das processierte Model vor dem Setzen des States aus
-      console.log('DEBUG: Processed Model for State:', processedModel);
-      
       // Statt Probleme mit Typen zu haben, verwenden wir die originalen Referenzen
       // auf die Daten der IAB-Library
-      setDecodedData(processedModel);
+      setDecodedData(tcModel); // Direkt das tcModel speichern
       setBitRepresentation(''); // Optional: kann entfernt werden
     } catch (error) {
       console.error('Error decoding:', error);
@@ -751,49 +748,49 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Created</td>
                         <td className="px-4 py-2">
-                          {decodedData.coreData?.created ? new Date(decodedData.coreData.created).toLocaleString() : 'N/A'}
+                          {decodedData.created ? new Date(decodedData.created).toLocaleString() : 'N/A'}
                         </td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Last Updated</td>
                         <td className="px-4 py-2">
-                          {decodedData.coreData?.lastUpdated ? new Date(decodedData.coreData.lastUpdated).toLocaleString() : 'N/A'}
+                          {decodedData.lastUpdated ? new Date(decodedData.lastUpdated).toLocaleString() : 'N/A'}
                         </td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">CMP ID</td>
-                        <td className="px-4 py-2">{decodedData.coreData?.cmpId ?? 'N/A'}</td>
+                        <td className="px-4 py-2">{decodedData.cmpId ?? 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">CMP Version</td>
-                        <td className="px-4 py-2">{decodedData.coreData?.cmpVersion ?? 'N/A'}</td>
+                        <td className="px-4 py-2">{decodedData.cmpVersion ?? 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Consent Screen</td>
-                        <td className="px-4 py-2">{decodedData.coreData?.consentScreen ?? 'N/A'}</td>
+                        <td className="px-4 py-2">{decodedData.consentScreen ?? 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Consent Language</td>
-                        <td className="px-4 py-2">{decodedData.coreData?.consentLanguage || 'N/A'}</td>
+                        <td className="px-4 py-2">{decodedData.consentLanguage || 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Vendor List Version</td>
-                        <td className="px-4 py-2">{decodedData.coreData?.vendorListVersion ?? 'N/A'}</td>
+                        <td className="px-4 py-2">{decodedData.vendorListVersion ?? 'N/A'}</td>
                       </tr>
                       <tr className={tableRowBg}>
                         <td className="px-4 py-2 font-medium">Policy Version</td>
-                        <td className="px-4 py-2">{decodedData.coreData?.policyVersion ?? 'N/A'}</td>
+                        <td className="px-4 py-2">{decodedData.policyVersion ?? 'N/A'}</td>
                       </tr>
                       {/* Spezifische Felder für TCF v2.2 */}
                       {decodedData.version === '2.2' && (
                         <>
                           <tr className={tableRowBg}>
                             <td className="px-4 py-2 font-medium">Purpose One Treatment</td>
-                            <td className="px-4 py-2">{decodedData.coreData?.purposeOneTreatment ? 'Yes' : 'No'}</td>
+                            <td className="px-4 py-2">{decodedData.purposeOneTreatment ? 'Yes' : 'No'}</td>
                           </tr>
                           <tr className={tableRowBg}>
                             <td className="px-4 py-2 font-medium">Publisher Country Code</td>
-                            <td className="px-4 py-2">{decodedData.coreData?.publisherCC || 'N/A'}</td>
+                            <td className="px-4 py-2">{decodedData.publisherCC || 'N/A'}</td>
                           </tr>
                         </>
                       )}
@@ -877,8 +874,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                         {filteredVendors.map((vendor) => {
                           const vendorId = vendor.id;
-                          const hasVendorConsent = decodedData.coreData?.vendorConsent?.includes(vendorId) || false;
-                          const hasVendorLI = decodedData.coreData?.vendorLI?.includes(vendorId) || false;
+                          const hasVendorConsent = decodedData.vendorConsents?.has?.(vendorId) || false;
+                          const hasVendorLI = decodedData.vendorLegitimateInterests?.has?.(vendorId) || false;
                           
                           const vendorSpecificInfo = decodedData.vendorResults?.find((v:any) => v.id === vendorId);
                           const consentPurposes = vendorSpecificInfo?.purposes || [];
