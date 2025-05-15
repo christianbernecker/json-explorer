@@ -323,12 +323,13 @@
                     const globalSpecialFeatures = Array.from(tcModel.specialFeatureOptins.keys());
                     
                     // Berechne die Schnittmenge
-                    // 1. Für Consent: Nur wenn der Vendor den Purpose unterstützt UND global Consent für diesen Purpose besteht
+                    // 1. Für Consent: Wenn der Vendor im vendorConsents Bitfeld ist, geben wir alle seine Purposes zurück
                     const activeConsentPurposesForVendor = vendorConsent 
-                        ? vendorConsentPurposes.filter(purposeId => globalPurposesConsent.includes(purposeId))
+                        ? vendorConsentPurposes 
                         : [];
                         
-                    // 2. Für LI: Nur wenn der Vendor den Purpose als LI definiert hat UND global LI für diesen Purpose besteht
+                    // 2. Für LI: Nur wenn der Vendor im LI-Bitfeld ist UND eine Überschneidung zwischen
+                    // seinen LI-Purposes und den globalen LI-Purposes besteht
                     const activeLIPurposesForVendor = vendorLIBit 
                         ? vendorLIPurposes.filter(purposeId => globalPurposesLI.includes(purposeId))
                         : [];

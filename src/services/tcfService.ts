@@ -282,25 +282,26 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   // 2. UND mindestens ein Purpose muss im purposeLegitimateInterests Bitfeld freigegeben sein
   const hasLegitimateInterestBit = tcModel.vendorLegitimateInterests.has(vendorId);
   
-  // Vendor-spezifische Purposes und Special Features aus der GVL
+  // Vendor-spezifische Purposes aus der GVL
   const vendorConsentPurposes: number[] = vendorFromGVL?.purposes || [];
   const vendorLIPurposes: number[] = vendorFromGVL?.legIntPurposes || [];
   const vendorSpecialFeatures: number[] = vendorFromGVL?.specialFeatures || [];
   
-  // Berechne die Schnittmenge zwischen Vendor-Purposes und globalen Purposes
-  // 1. Für Consent: Nur wenn der Vendor den Purpose unterstützt UND global Consent für diesen Purpose besteht
-  // Wenn der Vendor keinen generellen Consent hat (vendorConsents), dann ist die Liste leer
+  // KORRIGIERTER ANSATZ:
+  // 1. Für Consent: Wenn der Vendor im vendorConsents Bitfeld ist, geben wir alle seine Purposes zurück
+  // Dies entspricht dem offiziellen IAB-Decoder - wenn ein Vendor Consent hat, werden alle seine Consent-Purposes angezeigt
   const activeConsentPurposesForVendor = hasConsent 
-    ? vendorConsentPurposes.filter(purposeId => globalPurposesConsent.includes(purposeId))
+    ? vendorConsentPurposes 
     : [];
     
-  // 2. Für Legitimate Interest: Nur wenn der Vendor den Purpose als LI definiert hat UND global LI für diesen Purpose besteht
-  // Der Vendor muss außerdem im vendorLegitimateInterests Bitfeld auf true gesetzt sein
+  // 2. Für Legitimate Interest: Nur wenn der Vendor im LI-Bitfeld ist UND eine Überschneidung zwischen
+  // seinen LI-Purposes und den globalen LI-Purposes besteht
   const activeLIPurposesForVendor = hasLegitimateInterestBit 
     ? vendorLIPurposes.filter(purposeId => globalPurposesLI.includes(purposeId))
     : [];
   
-  // 3. Für Special Features: Nur wenn der Vendor das Special Feature unterstützt UND global ein Opt-In für dieses Feature besteht
+  // 3. Für Special Features: Hier prüfen wir die Überschneidung zwischen Vendor Special Features und 
+  // global aktivierten Special Features
   const activeSpecialFeaturesForVendor = vendorSpecialFeatures.filter(featureId => 
     globalSpecialFeatures.includes(featureId)
   );
