@@ -2,9 +2,9 @@ import { TCString, GVL, TCModel, IntMap } from '@iabtechlabtcf/core';
 
 // --- GVL Loading and Caching Logic (integriert aus gvl-loader.ts) ---
 // Direkte URLs für den Zugriff auf die GVL
-const GVL_PRIMARY_URL = '/api/gvl'; // Unsere eigene API-Route
-const GVL_FALLBACK_URL = 'https://cmp.cdn-origin.cloudfront.net/vendor-list.json'; // Cloudfront Fallback wie im alten Loader
-const LOCAL_GVL_URL = '/vendor-list.json'; // Falls die API-Route nicht funktioniert
+const GVL_PRIMARY_URL = '/vendor-list.json'; // Lokale Fallback-Datei in public/ zuerst versuchen
+const GVL_FALLBACK_URL = '/api/gvl'; // Unsere eigene API-Route als Fallback
+const LOCAL_GVL_URL = 'https://cmp.cdn-origin.cloudfront.net/vendor-list.json'; // Externer Fallback als letzte Option
 
 const GVL_CACHE_KEY = 'tcf_service_gvl_cache'; // Eigener Cache Key für den Service
 const GVL_CACHE_TTL = 1000 * 60 * 60 * 12; // 12 hours
