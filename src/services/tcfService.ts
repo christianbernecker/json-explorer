@@ -1,12 +1,10 @@
 import { TCString, GVL, TCModel, IntMap } from '@iabtechlabtcf/core';
 
 // --- GVL Loading and Caching Logic (integriert aus gvl-loader.ts) ---
-const GVL_BASE_URL = 'https://vendor-list.consensu.org/'; // Basis-URL für GVL
-const LATEST_GVL_FILENAME = 'vendor-list.json'; // Für die aktuellste Version
-// const VERSIONED_GVL_FILENAME = 'v{version}/vendor-list.json'; // Für spezifische Versionen (aktuell nicht primär genutzt)
-
-const GVL_PRIMARY_URL = `${GVL_BASE_URL}v3/${LATEST_GVL_FILENAME}`; // Standardmäßig v3
+// Direkte URLs für den Zugriff auf die GVL
+const GVL_PRIMARY_URL = '/api/gvl'; // Unsere eigene API-Route
 const GVL_FALLBACK_URL = 'https://cmp.cdn-origin.cloudfront.net/vendor-list.json'; // Cloudfront Fallback wie im alten Loader
+const LOCAL_GVL_URL = '/vendor-list.json'; // Falls die API-Route nicht funktioniert
 
 const GVL_CACHE_KEY = 'tcf_service_gvl_cache'; // Eigener Cache Key für den Service
 const GVL_CACHE_TTL = 1000 * 60 * 60 * 12; // 12 hours
@@ -27,6 +25,7 @@ export function clearTcfServiceGVLCache(): void {
 }
 
 async function fetchGvlJson(url: string): Promise<any> {
+  console.log(`Fetching GVL JSON from ${url}...`);
   const response = await fetch(url, {
     mode: 'cors',
     credentials: 'omit',
@@ -35,17 +34,23 @@ async function fetchGvlJson(url: string): Promise<any> {
   if (!response.ok) {
     throw new Error(`Failed to fetch GVL from ${url}. Status: ${response.status}`);
   }
+  console.log(`GVL JSON from ${url} loaded successfully.`);
   return response.json();
 }
 
 async function fetchAndInstantiateGVL(): Promise<GVL> {
-  const urlsToTry = [GVL_PRIMARY_URL, GVL_FALLBACK_URL];
+  const urlsToTry = [GVL_PRIMARY_URL, GVL_FALLBACK_URL, LOCAL_GVL_URL];
   let lastError: any = null;
 
   for (const url of urlsToTry) {
     try {
       console.log(`Attempting to load GVL JSON from ${url}...`);
       const gvlJsonData = await fetchGvlJson(url);
+      
+      // Verifiziere, dass wir eine Vendor List Version 3 haben
+      if (gvlJsonData.gvlSpecificationVersion !== 3) {
+        console.warn(`Warning: GVL from ${url} has specification version ${gvlJsonData.gvlSpecificationVersion}, expected version 3.`);
+      }
       
       if (typeof window !== 'undefined' && window.localStorage) {
         try {
@@ -144,9 +149,12 @@ export async function decodeTCStringStrict(tcString: string): Promise<{ tcModel:
 
 function intMapToIdsArray(intMap: IntMap<boolean> | undefined): number[] {
   if (!intMap) return [];
-  // Explizite Typ-Assertion und @ts-ignore, um Compiler-Problem zu umgehen
-  // @ts-ignore - Library type definition seems problematic here
-  return (intMap as IntMap<boolean>).keys(); 
+  const keys: number[] = [];
+  // @ts-ignore - Library type definition or TS inference for IntMap.forEach seems problematic
+  (intMap as IntMap<boolean>).forEach((_value: boolean, key: number) => {
+    keys.push(key);
+  });
+  return keys.sort((a, b) => a - b); 
 }
 
 // vectorToIdsArray wird vorerst nicht mehr direkt in getVendorDetails benötigt

@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May 13 05:59:33 CEST 2025", "commit": "fix: Korrekter Datenzugriff in TCFDecoder & GVL-Ladecheck vor Decode"}
+{"deployment": "staging", "timestamp": "Tue May 13 09:46:42 CEST 2025", "commit": "Refactor: Implement TCF logic using tcfService and @iabtechlabtcf/core"}
