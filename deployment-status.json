@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 15 16:12:06 CEST 2025", "commit": "Korrektur der TCF LI-Interpretation gemäß IAB-Spezifikation (v1.1.7)"}
+{"deployment": "staging", "timestamp": "Thu May 15 16:43:03 CEST 2025", "commit": "Verbesserte TCF-Decoder Debug-Tools zur GVL-Validierung und LI-Berechnung"}

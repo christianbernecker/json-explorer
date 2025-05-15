@@ -266,11 +266,13 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   const vendorFromGVL = tcModel.gvl?.vendors?.[vendorId] || null;
   const vendorName = vendorFromGVL?.name || `Vendor ID ${vendorId}`;
   
-  // Generiere Listen der Purpose IDs
+  // Generiere Listen der globalen Purpose IDs aus dem TCF-String
   // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
-  const purposesConsent = intMapToIdsArray(tcModel.purposeConsents);
+  const globalPurposesConsent = intMapToIdsArray(tcModel.purposeConsents);
   // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
-  const purposesLI = intMapToIdsArray(tcModel.purposeLegitimateInterests);
+  const globalPurposesLI = intMapToIdsArray(tcModel.purposeLegitimateInterests);
+  // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
+  const globalSpecialFeatures = intMapToIdsArray(tcModel.specialFeatureOptins);
   
   // Überprüfe den Consent-Status
   const hasConsent = tcModel.vendorConsents.has(vendorId);
@@ -280,13 +282,27 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   // 2. UND mindestens ein Purpose muss im purposeLegitimateInterests Bitfeld freigegeben sein
   const hasLegitimateInterestBit = tcModel.vendorLegitimateInterests.has(vendorId);
   
-  // In der GVL sind die LI-fähigen Purposes pro Vendor definiert
-  // Nutzen wir legIntPurposes statt legitimateInterestPurposes, da dies der korrekte Property-Name ist
+  // Vendor-spezifische Purposes und Special Features aus der GVL
+  const vendorConsentPurposes: number[] = vendorFromGVL?.purposes || [];
   const vendorLIPurposes: number[] = vendorFromGVL?.legIntPurposes || [];
+  const vendorSpecialFeatures: number[] = vendorFromGVL?.specialFeatures || [];
   
-  // Überschneidung zwischen den LI-Purposes des Vendors und den aktivierten LI-Purposes im TC String
-  const activeLIPurposesForVendor = vendorLIPurposes.filter((purposeId: number) => 
-    purposesLI.includes(purposeId)
+  // Berechne die Schnittmenge zwischen Vendor-Purposes und globalen Purposes
+  // 1. Für Consent: Nur wenn der Vendor den Purpose unterstützt UND global Consent für diesen Purpose besteht
+  // Wenn der Vendor keinen generellen Consent hat (vendorConsents), dann ist die Liste leer
+  const activeConsentPurposesForVendor = hasConsent 
+    ? vendorConsentPurposes.filter(purposeId => globalPurposesConsent.includes(purposeId))
+    : [];
+    
+  // 2. Für Legitimate Interest: Nur wenn der Vendor den Purpose als LI definiert hat UND global LI für diesen Purpose besteht
+  // Der Vendor muss außerdem im vendorLegitimateInterests Bitfeld auf true gesetzt sein
+  const activeLIPurposesForVendor = hasLegitimateInterestBit 
+    ? vendorLIPurposes.filter(purposeId => globalPurposesLI.includes(purposeId))
+    : [];
+  
+  // 3. Für Special Features: Nur wenn der Vendor das Special Feature unterstützt UND global ein Opt-In für dieses Feature besteht
+  const activeSpecialFeaturesForVendor = vendorSpecialFeatures.filter(featureId => 
+    globalSpecialFeatures.includes(featureId)
   );
   
   // Ein Vendor hat nur dann LI, wenn beide Bedingungen erfüllt sind
@@ -295,9 +311,15 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   // Detaillierte Debug-Informationen
   const debugInfo = {
     hasVendorLIBit: hasLegitimateInterestBit,
-    vendorLIPurposeIds: vendorLIPurposes,
-    activeLIPurposesInTCString: purposesLI,
+    vendorConsentPurposes,
+    vendorLIPurposes,
+    vendorSpecialFeatures,
+    globalPurposesConsent,
+    globalPurposesLI,
+    globalSpecialFeatures,
+    activeConsentPurposesForVendor,
     activeLIPurposesForVendor,
+    activeSpecialFeaturesForVendor,
     finalLIStatus: hasLegitimateInterest
   };
 
@@ -307,9 +329,9 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     hasConsent,
     hasLegitimateInterest,
     policyUrl: vendorFromGVL?.policyUrl,
-    purposesConsent: purposesConsent,
-    purposesLI: purposesLI,
-    specialFeaturesOptIn: [],
+    purposesConsent: activeConsentPurposesForVendor,
+    purposesLI: activeLIPurposesForVendor,
+    specialFeaturesOptIn: activeSpecialFeaturesForVendor,
     gvlVendor: vendorFromGVL,
     debugInfo
   };
@@ -362,26 +384,40 @@ export function getProcessedTCData(tcModel: TCModel | null): ProcessedTCData | n
           keyVendorResults.push(getVendorDetails(id, tcModel));
       });
   } else {
+      // Wenn keine GVL verfügbar ist, können wir nur grundlegende Informationen bereitstellen
+      // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
+      const globalPurposesConsent = intMapToIdsArray(tcModel.purposeConsents);
+      // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
+      const globalPurposesLI = intMapToIdsArray(tcModel.purposeLegitimateInterests);
+      // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
+      const globalSpecialFeatures = intMapToIdsArray(tcModel.specialFeatureOptins);
+      
       keyVendorIds.forEach(id => {
-          // Wenn keine GVL verfügbar ist, können wir die spezifischen Purposes nicht bestimmen
-          // Wir verwenden direkt das vendorLegitimateInterests-Flag aus dem TCModel
+          const hasVendorConsent = tcModel.vendorConsents.has(id);
           const hasVendorLIFlag = tcModel.vendorLegitimateInterests.has(id);
           
           keyVendorResults.push({
               id,
               name: `Vendor ${id} (GVL not loaded)`,
-              hasConsent: tcModel.vendorConsents.has(id),
-              // Ohne GVL können wir die Purposes nicht prüfen, verlassen uns nur auf das Flag
+              hasConsent: hasVendorConsent,
+              // Ohne GVL können wir nicht wissen, welche spezifischen Purposes dieser Vendor unterstützt
+              // Daher ist der LI-Status in diesem Fall nicht vollständig, sondern nur das Flag
               hasLegitimateInterest: hasVendorLIFlag,
-              purposesConsent: [],
-              purposesLI: [],
-              specialFeaturesOptIn: [],
+              purposesConsent: [], // Wir können ohne GVL nicht wissen, welche Purposes der Vendor unterstützt
+              purposesLI: [],      // Wir können ohne GVL nicht wissen, welche LI-Purposes der Vendor unterstützt
+              specialFeaturesOptIn: [], // Wir können ohne GVL nicht wissen, welche Special Features der Vendor unterstützt
               gvlVendor: null,
               debugInfo: {
                   hasVendorLIBit: hasVendorLIFlag,
-                  vendorLIPurposeIds: [],
-                  activeLIPurposesInTCString: [],
+                  vendorConsentPurposes: [],
+                  vendorLIPurposes: [],
+                  vendorSpecialFeatures: [],
+                  globalPurposesConsent,
+                  globalPurposesLI,
+                  globalSpecialFeatures,
+                  activeConsentPurposesForVendor: [],
                   activeLIPurposesForVendor: [],
+                  activeSpecialFeaturesForVendor: [],
                   finalLIStatus: hasVendorLIFlag
               }
           });

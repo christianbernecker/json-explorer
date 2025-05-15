@@ -313,12 +313,29 @@
                     
                     // Prüfe LI Purposes für den Vendor (erfordert GVL)
                     const vendorFromGVL = tcModel.gvl?.vendors?.[id] || null;
+                    const vendorConsentPurposes = vendorFromGVL?.purposes || [];
                     const vendorLIPurposes = vendorFromGVL?.legIntPurposes || [];
-                    const purposesLI = Array.from(tcModel.purposeLegitimateInterests.keys());
+                    const vendorSpecialFeatures = vendorFromGVL?.specialFeatures || [];
                     
-                    // Überprüfe, ob es eine Überschneidung zwischen den LI-Purposes des Vendors und den aktivierten LI-Purposes gibt
-                    const activeLIPurposesForVendor = vendorLIPurposes.filter(purposeId => 
-                        purposesLI.includes(purposeId)
+                    // Globale Purpose IDs aus dem TCF-String
+                    const globalPurposesConsent = Array.from(tcModel.purposeConsents.keys());
+                    const globalPurposesLI = Array.from(tcModel.purposeLegitimateInterests.keys());
+                    const globalSpecialFeatures = Array.from(tcModel.specialFeatureOptins.keys());
+                    
+                    // Berechne die Schnittmenge
+                    // 1. Für Consent: Nur wenn der Vendor den Purpose unterstützt UND global Consent für diesen Purpose besteht
+                    const activeConsentPurposesForVendor = vendorConsent 
+                        ? vendorConsentPurposes.filter(purposeId => globalPurposesConsent.includes(purposeId))
+                        : [];
+                        
+                    // 2. Für LI: Nur wenn der Vendor den Purpose als LI definiert hat UND global LI für diesen Purpose besteht
+                    const activeLIPurposesForVendor = vendorLIBit 
+                        ? vendorLIPurposes.filter(purposeId => globalPurposesLI.includes(purposeId))
+                        : [];
+                        
+                    // 3. Für Special Features: Nur wenn der Vendor das Feature unterstützt UND global Opt-In für dieses Feature besteht
+                    const activeSpecialFeaturesForVendor = vendorSpecialFeatures.filter(featureId => 
+                        globalSpecialFeatures.includes(featureId)
                     );
                     
                     // Nach TCF-Spezifikation: Ein Vendor hat nur dann LI, wenn beide Bedingungen erfüllt sind
@@ -343,7 +360,7 @@
   - Consent: ${vendorConsent ? 'JA' : 'NEIN'}
   - LI Bit im TCString: ${vendorLIBit ? 'JA' : 'NEIN'}
   - LI Purposes des Vendors (GVL): ${vendorLIPurposes.join(', ') || 'Keine'}
-  - Aktive LI Purposes im TCString: ${purposesLI.join(', ') || 'Keine'}
+  - Globale LI Purposes im TCString: ${globalPurposesLI.join(', ') || 'Keine'}
   - Aktive LI Purposes für diesen Vendor: ${activeLIPurposesForVendor.join(', ') || 'Keine'}
   - Hat Legitimate Interest (nach TCF-Spezifikation): ${hasLegitimateInterest ? 'JA' : 'NEIN'}${gvlInfo}`;
                 }).join('\n\n');
