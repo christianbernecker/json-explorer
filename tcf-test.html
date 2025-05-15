@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TCF String Analyzer</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #output { white-space: pre-wrap; font-family: monospace; background: #f5f5f5; padding: 10px; border-radius: 5px; }
+        .section { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+        h2 { margin-top: 0; }
+        button { padding: 8px 16px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #3367d6; }
+        textarea { width: 100%; height: 80px; margin-bottom: 10px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>TCF String Analyzer</h1>
+    
+    <div class="section">
+        <h2>TCF String Input</h2>
+        <textarea id="tcfString">CQRemBOQRemBOAGACAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA</textarea>
+        <button onclick="decodeTCF()">Decode TCF String</button>
+    </div>
+    
+    <div class="section">
+        <h2>Output</h2>
+        <div id="output">Results will appear here...</div>
+    </div>
+
+    <script>
+        // Base64 decoding functions needed for TCF
+        const base64UrlDecode = (input) => {
+            // Replace URL-safe characters
+            input = input.replace(/-/g, '+').replace(/_/g, '/');
+            
+            // Add padding if needed
+            const pad = input.length % 4;
+            if (pad) {
+                if (pad === 1) {
+                    throw new Error('Invalid base64url string');
+                }
+                input += new Array(5-pad).join('=');
+            }
+            
+            // Decode
+            try {
+                return atob(input);
+            } catch (e) {
+                throw new Error('Failed to decode base64url: ' + e.message);
+            }
+        };
+        
+        const uint8ArrayToHex = (array) => {
+            return Array.from(array)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        };
+        
+        const binaryToUint8Array = (binary) => {
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        };
+
+        // Returns a bit value at a specific position in a Uint8Array
+        const getBit = (bytes, pos) => {
+            const bytePos = Math.floor(pos / 8);
+            const bitPos = pos % 8;
+            if (bytePos >= bytes.length) return 0;
+            return (bytes[bytePos] & (1 << (7 - bitPos))) !== 0 ? 1 : 0;
+        };
+        
+        // Extracts an integer from a range of bits
+        const extractInt = (bytes, startPos, length) => {
+            let result = 0;
+            for (let i = 0; i < length; i++) {
+                result = (result << 1) | getBit(bytes, startPos + i);
+            }
+            return result;
+        };
+        
+        // Simple TCF string decoder focused on vendor consent and LI
+        const decodeSimpleTCF = (tcString) => {
+            const parts = tcString.split('.');
+            if (parts.length < 2) {
+                return { error: 'Invalid TCF string format (missing parts)' };
+            }
+            
+            try {
+                // Decode core string
+                const coreBytes = binaryToUint8Array(base64UrlDecode(parts[0]));
+                
+                // Get version (first 6 bits)
+                const version = extractInt(coreBytes, 0, 6);
+                
+                // Check if we have a supported version
+                if (version !== 2) {
+                    return { error: `Unsupported TCF version: ${version}` };
+                }
+                
+                // Decode the vendor section
+                const vendorBytes = parts.length >= 2 ? 
+                    binaryToUint8Array(base64UrlDecode(parts[1])) : 
+                    new Uint8Array(0);
+                
+                // Output object
+                const result = {
+                    version,
+                    created: new Date(extractInt(coreBytes, 6, 36) * 100),
+                    lastUpdated: new Date(extractInt(coreBytes, 42, 36) * 100),
+                    cmpId: extractInt(coreBytes, 78, 12),
+                    cmpVersion: extractInt(coreBytes, 90, 12),
+                    consentScreen: extractInt(coreBytes, 102, 6),
+                    consentLanguage: String.fromCharCode(
+                        extractInt(coreBytes, 108, 6) + 65,
+                        extractInt(coreBytes, 114, 6) + 65
+                    ),
+                    vendorListVersion: extractInt(coreBytes, 120, 12),
+                    purposesConsent: [],
+                    purposesLI: [],
+                    vendorConsents: [],
+                    vendorLI: []
+                };
+                
+                // Extract Purpose Consents (24 bits starting at bit 132)
+                for (let i = 0; i < 24; i++) {
+                    if (getBit(coreBytes, 132 + i)) {
+                        result.purposesConsent.push(i + 1);
+                    }
+                }
+                
+                // Extract Purpose LI (24 bits starting at bit 156)
+                for (let i = 0; i < 24; i++) {
+                    if (getBit(coreBytes, 156 + i)) {
+                        result.purposesLI.push(i + 1);
+                    }
+                }
+                
+                // Get the special feature start bit (deduced from TCF spec)
+                let bitPosition = 180 + 24; // After purposes LI
+                
+                // Skip special features (12 bits)
+                bitPosition += 12;
+                
+                // Check if vendor consents and LI is in range encoding or bit field
+                const vendorConsentIsRangeEncoding = getBit(coreBytes, bitPosition) === 1;
+                bitPosition++;
+                
+                // Determine vendor consent bit field
+                if (!vendorConsentIsRangeEncoding) {
+                    const vendorConsentMaxId = extractInt(coreBytes, bitPosition, 16);
+                    bitPosition += 16;
+                    
+                    // Extract Vendor Consents
+                    for (let i = 0; i < vendorConsentMaxId; i++) {
+                        if (getBit(coreBytes, bitPosition + i)) {
+                            result.vendorConsents.push(i + 1);
+                        }
+                    }
+                    bitPosition += vendorConsentMaxId;
+                }
+                
+                // Check for LI encoding
+                const vendorLIIsRangeEncoding = getBit(coreBytes, bitPosition) === 1;
+                bitPosition++;
+                
+                // Determine vendor LI bit field
+                if (!vendorLIIsRangeEncoding) {
+                    const vendorLIMaxId = extractInt(coreBytes, bitPosition, 16);
+                    bitPosition += 16;
+                    
+                    // Extract Vendor LI
+                    for (let i = 0; i < vendorLIMaxId; i++) {
+                        if (getBit(coreBytes, bitPosition + i)) {
+                            result.vendorLI.push(i + 1);
+                        }
+                    }
+                }
+                
+                return result;
+                
+            } catch (e) {
+                return { error: `Decoding error: ${e.message}` };
+            }
+        };
+        
+        function decodeTCF() {
+            const tcfString = document.getElementById('tcfString').value.trim();
+            const outputElement = document.getElementById('output');
+            
+            try {
+                const result = decodeSimpleTCF(tcfString);
+                
+                if (result.error) {
+                    outputElement.innerHTML = `ERROR: ${result.error}`;
+                    return;
+                }
+                
+                // Format key vendors data
+                const keyVendorIds = [136, 137, 44];
+                let keyVendorsInfo = keyVendorIds.map(id => {
+                    const hasConsent = result.vendorConsents.includes(id);
+                    const hasLI = result.vendorLI.includes(id);
+                    return `Vendor ${id}:
+  - In Vendor Consents: ${hasConsent ? 'YES' : 'NO'}
+  - In Vendor LI: ${hasLI ? 'YES' : 'NO'}
+`;
+                }).join('\n');
+                
+                // Build the full output
+                const output = `TCF STRING ANALYSIS:
+============================================
+Version: ${result.version}
+Created: ${result.created.toISOString()}
+Last Updated: ${result.lastUpdated.toISOString()}
+CMP ID: ${result.cmpId}
+CMP Version: ${result.cmpVersion}
+Consent Screen: ${result.consentScreen}
+Consent Language: ${result.consentLanguage}
+Vendor List Version: ${result.vendorListVersion}
+
+PURPOSE CONSENTS:
+${result.purposesConsent.join(', ') || 'None'}
+
+PURPOSE LEGITIMATE INTERESTS:
+${result.purposesLI.join(', ') || 'None'}
+
+VENDOR CONSENTS:
+${result.vendorConsents.slice(0, 20).join(', ')}${result.vendorConsents.length > 20 ? '...' : ''}
+(Total: ${result.vendorConsents.length})
+
+VENDOR LEGITIMATE INTERESTS:
+${result.vendorLI.slice(0, 20).join(', ')}${result.vendorLI.length > 20 ? '...' : ''}
+(Total: ${result.vendorLI.length})
+
+KEY VENDORS STATUS:
+${keyVendorsInfo}
+
+LEGITIMATE INTEREST ANALYSIS:
+============================================
+Überprüfung gemäß neuer Interpretation (v1.1.6):
+Ein Vendor hat LI, wenn mindestens einer seiner LI-Purposes im TCF-String aktiv ist.
+
+Vendor 136 (Beispiel für LI-Berechnung):
+- In Vendor LI-Liste?: ${result.vendorLI.includes(136) ? 'Ja' : 'Nein'}
+- Angenommene LI-Purposes des Vendors: 2, 7, 9
+- Aktive LI-Purposes im TCF-String: ${result.purposesLI.join(', ') || 'Keine'}
+- LI gemäß neuer Interpretation: ${result.purposesLI.some(p => [2, 7, 9].includes(p)) ? 'Ja' : 'Nein'}
+
+Vendor 137 (Beispiel für LI-Berechnung):
+- In Vendor LI-Liste?: ${result.vendorLI.includes(137) ? 'Ja' : 'Nein'}
+- Angenommene LI-Purposes des Vendors: 2, 7
+- Aktive LI-Purposes im TCF-String: ${result.purposesLI.join(', ') || 'Keine'}
+- LI gemäß neuer Interpretation: ${result.purposesLI.some(p => [2, 7].includes(p)) ? 'Ja' : 'Nein'}
+
+HINWEIS: Dies ist eine Schätzung basierend auf typischen LI-Purposes.
+Eine genaue Analyse erfordert die vollständige GVL (Global Vendor List).`;
+                
+                outputElement.innerHTML = output;
+                
+            } catch (error) {
+                outputElement.innerHTML = `ERROR: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html> 

@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 15 14:39:35 CEST 2025", "commit": "Debug-Informationen und verbesserter Test-TCF-String mit bekannten LI für Vendor 136"}
+{"deployment": "staging", "timestamp": "Thu May 15 15:58:11 CEST 2025", "commit": "Testversion mit alternativer LI-Interpretation und besserer Debug-Ausgabe"}

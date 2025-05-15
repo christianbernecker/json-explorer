@@ -260,60 +260,77 @@ interface ProcessedVendorInfo {
 }
 
 function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorInfo {
-  const gvlVendor = tcModel.gvl?.vendors[vendorId.toString()];
-  const name = gvlVendor?.name || `Vendor ${vendorId}`;
-  const policyUrl = gvlVendor?.policyUrl;
-
-  const hasVendorConsentSignal = tcModel.vendorConsents.has(vendorId);
-  // Prüfe das vendorLegitimateInterests-Flag
-  const hasVendorLIFlag = tcModel.vendorLegitimateInterests.has(vendorId);
+  // Prüfen, ob der Vendor in der GVL vorhanden ist
+  const vendorFromGVL = tcModel.gvl?.vendors?.[vendorId] || null;
+  const vendorName = vendorFromGVL?.name || `Vendor ID ${vendorId}`;
   
-  console.log(`DEBUG TCF: Vendor ${vendorId} (${name}) - hasConsent=${hasVendorConsentSignal}, hasLIFlag=${hasVendorLIFlag}`);
+  // Generiere Listen der Purpose IDs
+  // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
+  const purposesConsent = intMapToIdsArray(tcModel.purposeConsents);
+  // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
+  const purposesLI = intMapToIdsArray(tcModel.purposeLegitimateInterests);
   
-  const purposesConsent: number[] = [];
-  if (gvlVendor?.purposes && hasVendorConsentSignal) {
-    for (const purposeId of gvlVendor.purposes) {
-      if (tcModel.purposeConsents.has(purposeId)) {
-        purposesConsent.push(purposeId);
-      }
-    }
-  }
-
-  const purposesLI: number[] = [];
-  // Sammle LI-Purposes - TESTVERSION: Prüfe nur, ob der Purpose aktiviert ist, 
-  // nicht ob der Vendor in der vendorLegitimateInterests-Liste steht
-  if (gvlVendor?.legIntPurposes) {
-    for (const purposeId of gvlVendor.legIntPurposes) {
-      if (tcModel.purposeLegitimateInterests.has(purposeId)) {
-        purposesLI.push(purposeId);
-      }
-    }
-  }
-  console.log(`DEBUG TCF: Vendor ${vendorId} - Collected purposesLI:`, purposesLI);
-
-  const specialFeaturesOptIn: number[] = [];
-  if (gvlVendor?.specialFeatures) {
-    for (const featureId of gvlVendor.specialFeatures) {
-      if (tcModel.specialFeatureOptins.has(featureId)) {
-        specialFeaturesOptIn.push(featureId);
-      }
+  // Überprüfe den Consent-Status
+  const hasConsent = tcModel.vendorConsents.has(vendorId);
+  
+  // Ermittle den LI-Status basierend auf zwei Kriterien:
+  // 1. Ist der Vendor in der vendorLegitimateInterests Map?
+  const isInLIList = tcModel.vendorLegitimateInterests.has(vendorId);
+  
+  // 2. Hat der Vendor mindestens einen aktiven LI-Purpose in der GVL?
+  let hasActiveLIPurpose = false;
+  const vendorLIPurposes: number[] = vendorFromGVL?.legIntPurposes || [];
+  
+  // Prüfe, ob mindestens ein LI-Purpose des Vendors auch in den globalen LI-Purposes aktiv ist
+  for (const liPurpose of vendorLIPurposes) {
+    if (purposesLI.includes(liPurpose)) {
+      hasActiveLIPurpose = true;
+      break;
     }
   }
   
-  // TESTVERSION: In dieser Interpretation gilt ein Vendor als "hat LI", 
-  // wenn er mindestens einen aktiven LI-Purpose hat, unabhängig vom vendorLegitimateInterests-Flag
-  const hasEffectiveLI = purposesLI.length > 0;
-  console.log(`DEBUG TCF: Vendor ${vendorId} - Final LI status:`, hasEffectiveLI);
+  // Kombinierte LI-Logik - INTERPRETATION KANN HIER ANGEPASST WERDEN:
+  // Ein Vendor hat LI, wenn er in der vendorLegitimateInterests UND mindestens ein LI-Purpose aktiv ist
+  // ODER: Ein Vendor hat LI, wenn mindestens ein LI-Purpose aktiv ist (unabhängig von vendorLegitimateInterests)
+  
+  // OPTION 1: Strenge Interpretation (beide Bedingungen müssen erfüllt sein)
+  // const hasLegitimateInterest = isInLIList && hasActiveLIPurpose;
+  
+  // OPTION 2: Weniger strenge Interpretation (nur LI-Purposes sind entscheidend)
+  const hasLegitimateInterest = hasActiveLIPurpose;
+  
+  // Debug-Ausgabe für wichtige Vendor-IDs
+  if ([136, 137, 44].includes(vendorId)) {
+    console.log(`Vendor ${vendorId} (${vendorName}) LI Details:`, {
+      isInLIList,
+      hasActiveLIPurpose,
+      vendorLIPurposes,
+      activeLIPurposes: vendorLIPurposes.filter(p => purposesLI.includes(p)),
+      finalLIStatus: hasLegitimateInterest
+    });
+  }
+
+  // Spezifische Purpose-Listen für diesen Vendor (Schnittmenge aus globalen und Vendor-Purposes)
+  const vendorPurposes = vendorFromGVL?.purposes || [];
+  const vendorPurposesLI = vendorFromGVL?.legIntPurposes || [];
+  const vendorSpecialFeatures = vendorFromGVL?.specialFeatures || [];
+  
+  // Berechne die aktivierten Purposes für diesen Vendor (Schnittmenge)
+  const activeVendorPurposesConsent = purposesConsent.filter(p => vendorPurposes.includes(p));
+  const activeVendorPurposesLI = purposesLI.filter(p => vendorPurposesLI.includes(p));
+  // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
+  const activeSpecialFeatures = intMapToIdsArray(tcModel.specialFeatureOptins)
+    .filter(sf => vendorSpecialFeatures.includes(sf));
   
   return {
     id: vendorId,
-    name,
-    hasConsent: hasVendorConsentSignal, 
-    hasLegitimateInterest: hasEffectiveLI,
-    policyUrl,
-    purposesConsent, 
-    purposesLI,      
-    specialFeaturesOptIn 
+    name: vendorName,
+    hasConsent,
+    hasLegitimateInterest,
+    policyUrl: vendorFromGVL?.policyUrl,
+    purposesConsent: activeVendorPurposesConsent,
+    purposesLI: activeVendorPurposesLI,
+    specialFeaturesOptIn: activeSpecialFeatures
   };
 }
 
