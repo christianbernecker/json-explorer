@@ -467,11 +467,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     const purposesWithLI = vendorEntry.purposesLI;
                     const specialFeaturesAllowed = vendorEntry.specialFeaturesOptIn;
 
-                    const getPurposeNameLocal = (purposeId: number): string => 
-                      processedTcfData.rawTCModel?.gvl?.purposes?.[purposeId.toString()]?.name || `Purpose ${purposeId}`;
-                    const getSpecialFeatureNameLocal = (sfId: number): string => 
-                      processedTcfData.rawTCModel?.gvl?.specialFeatures?.[sfId.toString()]?.name || `Special Feature ${sfId}`;
-                      
                     return (
                       <div key={id} className={`p-4 border rounded-lg ${borderColor} ${bgColor}`}>
                         <div className="flex justify-between items-start mb-2">
@@ -491,7 +486,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                             <div className="mb-1">
                               <strong>Purposes mit Consent:</strong> 
                               {purposesWithConsent.map((p, index) => (
-                                <span key={`pwc-${p}`}>{getPurposeNameLocal(p)}{index < purposesWithConsent.length - 1 ? ', ' : ''}</span>
+                                <span key={`pwc-${p}`}>Purpose {p}{index < purposesWithConsent.length - 1 ? ', ' : ''}</span>
                               ))}
                             </div>
                           )}
@@ -499,7 +494,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                             <div className="mb-1">
                               <strong>Purposes mit Leg. Interest:</strong> 
                               {purposesWithLI.map((p, index) => (
-                                <span key={`pli-${p}`}>{getPurposeNameLocal(p)}{index < purposesWithLI.length - 1 ? ', ' : ''}</span>
+                                <span key={`pli-${p}`}>Purpose {p}{index < purposesWithLI.length - 1 ? ', ' : ''}</span>
                               ))}
                             </div>
                           )}
@@ -507,7 +502,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                             <div className="mb-1">
                               <strong>Special Features mit Opt-In:</strong> 
                               {specialFeaturesAllowed.map((f, index) => (
-                                <span key={`sf-${f}`}>{getSpecialFeatureNameLocal(f)}{index < specialFeaturesAllowed.length - 1 ? ', ' : ''}</span>
+                                <span key={`sf-${f}`}>Special Feature {f}{index < specialFeaturesAllowed.length - 1 ? ', ' : ''}</span>
                               ))}
                             </div>
                           )}
@@ -660,7 +655,85 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                </div>
             </div>
             
-            {/* Vollständige Vendor-Liste wurde im vorherigen Schritt vereinfacht/entfernt, da Key Vendors separat sind und eine vollständige Liste den Rahmen sprengt */}
+            {/* Vollständige Vendor-Liste mit Consent-Status */}
+            {processedTcfData.rawTCModel?.gvl?.vendors && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">Alle Vendoren mit Consent-Status</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className={tableHeaderBg}>
+                      <tr>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">ID</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Vendor</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Consent</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Leg. Interest</th>
+                        <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${bgColor}`}>
+                      {Object.values(processedTcfData.rawTCModel.gvl.vendors)
+                        .sort((a, b) => a.id - b.id)
+                        .map((vendor) => {
+                          const vendorId = vendor.id;
+                          const hasConsent = processedTcfData.rawTCModel?.vendorConsents?.has(vendorId) || false;
+                          const hasLI = processedTcfData.rawTCModel?.vendorLegitimateInterests?.has(vendorId) || false;
+                          
+                          return (
+                            <tr key={`vendor-${vendorId}`} className={tableRowBg}>
+                              <td className="px-4 py-2">{vendorId}</td>
+                              <td className="px-4 py-2">{vendor.name}</td>
+                              <td className="px-4 py-2">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${hasConsent ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
+                                  {hasConsent ? 'Ja' : 'Nein'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2">
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${hasLI ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
+                                  {hasLI ? 'Ja' : 'Nein'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2">
+                                <Button 
+                                  onClick={() => {
+                                    // Erstelle ein simuliertes ProcessedVendorInfo-Objekt für diesen Vendor
+                                    const vendorPurposes = vendor.purposes || [];
+                                    const vendorLIPurposes = vendor.legIntPurposes || [];
+                                    const vendorSpecialFeatures = vendor.specialFeatures || [];
+                                    
+                                    const vendorInfo = {
+                                      id: vendorId,
+                                      name: vendor.name,
+                                      hasConsent: hasConsent,
+                                      hasLegitimateInterest: hasLI,
+                                      policyUrl: vendor.policyUrl,
+                                      // Filter auf erlaubte Purposes basierend auf globalen Consent-Einstellungen
+                                      purposesConsent: hasConsent ? 
+                                        vendorPurposes.filter(p => processedTcfData.rawTCModel?.purposeConsents?.has(p)) :
+                                        [],
+                                      purposesLI: hasLI ? 
+                                        vendorLIPurposes.filter(p => processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p)) :
+                                        [],
+                                      specialFeaturesOptIn: 
+                                        vendorSpecialFeatures.filter(f => processedTcfData.rawTCModel?.specialFeatureOptins?.has(f))
+                                    };
+                                    
+                                    handleViewVendorDetails(vendorInfo);
+                                  }}
+                                  isDarkMode={isDarkMode}
+                                  size="sm"
+                                  className="text-xs"
+                                >
+                                  Details
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
           </div> 
         )}

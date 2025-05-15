@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 15 13:43:08 CEST 2025", "commit": "Fix TCF decoder by adding correct GVL v3 vendor list files"}
+{"deployment": "staging", "timestamp": "Thu May 15 13:49:30 CEST 2025", "commit": "Fix TCF Decoder GVL loading by explicitly attaching GVL to TCModel"}
