@@ -20,14 +20,72 @@
         <h2>TCF String Input</h2>
         <textarea id="tcfString">CQRemBOQRemBOAGACAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA</textarea>
         <button onclick="decodeTCF()">Decode TCF String</button>
+        <button onclick="checkGVL()">Check GVL Status</button>
     </div>
     
     <div class="section">
         <h2>Output</h2>
         <div id="output">Results will appear here...</div>
     </div>
+    
+    <div class="section">
+        <h2>Debug Results</h2>
+        <div id="results">Debug results will appear here...</div>
+    </div>
 
     <script>
+        // Load the necessary libraries for testing
+        let tcfLibsLoaded = false;
+        let TCString, GVL, TCModel;
+        
+        // Load the @iabtcf/core library dynamically
+        async function loadTcfLibraries() {
+            if (tcfLibsLoaded) return;
+            
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/@iabtcf/core@1.5.10/dist/iabtcf.core.min.js";
+                script.onload = () => {
+                    // Access the globals provided by the library
+                    TCString = window.iabtcf.core.TCString;
+                    GVL = window.iabtcf.core.GVL;
+                    TCModel = window.iabtcf.core.TCModel;
+                    tcfLibsLoaded = true;
+                    console.log("@iabtcf/core library loaded successfully");
+                    resolve();
+                };
+                script.onerror = (err) => {
+                    console.error("Failed to load @iabtcf/core library:", err);
+                    reject(err);
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Load the GVL data 
+        async function loadGvlForAnalysis() {
+            try {
+                const gvlResponse = await fetch("/vendor-list.json");
+                if (!gvlResponse.ok) {
+                    throw new Error(`Failed to fetch GVL: ${gvlResponse.status}`);
+                }
+                const gvlData = await gvlResponse.json();
+                console.log("GVL loaded successfully", gvlData);
+                return new GVL(gvlData);
+            } catch (error) {
+                console.error("GVL loading error:", error);
+                
+                // Fallback to remote GVL
+                try {
+                    console.log("Trying to load GVL directly from remote source...");
+                    return await GVL.getLatest();
+                } catch (remoteError) {
+                    console.error("Remote GVL loading failed too:", remoteError);
+                    throw new Error("Failed to load GVL from all sources");
+                }
+            }
+        }
+
         // Base64 decoding functions needed for TCF
         const base64UrlDecode = (input) => {
             // Replace URL-safe characters
@@ -187,10 +245,42 @@
         };
         
         async function analyzeString(tcString) {
+            // Ensure the TCF libraries are loaded
+            if (!tcfLibsLoaded) {
+                try {
+                    await loadTcfLibraries();
+                    console.log("TCF libraries loaded successfully");
+                } catch (error) {
+                    document.getElementById('results').textContent = `Error loading TCF libraries: ${error.message}`;
+                    return;
+                }
+            }
+            
             // Füge unsere Implementierung basierend auf der korrekten TCF-Spezifikation ein
             try {
+                // Load GVL first
+                let gvl;
+                try {
+                    gvl = await loadGvlForAnalysis();
+                    console.log("GVL loaded for TCF analysis");
+                } catch (gvlError) {
+                    console.warn("GVL loading failed, proceeding without vendor details:", gvlError);
+                }
+                
                 // Create a TCModel Instance (from @iabtcf/core)
-                const tcModel = new TCModel(tcString);
+                const tcModel = TCString.decode(tcString);
+                
+                // Attach GVL if available
+                if (gvl) {
+                    tcModel.gvl = gvl;
+                    // Wait for GVL to be ready
+                    try {
+                        await tcModel.gvl.readyPromise;
+                        console.log("GVL ready, vendor details should be available");
+                    } catch (readyError) {
+                        console.error("Error waiting for GVL ready:", readyError);
+                    }
+                }
                 
                 // Basic Info
                 const result = {
@@ -212,6 +302,7 @@
                     vendorConsents: Array.from(tcModel.vendorConsents.keys()),
                     vendorLI: Array.from(tcModel.vendorLegitimateInterests.keys()),
                     publisherRestrictions: Array.from(tcModel.publisherRestrictions.keys()),
+                    gvlLoaded: tcModel.gvl ? true : false
                 };
                 
                 // Format key vendors data
@@ -233,15 +324,29 @@
                     // Nach TCF-Spezifikation: Ein Vendor hat nur dann LI, wenn beide Bedingungen erfüllt sind
                     const hasLegitimateInterest = vendorLIBit && activeLIPurposesForVendor.length > 0;
                     
+                    // Erweiterte Debug-Informationen zur GVL-Übereinstimmung
+                    let gvlInfo = '';
+                    if (vendorFromGVL) {
+                        gvlInfo = `
+  - GVL Vendor Information:
+    * Name in GVL: ${vendorFromGVL.name || 'Nicht angegeben'}
+    * Consent Purposes in GVL: ${(vendorFromGVL.purposes || []).join(', ') || 'Keine'}
+    * LI Purposes in GVL: ${(vendorFromGVL.legIntPurposes || []).join(', ') || 'Keine'}
+    * Flexible Purposes in GVL: ${(vendorFromGVL.flexiblePurposes || []).join(', ') || 'Keine'}`;
+                    } else {
+                        gvlInfo = `
+  - HINWEIS: Keine GVL-Daten für diesen Vendor verfügbar. 
+    Bitte stellen Sie sicher, dass die GVL korrekt geladen wurde.`;
+                    }
+                    
                     return `Vendor ${id}:
   - Consent: ${vendorConsent ? 'JA' : 'NEIN'}
   - LI Bit im TCString: ${vendorLIBit ? 'JA' : 'NEIN'}
-  - LI Purposes des Vendors (GVL): ${vendorLIPurposes.join(', ')}
-  - Aktive LI Purposes im TCString: ${purposesLI.join(', ')}
-  - Aktive LI Purposes für diesen Vendor: ${activeLIPurposesForVendor.join(', ')}
-  - Hat Legitimate Interest (nach TCF-Spezifikation): ${hasLegitimateInterest ? 'JA' : 'NEIN'}
-`;
-                }).join('\n');
+  - LI Purposes des Vendors (GVL): ${vendorLIPurposes.join(', ') || 'Keine'}
+  - Aktive LI Purposes im TCString: ${purposesLI.join(', ') || 'Keine'}
+  - Aktive LI Purposes für diesen Vendor: ${activeLIPurposesForVendor.join(', ') || 'Keine'}
+  - Hat Legitimate Interest (nach TCF-Spezifikation): ${hasLegitimateInterest ? 'JA' : 'NEIN'}${gvlInfo}`;
+                }).join('\n\n');
                 
                 // Build the full output
                 const output = `TCF STRING ANALYSE:
@@ -257,6 +362,7 @@ Vendor List Version: ${result.vendorListVersion}
 Policy Version: ${result.policyVersion}
 Service Specific: ${result.isServiceSpecific}
 Non-Standard Stacks: ${result.useNonStandardStacks}
+GVL geladen: ${result.gvlLoaded ? 'JA' : 'NEIN'}
 
 PURPOSES:
 ============================================
@@ -276,12 +382,20 @@ ${keyVendorsInfo}
 PUBLISHER RESTRICTIONS:
 ============================================
 ${result.publisherRestrictions.join(', ') || 'Keine'}
+
+TECHNISCHE VALIDIERUNG:
+============================================
+Die Legitimate Interest Berechnung erfolgt gemäß offizieller IAB TCF Spezifikation:
+1. Der Vendor muss im vendorLegitimateInterests-Bitfeld auf TRUE gesetzt sein
+2. UND mindestens ein Purpose aus seinen legitimen Interessen muss aktiviert sein
 `;
                 
                 document.getElementById('results').textContent = output;
+                document.getElementById('output').textContent = output;
             } catch (error) {
                 console.error('Error parsing TC string:', error);
                 document.getElementById('results').textContent = `ERROR: ${error.message}`;
+                document.getElementById('output').textContent = `ERROR: ${error.message}`;
             }
         }
 
@@ -294,6 +408,58 @@ ${result.publisherRestrictions.join(', ') || 'Keine'}
             
             // Rufe die neue analyzeString-Funktion auf
             analyzeString(tcfString);
+        }
+
+        // Hilfsfunktion zur Überprüfung des GVL-Status
+        async function checkGVL() {
+            // Stelle sicher, dass TCF-Bibliotheken geladen sind
+            if (!tcfLibsLoaded) {
+                try {
+                    await loadTcfLibraries();
+                } catch (error) {
+                    document.getElementById('results').textContent = `Error loading TCF libraries: ${error.message}`;
+                    return;
+                }
+            }
+            
+            try {
+                const gvl = await loadGvlForAnalysis();
+                
+                // Wähle einen speziellen Vendor aus und überprüfe dessen Daten
+                const vendor136 = gvl.vendors[136];
+                const vendor137 = gvl.vendors[137];
+                
+                let output = "GVL ANALYSE:\n";
+                output += "============================================\n";
+                output += `GVL Version: ${gvl.vendorListVersion}\n`;
+                output += `Vendor-Anzahl: ${Object.keys(gvl.vendors).length}\n\n`;
+                
+                if (vendor136) {
+                    output += "VENDOR 136 (Ströer SSP GmbH):\n";
+                    output += `Name: ${vendor136.name}\n`;
+                    output += `Consent Purposes: ${(vendor136.purposes || []).join(', ')}\n`;
+                    output += `LI Purposes: ${(vendor136.legIntPurposes || []).join(', ')}\n`;
+                    output += `Flexible Purposes: ${(vendor136.flexiblePurposes || []).join(', ')}\n`;
+                    output += `Special Purposes: ${(vendor136.specialPurposes || []).join(', ')}\n\n`;
+                } else {
+                    output += "VENDOR 136 nicht in der GVL gefunden!\n\n";
+                }
+                
+                if (vendor137) {
+                    output += "VENDOR 137 (Ströer SSP GmbH (DSP)):\n";
+                    output += `Name: ${vendor137.name}\n`;
+                    output += `Consent Purposes: ${(vendor137.purposes || []).join(', ')}\n`;
+                    output += `LI Purposes: ${(vendor137.legIntPurposes || []).join(', ')}\n`;
+                    output += `Flexible Purposes: ${(vendor137.flexiblePurposes || []).join(', ')}\n`;
+                    output += `Special Purposes: ${(vendor137.specialPurposes || []).join(', ')}\n`;
+                } else {
+                    output += "VENDOR 137 nicht in der GVL gefunden!\n";
+                }
+                
+                document.getElementById('results').textContent = output;
+            } catch (error) {
+                document.getElementById('results').textContent = `Error checking GVL: ${error.message}`;
+            }
         }
     </script>
 </body>
