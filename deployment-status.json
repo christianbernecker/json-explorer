@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 15 13:49:30 CEST 2025", "commit": "Fix TCF Decoder GVL loading by explicitly attaching GVL to TCModel"}
+{"deployment": "staging", "timestamp": "Thu May 15 13:56:34 CEST 2025", "commit": "Zeige Purpose-IDs statt Beschreibungen für Haupt-Vendoren und füge vollständige Vendorenliste hinzu"}

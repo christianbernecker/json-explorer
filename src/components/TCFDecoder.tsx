@@ -676,7 +676,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                         .map((vendor) => {
                           const vendorId = vendor.id;
                           const hasConsent = processedTcfData.rawTCModel?.vendorConsents?.has(vendorId) || false;
-                          const hasLI = processedTcfData.rawTCModel?.vendorLegitimateInterests?.has(vendorId) || false;
+                          
+                          // Überprüfe, ob der Vendor irgendwelche LI-Purposes hat, die vom Nutzer akzeptiert wurden
+                          const vendorLIPurposes = vendor.legIntPurposes || [];
+                          const acceptedLIPurposes = vendorLIPurposes.filter(p => 
+                            processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p)
+                          );
+                          const hasLI = acceptedLIPurposes.length > 0;
                           
                           return (
                             <tr key={`vendor-${vendorId}`} className={tableRowBg}>
@@ -700,19 +706,21 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                     const vendorLIPurposes = vendor.legIntPurposes || [];
                                     const vendorSpecialFeatures = vendor.specialFeatures || [];
                                     
+                                    // Filter auf erlaubte Purposes basierend auf globalen Consent-Einstellungen
+                                    const activePurposesConsent = hasConsent ? 
+                                      vendorPurposes.filter(p => processedTcfData.rawTCModel?.purposeConsents?.has(p)) :
+                                      [];
+                                    const activePurposesLI = 
+                                      vendorLIPurposes.filter(p => processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p));
+                                    
                                     const vendorInfo = {
                                       id: vendorId,
                                       name: vendor.name,
                                       hasConsent: hasConsent,
-                                      hasLegitimateInterest: hasLI,
+                                      hasLegitimateInterest: hasLI, // Aktualisiert auf Basis der effektiven LI-Purposes
                                       policyUrl: vendor.policyUrl,
-                                      // Filter auf erlaubte Purposes basierend auf globalen Consent-Einstellungen
-                                      purposesConsent: hasConsent ? 
-                                        vendorPurposes.filter(p => processedTcfData.rawTCModel?.purposeConsents?.has(p)) :
-                                        [],
-                                      purposesLI: hasLI ? 
-                                        vendorLIPurposes.filter(p => processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p)) :
-                                        [],
+                                      purposesConsent: activePurposesConsent,
+                                      purposesLI: activePurposesLI,
                                       specialFeaturesOptIn: 
                                         vendorSpecialFeatures.filter(f => processedTcfData.rawTCModel?.specialFeatureOptins?.has(f))
                                     };
