@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 15 14:31:32 CEST 2025", "commit": "Fix korrekten Legitimate Interest Logic durch Überprüfung von vendor UND purpose"}
+{"deployment": "staging", "timestamp": "Thu May 15 14:39:35 CEST 2025", "commit": "Debug-Informationen und verbesserter Test-TCF-String mit bekannten LI für Vendor 136"}

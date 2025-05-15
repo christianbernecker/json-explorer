@@ -120,6 +120,64 @@ export async function loadAndCacheGVL(): Promise<GVL> {
 }
 // --- Ende GVL Loading --- 
 
+// Debug-Funktion für TCF Werte
+function debugTCFValues(tcModel: TCModel) {
+  console.log('======= TCF DEBUG INFO =======');
+  console.log('TCF Version:', tcModel.version);
+  
+  // Globale Arrays von Purpose IDs extrahieren
+  const purposeConsents: number[] = [];
+  const purposeLI: number[] = [];
+  
+  // @ts-ignore - Ignoriere Typescript-Fehler für Debug-Zwecke
+  tcModel.purposeConsents.forEach((value: boolean, key: number) => {
+    if (value) purposeConsents.push(key);
+  });
+  
+  // @ts-ignore - Ignoriere Typescript-Fehler für Debug-Zwecke
+  tcModel.purposeLegitimateInterests.forEach((value: boolean, key: number) => {
+    if (value) purposeLI.push(key);
+  });
+  
+  console.log('Global Purpose Consents:', purposeConsents);
+  console.log('Global Purpose LI:', purposeLI);
+  
+  // Alle Vendoren prüfen
+  console.log('Vendor Consents:');
+  for (let i = 1; i <= 1000; i++) {
+    if (tcModel.vendorConsents.has(i)) {
+      console.log(`- Vendor ${i}`);
+    }
+  }
+  
+  console.log('Vendor LI:');
+  for (let i = 1; i <= 1000; i++) {
+    if (tcModel.vendorLegitimateInterests.has(i)) {
+      console.log(`- Vendor ${i}`);
+    }
+  }
+  
+  // Spezifische Key-Vendoren prüfen
+  const keyVendors = [136, 137, 44];
+  keyVendors.forEach(vendorId => {
+    console.log(`\nVendor ${vendorId} Details:`);
+    console.log(`- In Vendor Consents: ${tcModel.vendorConsents.has(vendorId)}`);
+    console.log(`- In Vendor LI: ${tcModel.vendorLegitimateInterests.has(vendorId)}`);
+    
+    // GVL-Vendor-Infos, falls verfügbar
+    if (tcModel.gvl?.vendors[vendorId]) {
+      const gvlVendor = tcModel.gvl.vendors[vendorId];
+      console.log(`- GVL Name: ${gvlVendor.name}`);
+      console.log(`- Purposes:`, gvlVendor.purposes);
+      console.log(`- LI Purposes:`, gvlVendor.legIntPurposes);
+    } else {
+      console.log('- No GVL info available');
+    }
+  });
+  
+  console.log('============================');
+}
+
 /**
  * Dekodiert einen TCF-String streng nach IAB-Bibliothek.
  * Lädt die GVL-Daten und verknüpft sie explizit mit dem TCModel.
@@ -162,8 +220,9 @@ export async function decodeTCStringStrict(tcString: string): Promise<{ tcModel:
       console.warn('TCModel was decoded, but no GVL instance was available to attach.');
     }
 
-    // Einfache Debug-Ausgabe
+    // Debug-Ausgaben zur Fehleranalyse
     console.log('TCF String decoded, version:', tcModel.version);
+    debugTCFValues(tcModel);
 
     return { tcModel, error: null };
   } catch (err) {
@@ -221,8 +280,9 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   }
 
   const purposesLI: number[] = [];
-  // Sammle LI-Purposes nur wenn der Vendor in der vendorLegitimateInterests-Liste steht
-  if (gvlVendor?.legIntPurposes && hasVendorLIFlag) {
+  // Sammle LI-Purposes - TESTVERSION: Prüfe nur, ob der Purpose aktiviert ist, 
+  // nicht ob der Vendor in der vendorLegitimateInterests-Liste steht
+  if (gvlVendor?.legIntPurposes) {
     for (const purposeId of gvlVendor.legIntPurposes) {
       if (tcModel.purposeLegitimateInterests.has(purposeId)) {
         purposesLI.push(purposeId);
@@ -240,8 +300,9 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     }
   }
   
-  // Vendor hat LI nur wenn beide Bedingungen erfüllt sind
-  const hasEffectiveLI = hasVendorLIFlag && purposesLI.length > 0;
+  // TESTVERSION: In dieser Interpretation gilt ein Vendor als "hat LI", 
+  // wenn er mindestens einen aktiven LI-Purpose hat, unabhängig vom vendorLegitimateInterests-Flag
+  const hasEffectiveLI = purposesLI.length > 0;
   console.log(`DEBUG TCF: Vendor ${vendorId} - Final LI status:`, hasEffectiveLI);
   
   return {

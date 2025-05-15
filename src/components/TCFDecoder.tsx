@@ -32,8 +32,11 @@ interface VendorFilterOptions {
 */
 
 // Example TCF string - mit bekannten LI-Eigenschaften für Vendor 136
-// Diese Version soll LI für Vendor 136 aber nicht für 137 aktivieren
-const EXAMPLE_TCF_STRING = "CQRemBOQRemBOAGACAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA"; // Neuer Beispielstring für den Test
+// String 1 (erster Versuch): 
+// const EXAMPLE_TCF_STRING = "CQRemBOQRemBOAGACAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA";
+
+// String 2 (zweiter Versuch): Vendor 136, LI Purpose 2 und 3
+const EXAMPLE_TCF_STRING = "CPXxRfAPXxRfAAfZABENB-CoAP_AAAAAAAYgGbQFAAEEAALIAFAAEAAAqIAKAAIALAgIAAAAUA0YAAAAACBAAgABAARAIAAAAABAAAIAgAAAEBAAAAAMAIAAAAAAgAAAAIAAAAAAAIAAAAAAAAAAAAAggAAA.IGLtV_T9fb9_j-_59f-ts0eY1f9_7_v-0zjhfds-8N3v_X_L8X42M7vF36pq4KuR4ku1vBIQFtHOncTUmx6olVrTPsbk2cr7NKJ_Pkmnsbe0d-B39ek-wASeOBAPpO4IAAA";
 
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   // State für den Decoder
@@ -678,14 +681,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                           const vendorId = vendor.id;
                           const hasConsent = processedTcfData.rawTCModel?.vendorConsents?.has(vendorId) || false;
                           
-                          // Überprüfe, ob der Vendor in der LI-Liste steht UND ob er LI-Purposes hat
-                          const hasVendorLIFlag = processedTcfData.rawTCModel?.vendorLegitimateInterests?.has(vendorId) || false;
+                          // Überprüfe nur, ob der Vendor LI-Purposes hat
                           const vendorLIPurposes = vendor.legIntPurposes || [];
                           const acceptedLIPurposes = vendorLIPurposes.filter(p => 
                             processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p)
                           );
-                          // Beide Bedingungen müssen erfüllt sein
-                          const hasLI = hasVendorLIFlag && acceptedLIPurposes.length > 0;
+                          // TESTVERSION: Nur Check ob der Vendor aktive LI-Purposes hat
+                          const hasLI = acceptedLIPurposes.length > 0;
                           
                           return (
                             <tr key={`vendor-${vendorId}`} className={tableRowBg}>
@@ -715,9 +717,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                       [];
                                     
                                     // LI-Purposes nur filtern wenn der Vendor in der LI-Liste steht
-                                    const activePurposesLI = hasVendorLIFlag ? 
-                                      vendorLIPurposes.filter(p => processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p)) :
-                                      [];
+                                    const activePurposesLI = 
+                                      vendorLIPurposes.filter(p => processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p));
                                     
                                     const vendorInfo = {
                                       id: vendorId,
