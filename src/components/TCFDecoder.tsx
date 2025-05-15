@@ -31,8 +31,9 @@ interface VendorFilterOptions {
 }
 */
 
-// Example TCF string
-const EXAMPLE_TCF_STRING = "CO_Uu4_O_Uu4_ADACBENDECsAP_AAAAAAAYgAIAAAA"; // Behalte aktuellen Beispielstring
+// Example TCF string - mit bekannten LI-Eigenschaften für Vendor 136
+// Diese Version soll LI für Vendor 136 aber nicht für 137 aktivieren
+const EXAMPLE_TCF_STRING = "CQRemBOQRemBOAGACAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA"; // Neuer Beispielstring für den Test
 
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   // State für den Decoder

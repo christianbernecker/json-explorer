@@ -162,6 +162,9 @@ export async function decodeTCStringStrict(tcString: string): Promise<{ tcModel:
       console.warn('TCModel was decoded, but no GVL instance was available to attach.');
     }
 
+    // Einfache Debug-Ausgabe
+    console.log('TCF String decoded, version:', tcModel.version);
+
     return { tcModel, error: null };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown decoding error.';
@@ -203,8 +206,10 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   const policyUrl = gvlVendor?.policyUrl;
 
   const hasVendorConsentSignal = tcModel.vendorConsents.has(vendorId);
-  // Wir benötigen das vendorLegitimateInterests-Flag doch
+  // Prüfe das vendorLegitimateInterests-Flag
   const hasVendorLIFlag = tcModel.vendorLegitimateInterests.has(vendorId);
+  
+  console.log(`DEBUG TCF: Vendor ${vendorId} (${name}) - hasConsent=${hasVendorConsentSignal}, hasLIFlag=${hasVendorLIFlag}`);
   
   const purposesConsent: number[] = [];
   if (gvlVendor?.purposes && hasVendorConsentSignal) {
@@ -216,7 +221,7 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   }
 
   const purposesLI: number[] = [];
-  // KORRIGIERT: Sammle LI-Purposes nur wenn der Vendor in der vendorLegitimateInterests-Liste steht
+  // Sammle LI-Purposes nur wenn der Vendor in der vendorLegitimateInterests-Liste steht
   if (gvlVendor?.legIntPurposes && hasVendorLIFlag) {
     for (const purposeId of gvlVendor.legIntPurposes) {
       if (tcModel.purposeLegitimateInterests.has(purposeId)) {
@@ -224,6 +229,7 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
       }
     }
   }
+  console.log(`DEBUG TCF: Vendor ${vendorId} - Collected purposesLI:`, purposesLI);
 
   const specialFeaturesOptIn: number[] = [];
   if (gvlVendor?.specialFeatures) {
@@ -234,10 +240,9 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     }
   }
   
-  // KORRIGIERT: Vendor hat LI nur wenn beide Bedingungen erfüllt sind: 
-  // 1. Er muss in der vendorLegitimateInterests-Liste stehen
-  // 2. Er muss mindestens einen LI-Purpose haben, der aktiviert ist
+  // Vendor hat LI nur wenn beide Bedingungen erfüllt sind
   const hasEffectiveLI = hasVendorLIFlag && purposesLI.length > 0;
+  console.log(`DEBUG TCF: Vendor ${vendorId} - Final LI status:`, hasEffectiveLI);
   
   return {
     id: vendorId,
