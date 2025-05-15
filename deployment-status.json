@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 15 15:58:11 CEST 2025", "commit": "Testversion mit alternativer LI-Interpretation und besserer Debug-Ausgabe"}
+{"deployment": "staging", "timestamp": "Thu May 15 16:07:29 CEST 2025", "commit": "Fix TCF Service Legitimate Interest Interpretation (v1.1.6)"}

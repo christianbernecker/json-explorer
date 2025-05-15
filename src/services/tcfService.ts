@@ -257,6 +257,8 @@ interface ProcessedVendorInfo {
   purposesConsent: number[]; 
   purposesLI: number[];      
   specialFeaturesOptIn: number[];
+  gvlVendor?: any;
+  debugInfo: any;
 }
 
 function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorInfo {
@@ -273,64 +275,43 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   // Überprüfe den Consent-Status
   const hasConsent = tcModel.vendorConsents.has(vendorId);
   
-  // Ermittle den LI-Status basierend auf zwei Kriterien:
-  // 1. Ist der Vendor in der vendorLegitimateInterests Map?
-  const isInLIList = tcModel.vendorLegitimateInterests.has(vendorId);
+  // Überprüfe den LI-Status gemäß offizieller TCF-Spezifikation:
+  // 1. Der Vendor muss im vendorLegitimateInterests Bitfeld auf true gesetzt sein
+  // 2. UND mindestens ein Purpose muss im purposeLegitimateInterests Bitfeld freigegeben sein
+  const hasLegitimateInterestBit = tcModel.vendorLegitimateInterests.has(vendorId);
   
-  // 2. Hat der Vendor mindestens einen aktiven LI-Purpose in der GVL?
-  let hasActiveLIPurpose = false;
+  // In der GVL sind die LI-fähigen Purposes pro Vendor definiert
+  // Nutzen wir legIntPurposes statt legitimateInterestPurposes, da dies der korrekte Property-Name ist
   const vendorLIPurposes: number[] = vendorFromGVL?.legIntPurposes || [];
   
-  // Prüfe, ob mindestens ein LI-Purpose des Vendors auch in den globalen LI-Purposes aktiv ist
-  for (const liPurpose of vendorLIPurposes) {
-    if (purposesLI.includes(liPurpose)) {
-      hasActiveLIPurpose = true;
-      break;
-    }
-  }
+  // Überschneidung zwischen den LI-Purposes des Vendors und den aktivierten LI-Purposes im TC String
+  const activeLIPurposesForVendor = vendorLIPurposes.filter((purposeId: number) => 
+    purposesLI.includes(purposeId)
+  );
   
-  // Kombinierte LI-Logik - INTERPRETATION KANN HIER ANGEPASST WERDEN:
-  // Ein Vendor hat LI, wenn er in der vendorLegitimateInterests UND mindestens ein LI-Purpose aktiv ist
-  // ODER: Ein Vendor hat LI, wenn mindestens ein LI-Purpose aktiv ist (unabhängig von vendorLegitimateInterests)
+  // Ein Vendor hat nur dann LI, wenn beide Bedingungen erfüllt sind
+  const hasLegitimateInterest = hasLegitimateInterestBit && activeLIPurposesForVendor.length > 0;
   
-  // OPTION 1: Strenge Interpretation (beide Bedingungen müssen erfüllt sein)
-  // const hasLegitimateInterest = isInLIList && hasActiveLIPurpose;
-  
-  // OPTION 2: Weniger strenge Interpretation (nur LI-Purposes sind entscheidend)
-  const hasLegitimateInterest = hasActiveLIPurpose;
-  
-  // Debug-Ausgabe für wichtige Vendor-IDs
-  if ([136, 137, 44].includes(vendorId)) {
-    console.log(`Vendor ${vendorId} (${vendorName}) LI Details:`, {
-      isInLIList,
-      hasActiveLIPurpose,
-      vendorLIPurposes,
-      activeLIPurposes: vendorLIPurposes.filter(p => purposesLI.includes(p)),
-      finalLIStatus: hasLegitimateInterest
-    });
-  }
+  // Detaillierte Debug-Informationen
+  const debugInfo = {
+    hasVendorLIBit: hasLegitimateInterestBit,
+    vendorLIPurposeIds: vendorLIPurposes,
+    activeLIPurposesInTCString: purposesLI,
+    activeLIPurposesForVendor,
+    finalLIStatus: hasLegitimateInterest
+  };
 
-  // Spezifische Purpose-Listen für diesen Vendor (Schnittmenge aus globalen und Vendor-Purposes)
-  const vendorPurposes = vendorFromGVL?.purposes || [];
-  const vendorPurposesLI = vendorFromGVL?.legIntPurposes || [];
-  const vendorSpecialFeatures = vendorFromGVL?.specialFeatures || [];
-  
-  // Berechne die aktivierten Purposes für diesen Vendor (Schnittmenge)
-  const activeVendorPurposesConsent = purposesConsent.filter(p => vendorPurposes.includes(p));
-  const activeVendorPurposesLI = purposesLI.filter(p => vendorPurposesLI.includes(p));
-  // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
-  const activeSpecialFeatures = intMapToIdsArray(tcModel.specialFeatureOptins)
-    .filter(sf => vendorSpecialFeatures.includes(sf));
-  
   return {
     id: vendorId,
     name: vendorName,
     hasConsent,
     hasLegitimateInterest,
     policyUrl: vendorFromGVL?.policyUrl,
-    purposesConsent: activeVendorPurposesConsent,
-    purposesLI: activeVendorPurposesLI,
-    specialFeaturesOptIn: activeSpecialFeatures
+    purposesConsent: purposesConsent,
+    purposesLI: purposesLI,
+    specialFeaturesOptIn: [],
+    gvlVendor: vendorFromGVL,
+    debugInfo
   };
 }
 
@@ -394,7 +375,15 @@ export function getProcessedTCData(tcModel: TCModel | null): ProcessedTCData | n
               hasLegitimateInterest: hasVendorLIFlag,
               purposesConsent: [],
               purposesLI: [],
-              specialFeaturesOptIn: []
+              specialFeaturesOptIn: [],
+              gvlVendor: null,
+              debugInfo: {
+                  hasVendorLIBit: hasVendorLIFlag,
+                  vendorLIPurposeIds: [],
+                  activeLIPurposesInTCString: [],
+                  activeLIPurposesForVendor: [],
+                  finalLIStatus: hasVendorLIFlag
+              }
           });
       });
   }

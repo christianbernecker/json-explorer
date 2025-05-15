@@ -186,83 +186,114 @@
             }
         };
         
-        function decodeTCF() {
-            const tcfString = document.getElementById('tcfString').value.trim();
-            const outputElement = document.getElementById('output');
-            
+        async function analyzeString(tcString) {
+            // Füge unsere Implementierung basierend auf der korrekten TCF-Spezifikation ein
             try {
-                const result = decodeSimpleTCF(tcfString);
+                // Create a TCModel Instance (from @iabtcf/core)
+                const tcModel = new TCModel(tcString);
                 
-                if (result.error) {
-                    outputElement.innerHTML = `ERROR: ${result.error}`;
-                    return;
-                }
+                // Basic Info
+                const result = {
+                    tcString: tcString,
+                    version: tcModel.version,
+                    created: tcModel.created,
+                    lastUpdated: tcModel.lastUpdated,
+                    cmpId: tcModel.cmpId,
+                    cmpVersion: tcModel.cmpVersion,
+                    consentScreen: tcModel.consentScreen,
+                    consentLanguage: tcModel.consentLanguage,
+                    vendorListVersion: tcModel.vendorListVersion,
+                    policyVersion: tcModel.policyVersion,
+                    isServiceSpecific: tcModel.isServiceSpecific,
+                    useNonStandardStacks: tcModel.useNonStandardStacks,
+                    purposeConsents: Array.from(tcModel.purposeConsents.keys()),
+                    specialFeatureOptins: Array.from(tcModel.specialFeatureOptins.keys()),
+                    purposeLegitimateInterests: Array.from(tcModel.purposeLegitimateInterests.keys()),
+                    vendorConsents: Array.from(tcModel.vendorConsents.keys()),
+                    vendorLI: Array.from(tcModel.vendorLegitimateInterests.keys()),
+                    publisherRestrictions: Array.from(tcModel.publisherRestrictions.keys()),
+                };
                 
                 // Format key vendors data
                 const keyVendorIds = [136, 137, 44];
                 let keyVendorsInfo = keyVendorIds.map(id => {
-                    const hasConsent = result.vendorConsents.includes(id);
-                    const hasLI = result.vendorLI.includes(id);
+                    const vendorConsent = tcModel.vendorConsents.has(id);
+                    const vendorLIBit = tcModel.vendorLegitimateInterests.has(id);
+                    
+                    // Prüfe LI Purposes für den Vendor (erfordert GVL)
+                    const vendorFromGVL = tcModel.gvl?.vendors?.[id] || null;
+                    const vendorLIPurposes = vendorFromGVL?.legIntPurposes || [];
+                    const purposesLI = Array.from(tcModel.purposeLegitimateInterests.keys());
+                    
+                    // Überprüfe, ob es eine Überschneidung zwischen den LI-Purposes des Vendors und den aktivierten LI-Purposes gibt
+                    const activeLIPurposesForVendor = vendorLIPurposes.filter(purposeId => 
+                        purposesLI.includes(purposeId)
+                    );
+                    
+                    // Nach TCF-Spezifikation: Ein Vendor hat nur dann LI, wenn beide Bedingungen erfüllt sind
+                    const hasLegitimateInterest = vendorLIBit && activeLIPurposesForVendor.length > 0;
+                    
                     return `Vendor ${id}:
-  - In Vendor Consents: ${hasConsent ? 'YES' : 'NO'}
-  - In Vendor LI: ${hasLI ? 'YES' : 'NO'}
+  - Consent: ${vendorConsent ? 'JA' : 'NEIN'}
+  - LI Bit im TCString: ${vendorLIBit ? 'JA' : 'NEIN'}
+  - LI Purposes des Vendors (GVL): ${vendorLIPurposes.join(', ')}
+  - Aktive LI Purposes im TCString: ${purposesLI.join(', ')}
+  - Aktive LI Purposes für diesen Vendor: ${activeLIPurposesForVendor.join(', ')}
+  - Hat Legitimate Interest (nach TCF-Spezifikation): ${hasLegitimateInterest ? 'JA' : 'NEIN'}
 `;
                 }).join('\n');
                 
                 // Build the full output
-                const output = `TCF STRING ANALYSIS:
+                const output = `TCF STRING ANALYSE:
 ============================================
 Version: ${result.version}
-Created: ${result.created.toISOString()}
-Last Updated: ${result.lastUpdated.toISOString()}
+Erstellt: ${result.created.toISOString()}
+Letztes Update: ${result.lastUpdated.toISOString()}
 CMP ID: ${result.cmpId}
 CMP Version: ${result.cmpVersion}
 Consent Screen: ${result.consentScreen}
 Consent Language: ${result.consentLanguage}
 Vendor List Version: ${result.vendorListVersion}
+Policy Version: ${result.policyVersion}
+Service Specific: ${result.isServiceSpecific}
+Non-Standard Stacks: ${result.useNonStandardStacks}
 
-PURPOSE CONSENTS:
-${result.purposesConsent.join(', ') || 'None'}
+PURPOSES:
+============================================
+Purpose Consents: ${result.purposeConsents.join(', ')}
+Purpose Legitimate Interests: ${result.purposeLegitimateInterests.join(', ')}
+Special Feature Opt-ins: ${result.specialFeatureOptins.join(', ')}
 
-PURPOSE LEGITIMATE INTERESTS:
-${result.purposesLI.join(', ') || 'None'}
+VENDORS:
+============================================
+Vendor Consents: ${result.vendorConsents.join(', ')}
+Vendor Legitimate Interests: ${result.vendorLI.join(', ')}
 
-VENDOR CONSENTS:
-${result.vendorConsents.slice(0, 20).join(', ')}${result.vendorConsents.length > 20 ? '...' : ''}
-(Total: ${result.vendorConsents.length})
-
-VENDOR LEGITIMATE INTERESTS:
-${result.vendorLI.slice(0, 20).join(', ')}${result.vendorLI.length > 20 ? '...' : ''}
-(Total: ${result.vendorLI.length})
-
-KEY VENDORS STATUS:
+KEY VENDORS ANALYSIS:
+============================================
 ${keyVendorsInfo}
 
-LEGITIMATE INTEREST ANALYSIS:
+PUBLISHER RESTRICTIONS:
 ============================================
-Überprüfung gemäß neuer Interpretation (v1.1.6):
-Ein Vendor hat LI, wenn mindestens einer seiner LI-Purposes im TCF-String aktiv ist.
-
-Vendor 136 (Beispiel für LI-Berechnung):
-- In Vendor LI-Liste?: ${result.vendorLI.includes(136) ? 'Ja' : 'Nein'}
-- Angenommene LI-Purposes des Vendors: 2, 7, 9
-- Aktive LI-Purposes im TCF-String: ${result.purposesLI.join(', ') || 'Keine'}
-- LI gemäß neuer Interpretation: ${result.purposesLI.some(p => [2, 7, 9].includes(p)) ? 'Ja' : 'Nein'}
-
-Vendor 137 (Beispiel für LI-Berechnung):
-- In Vendor LI-Liste?: ${result.vendorLI.includes(137) ? 'Ja' : 'Nein'}
-- Angenommene LI-Purposes des Vendors: 2, 7
-- Aktive LI-Purposes im TCF-String: ${result.purposesLI.join(', ') || 'Keine'}
-- LI gemäß neuer Interpretation: ${result.purposesLI.some(p => [2, 7].includes(p)) ? 'Ja' : 'Nein'}
-
-HINWEIS: Dies ist eine Schätzung basierend auf typischen LI-Purposes.
-Eine genaue Analyse erfordert die vollständige GVL (Global Vendor List).`;
+${result.publisherRestrictions.join(', ') || 'Keine'}
+`;
                 
-                outputElement.innerHTML = output;
-                
+                document.getElementById('results').textContent = output;
             } catch (error) {
-                outputElement.innerHTML = `ERROR: ${error.message}`;
+                console.error('Error parsing TC string:', error);
+                document.getElementById('results').textContent = `ERROR: ${error.message}`;
             }
+        }
+
+        function decodeTCF() {
+            const tcfString = document.getElementById('tcfString').value.trim();
+            if (!tcfString) {
+                document.getElementById('results').textContent = 'Please enter a TCF string';
+                return;
+            }
+            
+            // Rufe die neue analyzeString-Funktion auf
+            analyzeString(tcfString);
         }
     </script>
 </body>
