@@ -203,8 +203,8 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   const policyUrl = gvlVendor?.policyUrl;
 
   const hasVendorConsentSignal = tcModel.vendorConsents.has(vendorId);
-  // Wir benötigen vendorLegitimateInterests nicht mehr direkt, da wir nur auf die tatsächlichen
-  // legitimen Zwecke (purposeLegitimateInterests) achten
+  // Wir benötigen das vendorLegitimateInterests-Flag doch
+  const hasVendorLIFlag = tcModel.vendorLegitimateInterests.has(vendorId);
   
   const purposesConsent: number[] = [];
   if (gvlVendor?.purposes && hasVendorConsentSignal) {
@@ -216,8 +216,8 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   }
 
   const purposesLI: number[] = [];
-  // KORRIGIERT: Sammle alle LI-Purposes, unabhängig vom vendorLegitimateInterests-Flag
-  if (gvlVendor?.legIntPurposes) {
+  // KORRIGIERT: Sammle LI-Purposes nur wenn der Vendor in der vendorLegitimateInterests-Liste steht
+  if (gvlVendor?.legIntPurposes && hasVendorLIFlag) {
     for (const purposeId of gvlVendor.legIntPurposes) {
       if (tcModel.purposeLegitimateInterests.has(purposeId)) {
         purposesLI.push(purposeId);
@@ -234,14 +234,16 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     }
   }
   
-  // KORRIGIERT: Ein Vendor hat LI, wenn er mindestens einen legitimen Zweck hat
-  const hasEffectiveLI = purposesLI.length > 0;
+  // KORRIGIERT: Vendor hat LI nur wenn beide Bedingungen erfüllt sind: 
+  // 1. Er muss in der vendorLegitimateInterests-Liste stehen
+  // 2. Er muss mindestens einen LI-Purpose haben, der aktiviert ist
+  const hasEffectiveLI = hasVendorLIFlag && purposesLI.length > 0;
   
   return {
     id: vendorId,
     name,
     hasConsent: hasVendorConsentSignal, 
-    hasLegitimateInterest: hasEffectiveLI, // Aktualisiert auf Basis der tatsächlichen Purposes
+    hasLegitimateInterest: hasEffectiveLI,
     policyUrl,
     purposesConsent, 
     purposesLI,      
@@ -298,16 +300,15 @@ export function getProcessedTCData(tcModel: TCModel | null): ProcessedTCData | n
   } else {
       keyVendorIds.forEach(id => {
           // Wenn keine GVL verfügbar ist, können wir die spezifischen Purposes nicht bestimmen
-          // Wir setzen hasLegitimateInterest basierend auf dem Zustand in tcModel.purposeLegitimateInterests
-          // anstatt nur auf vendorLegitimateInterests zu prüfen
-          const hasSomeLISignal = tcModel.purposeLegitimateInterests.size > 0;
+          // Wir verwenden direkt das vendorLegitimateInterests-Flag aus dem TCModel
+          const hasVendorLIFlag = tcModel.vendorLegitimateInterests.has(id);
           
           keyVendorResults.push({
               id,
               name: `Vendor ${id} (GVL not loaded)`,
               hasConsent: tcModel.vendorConsents.has(id),
-              // Konsistent mit unserer aktualisierten Logik bei Vendor-Details
-              hasLegitimateInterest: hasSomeLISignal && tcModel.vendorLegitimateInterests.has(id),
+              // Ohne GVL können wir die Purposes nicht prüfen, verlassen uns nur auf das Flag
+              hasLegitimateInterest: hasVendorLIFlag,
               purposesConsent: [],
               purposesLI: [],
               specialFeaturesOptIn: []

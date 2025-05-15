@@ -677,12 +677,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                           const vendorId = vendor.id;
                           const hasConsent = processedTcfData.rawTCModel?.vendorConsents?.has(vendorId) || false;
                           
-                          // Überprüfe, ob der Vendor irgendwelche LI-Purposes hat, die vom Nutzer akzeptiert wurden
+                          // Überprüfe, ob der Vendor in der LI-Liste steht UND ob er LI-Purposes hat
+                          const hasVendorLIFlag = processedTcfData.rawTCModel?.vendorLegitimateInterests?.has(vendorId) || false;
                           const vendorLIPurposes = vendor.legIntPurposes || [];
                           const acceptedLIPurposes = vendorLIPurposes.filter(p => 
                             processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p)
                           );
-                          const hasLI = acceptedLIPurposes.length > 0;
+                          // Beide Bedingungen müssen erfüllt sein
+                          const hasLI = hasVendorLIFlag && acceptedLIPurposes.length > 0;
                           
                           return (
                             <tr key={`vendor-${vendorId}`} className={tableRowBg}>
@@ -710,14 +712,17 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                     const activePurposesConsent = hasConsent ? 
                                       vendorPurposes.filter(p => processedTcfData.rawTCModel?.purposeConsents?.has(p)) :
                                       [];
-                                    const activePurposesLI = 
-                                      vendorLIPurposes.filter(p => processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p));
+                                    
+                                    // LI-Purposes nur filtern wenn der Vendor in der LI-Liste steht
+                                    const activePurposesLI = hasVendorLIFlag ? 
+                                      vendorLIPurposes.filter(p => processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p)) :
+                                      [];
                                     
                                     const vendorInfo = {
                                       id: vendorId,
                                       name: vendor.name,
                                       hasConsent: hasConsent,
-                                      hasLegitimateInterest: hasLI, // Aktualisiert auf Basis der effektiven LI-Purposes
+                                      hasLegitimateInterest: hasLI,
                                       policyUrl: vendor.policyUrl,
                                       purposesConsent: activePurposesConsent,
                                       purposesLI: activePurposesLI,
