@@ -7,7 +7,7 @@ const GVL_FALLBACK_URL = '/api/gvl'; // Unsere eigene API-Route als Fallback
 const LOCAL_GVL_URL = 'https://cmp.cdn-origin.cloudfront.net/vendor-list.json'; // Externer Fallback als letzte Option
 
 const GVL_CACHE_KEY = 'tcf_service_gvl_cache'; // Eigener Cache Key für den Service
-const GVL_CACHE_TTL = 1000 * 60 * 60 * 12; // 12 hours
+const GVL_CACHE_TTL = 1000 * 60 * 60 * 24 * 7; // 7 Tage Cache-Dauer, da eine Woche alte GVL ausreichend ist
 
 let gvlInstance: GVL | null = null;
 let gvlLoadingPromise: Promise<GVL> | null = null;
@@ -122,21 +122,44 @@ export async function loadAndCacheGVL(): Promise<GVL> {
 
 /**
  * Dekodiert einen TCF-String streng nach IAB-Bibliothek.
- * Verwendet die gecachte GVL.
+ * Lädt die GVL-Daten und verknüpft sie explizit mit dem TCModel.
  * 
  * @param tcString Der zu dekodierende TCF-String.
  * @returns Ein Objekt mit dem dekodierten TCModel oder einem Fehler.
  */
 export async function decodeTCStringStrict(tcString: string): Promise<{ tcModel: TCModel | null; error: string | null }> {
   try {
+    // Zuerst laden wir die GVL
+    try {
+      await loadAndCacheGVL();
+      console.log('GVL successfully loaded for TCF decoding');
+    } catch (err) {
+      console.error('Failed to load GVL for TCF decoding:', err);
+      // Wir fahren trotzdem fort, auch wenn die GVL nicht geladen werden konnte
+    }
+
+    // Dekodiere den TCF-String
     const tcModel = TCString.decode(tcString);
 
     if (!tcModel) {
       return { tcModel: null, error: 'TCString.decode returned no model (string might be invalid).' };
     }
 
-    if (!tcModel.gvl) {
-      console.warn('TCModel was decoded, but tcModel.gvl is not populated. This might happen if the GVL could not be fetched by the library or the TC string has an invalid vendorListVersion.');
+    // Verknüpfe die GVL manuell mit dem TCModel, wenn sie geladen wurde
+    if (gvlInstance) {
+      console.log('Manually attaching GVL to TCModel');
+      tcModel.gvl = gvlInstance;
+      
+      // Versuche, die Vendor-Informationen zu laden (wichtig für die korrekte Anzeige)
+      try {
+        // Erzwinge die Verarbeitung der GVL und der Vendor-Informationen
+        await tcModel.gvl.readyPromise;
+        console.log('GVL ready promise resolved, vendors should be available');
+      } catch (gvlReadyError) {
+        console.error('Error while waiting for GVL ready promise:', gvlReadyError);
+      }
+    } else {
+      console.warn('TCModel was decoded, but no GVL instance was available to attach.');
     }
 
     return { tcModel, error: null };
