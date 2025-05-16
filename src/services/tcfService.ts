@@ -297,64 +297,39 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   const vendorLIPurposes: number[] = vendorFromGVL?.legIntPurposes || [];
   const vendorSpecialFeatures: number[] = vendorFromGVL?.specialFeatures || [];
   
-  // DEBUG: Für Vendor 136 (Ströer) detaillierte Informationen ausgeben
-  if (vendorId === 136) {
-    console.log('DEBUG Vendor 136 (Ströer):');
-    console.log('- GVL vorhanden:', !!vendorFromGVL);
-    console.log('- Vendor Name:', vendorName);
-    console.log('- Consent Purposes aus GVL:', vendorConsentPurposes);
-    console.log('- LI Purposes aus GVL:', vendorLIPurposes);
-    console.log('- Vendor hat Consent Bit:', hasConsent);
-    console.log('- Globale Purpose Consents:', globalPurposesConsent);
-  }
+  // Standard-Debug-Info, nicht vendor-spezifisch
+  console.log(`TCF-Decoder: Processing Vendor ${vendorId} (${vendorName})`);
   
   // KORRIGIERTER ANSATZ:
-  // 1. Für Consent: Wenn der Vendor im vendorConsents Bitfeld ist, geben wir alle seine Purposes zurück
-  // Dies entspricht dem offiziellen IAB-Decoder - wenn ein Vendor Consent hat, werden alle seine Consent-Purposes angezeigt
+  // 1. Für Consent: Wenn der Vendor im vendorConsents Bitfeld ist, erhält er ALLE globalen Purpose Consents!
+  // Dies entspricht dem offiziellen IAB-Decoder - wenn ein Vendor Consent hat, sind alle globalen Purpose Consents gültig
   let activeConsentPurposesForVendor: number[] = [];
   
   if (hasConsent) {
-    // Prüfe, ob GVL-Daten vorhanden sind und Vendor-Purposes definiert sind
-    if (vendorConsentPurposes.length > 0) {
-      // Verwende die Purposes aus der GVL
-      activeConsentPurposesForVendor = vendorConsentPurposes;
-    } else {
-      // Fallback: Wenn keine GVL-Daten vorhanden sind oder der Vendor keine Purposes hat,
-      // zeige alle Standard-IAB-Purposes (1-10) für diesen Vendor an, wenn er Consent hat
-      // Dies entspricht dem Verhalten des offiziellen IAB-Decoders
-      activeConsentPurposesForVendor = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        .filter(purposeId => globalPurposesConsent.includes(purposeId));
-    }
-    
-    // WICHTIG: Wenn für diesen konkreten TCF-String der IAB-Decoder alle Purposes 1-8 anzeigt,
-    // aber unsere GVL nur Purpose 1 und 4 ausgibt, dann überschreiben wir hier mit einer Sonderlösung
-    // für den Ströer Vendor (136)
-    if (vendorId === 136 && vendorConsentPurposes.length < 8 && vendorName.includes("Ströer")) {
-      // Gemäß Screenshot des offiziellen IAB-Decoders sollten die Purposes 1-8 angezeigt werden
-      // Der IAB-Decoder zeigt die Schnittmenge der global aktivierten Purposes und der Standard-Purposes
-      const standardPurposes = [1, 2, 3, 4, 5, 6, 7, 8];
-      activeConsentPurposesForVendor = standardPurposes.filter(purposeId => 
-        globalPurposesConsent.includes(purposeId)
-      );
-      
-      console.log('- Korrigierte Consent Purposes für Ströer:', activeConsentPurposesForVendor);
-
-      // Besondere Aufmerksamkeit für die Schlüssel-Purposes 1, 2 und 4 (wie im Kotlin-Code)
-      // Stellen wir sicher, dass diese immer korrekt verarbeitet werden
-      const keyPurposes = [1, 2, 4];  // PURPOSE_ONE, PURPOSE_TWO, PURPOSE_FOUR
-      console.log('- Ströer Schlüssel-Purposes Status:');
-      keyPurposes.forEach(purposeId => {
-        const isActive = activeConsentPurposesForVendor.includes(purposeId);
-        console.log(`  - Purpose ${purposeId}: ${isActive ? 'AKTIV' : 'INAKTIV'}`);
-      });
-    }
+    // Nach IAB-Spezifikation: Wenn ein Vendor im vendorConsents-Bitfeld steht, 
+    // gelten ALLE globalen Purpose Consents für diesen Vendor
+    activeConsentPurposesForVendor = globalPurposesConsent;
   }
     
-  // 2. Für Legitimate Interest: Nur wenn der Vendor im LI-Bitfeld ist UND eine Überschneidung zwischen
-  // seinen LI-Purposes und den globalen LI-Purposes besteht
-  const activeLIPurposesForVendor = hasLegitimateInterestBit 
-    ? vendorLIPurposes.filter(purposeId => globalPurposesLI.includes(purposeId))
-    : [];
+  // 2. Für Legitimate Interest: Nach IAB-Spezifikation:
+  // - Der Vendor muss im vendorLegitimateInterests-Bitfeld sein
+  // - UND es muss eine Überschneidung zwischen Vendor LI-Purposes und globalen LI-Purposes geben
+  let activeLIPurposesForVendor: number[] = [];
+  
+  if (hasLegitimateInterestBit) {
+    // Prüfe Überschneidung zwischen Vendor LI-Purposes und globalen LI-Purposes
+    if (vendorLIPurposes.length > 0) {
+      // Vendor hat LI-Purposes in der GVL definiert, prüfe Überschneidung mit globalen LI-Purposes
+      activeLIPurposesForVendor = vendorLIPurposes.filter(purposeId => 
+        globalPurposesLI.includes(purposeId)
+      );
+    } else {
+      // Wenn keine Vendor-spezifischen LI-Purposes definiert sind, nehmen wir die Überschneidung
+      // zwischen Standard-LI-Purposes (1-10) und globalen LI-Purposes
+      activeLIPurposesForVendor = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        .filter(purposeId => globalPurposesLI.includes(purposeId));
+    }
+  }
   
   // 3. Für Special Features: Hier prüfen wir die Überschneidung zwischen Vendor Special Features und 
   // global aktivierten Special Features

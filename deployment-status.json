@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 15 17:04:10 CEST 2025", "commit": "Fix TCF-Decoder: Korrektur der Purpose-Anzeige für Vendor Consents"}
+{"deployment": "staging", "timestamp": "Fri May 16 09:52:48 CEST 2025", "commit": "TCF-Decoder Optimierung: Exakte Übereinstimmung mit IAB-Spezifikation und Stroeer-Code"}
