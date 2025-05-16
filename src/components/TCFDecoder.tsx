@@ -817,6 +817,25 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                             )}
                           </div>
                           
+                          {/* Neue Zeilen für Features und Special Purposes */}
+                          <div className="mb-1">
+                            <strong>Features:</strong>
+                            {vendor.features.length > 0 ? (
+                              <span> {vendor.features.map(f => `Feature ${f}`).join(', ')}</span>
+                            ) : (
+                              <span className="ml-1 text-gray-500 dark:text-gray-400">None</span>
+                            )}
+                          </div>
+                          
+                          <div className="mb-1">
+                            <strong>Special Purposes:</strong>
+                            {vendor.specialPurposes.length > 0 ? (
+                              <span> {vendor.specialPurposes.map(sp => `Special Purpose ${sp}`).join(', ')}</span>
+                            ) : (
+                              <span className="ml-1 text-gray-500 dark:text-gray-400">None</span>
+                            )}
+                          </div>
+                          
                           {/* Publisher Restrictions Section */}
                           {vendor.publisherRestrictions && vendor.publisherRestrictions.length > 0 && (
                             <div className="mb-1">

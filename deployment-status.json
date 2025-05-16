@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 16 13:50:18 CEST 2025", "commit": "Korrektur der LI-Logik in der Vendorliste: Korrekte Behandlung von impliziten Erlaubnissen überall implementiert"}
+{"deployment": "staging", "timestamp": "Fri May 16 13:56:35 CEST 2025", "commit": "Features und Special Purposes zur TCF-Decoder-Anzeige hinzugefügt, sowohl in Bezug auf Decodierung als auch UI-Integration"}
