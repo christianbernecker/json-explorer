@@ -1090,13 +1090,32 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                           const vendorId = vendor.id;
                           const hasConsent = processedTcfData.rawTCModel?.vendorConsents?.has(vendorId) || false;
                           
-                          // Überprüfe nur, ob der Vendor LI-Purposes hat
+                          // KORREKTUR: LI-Logik gemäß TCF-Spezifikation
                           const vendorLIPurposes = vendor.legIntPurposes || [];
-                          const acceptedLIPurposes = vendorLIPurposes.filter(p => 
-                            processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p)
-                          );
-                          // Nur Check ob der Vendor aktive LI-Purposes hat
-                          const hasLI = acceptedLIPurposes.length > 0;
+                          
+                          // KORREKTUR: LI-Logik gemäß TCF-Spezifikation
+                          // Ein LI-Purpose ist aktiv, wenn er NICHT explizit abgelehnt wurde
+                          let activePurposesLI: number[] = [];
+                          
+                          // Prüfe für jeden LI-Purpose, ob er NICHT explizit abgelehnt wurde
+                          vendorLIPurposes.forEach(purposeId => {
+                            let isExplicitlyOptedOut = false;
+                            
+                            // Hier müssen wir prüfen, ob der Purpose explizit als FALSE markiert ist
+                            processedTcfData.rawTCModel?.purposeLegitimateInterests?.forEach((value, key) => {
+                              if (key === purposeId && value === false) {
+                                isExplicitlyOptedOut = true;
+                              }
+                            });
+                            
+                            // Wenn kein explizites Opt-out, darf der Vendor diesen Purpose nutzen
+                            if (!isExplicitlyOptedOut) {
+                              activePurposesLI.push(purposeId);
+                            }
+                          });
+                          
+                          // Ein Vendor hat LI, wenn er mindestens einen aktiven LI-Purpose hat
+                          const hasLegitimateInterest = activePurposesLI.length > 0;
                           
                           return (
                             <tr key={`vendor-${vendorId}`} className={tableRowBg}>
@@ -1108,8 +1127,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                 </span>
                               </td>
                               <td className="px-4 py-2">
-                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${hasLI ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
-                                  {hasLI ? 'Ja' : 'Nein'}
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${hasLegitimateInterest ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
+                                  {hasLegitimateInterest ? 'Ja' : 'Nein'}
                                 </span>
                               </td>
                               <td className="px-4 py-2">
@@ -1125,15 +1144,35 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                       vendorPurposes.filter(p => processedTcfData.rawTCModel?.purposeConsents?.has(p)) :
                                       [];
                                     
-                                    // LI-Purposes nur filtern wenn der Vendor in der LI-Liste steht
-                                    const activePurposesLI = 
-                                      vendorLIPurposes.filter(p => processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p));
+                                    // KORREKTUR: LI-Logik gemäß TCF-Spezifikation
+                                    // Ein LI-Purpose ist aktiv, wenn er NICHT explizit abgelehnt wurde
+                                    let activePurposesLI: number[] = [];
+                                    
+                                    // Prüfe für jeden LI-Purpose, ob er NICHT explizit abgelehnt wurde
+                                    vendorLIPurposes.forEach(purposeId => {
+                                      let isExplicitlyOptedOut = false;
+                                      
+                                      // Hier müssen wir prüfen, ob der Purpose explizit als FALSE markiert ist
+                                      processedTcfData.rawTCModel?.purposeLegitimateInterests?.forEach((value, key) => {
+                                        if (key === purposeId && value === false) {
+                                          isExplicitlyOptedOut = true;
+                                        }
+                                      });
+                                      
+                                      // Wenn kein explizites Opt-out, darf der Vendor diesen Purpose nutzen
+                                      if (!isExplicitlyOptedOut) {
+                                        activePurposesLI.push(purposeId);
+                                      }
+                                    });
+                                    
+                                    // Ein Vendor hat LI, wenn er mindestens einen aktiven LI-Purpose hat
+                                    const hasLegitimateInterest = activePurposesLI.length > 0;
                                     
                                     const vendorInfo = {
                                       id: vendorId,
                                       name: vendor.name,
                                       hasConsent: hasConsent,
-                                      hasLegitimateInterest: hasLI,
+                                      hasLegitimateInterest: hasLegitimateInterest,
                                       policyUrl: vendor.policyUrl,
                                       purposesConsent: activePurposesConsent,
                                       purposesLI: activePurposesLI,

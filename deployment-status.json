@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 16 12:50:26 CEST 2025", "commit": "Korrektur der LI-Berechnung für TCF: Standardmäßig erlaubt statt explizit erforderlich"}
+{"deployment": "staging", "timestamp": "Fri May 16 13:42:04 CEST 2025", "commit": "Korrektur der LI-Logik: Korrekte Behandlung impliziter Erlaubnisse in der TCF-Spezifikation"}
