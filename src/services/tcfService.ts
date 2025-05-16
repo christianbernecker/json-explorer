@@ -121,6 +121,7 @@ export async function loadAndCacheGVL(): Promise<GVL> {
 // --- Ende GVL Loading --- 
 
 // Debug-Funktion für TCF Werte
+/* // Auskommentiert, da wir jetzt eine detailliertere Analyse direkt in decodeTCStringStrict haben
 function debugTCFValues(tcModel: TCModel) {
   console.log('======= TCF DEBUG INFO =======');
   console.log('TCF Version:', tcModel.version);
@@ -177,6 +178,7 @@ function debugTCFValues(tcModel: TCModel) {
   
   console.log('============================');
 }
+*/
 
 /**
  * Dekodiert einen TCF-String streng nach IAB-Bibliothek.
@@ -222,8 +224,46 @@ export async function decodeTCStringStrict(tcString: string): Promise<{ tcModel:
 
     // Debug-Ausgaben zur Fehleranalyse
     console.log('TCF String decoded, version:', tcModel.version);
-    debugTCFValues(tcModel);
-
+    
+    // DETAILLIERTE DEBUG-AUSGABEN der tatsächlichen Daten im TCF-String
+    console.log('=== DETAILED TCF STRING CONTENT ANALYSIS ===');
+    
+    // 1. Global Purpose Consents
+    console.log('GLOBAL PURPOSE CONSENTS:');
+    const globalPurposeConsents: number[] = [];
+    tcModel.purposeConsents.forEach((value, key) => {
+      if (value) {
+        globalPurposeConsents.push(key);
+        console.log(`- Purpose ${key}: CONSENT`);
+      }
+    });
+    
+    // 2. Global Legitimate Interests
+    console.log('GLOBAL LEGITIMATE INTERESTS:');
+    const globalLegitimateInterests: number[] = [];
+    tcModel.purposeLegitimateInterests.forEach((value, key) => {
+      if (value) {
+        globalLegitimateInterests.push(key);
+        console.log(`- Purpose ${key}: LEGITIMATE INTEREST`);
+      }
+    });
+    
+    // 3. Vendor Consents - insbesondere für Key Vendors
+    console.log('VENDOR CONSENTS:');
+    [136, 137, 44].forEach(vendorId => {
+      const hasConsent = tcModel.vendorConsents.has(vendorId);
+      console.log(`- Vendor ${vendorId}: ${hasConsent ? 'HAS CONSENT' : 'NO CONSENT'}`);
+    });
+    
+    // 4. Vendor Legitimate Interests - insbesondere für Key Vendors
+    console.log('VENDOR LEGITIMATE INTERESTS:');
+    [136, 137, 44].forEach(vendorId => {
+      const hasLI = tcModel.vendorLegitimateInterests.has(vendorId);
+      console.log(`- Vendor ${vendorId}: ${hasLI ? 'HAS LI' : 'NO LI'}`);
+    });
+    
+    console.log('=== END TCF STRING ANALYSIS ===');
+    
     return { tcModel, error: null };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Unknown decoding error.';
@@ -307,13 +347,18 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   
   if (hasConsent) {
     // Nach IAB-Spezifikation: Wenn ein Vendor im vendorConsents-Bitfeld steht, 
-    // gelten ALLE globalen Purpose Consents für diesen Vendor
+    // gelten nur die tatsächlich im globalen Purpose Consents vorhandenen Purposes,
+    // nicht automatisch alle Purposes 1-10
+    // Daher: Behalte nur die tatsächlich vorhandenen globalen Purpose Consents
     activeConsentPurposesForVendor = globalPurposesConsent;
+    
+    // Füge Debug-Info hinzu
+    console.log(`Vendor ${vendorId} (${vendorName}) hat Consent mit Purposes:`, activeConsentPurposesForVendor);
   }
     
   // 2. Für Legitimate Interest: Nach IAB-Spezifikation:
-  // - Der Vendor muss im vendorLegitimateInterests-Bitfeld sein
-  // - UND es muss eine Überschneidung zwischen Vendor LI-Purposes und globalen LI-Purposes geben
+  // - Der Vendor muss im vendorLegitimateInterests-Bitfeld sein UND
+  // - Es muss eine Überschneidung zwischen Vendor LI-Purposes und globalen LI-Purposes geben
   let activeLIPurposesForVendor: number[] = [];
   
   if (hasLegitimateInterestBit) {
@@ -326,9 +371,11 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     } else {
       // Wenn keine Vendor-spezifischen LI-Purposes definiert sind, nehmen wir die Überschneidung
       // zwischen Standard-LI-Purposes (1-10) und globalen LI-Purposes
-      activeLIPurposesForVendor = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        .filter(purposeId => globalPurposesLI.includes(purposeId));
+      activeLIPurposesForVendor = globalPurposesLI;
     }
+    
+    // Füge Debug-Info hinzu
+    console.log(`Vendor ${vendorId} (${vendorName}) hat LI mit Purposes:`, activeLIPurposesForVendor);
   }
   
   // 3. Für Special Features: Hier prüfen wir die Überschneidung zwischen Vendor Special Features und 

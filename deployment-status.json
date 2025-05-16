@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 16 09:52:48 CEST 2025", "commit": "TCF-Decoder Optimierung: Exakte Übereinstimmung mit IAB-Spezifikation und Stroeer-Code"}
+{"deployment": "staging", "timestamp": "Fri May 16 10:09:22 CEST 2025", "commit": "TCF-Decoder: Vereinheitlichung der Dekodierungslogik für alle Vendors gemäß IAB-Standard"}
