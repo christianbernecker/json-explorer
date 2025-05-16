@@ -453,34 +453,35 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   }
   
   // Neue, direktere Implementierung für Legitimate Interest Purposes
-  if (hasLegitimateInterestBit && vendorFromGVL) {
+  if (vendorFromGVL) {
     const supportedLIPurposes = vendorFromGVL.legIntPurposes || [];
     activeLIPurposesForVendor = [];
     
-    // Prüfe jeden Purpose einzeln
-    for (let i = 1; i <= 10; i++) {
-      const purposeHasGlobalLI = tcModel.purposeLegitimateInterests.has(i);
-      const vendorSupportsLIPurpose = supportedLIPurposes.includes(i);
+    // KORREKTUR: LI-Logik umkehren - Default ist ERLAUBT, global ist OPT-OUT
+    // Prüfe jeden vom Vendor unterstützten LI-Purpose
+    for (const purposeId of supportedLIPurposes) {
+      // Ein Purpose hat LI, AUSSER wenn global explizit ein FALSE für LI gesetzt ist
+      // hasLegitimateInterestBit ist optional - der Nutzer darf einen Vendor aber für 
+      // alle seine LI-Purposes ausschließen, dann muss dieses Bit gesetzt sein
+      const purposeHasExplicitGlobalLIOPTOUT = tcModel.purposeLegitimateInterests.has(purposeId) === false;
+      const vendorOptedOutOfAllLI = !hasLegitimateInterestBit;
       
-      if (purposeHasGlobalLI && vendorSupportsLIPurpose) {
-        activeLIPurposesForVendor.push(i);
+      // Wenn kein globales Opt-out UND kein vollständiger Vendor-LI-Opt-out vorliegt,
+      // darf der Vendor diesen Purpose per LI nutzen
+      if (!purposeHasExplicitGlobalLIOPTOUT && !vendorOptedOutOfAllLI) {
+        activeLIPurposesForVendor.push(purposeId);
       }
     }
     
-    console.log(`TCF-Decoder: Vendor ${vendorId} (${vendorName}) - Neue LI Purpose Berechnung:`);
+    console.log(`TCF-Decoder: Vendor ${vendorId} (${vendorName}) - KORRIGIERTE LI Purpose Berechnung:`);
     console.log(`- Vendor hat grundsätzlich LI-Bit: ${hasLegitimateInterestBit}`);
     console.log(`- Vendor unterstützt diese LI Purposes: ${JSON.stringify(supportedLIPurposes)}`);
     console.log(`- Tatsächlich aktive LI Purposes: ${JSON.stringify(activeLIPurposesForVendor)}`);
   } else if (hasLegitimateInterestBit) {
     // Fallback, wenn keine GVL-Daten verfügbar sind
-    // Extrahiere die globalen LI Purposes direkt
+    // Wir können nicht wissen, welche LI-Purposes der Vendor hat
     activeLIPurposesForVendor = [];
-    for (let i = 1; i <= 10; i++) {
-      if (tcModel.purposeLegitimateInterests.has(i)) {
-        activeLIPurposesForVendor.push(i);
-      }
-    }
-    console.log(`Vendor ${vendorId} (${vendorName}) hat LI mit Purposes: ${JSON.stringify(activeLIPurposesForVendor)}`);
+    console.log(`Vendor ${vendorId} (${vendorName}) hat LI, aber GVL fehlt - keine Purposes aktiv`);
   }
   
   // Special Features Verarbeitung
@@ -490,8 +491,8 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     globalSpecialFeatures.includes(featureId)
   );
   
-  // End-Status: Ein Vendor hat nur dann LI, wenn beide Bedingungen erfüllt sind
-  const hasLegitimateInterest = hasLegitimateInterestBit && activeLIPurposesForVendor.length > 0;
+  // End-Status: Ein Vendor hat LI, wenn er mindestens einen aktiven LI-Purpose hat
+  const hasLegitimateInterest = activeLIPurposesForVendor.length > 0;
   const isFullyRestricted = isVendorFullyRestricted(tcModel, vendorId);
   
   return {

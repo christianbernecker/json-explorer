@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 16 12:31:12 CEST 2025", "commit": "Umfangreiche Erweiterungen für den TCF Decoder: Umstellung auf Englisch, History-Funktion, GVL Vendor Details und UI-Verbesserungen"}
+{"deployment": "staging", "timestamp": "Fri May 16 12:33:55 CEST 2025", "commit": "Publisher Restrictions hinzugefügt: Anzeige von Publisher Restrictions in allen TCF-Decoder-Ansichten"}
