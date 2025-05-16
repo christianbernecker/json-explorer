@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 16 14:50:41 CEST 2025", "commit": "UI-Harmonisierung: Einführung gemeinsamer Komponenten (Card, Input, Section, AppHeader) für einheitliches Design"}
+{"deployment": "staging", "timestamp": "Fri May 16 15:17:25 CEST 2025", "commit": "AppHeader im TCF Decoder durch ApplicationHeader ersetzt für einheitliches Design"}

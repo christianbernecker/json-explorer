@@ -17,7 +17,7 @@ interface TCFDecoderPageProps {
 const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, toggleDarkMode }) => {
   // State für automatisches Dekodieren aus URL-Parameter
   const [autoDecodeString, setAutoDecodeString] = useState<string | null>(null);
-  // History state
+  // State für die History-Anzeige
   const [showHistory, setShowHistory] = useState(false);
   const tcfHistory = loadHistory('tcf');
   
@@ -54,9 +54,13 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         activeTab="tcf-decoder"
       />
       
-      {/* Container mit responsiven Abständen */}
+      {/* Container mit responsiven Abständen angepasst an JsonToolsApp */}
       <div className="mt-4 sm:mt-6 md:mt-8 px-2 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
-        <Section isDarkMode={isDarkMode} className="mb-0" fullWidth={true}>
+        <Section 
+          isDarkMode={isDarkMode} 
+          className="mb-0"
+          fullWidth={true}
+        >
           <TCFDecoder 
             isDarkMode={isDarkMode} 
             initialTcString={autoDecodeString}

@@ -24,7 +24,7 @@ function Homepage({ isDarkMode }: HomepageProps) {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {/* JSON Explorer Card */}
         <Link 
           to="/apps/json-explorer" 
@@ -88,6 +88,49 @@ function Homepage({ isDarkMode }: HomepageProps) {
               </p>
               
               <div className="flex items-center text-indigo-600 dark:text-indigo-400 group-hover:text-indigo-800 dark:group-hover:text-indigo-300 transition-colors">
+                <span className="font-medium">Open Tool</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        {/* TCF Decoder Card */}
+        <Link 
+          to="/apps/tcf-decoder" 
+          className="group block rounded-xl overflow-hidden shadow-lg transition transform hover:-translate-y-1 hover:shadow-xl"
+        >
+          <div className="h-2 bg-gradient-to-r from-purple-600 to-blue-500"></div>
+          <div className="p-8 bg-white dark:bg-gray-800 relative overflow-hidden">
+            {/* Background pattern for visual distinction */}
+            <div className="absolute inset-0 opacity-5 dark:opacity-10">
+              <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <pattern id="shield" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <rect width="2" height="2" fill="currentColor" className="text-purple-500" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#shield)" />
+              </svg>
+            </div>
+            
+            <div className="relative">
+              <div className="flex items-center mb-4">
+                <div className="h-12 w-12 rounded-lg bg-gradient-to-r from-purple-600 to-blue-500 flex items-center justify-center text-white mr-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">TCF Decoder</h2>
+              </div>
+              
+              <p className="text-gray-600 dark:text-gray-300 mb-6">
+                Decode and analyze IAB TCF consent strings. Explore vendor consents, purposes, legitimate interests, and special features from TCF v2.0 and v2.2.
+              </p>
+              
+              <div className="flex items-center text-purple-600 dark:text-purple-400 group-hover:text-purple-800 dark:group-hover:text-purple-300 transition-colors">
                 <span className="font-medium">Open Tool</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
