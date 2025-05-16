@@ -618,26 +618,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             
             <div>
               <h4 className="text-md font-semibold mb-2">Special Purposes</h4>
-              {!vendor.specialPurposes || vendor.specialPurposes.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400">No special purposes registered</p>
-              ) : (
-                <ul className="list-disc pl-5 space-y-1">
-                  {vendor.specialPurposes.map((purposeId: number) => {
-                    const purpose = gvlExplorerInstance?.specialPurposes?.[purposeId];
-                    return (
-                      <li key={`special-purpose-${purposeId}`}>
-                        {purpose ? (
-                          <span title={purpose.description}>
-                            <strong>{purposeId}:</strong> {purpose.name}
-                          </span>
-                        ) : (
-                          <span><strong>{purposeId}:</strong> Unknown Special Purpose</span>
-                        )}
-                      </li>
-                    );
-                  })}
+              {vendor.specialPurposes?.length > 0 ? (
+                <ul className="list-disc pl-5 text-sm">
+                  {vendor.specialPurposes.map((spId: number) => (
+                    <li key={`vd-sp-${spId}`}>{`${spId}. ${processedTcfData?.rawTCModel?.gvl?.specialPurposes?.[spId.toString()]?.name || `Special Purpose ${spId}`}`}</li>
+                  ))}
                 </ul>
-              )}
+              ) : <p className="text-sm italic">None</p>}
             </div>
           </div>
           
@@ -1138,6 +1125,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                     const vendorPurposes = vendor.purposes || [];
                                     const vendorLIPurposes = vendor.legIntPurposes || [];
                                     const vendorSpecialFeatures = vendor.specialFeatures || [];
+                                    // Neue Felder extrahieren
+                                    const vendorFeatures = vendor.features || [];
+                                    const vendorSpecialPurposes = vendor.specialPurposes || [];
                                     
                                     // Filter auf erlaubte Purposes basierend auf globalen Consent-Einstellungen
                                     const activePurposesConsent = hasConsent ? 
@@ -1178,6 +1168,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                       purposesLI: activePurposesLI,
                                       specialFeaturesOptIn: 
                                         vendorSpecialFeatures.filter(f => processedTcfData.rawTCModel?.specialFeatureOptins?.has(f)),
+                                      // Neue Felder
+                                      features: vendorFeatures,
+                                      specialPurposes: vendorSpecialPurposes,
                                       debugInfo: {}
                                     };
                                     
@@ -1325,6 +1318,31 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 </ul>
               ) : <p className="text-sm italic">None</p>}
             </div>
+            
+            {/* Neue Sektion für Special Purposes */}
+            <div>
+              <h4 className="font-semibold mb-2">Special Purposes</h4>
+              {selectedVendor.specialPurposes?.length > 0 ? (
+                <ul className="list-disc pl-5 text-sm">
+                  {selectedVendor.specialPurposes.map((spId: number) => (
+                    <li key={`vd-sp-${spId}`}>{`${spId}. ${processedTcfData?.rawTCModel?.gvl?.specialPurposes?.[spId.toString()]?.name || `Special Purpose ${spId}`}`}</li>
+                  ))}
+                </ul>
+              ) : <p className="text-sm italic">None</p>}
+            </div>
+            
+            {/* Neue Sektion für Features */}
+            <div>
+              <h4 className="font-semibold mb-2">Features</h4>
+              {selectedVendor.features?.length > 0 ? (
+                <ul className="list-disc pl-5 text-sm">
+                  {selectedVendor.features.map((fId: number) => (
+                    <li key={`vd-f-${fId}`}>{`${fId}. ${processedTcfData?.rawTCModel?.gvl?.features?.[fId.toString()]?.name || `Feature ${fId}`}`}</li>
+                  ))}
+                </ul>
+              ) : <p className="text-sm italic">None</p>}
+            </div>
+            
             <div>
               <h4 className="font-semibold mb-2">Special Features with Opt-in</h4>
               {selectedVendor.specialFeaturesOptIn.length > 0 ? (

@@ -316,6 +316,9 @@ interface ProcessedVendorInfo {
   purposesConsent: number[]; 
   purposesLI: number[];      
   specialFeaturesOptIn: number[];
+  // Neue Felder für Features und Special Purposes
+  features: number[];
+  specialPurposes: number[];
   gvlVendor?: any;
   debugInfo: any;
   // Neue Felder für erweiterte Funktionalität
@@ -505,6 +508,10 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     globalSpecialFeatures.includes(featureId)
   );
   
+  // Neue Verarbeitung für Features und Special Purposes
+  const vendorFeatures: number[] = vendorFromGVL?.features || [];
+  const vendorSpecialPurposes: number[] = vendorFromGVL?.specialPurposes || [];
+  
   // End-Status: Ein Vendor hat LI, wenn er mindestens einen aktiven LI-Purpose hat
   const hasLegitimateInterest = activeLIPurposesForVendor.length > 0;
   const isFullyRestricted = isVendorFullyRestricted(tcModel, vendorId);
@@ -518,6 +525,9 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     purposesConsent: activeConsentPurposesForVendor,
     purposesLI: activeLIPurposesForVendor,
     specialFeaturesOptIn: activeSpecialFeaturesForVendor,
+    // Neue Felder für Features und Special Purposes
+    features: vendorFeatures,
+    specialPurposes: vendorSpecialPurposes,
     gvlVendor: vendorFromGVL,
     debugInfo: {
       hasConsent,
@@ -528,7 +538,9 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
       vendorConsentPurposes: vendorFromGVL?.purposes || [],
       vendorLIPurposes: vendorFromGVL?.legIntPurposes || [],
       activeConsentPurposesForVendor,
-      activeLIPurposesForVendor
+      activeLIPurposesForVendor,
+      vendorFeatures,
+      vendorSpecialPurposes
     },
     publisherRestrictions,
     isFullyRestricted
@@ -604,12 +616,17 @@ export function getProcessedTCData(tcModel: TCModel | null): ProcessedTCData | n
               purposesConsent: [], // Wir können ohne GVL nicht wissen, welche Purposes der Vendor unterstützt
               purposesLI: [],      // Wir können ohne GVL nicht wissen, welche LI-Purposes der Vendor unterstützt
               specialFeaturesOptIn: [], // Wir können ohne GVL nicht wissen, welche Special Features der Vendor unterstützt
+              // Neue Felder für Features und Special Purposes
+              features: [],    // Wir können ohne GVL nicht wissen, welche Features der Vendor unterstützt
+              specialPurposes: [], // Wir können ohne GVL nicht wissen, welche Special Purposes der Vendor unterstützt
               gvlVendor: null,
               debugInfo: {
                   hasVendorLIBit: hasVendorLIFlag,
                   vendorConsentPurposes: [],
                   vendorLIPurposes: [],
                   vendorSpecialFeatures: [],
+                  vendorFeatures: [],
+                  vendorSpecialPurposes: [],
                   globalPurposesConsent,
                   globalPurposesLI,
                   globalSpecialFeatures,
