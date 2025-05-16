@@ -640,6 +640,70 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
               )}
             </div>
           </div>
+          
+          {/* Publisher Restrictions Section */}
+          {processedTcfData && (
+            <div className="mt-6">
+              <h4 className="text-lg font-semibold mb-2">Publisher Restrictions</h4>
+              {!processedTcfData.rawTCModel?.publisherRestrictions || 
+               !processedTcfData.rawTCModel.publisherRestrictions.getRestrictions(vendor.id) || 
+               processedTcfData.rawTCModel.publisherRestrictions.getRestrictions(vendor.id).length === 0 ? (
+                <p className="text-gray-500 dark:text-gray-400">No publisher restrictions for this vendor</p>
+              ) : (
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead>
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Purpose</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Restriction Type</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Meaning</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                      {processedTcfData.rawTCModel.publisherRestrictions.getRestrictions(vendor.id).map((restriction: any, idx: number) => {
+                        const purposeId = restriction.purposeId;
+                        const restrictionType = restriction.restrictionType;
+                        const purpose = gvlExplorerInstance?.purposes?.[purposeId] || 
+                                        gvlExplorerInstance?.specialPurposes?.[purposeId];
+                        
+                        return (
+                          <tr key={`pub-restriction-${idx}`}>
+                            <td className="px-4 py-2 whitespace-nowrap">
+                              {purpose ? (
+                                <span title={purpose.description}>
+                                  <strong>{purposeId}:</strong> {purpose.name}
+                                </span>
+                              ) : (
+                                <span><strong>{purposeId}:</strong> Unknown Purpose</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2 whitespace-nowrap">
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                restrictionType === 0
+                                  ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
+                                  : restrictionType === 1
+                                    ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                                    : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                              }`}>
+                                Type {restrictionType}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2">
+                              {restrictionType === 0 
+                                ? 'Not Allowed' 
+                                : restrictionType === 1 
+                                  ? 'Require Consent' 
+                                  : 'Require Legitimate Interest'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -765,6 +829,32 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                               <span className="ml-1 text-gray-500 dark:text-gray-400">None</span>
                             )}
                           </div>
+                          
+                          {/* Publisher Restrictions Section */}
+                          {vendor.publisherRestrictions && vendor.publisherRestrictions.length > 0 && (
+                            <div className="mb-1">
+                              <strong>Publisher Restrictions:</strong>
+                              <ul className="list-disc pl-5 mt-1">
+                                {vendor.publisherRestrictions.map((restriction, idx) => (
+                                  <li key={`restriction-${idx}`} className="text-xs">
+                                    Purpose {restriction.purposeId}: 
+                                    <span className={`ml-1 ${
+                                      restriction.restrictionType === 0 
+                                        ? 'text-red-600 dark:text-red-400' 
+                                        : 'text-amber-600 dark:text-amber-400'
+                                    }`}>
+                                      {restriction.restrictionType === 0 
+                                        ? 'Not Allowed' 
+                                        : restriction.restrictionType === 1 
+                                          ? 'Require Consent' 
+                                          : 'Require Legitimate Interest'}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
                           <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                             <strong className="text-green-600 dark:text-green-400">
                               Effective Purposes (Consent OR LI):
@@ -1151,6 +1241,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             <span className={`px-3 py-1 rounded-full text-sm ${selectedVendor.hasLegitimateInterest ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
               Legitimate Interest: {selectedVendor.hasLegitimateInterest ? 'Yes' : 'No'}
             </span>
+            
+            {/* Publisher Restriction Badge */}
+            {selectedVendor.publisherRestrictions && selectedVendor.publisherRestrictions.length > 0 && (
+              <span className="px-3 py-1 rounded-full text-sm bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                Has Publisher Restrictions
+              </span>
+            )}
           </div>
           
           {/* GVL Information (if available) */}
@@ -1195,6 +1292,32 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                 <ul className="list-disc pl-5 text-sm">
                   {selectedVendor.specialFeaturesOptIn.map((sfId: number) => (
                     <li key={`vd-sf-${sfId}`}>{`${sfId}. ${processedTcfData?.rawTCModel?.gvl?.specialFeatures?.[sfId.toString()]?.name || `Special Feature ${sfId}`}`}</li>
+                  ))}
+                </ul>
+              ) : <p className="text-sm italic">None</p>}
+            </div>
+            
+            {/* Publisher Restrictions Section */}
+            <div>
+              <h4 className="font-semibold mb-2">Publisher Restrictions</h4>
+              {selectedVendor.publisherRestrictions && selectedVendor.publisherRestrictions.length > 0 ? (
+                <ul className="list-disc pl-5 text-sm">
+                  {selectedVendor.publisherRestrictions.map((restriction: any, idx: number) => (
+                    <li key={`vd-pr-${idx}`} className={`${
+                      restriction.restrictionType === 0 
+                        ? 'text-red-600 dark:text-red-400' 
+                        : restriction.restrictionType === 1
+                          ? 'text-amber-600 dark:text-amber-400'
+                          : 'text-blue-600 dark:text-blue-400'
+                      }`}>
+                      Purpose {restriction.purposeId}: {
+                        restriction.restrictionType === 0 
+                          ? 'Not Allowed' 
+                          : restriction.restrictionType === 1 
+                            ? 'Require Consent' 
+                            : 'Require Legitimate Interest'
+                      }
+                    </li>
                   ))}
                 </ul>
               ) : <p className="text-sm italic">None</p>}

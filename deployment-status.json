@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 16 12:15:08 CEST 2025", "commit": "Debug-Informationen für die TCF-Vendor-Analyse hinzugefügt"}
+{"deployment": "staging", "timestamp": "Fri May 16 12:31:12 CEST 2025", "commit": "Umfangreiche Erweiterungen für den TCF Decoder: Umstellung auf Englisch, History-Funktion, GVL Vendor Details und UI-Verbesserungen"}
