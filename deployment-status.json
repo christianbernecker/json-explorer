@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 16 10:16:22 CEST 2025", "commit": "TCF-Decoder: Korrektur der Purpose-Verarbeitung gemäß tatsächlichem TCF-String-Inhalt"}
+{"deployment": "staging", "timestamp": "Fri May 16 12:08:49 CEST 2025", "commit": "Fix für TCF Decoder: Korrekte Anzeige der Vendor Purposes und Consent-Status implementiert"}

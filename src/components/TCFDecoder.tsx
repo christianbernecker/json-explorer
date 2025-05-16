@@ -517,6 +517,64 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                               )}
                             </div>
                           </div>
+                          
+                          {/* Neuer Debug-Button und Debug-Anzeige */}
+                          <div className="mt-3">
+                            <Button 
+                              onClick={() => {
+                                // Toggle Debug-Anzeige durch Hinzufügen einer Klasse
+                                const debugElement = document.getElementById(`debug-info-${vendor.id}`);
+                                if (debugElement) {
+                                  debugElement.classList.toggle('hidden');
+                                }
+                              }}
+                              isDarkMode={isDarkMode}
+                              variant="secondary"
+                              size="sm"
+                            >
+                              Debug-Informationen anzeigen
+                            </Button>
+                          </div>
+                          
+                          <div id={`debug-info-${vendor.id}`} className="hidden mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-md text-xs overflow-auto max-h-96">
+                            <h5 className="font-bold mb-2">TCF Debug-Informationen für Vendor {vendor.id}</h5>
+                            
+                            <div className="mb-2">
+                              <strong>Vendor Consent-Bit im TCF-String:</strong> {vendor.debugInfo?.hasConsent ? 'Ja' : 'Nein'}
+                            </div>
+                            
+                            <div className="mb-2">
+                              <strong>Vendor LI-Bit im TCF-String:</strong> {vendor.debugInfo?.hasLegitimateInterestBit ? 'Ja' : 'Nein'}
+                            </div>
+                            
+                            <div className="mb-2">
+                              <strong>Globale Purpose Consents:</strong> {vendor.debugInfo?.globalPurposeConsents?.join(', ') || 'Keine'}
+                            </div>
+                            
+                            <div className="mb-2">
+                              <strong>Globale LI Purposes:</strong> {vendor.debugInfo?.globalPurposesLI?.join(', ') || 'Keine'}
+                            </div>
+                            
+                            <div className="mb-2">
+                              <strong>Vendor unterstützt diese Purposes (laut GVL):</strong> {vendor.debugInfo?.vendorConsentPurposes?.join(', ') || 'Keine'}
+                            </div>
+                            
+                            <div className="mb-2">
+                              <strong>Vendor unterstützt diese LI Purposes (laut GVL):</strong> {vendor.debugInfo?.vendorLIPurposes?.join(', ') || 'Keine'}
+                            </div>
+                            
+                            <div className="mb-2">
+                              <strong>Aktive Consent Purposes (Überschneidung):</strong> {vendor.debugInfo?.activeConsentPurposesForVendor?.join(', ') || 'Keine'}
+                            </div>
+                            
+                            <div className="mb-2">
+                              <strong>Aktive LI Purposes (Überschneidung):</strong> {vendor.debugInfo?.activeLIPurposesForVendor?.join(', ') || 'Keine'}
+                            </div>
+                            
+                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                              <pre className="whitespace-pre-wrap">{JSON.stringify(vendor.debugInfo, null, 2)}</pre>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))
