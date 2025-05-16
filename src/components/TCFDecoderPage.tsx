@@ -1,8 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import TCFDecoder from './TCFDecoder';
 import { Helmet } from 'react-helmet-async';
-import ApplicationHeader from './ApplicationHeader';
-import PrimaryContainer from './shared/PrimaryContainer';
+import { AppHeader, Card } from './shared';
 
 // URL parameter for direct decoding
 interface TCFDecoderPageProps {
@@ -14,6 +13,9 @@ interface TCFDecoderPageProps {
 }
 
 const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, toggleDarkMode }) => {
+  // State für automatisches Dekodieren aus URL-Parameter
+  const [autoDecodeString, setAutoDecodeString] = useState<string | null>(null);
+
   // Auto-decode if string is passed in URL
   useEffect(() => {
     if (location?.search) {
@@ -21,15 +23,13 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
       const tcString = params.get('tcString');
       
       if (tcString) {
-        // Here you could automatically load the string into the decoder
-        console.log('Auto-decode:', tcString);
-        // TODO: Implement auto-decode
+        setAutoDecodeString(tcString);
       }
     }
   }, [location]);
 
   return (
-    <div className="w-full h-full flex flex-col p-0">
+    <div className="w-full h-full flex flex-col">
       <Helmet>
         <title>TCF Consent String Decoder & Analyzer | AdTech Toolbox</title>
         <meta 
@@ -38,18 +38,22 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         />
       </Helmet>
       
-      <ApplicationHeader 
-        isDarkMode={isDarkMode} 
+      {/* Neuer AppHeader statt ApplicationHeader */}
+      <AppHeader 
+        isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
         title="TCF Decoder"
         subtitle="Decode and analyze IAB TCF consent strings"
       />
       
       {/* Container mit responsiven Abständen */}
-      <div className="py-2 sm:py-3 md:py-4 px-2 sm:px-4 md:px-6 lg:px-8">
-        <PrimaryContainer isDarkMode={isDarkMode}>
-          <TCFDecoder isDarkMode={isDarkMode} />
-        </PrimaryContainer>
+      <div className="py-2 sm:py-4 md:py-6 px-2 sm:px-4 md:px-6 lg:px-8">
+        <Card isDarkMode={isDarkMode} className="p-0">
+          <TCFDecoder 
+            isDarkMode={isDarkMode} 
+            initialTcString={autoDecodeString}
+          />
+        </Card>
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ import Button from './shared/Button';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
+  initialTcString?: string | null;
 }
 
 // Tabs for display
@@ -42,9 +43,9 @@ interface VendorFilterOptions {
 // String 3 (Neuer Versuch): Vendor 136 hat Consent, Global nur Purpose 1 und 4, und LI Purpose 2 und 7 
 // const EXAMPLE_TCF_STRING = "CPz2y3oPz2y3oAGABCENAuCoAP_AAH_AAAiQI3Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1LBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgAkDSFaoCEAwkOFEAIAAGIAAIAAKABAIgMMAAAEFB0JACAQFgIYAARIAMEgBIIACQAIgEAAIAEAiABAACABAAKABEAAIABAAgAAAACEAiABEABAAAAQAAEABIgAAAIOrCDNACAAQsCXCIQAAgAEQAAAAA.YAAAAAAAAAAAA";
 
-const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
+const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) => {
   // State für den Decoder
-  const [tcfString, setTcfString] = useState('');
+  const [tcfString, setTcfString] = useState(initialTcString || '');
   // const [additionalVendorId, setAdditionalVendorId] = useState<number>(136); // Entfernt, da ungenutzt
   // const [decodedVersion, setDecodedVersion] = useState<string>(''); // Kommt jetzt aus processedTcfData
   const [decodeError, setDecodeError] = useState<string | null>(null);
