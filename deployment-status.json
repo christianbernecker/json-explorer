@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 16 12:33:55 CEST 2025", "commit": "Publisher Restrictions hinzugefügt: Anzeige von Publisher Restrictions in allen TCF-Decoder-Ansichten"}
+{"deployment": "staging", "timestamp": "Fri May 16 12:50:26 CEST 2025", "commit": "Korrektur der LI-Berechnung für TCF: Standardmäßig erlaubt statt explizit erforderlich"}

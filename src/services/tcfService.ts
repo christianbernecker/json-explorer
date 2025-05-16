@@ -457,23 +457,37 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     const supportedLIPurposes = vendorFromGVL.legIntPurposes || [];
     activeLIPurposesForVendor = [];
     
-    // KORREKTUR: LI-Logik umkehren - Default ist ERLAUBT, global ist OPT-OUT
-    // Prüfe jeden vom Vendor unterstützten LI-Purpose
+    // KORREKTUR 3: Leere Global LI berücksichtigen - gemäß TCF-Spec
+    // Wir müssen unterscheiden zwischen "leer" (keine Angabe = implizit erlaubt)
+    // und "explizit FALSE" (Benutzer hat LI aktiv abgelehnt)
     for (const purposeId of supportedLIPurposes) {
-      // Ein Purpose hat LI, AUSSER wenn global explizit ein FALSE für LI gesetzt ist
-      // hasLegitimateInterestBit ist optional - der Nutzer darf einen Vendor aber für 
-      // alle seine LI-Purposes ausschließen, dann muss dieses Bit gesetzt sein
-      const purposeHasExplicitGlobalLIOPTOUT = tcModel.purposeLegitimateInterests.has(purposeId) === false;
-      const vendorOptedOutOfAllLI = !hasLegitimateInterestBit;
+      // KORREKTUR: Neuimplementierung der LI-Logik gemäß TCF-Spezifikation
+      // Nach der TCF-Spezifikation ist ein LI-Purpose erlaubt, wenn:
+      // 1. Der Vendor diesen Purpose in der GVL als LI-Purpose registriert hat (bereits durch supportedLIPurposes gefiltert)
+      // 2. Es im TCF-String KEINEN EXPLIZITEN OPT-OUT (false) gibt
       
-      // Wenn kein globales Opt-out UND kein vollständiger Vendor-LI-Opt-out vorliegt,
-      // darf der Vendor diesen Purpose per LI nutzen
-      if (!purposeHasExplicitGlobalLIOPTOUT && !vendorOptedOutOfAllLI) {
+      // Prüfen, ob der Purpose im TCF-String als false eingetragen ist (OPT-OUT)
+      let purposeIsExplicitlyOptedOut = false;
+      
+      // Wir müssen hier spezifisch prüfen, ob der Wert false ist
+      // In der tcModel.purposeLegitimateInterests.forEach können wir sehen, wie
+      // die Werte abgefragt werden - dort werden nur Einträge mit value=true hinzugefügt
+      tcModel.purposeLegitimateInterests.forEach((value, key) => {
+        if (key === purposeId && value === false) {
+          purposeIsExplicitlyOptedOut = true;
+        }
+      });
+
+      // Wenn der Purpose NICHT explizit abgelehnt wurde, kann er verwendet werden
+      if (!purposeIsExplicitlyOptedOut) {
         activeLIPurposesForVendor.push(purposeId);
+        console.log(`  Purpose ${purposeId}: AKTIV (kein explizites Opt-out im TCF String)`);
+      } else {
+        console.log(`  Purpose ${purposeId}: INAKTIV (explizites Opt-out im TCF String)`);
       }
     }
     
-    console.log(`TCF-Decoder: Vendor ${vendorId} (${vendorName}) - KORRIGIERTE LI Purpose Berechnung:`);
+    console.log(`TCF-Decoder: Vendor ${vendorId} (${vendorName}) - FINAL LI Purpose Berechnung:`);
     console.log(`- Vendor hat grundsätzlich LI-Bit: ${hasLegitimateInterestBit}`);
     console.log(`- Vendor unterstützt diese LI Purposes: ${JSON.stringify(supportedLIPurposes)}`);
     console.log(`- Tatsächlich aktive LI Purposes: ${JSON.stringify(activeLIPurposesForVendor)}`);
