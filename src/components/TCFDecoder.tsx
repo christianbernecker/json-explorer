@@ -510,6 +510,24 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                               ))}
                             </div>
                           )}
+                          {/* Neue Sektion: Kombinierte Purposes (Consent ODER LI) */}
+                          {(purposesWithConsent.length > 0 || purposesWithLI.length > 0) && (
+                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                              <strong className="text-green-600 dark:text-green-400">
+                                Effektive Purposes (Consent ODER LI):
+                              </strong>
+                              <div>
+                                {Array.from(new Set([...purposesWithConsent, ...purposesWithLI]))
+                                  .sort((a, b) => a - b)
+                                  .map((p, index, arr) => (
+                                    <span key={`combined-${p}`} className="font-medium">
+                                      Purpose {p}{index < arr.length - 1 ? ', ' : ''}
+                                    </span>
+                                  ))
+                                }
+                              </div>
+                            </div>
+                          )}
                            {(purposesWithConsent.length === 0 && purposesWithLI.length === 0 && specialFeaturesAllowed.length === 0) && (
                                <p className="text-xs text-gray-500 dark:text-gray-400">Keine erlaubten Zwecke oder Spezialfeatures für diesen Vendor basierend auf den globalen Signalen.</p>
                            )}

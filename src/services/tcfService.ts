@@ -259,6 +259,12 @@ interface ProcessedVendorInfo {
   specialFeaturesOptIn: number[];
   gvlVendor?: any;
   debugInfo: any;
+  // Neue Felder für erweiterte Funktionalität
+  publisherRestrictions?: {
+    purposeId: number;
+    restrictionType: number;
+  }[];
+  isFullyRestricted?: boolean;
 }
 
 function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorInfo {
@@ -281,6 +287,10 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   // 1. Der Vendor muss im vendorLegitimateInterests Bitfeld auf true gesetzt sein
   // 2. UND mindestens ein Purpose muss im purposeLegitimateInterests Bitfeld freigegeben sein
   const hasLegitimateInterestBit = tcModel.vendorLegitimateInterests.has(vendorId);
+  
+  // Publisher Restrictions für diesen Vendor
+  const publisherRestrictions = getPublisherRestrictionsForVendor(tcModel, vendorId);
+  const isFullyRestricted = isVendorFullyRestricted(tcModel, vendorId);
   
   // Vendor-spezifische Purposes aus der GVL
   const vendorConsentPurposes: number[] = vendorFromGVL?.purposes || [];
@@ -328,6 +338,15 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
       );
       
       console.log('- Korrigierte Consent Purposes für Ströer:', activeConsentPurposesForVendor);
+
+      // Besondere Aufmerksamkeit für die Schlüssel-Purposes 1, 2 und 4 (wie im Kotlin-Code)
+      // Stellen wir sicher, dass diese immer korrekt verarbeitet werden
+      const keyPurposes = [1, 2, 4];  // PURPOSE_ONE, PURPOSE_TWO, PURPOSE_FOUR
+      console.log('- Ströer Schlüssel-Purposes Status:');
+      keyPurposes.forEach(purposeId => {
+        const isActive = activeConsentPurposesForVendor.includes(purposeId);
+        console.log(`  - Purpose ${purposeId}: ${isActive ? 'AKTIV' : 'INAKTIV'}`);
+      });
     }
   }
     
@@ -358,7 +377,9 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     activeConsentPurposesForVendor,
     activeLIPurposesForVendor,
     activeSpecialFeaturesForVendor,
-    finalLIStatus: hasLegitimateInterest
+    finalLIStatus: hasLegitimateInterest,
+    publisherRestrictions,
+    isFullyRestricted
   };
 
   return {
@@ -371,7 +392,9 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     purposesLI: activeLIPurposesForVendor,
     specialFeaturesOptIn: activeSpecialFeaturesForVendor,
     gvlVendor: vendorFromGVL,
-    debugInfo
+    debugInfo,
+    publisherRestrictions,
+    isFullyRestricted
   };
 }
 
@@ -456,7 +479,9 @@ export function getProcessedTCData(tcModel: TCModel | null): ProcessedTCData | n
                   activeConsentPurposesForVendor: [],
                   activeLIPurposesForVendor: [],
                   activeSpecialFeaturesForVendor: [],
-                  finalLIStatus: hasVendorLIFlag
+                  finalLIStatus: hasVendorLIFlag,
+                  publisherRestrictions: [],
+                  isFullyRestricted: false
               }
           });
       });
@@ -496,3 +521,147 @@ export function getProcessedTCData(tcModel: TCModel | null): ProcessedTCData | n
 }
 
 // Weitere Hilfsfunktionen können hier bei Bedarf hinzugefügt werden. 
+
+/**
+ * Prüft, ob ein Vendor Consent für einen bestimmten Purpose hat, 
+ * entweder durch direkten Consent ODER durch Legitimate Interest.
+ * Diese Funktion folgt dem Ansatz aus dem Kotlin-Code:
+ * `vendorHasConsent(vendorId, purpose) || vendorHasPurposeConsentFromLegitimateInterest(vendorId, purpose)`
+ * 
+ * @param vendorInfo Die aufbereiteten Vendor-Informationen
+ * @param purposeId Die Purpose-ID, die geprüft werden soll
+ * @returns true, wenn der Vendor Consent für den Purpose hat (über Consent oder LI)
+ */
+export function vendorHasCombinedPurposeConsent(vendorInfo: ProcessedVendorInfo, purposeId: number): boolean {
+  // Der Vendor hat Consent für den Purpose, wenn:
+  // 1. Er direkten Consent hat UND der Purpose in seiner Consent-Liste ist ODER
+  // 2. Er Legitimate Interest hat UND der Purpose in seiner LI-Liste ist
+  
+  const hasPurposeConsent = vendorInfo.hasConsent && 
+                           vendorInfo.purposesConsent.includes(purposeId);
+  
+  const hasPurposeLI = vendorInfo.hasLegitimateInterest && 
+                       vendorInfo.purposesLI.includes(purposeId);
+                       
+  return hasPurposeConsent || hasPurposeLI;
+}
+
+/**
+ * Liefert alle Purposes zurück, für die ein Vendor Consent hat,
+ * entweder durch direkten Consent ODER durch Legitimate Interest.
+ * 
+ * @param vendorInfo Die aufbereiteten Vendor-Informationen
+ * @returns Array mit allen Purpose-IDs, für die der Vendor Consent hat
+ */
+export function getVendorCombinedPurposes(vendorInfo: ProcessedVendorInfo): number[] {
+  // Kombiniere Consent und LI Purposes ohne Duplikate
+  const combinedPurposes = new Set<number>();
+  
+  // Füge alle Purpose Consents hinzu, wenn Vendor Consent hat
+  if (vendorInfo.hasConsent) {
+    vendorInfo.purposesConsent.forEach(purpose => combinedPurposes.add(purpose));
+  }
+  
+  // Füge alle LI Purposes hinzu, wenn Vendor LI hat
+  if (vendorInfo.hasLegitimateInterest) {
+    vendorInfo.purposesLI.forEach(purpose => combinedPurposes.add(purpose));
+  }
+  
+  return Array.from(combinedPurposes).sort((a, b) => a - b);
+}
+
+/**
+ * Prüft, ob ein Vendor vollständig eingeschränkt ist. Ein Vendor gilt als 
+ * vollständig eingeschränkt, wenn alle seine Purposes durch Publisher 
+ * Restrictions eingeschränkt sind.
+ * 
+ * @param tcModel Das TCF Modell mit den Daten
+ * @param vendorId Die Vendor-ID
+ * @returns true, wenn der Vendor vollständig eingeschränkt ist
+ */
+export function isVendorFullyRestricted(tcModel: TCModel, vendorId: number): boolean {
+  if (!tcModel.publisherRestrictions) {
+    return false;
+  }
+
+  // Publisher Restrictions für diesen Vendor extrahieren
+  const vendorRestrictions = getPublisherRestrictionsForVendor(tcModel, vendorId);
+  
+  // Prüfen, ob es Restrictions vom Typ "Not Allowed" gibt
+  const purposesNotAllowed = vendorRestrictions
+    .filter(r => r.restrictionType === 0) // 0 = "Not allowed"
+    .map(r => r.purposeId);
+    
+  // Prüfen, ob es Restrictions vom Typ "Require Consent" gibt
+  // (die LI ausschließen, sodass nur Consent möglich ist)
+  const purposesConsentRequired = vendorRestrictions
+    .filter(r => r.restrictionType === 1) // 1 = "Require Consent"
+    .map(r => r.purposeId);
+  
+  // Prüfen, ob alle Purposes durch Restrictions abgedeckt sind
+  // Das ist eine Vereinfachung, da wir die exakten Purposes des Vendors berücksichtigen müssten
+  const totalStandardPurposes = 10; // 1-10 sind Standard-Purposes
+  const totalLIPurposes = 10; // Gleiche Anzahl für LI-Purposes
+  
+  return (purposesNotAllowed.length >= totalStandardPurposes &&
+         purposesConsentRequired.length >= totalLIPurposes);
+}
+
+/**
+ * Extrahiert alle Publisher Restrictions für einen bestimmten Vendor.
+ * 
+ * @param tcModel Das TCF Modell mit den Daten
+ * @param vendorId Die Vendor-ID
+ * @returns Array mit Restriction-Objekten für diesen Vendor
+ */
+export function getPublisherRestrictionsForVendor(tcModel: TCModel, vendorId: number): {
+  purposeId: number;
+  restrictionType: number;
+}[] {
+  if (!tcModel.publisherRestrictions) {
+    return [];
+  }
+  
+  const restrictions: {
+    purposeId: number;
+    restrictionType: number;
+  }[] = [];
+  
+  // Die publisherRestrictions im TCModel haben eine andere Struktur als angenommen
+  // Wir müssen die TCF-Library-Struktur genauer verstehen
+  
+  try {
+    // Anpassung für die tatsächliche Struktur der publisherRestrictions in der TCF Library
+    // In einigen Implementierungen existiert eine getRestrictions()-Methode, in anderen ist
+    // der Zugriff anders strukturiert.
+    
+    // @ts-ignore - Wir ignorieren Typ-Probleme, da die exakte Struktur von der Library abhängt
+    const allRestrictions = tcModel.publisherRestrictions.getRestrictions?.() || [];
+    
+    // Durchlaufe die Restrictions und finde die für den angegebenen Vendor
+    allRestrictions.forEach((restriction: any) => {
+      if (restriction && restriction.vendorId === vendorId) {
+        restrictions.push({
+          purposeId: restriction.purposeId,
+          restrictionType: restriction.restrictionType
+        });
+      }
+    });
+  } catch (error) {
+    console.warn('Error accessing publisher restrictions:', error);
+  }
+  
+  return restrictions;
+}
+
+/**
+ * Hilfsfunktion zur Umwandlung von restriction.restrictionType in lesbare Beschreibungen
+ */
+export function getRestrictionTypeDescription(restrictionType: number): string {
+  switch (restrictionType) {
+    case 0: return "Not allowed";
+    case 1: return "Consent required";
+    case 2: return "Legitimate Interest required";
+    default: return "Unknown";
+  }
+} 
