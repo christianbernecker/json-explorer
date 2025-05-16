@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 16 14:25:29 CEST 2025", "commit": "UI Verbesserungen am TCF Decoder: Policy URL in Detailansicht, Liste auf Englisch umgestellt, Suchfunktion für Vendor-Liste, Details-Button für Key Vendors, Debug-Information in Detailansicht, History-Funktion im Header"}
+{"deployment": "staging", "timestamp": "Fri May 16 14:50:41 CEST 2025", "commit": "UI-Harmonisierung: Einführung gemeinsamer Komponenten (Card, Input, Section, AppHeader) für einheitliches Design"}

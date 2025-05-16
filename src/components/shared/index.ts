@@ -9,4 +9,6 @@ export { default as JsonHistoryPanel } from './JsonHistoryPanel';
 export { default as Card } from './Card';
 export { default as Input } from './Input';
 export { default as AppHeader } from './AppHeader';
-export { default as Section } from './Section'; 
+export { default as Section } from './Section';
+export { default as TabSystem } from './TabSystem';
+export { default as HistoryPanel } from './HistoryPanel'; 

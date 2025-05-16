@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import TCFDecoder from './TCFDecoder';
 import { Helmet } from 'react-helmet-async';
-import { AppHeader, Card } from './shared';
+import { Section } from './shared';
+import ApplicationHeader from './ApplicationHeader';
+import { loadHistory } from '../services/historyService';
 
 // URL parameter for direct decoding
 interface TCFDecoderPageProps {
@@ -15,7 +17,10 @@ interface TCFDecoderPageProps {
 const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, toggleDarkMode }) => {
   // State für automatisches Dekodieren aus URL-Parameter
   const [autoDecodeString, setAutoDecodeString] = useState<string | null>(null);
-
+  // History state
+  const [showHistory, setShowHistory] = useState(false);
+  const tcfHistory = loadHistory('tcf');
+  
   // Auto-decode if string is passed in URL
   useEffect(() => {
     if (location?.search) {
@@ -38,22 +43,25 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         />
       </Helmet>
       
-      {/* Neuer AppHeader statt ApplicationHeader */}
-      <AppHeader 
+      <ApplicationHeader 
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
+        showHistory={showHistory}
+        setShowHistory={setShowHistory}
+        historyLength={tcfHistory.length}
         title="TCF Decoder"
         subtitle="Decode and analyze IAB TCF consent strings"
+        activeTab="tcf-decoder"
       />
       
       {/* Container mit responsiven Abständen */}
-      <div className="py-2 sm:py-4 md:py-6 px-2 sm:px-4 md:px-6 lg:px-8">
-        <Card isDarkMode={isDarkMode} className="p-0">
+      <div className="mt-4 sm:mt-6 md:mt-8 px-2 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
+        <Section isDarkMode={isDarkMode} className="mb-0" fullWidth={true}>
           <TCFDecoder 
             isDarkMode={isDarkMode} 
             initialTcString={autoDecodeString}
           />
-        </Card>
+        </Section>
       </div>
     </div>
   );
