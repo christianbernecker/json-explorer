@@ -282,11 +282,30 @@ function intMapToIdsArray(intMap: IntMap<boolean> | undefined): number[] {
   return keys.sort((a, b) => a - b); 
 }
 
-// vectorToIdsArray wird vorerst nicht mehr direkt in getVendorDetails benötigt
-// function vectorToIdsArray(vector: Vector | undefined): number[] {
-//   if (!vector) return [];
-//   return Array.from(vector).map(Number); 
-// }
+// Neue Funktion für Vector-Typen
+function vectorToIdsArray(vector: any): number[] {
+  if (!vector) return [];
+  const result: number[] = [];
+  
+  try {
+    // @ts-ignore - Ignoriere Typenprobleme, damit wir alle Operationen ausprobieren können
+    if (typeof vector.forEach === 'function') {
+      // @ts-ignore
+      vector.forEach((value: boolean, key: number) => {
+        if (value) result.push(key);
+      });
+    } else if (typeof vector[Symbol.iterator] === 'function') {
+      // Falls es ein iterierbares Objekt ist
+      for (const entry of vector) {
+        result.push(Number(entry));
+      }
+    }
+  } catch (error) {
+    console.error('Error converting vector to array:', error);
+  }
+  
+  return result.sort((a, b) => a - b);
+}
 
 interface ProcessedVendorInfo {
   id: number;
@@ -312,98 +331,169 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
   const vendorFromGVL = tcModel.gvl?.vendors?.[vendorId] || null;
   const vendorName = vendorFromGVL?.name || `Vendor ID ${vendorId}`;
   
-  // Generiere Listen der globalen Purpose IDs aus dem TCF-String
-  // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
-  const globalPurposesConsent = intMapToIdsArray(tcModel.purposeConsents);
-  // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
-  const globalPurposesLI = intMapToIdsArray(tcModel.purposeLegitimateInterests);
-  // @ts-ignore - Typprobleme behandeln wir explizit im intMapToIdsArray
-  const globalSpecialFeatures = intMapToIdsArray(tcModel.specialFeatureOptins);
-  
-  // Überprüfe den Consent-Status
-  const hasConsent = tcModel.vendorConsents.has(vendorId);
-  
-  // Überprüfe den LI-Status gemäß offizieller TCF-Spezifikation:
-  // 1. Der Vendor muss im vendorLegitimateInterests Bitfeld auf true gesetzt sein
-  // 2. UND mindestens ein Purpose muss im purposeLegitimateInterests Bitfeld freigegeben sein
-  const hasLegitimateInterestBit = tcModel.vendorLegitimateInterests.has(vendorId);
-  
-  // Publisher Restrictions für diesen Vendor
-  const publisherRestrictions = getPublisherRestrictionsForVendor(tcModel, vendorId);
-  const isFullyRestricted = isVendorFullyRestricted(tcModel, vendorId);
-  
-  // Vendor-spezifische Purposes aus der GVL
-  const vendorConsentPurposes: number[] = vendorFromGVL?.purposes || [];
-  const vendorLIPurposes: number[] = vendorFromGVL?.legIntPurposes || [];
-  const vendorSpecialFeatures: number[] = vendorFromGVL?.specialFeatures || [];
-  
-  // Standard-Debug-Info, nicht vendor-spezifisch
   console.log(`TCF-Decoder: Processing Vendor ${vendorId} (${vendorName})`);
   
-  // KORRIGIERTER ANSATZ:
-  // 1. Für Consent: Wenn der Vendor im vendorConsents Bitfeld ist, erhält er ALLE globalen Purpose Consents!
-  // Dies entspricht dem offiziellen IAB-Decoder - wenn ein Vendor Consent hat, sind alle globalen Purpose Consents gültig
-  let activeConsentPurposesForVendor: number[] = [];
-  
-  if (hasConsent) {
-    // Nach IAB-Spezifikation: Wenn ein Vendor im vendorConsents-Bitfeld steht, 
-    // gelten nur die tatsächlich im globalen Purpose Consents vorhandenen Purposes,
-    // nicht automatisch alle Purposes 1-10
-    // Daher: Behalte nur die tatsächlich vorhandenen globalen Purpose Consents
-    activeConsentPurposesForVendor = globalPurposesConsent;
-    
-    // Füge Debug-Info hinzu
-    console.log(`Vendor ${vendorId} (${vendorName}) hat Consent mit Purposes:`, activeConsentPurposesForVendor);
+  // DIREKTER TCF-DATEN-CHECK für diesen spezifischen Vendor 
+  console.log(`\nTCF-Decoder: DIREKTER CHECK für Vendor ${vendorId} (${vendorName})`);
+  console.log(`1. Consent-Bit im TCF-String: ${tcModel.vendorConsents.has(vendorId)}`);
+  console.log(`2. LI-Bit im TCF-String: ${tcModel.vendorLegitimateInterests.has(vendorId)}`);
+
+  // Zeige alle Purposes im TCF-String
+  console.log("3. Alle Purpose Consents im TCF-String (global):");
+  for (let i = 1; i <= 10; i++) {
+    console.log(`   Purpose ${i}: ${tcModel.purposeConsents.has(i)}`);
   }
-    
-  // 2. Für Legitimate Interest: Nach IAB-Spezifikation:
-  // - Der Vendor muss im vendorLegitimateInterests-Bitfeld sein UND
-  // - Es muss eine Überschneidung zwischen Vendor LI-Purposes und globalen LI-Purposes geben
+  
+  console.log("4. Alle LI Purposes im TCF-String (global):");
+  for (let i = 1; i <= 10; i++) {
+    console.log(`   Purpose ${i}: ${tcModel.purposeLegitimateInterests.has(i)}`);
+  }
+  
+  // Nun prüfen und ausgeben, welche Purposes dieser Vendor laut GVL unterstützt
+  if (vendorFromGVL) {
+    console.log(`5. Purposes, die dieser Vendor laut GVL unterstützt:`);
+    console.log(`   Consent Purposes: ${JSON.stringify(vendorFromGVL.purposes || [])}`);
+    console.log(`   LI Purposes: ${JSON.stringify(vendorFromGVL.legIntPurposes || [])}`);
+  }
+  
+  // EXTREME DEBUG: Alle relevanten Daten direkt ausgeben
+  console.log(`\n==== COMPLETE TCF DATA FOR VENDOR ${vendorId} (${vendorName}) ====`);
+  
+  // 1. Global Purpose Consents aus TCF String direkt extrahieren
+  const globalPurposeConsents: number[] = [];
+  if (tcModel.purposeConsents) {
+    console.log('- Global Purpose Consents:');
+    tcModel.purposeConsents.forEach((value, key) => {
+      if (value) {
+        globalPurposeConsents.push(key);
+        console.log(`  Purpose ${key}: TRUE (User has given consent)`);
+      } else {
+        console.log(`  Purpose ${key}: FALSE (No consent)`);
+      }
+    });
+  }
+  
+  // 2. Global Legitimate Interests aus TCF String direkt extrahieren
+  const globalPurposesLI: number[] = [];
+  if (tcModel.purposeLegitimateInterests) {
+    console.log('- Global Purpose Legitimate Interests:');
+    tcModel.purposeLegitimateInterests.forEach((value, key) => {
+      if (value) {
+        globalPurposesLI.push(key);
+        console.log(`  Purpose ${key}: TRUE (Legitimate Interest)`);
+      } else {
+        console.log(`  Purpose ${key}: FALSE (No Legitimate Interest)`);
+      }
+    });
+  }
+  
+  // 3. Vendor-spezifische Daten aus GVL
+  console.log('- Vendor GVL Data:');
+  if (vendorFromGVL) {
+    console.log(`  Consent Purposes from GVL: [${vendorFromGVL.purposes?.join(', ') || 'none'}]`);
+    console.log(`  LI Purposes from GVL: [${vendorFromGVL.legIntPurposes?.join(', ') || 'none'}]`);
+  } else {
+    console.log('  No GVL data available for this vendor');
+  }
+  
+  // 4. Vendor-Bits im TCF String
+  const hasConsent = tcModel.vendorConsents.has(vendorId);
+  const hasLegitimateInterestBit = tcModel.vendorLegitimateInterests.has(vendorId);
+  
+  console.log('- Vendor Bits in TCF String:');
+  console.log(`  vendorConsents[${vendorId}]: ${hasConsent ? 'TRUE' : 'FALSE'}`);
+  console.log(`  vendorLegitimateInterests[${vendorId}]: ${hasLegitimateInterestBit ? 'TRUE' : 'FALSE'}`);
+  
+  // 5. Publisher Restrictions
+  const publisherRestrictions = getPublisherRestrictionsForVendor(tcModel, vendorId);
+  console.log('- Publisher Restrictions:');
+  if (publisherRestrictions.length > 0) {
+    publisherRestrictions.forEach(r => {
+      console.log(`  Purpose ${r.purposeId}: ${getRestrictionTypeDescription(r.restrictionType)}`);
+    });
+  } else {
+    console.log('  No publisher restrictions');
+  }
+  
+  console.log('====================================\n');
+  
+  // VEREINFACHTE LOGIK: Direkte Extraktion der Purposes ohne komplexe Weiterverarbeitung
+  let activeConsentPurposesForVendor: number[] = [];
   let activeLIPurposesForVendor: number[] = [];
   
-  if (hasLegitimateInterestBit) {
-    // Prüfe Überschneidung zwischen Vendor LI-Purposes und globalen LI-Purposes
-    if (vendorLIPurposes.length > 0) {
-      // Vendor hat LI-Purposes in der GVL definiert, prüfe Überschneidung mit globalen LI-Purposes
-      activeLIPurposesForVendor = vendorLIPurposes.filter(purposeId => 
-        globalPurposesLI.includes(purposeId)
-      );
-    } else {
-      // Wenn keine Vendor-spezifischen LI-Purposes definiert sind, nehmen wir die Überschneidung
-      // zwischen Standard-LI-Purposes (1-10) und globalen LI-Purposes
-      activeLIPurposesForVendor = globalPurposesLI;
+  // Neue, direktere Implementierung für Consent Purposes
+  if (hasConsent && vendorFromGVL) {
+    const supportedPurposes = vendorFromGVL.purposes || [];
+    activeConsentPurposesForVendor = [];
+    
+    // Prüfe jeden Purpose einzeln
+    for (let i = 1; i <= 10; i++) {
+      const purposeHasGlobalConsent = tcModel.purposeConsents.has(i);
+      const vendorSupportsPurpose = supportedPurposes.includes(i);
+      
+      if (purposeHasGlobalConsent && vendorSupportsPurpose) {
+        activeConsentPurposesForVendor.push(i);
+      }
     }
     
-    // Füge Debug-Info hinzu
-    console.log(`Vendor ${vendorId} (${vendorName}) hat LI mit Purposes:`, activeLIPurposesForVendor);
+    console.log(`TCF-Decoder: Vendor ${vendorId} (${vendorName}) - Neue Purpose Berechnung:`);
+    console.log(`- Vendor hat grundsätzlich Consent: ${hasConsent}`);
+    console.log(`- Vendor unterstützt diese Consent Purposes: ${JSON.stringify(supportedPurposes)}`);
+    console.log(`- Tatsächlich aktive Consent Purposes: ${JSON.stringify(activeConsentPurposesForVendor)}`);
+  } else if (hasConsent) {
+    // Fallback, wenn keine GVL-Daten verfügbar sind
+    // Extrahiere die globalen Purpose Consents direkt
+    activeConsentPurposesForVendor = [];
+    for (let i = 1; i <= 10; i++) {
+      if (tcModel.purposeConsents.has(i)) {
+        activeConsentPurposesForVendor.push(i);
+      }
+    }
+    console.log(`Vendor ${vendorId} (${vendorName}) hat Consent mit Purposes: ${JSON.stringify(activeConsentPurposesForVendor)}`);
   }
   
-  // 3. Für Special Features: Hier prüfen wir die Überschneidung zwischen Vendor Special Features und 
-  // global aktivierten Special Features
+  // Neue, direktere Implementierung für Legitimate Interest Purposes
+  if (hasLegitimateInterestBit && vendorFromGVL) {
+    const supportedLIPurposes = vendorFromGVL.legIntPurposes || [];
+    activeLIPurposesForVendor = [];
+    
+    // Prüfe jeden Purpose einzeln
+    for (let i = 1; i <= 10; i++) {
+      const purposeHasGlobalLI = tcModel.purposeLegitimateInterests.has(i);
+      const vendorSupportsLIPurpose = supportedLIPurposes.includes(i);
+      
+      if (purposeHasGlobalLI && vendorSupportsLIPurpose) {
+        activeLIPurposesForVendor.push(i);
+      }
+    }
+    
+    console.log(`TCF-Decoder: Vendor ${vendorId} (${vendorName}) - Neue LI Purpose Berechnung:`);
+    console.log(`- Vendor hat grundsätzlich LI-Bit: ${hasLegitimateInterestBit}`);
+    console.log(`- Vendor unterstützt diese LI Purposes: ${JSON.stringify(supportedLIPurposes)}`);
+    console.log(`- Tatsächlich aktive LI Purposes: ${JSON.stringify(activeLIPurposesForVendor)}`);
+  } else if (hasLegitimateInterestBit) {
+    // Fallback, wenn keine GVL-Daten verfügbar sind
+    // Extrahiere die globalen LI Purposes direkt
+    activeLIPurposesForVendor = [];
+    for (let i = 1; i <= 10; i++) {
+      if (tcModel.purposeLegitimateInterests.has(i)) {
+        activeLIPurposesForVendor.push(i);
+      }
+    }
+    console.log(`Vendor ${vendorId} (${vendorName}) hat LI mit Purposes: ${JSON.stringify(activeLIPurposesForVendor)}`);
+  }
+  
+  // Special Features Verarbeitung
+  const globalSpecialFeatures = vectorToIdsArray(tcModel.specialFeatureOptins);
+  const vendorSpecialFeatures: number[] = vendorFromGVL?.specialFeatures || [];
   const activeSpecialFeaturesForVendor = vendorSpecialFeatures.filter(featureId => 
     globalSpecialFeatures.includes(featureId)
   );
   
-  // Ein Vendor hat nur dann LI, wenn beide Bedingungen erfüllt sind
+  // End-Status: Ein Vendor hat nur dann LI, wenn beide Bedingungen erfüllt sind
   const hasLegitimateInterest = hasLegitimateInterestBit && activeLIPurposesForVendor.length > 0;
+  const isFullyRestricted = isVendorFullyRestricted(tcModel, vendorId);
   
-  // Detaillierte Debug-Informationen
-  const debugInfo = {
-    hasVendorLIBit: hasLegitimateInterestBit,
-    vendorConsentPurposes,
-    vendorLIPurposes,
-    vendorSpecialFeatures,
-    globalPurposesConsent,
-    globalPurposesLI,
-    globalSpecialFeatures,
-    activeConsentPurposesForVendor,
-    activeLIPurposesForVendor,
-    activeSpecialFeaturesForVendor,
-    finalLIStatus: hasLegitimateInterest,
-    publisherRestrictions,
-    isFullyRestricted
-  };
-
   return {
     id: vendorId,
     name: vendorName,
@@ -414,7 +504,17 @@ function getVendorDetails(vendorId: number, tcModel: TCModel): ProcessedVendorIn
     purposesLI: activeLIPurposesForVendor,
     specialFeaturesOptIn: activeSpecialFeaturesForVendor,
     gvlVendor: vendorFromGVL,
-    debugInfo,
+    debugInfo: {
+      hasConsent,
+      hasLegitimateInterestBit,
+      hasLegitimateInterest,
+      globalPurposeConsents,
+      globalPurposesLI,
+      vendorConsentPurposes: vendorFromGVL?.purposes || [],
+      vendorLIPurposes: vendorFromGVL?.legIntPurposes || [],
+      activeConsentPurposesForVendor,
+      activeLIPurposesForVendor
+    },
     publisherRestrictions,
     isFullyRestricted
   };
@@ -530,8 +630,8 @@ export function getProcessedTCData(tcModel: TCModel | null): ProcessedTCData | n
     globalPurposeConsents: intMapToIdsArray(tcModel.purposeConsents),
     // @ts-ignore - Library type definition or TS inference seems problematic here
     globalPurposeLegitimateInterests: intMapToIdsArray(tcModel.purposeLegitimateInterests),
-    // @ts-ignore - Library type definition or TS inference seems problematic here
-    globalSpecialFeatureOptIns: intMapToIdsArray(tcModel.specialFeatureOptins),
+    // Angepasst für Vector-Typ
+    globalSpecialFeatureOptIns: vectorToIdsArray(tcModel.specialFeatureOptins),
 
     keyVendorResults,
     rawTCModel: tcModel, 

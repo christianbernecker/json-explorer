@@ -9,6 +9,7 @@ import {
   decodeTCStringStrict, 
   getProcessedTCData, 
   ProcessedTCData, 
+  getVendorCombinedPurposes,
   // ProcessedVendorInfo, // Wird ggf. später für Detailansichten benötigt
 } from '../services/tcfService';
 import { GVL } from '@iabtechlabtcf/core'; // GVL-Typ wird weiterhin benötigt für GVL-Explorer
@@ -36,7 +37,10 @@ interface VendorFilterOptions {
 // const EXAMPLE_TCF_STRING = "CQRemBOQRemBOAGACAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA";
 
 // String 2 (zweiter Versuch): Vendor 136, LI Purpose 2 und 3
-const EXAMPLE_TCF_STRING = "CPXxRfAPXxRfAAfZABENB-CoAP_AAAAAAAYgGbQFAAEEAALIAFAAEAAAqIAKAAIALAgIAAAAUA0YAAAAACBAAgABAARAIAAAAABAAAIAgAAAEBAAAAAMAIAAAAAAgAAAAIAAAAAAAIAAAAAAAAAAAAAggAAA.IGLtV_T9fb9_j-_59f-ts0eY1f9_7_v-0zjhfds-8N3v_X_L8X42M7vF36pq4KuR4ku1vBIQFtHOncTUmx6olVrTPsbk2cr7NKJ_Pkmnsbe0d-B39ek-wASeOBAPpO4IAAA";
+// const EXAMPLE_TCF_STRING = "CQRfAHIQRfAHIAGABAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA";
+
+// String 3 (Neuer Versuch): Vendor 136 hat Consent, Global nur Purpose 1 und 4, und LI Purpose 2 und 7 
+const EXAMPLE_TCF_STRING = "CPz2y3oPz2y3oAGABCENAuCoAP_AAH_AAAiQI3Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1LBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgAkDSFaoCEAwkOFEAIAAGIAAIAAKABAIgMMAAAEFB0JACAQFgIYAARIAMEgBIIACQAIgEAAIAEAiABAACABAAKABEAAIABAAgAAAACEAiABEABAAAAQAAEABIgAAAIOrCDNACAAQsCXCIQAAgAEQAAAAA.YAAAAAAAAAAAA";
 
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   // State für den Decoder
@@ -460,88 +464,67 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             {/* Key Vendors Section - ANPASSUNG DER DATENZUGRIFFE HIER */}
             <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
+                
                 <div className="grid grid-cols-1 gap-4">
-                  {processedTcfData.keyVendorResults?.map((vendorEntry) => { // vendorEntry ist ProcessedVendorInfo
-                    const id = vendorEntry.id;
-                    const hasVendorConsent = vendorEntry.hasConsent;
-                    const hasVendorLI = vendorEntry.hasLegitimateInterest;
-                    const vendorName = vendorEntry.name;
-                    // Diese sind bereits die gefilterten, erlaubten Purposes/Features
-                    const purposesWithConsent = vendorEntry.purposesConsent; 
-                    const purposesWithLI = vendorEntry.purposesLI;
-                    const specialFeaturesAllowed = vendorEntry.specialFeaturesOptIn;
-
-                    return (
-                      <div key={id} className={`p-4 border rounded-lg ${borderColor} ${bgColor}`}>
+                  {processedTcfData.keyVendorResults.length > 0 ? (
+                    processedTcfData.keyVendorResults.map((vendor) => (
+                      <div key={vendor.id} className={`p-4 border rounded-lg border-gray-300 dark:border-gray-700 ${bgColor}`}>
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold">{vendorName}</h4>
+                          <h4 className="font-semibold">{vendor.name}</h4>
                           <div className="flex space-x-2">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${hasVendorConsent ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
-                              Consent: {hasVendorConsent ? 'Yes' : 'No'}
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${vendor.hasConsent ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
+                              Consent: {vendor.hasConsent ? 'Yes' : 'No'}
                             </span>
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${hasVendorLI ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
-                              LI: {hasVendorLI ? 'Yes' : 'No'}
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${vendor.hasLegitimateInterest ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
+                              LI: {vendor.hasLegitimateInterest ? 'Yes' : 'No'}
                             </span>
                           </div>
                         </div>
-
                         <div className="text-sm mt-2">
-                          {purposesWithConsent.length > 0 && (
-                            <div className="mb-1">
-                              <strong>Purposes mit Consent:</strong> 
-                              {purposesWithConsent.map((p, index) => (
-                                <span key={`pwc-${p}`}>Purpose {p}{index < purposesWithConsent.length - 1 ? ', ' : ''}</span>
-                              ))}
+                          <div className="mb-1">
+                            <strong>Purposes mit Consent:</strong>
+                            {vendor.purposesConsent.length > 0 ? (
+                              <span> {vendor.purposesConsent.map(p => `Purpose ${p}`).join(', ')}</span>
+                            ) : (
+                              <span className="ml-1 text-gray-500 dark:text-gray-400">Keine</span>
+                            )}
+                          </div>
+                          <div className="mb-1">
+                            <strong>Purposes mit Leg. Interest:</strong>
+                            {vendor.purposesLI.length > 0 ? (
+                              <span> {vendor.purposesLI.map(p => `Purpose ${p}`).join(', ')}</span>
+                            ) : (
+                              <span className="ml-1 text-gray-500 dark:text-gray-400">Keine</span>
+                            )}
+                          </div>
+                          <div className="mb-1">
+                            <strong>Special Features mit Opt-In:</strong>
+                            {vendor.specialFeaturesOptIn.length > 0 ? (
+                              <span> {vendor.specialFeaturesOptIn.map(f => `Feature ${f}`).join(', ')}</span>
+                            ) : (
+                              <span className="ml-1 text-gray-500 dark:text-gray-400">Keine</span>
+                            )}
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                            <strong className="text-green-600 dark:text-green-400">
+                              Effektive Purposes (Consent ODER LI):
+                            </strong>
+                            <div>
+                              {getVendorCombinedPurposes(vendor).length > 0 ? (
+                                <span className="font-medium">{getVendorCombinedPurposes(vendor).map(p => `Purpose ${p}`).join(', ')}</span>
+                              ) : (
+                                <span className="text-gray-500 dark:text-gray-400">Keine</span>
+                              )}
                             </div>
-                          )}
-                          {purposesWithLI.length > 0 && (
-                            <div className="mb-1">
-                              <strong>Purposes mit Leg. Interest:</strong> 
-                              {purposesWithLI.map((p, index) => (
-                                <span key={`pli-${p}`}>Purpose {p}{index < purposesWithLI.length - 1 ? ', ' : ''}</span>
-                              ))}
-                            </div>
-                          )}
-                           {specialFeaturesAllowed.length > 0 && (
-                            <div className="mb-1">
-                              <strong>Special Features mit Opt-In:</strong> 
-                              {specialFeaturesAllowed.map((f, index) => (
-                                <span key={`sf-${f}`}>Special Feature {f}{index < specialFeaturesAllowed.length - 1 ? ', ' : ''}</span>
-                              ))}
-                            </div>
-                          )}
-                          {/* Neue Sektion: Kombinierte Purposes (Consent ODER LI) */}
-                          {(purposesWithConsent.length > 0 || purposesWithLI.length > 0) && (
-                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                              <strong className="text-green-600 dark:text-green-400">
-                                Effektive Purposes (Consent ODER LI):
-                              </strong>
-                              <div>
-                                {Array.from(new Set([...purposesWithConsent, ...purposesWithLI]))
-                                  .sort((a, b) => a - b)
-                                  .map((p, index, arr) => (
-                                    <span key={`combined-${p}`} className="font-medium">
-                                      Purpose {p}{index < arr.length - 1 ? ', ' : ''}
-                                    </span>
-                                  ))
-                                }
-                              </div>
-                            </div>
-                          )}
-                           {(purposesWithConsent.length === 0 && purposesWithLI.length === 0 && specialFeaturesAllowed.length === 0) && (
-                               <p className="text-xs text-gray-500 dark:text-gray-400">Keine erlaubten Zwecke oder Spezialfeatures für diesen Vendor basierend auf den globalen Signalen.</p>
-                           )}
+                          </div>
                         </div>
-                        <Button 
-                            onClick={() => handleViewVendorDetails(vendorEntry)} 
-                            isDarkMode={isDarkMode}
-                            size="sm" 
-                            className="mt-2 text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
-                                View More Details
-                            </Button>
                       </div>
-                    );
-                  })}
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400 border rounded-lg border-gray-300 dark:border-gray-700">
+                      Keine Key Vendor-Informationen verfügbar
+                    </div>
+                  )}
                 </div>
             </div>
 
@@ -704,7 +687,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                           const acceptedLIPurposes = vendorLIPurposes.filter(p => 
                             processedTcfData.rawTCModel?.purposeLegitimateInterests?.has(p)
                           );
-                          // TESTVERSION: Nur Check ob der Vendor aktive LI-Purposes hat
+                          // Nur Check ob der Vendor aktive LI-Purposes hat
                           const hasLI = acceptedLIPurposes.length > 0;
                           
                           return (
@@ -747,7 +730,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                                       purposesConsent: activePurposesConsent,
                                       purposesLI: activePurposesLI,
                                       specialFeaturesOptIn: 
-                                        vendorSpecialFeatures.filter(f => processedTcfData.rawTCModel?.specialFeatureOptins?.has(f))
+                                        vendorSpecialFeatures.filter(f => processedTcfData.rawTCModel?.specialFeatureOptins?.has(f)),
+                                      debugInfo: {}
                                     };
                                     
                                     handleViewVendorDetails(vendorInfo);
