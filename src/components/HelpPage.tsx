@@ -1,5 +1,6 @@
 import React from 'react';
-import { Section, AppHeader } from './shared';
+import { Section } from './shared';
+import ApplicationHeader from './ApplicationHeader';
 import { Helmet } from 'react-helmet-async';
 
 interface HelpPageProps {
@@ -18,11 +19,12 @@ const HelpPage: React.FC<HelpPageProps> = ({ isDarkMode, toggleDarkMode }) => {
         />
       </Helmet>
       
-      <AppHeader 
+      <ApplicationHeader 
         title="Help & Documentation" 
         subtitle="Learn how to use AdTech Toolbox effectively"
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
+        activeTab="guide"
       />
       
       <div className="py-6 px-4 md:px-8 space-y-6">

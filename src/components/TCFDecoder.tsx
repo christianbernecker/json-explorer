@@ -13,6 +13,7 @@ import {
   // ProcessedVendorInfo, // Wird ggf. später für Detailansichten benötigt
 } from '../services/tcfService';
 import { GVL } from '@iabtechlabtcf/core'; // GVL-Typ wird weiterhin benötigt für GVL-Explorer
+import { addHistoryItem } from '../services/historyService';
 
 import Button from './shared/Button';
 
@@ -70,8 +71,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
   const [filteredVendors, setFilteredVendors] = useState<any[]>([]); 
   
   // State for History feature
-  const [tcfHistory, setTcfHistory] = useState<{id: number; string: string; timestamp: number}[]>([]);
-  const [nextHistoryId, setNextHistoryId] = useState(1);
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   
   // Neuer State für Vendor-Liste Suche
@@ -146,25 +145,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
     }
   }, [gvlExplorerInstance, vendorSearchTerm]);
   
-  // Lade die History aus dem lokalen Speicher beim Komponentenstart
-  useEffect(() => {
-    try {
-      const savedHistory = localStorage.getItem('tcfDecoder_history');
-      if (savedHistory) {
-        const parsedHistory = JSON.parse(savedHistory);
-        setTcfHistory(parsedHistory);
-        
-        // Set nextHistoryId to be higher than any existing id
-        const maxId = parsedHistory.reduce(
-          (max: number, item: {id: number}) => Math.max(max, item.id), 0
-        );
-        setNextHistoryId(maxId + 1);
-      }
-    } catch (error) {
-      console.error('Failed to load history from localStorage:', error);
-    }
-  }, []);
-  
   // Filter function for vendors (muss mit GVL-Instanz arbeiten)
   function updateFilteredVendors(gvl: GVL, searchTerm: string) {
     if (!gvl || !gvl.vendors) {
@@ -207,31 +187,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
   const addToHistory = (str: string) => {
     if (!str.trim()) return;
     
-    // Check if already in history
-    const exists = tcfHistory.some(item => item.string === str);
-    if (exists) return;
-    
-    const newHistoryItem = {
-      id: nextHistoryId,
-      string: str,
-      timestamp: Date.now()
-    };
-    
-    const newHistory = [newHistoryItem, ...tcfHistory].slice(0, 10); // Keep only last 10 items
-    setTcfHistory(newHistory);
-    setNextHistoryId(prev => prev + 1);
-    
-    // Save to localStorage
-    try {
-      localStorage.setItem('tcfDecoder_history', JSON.stringify(newHistory));
-    } catch (error) {
-      console.error('Failed to save history to localStorage:', error);
-    }
-  };
-
-  // Load string from history
-  const loadFromHistory = (str: string) => {
-    setTcfString(str);
+    // Verwende den historyService statt lokaler History
+    addHistoryItem('tcf', str);
   };
 
   // Process TCF string using the new service
@@ -728,89 +685,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
     );
   };
 
-  // TCF History Panel Komponente innerhalb der Datei definieren
-  const TCFHistoryPanel: React.FC<{
-    isDarkMode: boolean,
-    history: {id: number; string: string; timestamp: number}[],
-    onRestore: (str: string) => void,
-    onClose: () => void
-  }> = ({ isDarkMode, history, onRestore, onClose }) => {
-    return (
-      <div className={`mb-6 p-4 border rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-            Recent TCF Strings
-          </h3>
-          <button 
-            onClick={onClose}
-            className={`p-1 rounded-md hover:bg-gray-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        
-        <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
-          {history.length > 0 ? (
-            history.map((item, index) => (
-              <div 
-                key={item.id} 
-                className={`p-3 mb-2 rounded-lg cursor-pointer hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-between ${
-                  isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                }`}
-                onClick={() => onRestore(item.string)}
-              >
-                <div>
-                  <div className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                    TCF String
-                    <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                      isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {item.string.length > 20 ? `${item.string.substring(0, 20)}...` : item.string}
-                    </span>
-                  </div>
-                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {new Date(item.timestamp).toLocaleString()}
-                  </div>
-                </div>
-                <div className={`text-xs px-2 py-1 rounded-lg ${
-                  isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                }`}>
-                  #{index + 1}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className={`p-3 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-              No history yet. Decode a TCF String to get started.
-            </div>
-          )}
-        </div>
-        
-        {history.length > 0 && (
-          <div className="mt-3 text-right">
-            <button 
-              className={`text-xs px-2 py-1 rounded ${
-                isDarkMode 
-                  ? 'bg-red-700 hover:bg-red-600 text-white' 
-                  : 'bg-red-200 hover:bg-red-300 text-red-700'
-              }`}
-              onClick={() => {
-                if (window.confirm('Are you sure you want to clear all history?')) {
-                  setTcfHistory([]);
-                  localStorage.removeItem('tcfDecoder_history');
-                }
-              }}
-            >
-              Clear All History
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const renderDecoder = () => (
      <div className={`p-6 ${bgColor} ${textColor}`}>
         {/* Input Area */}
@@ -838,7 +712,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
           )}
         </div>
         
-        {/* History Section */}
+        {/* Entferne die History Section und benutze stattdessen die vom ApplicationHeader */}
+        {/* 
         {tcfHistory.length > 0 && (
           <div className="mb-4">
             <h4 className="text-sm font-medium mb-2">History</h4>
@@ -870,6 +745,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
             </div>
           </div>
         )}
+        */}
 
         {decodeError && (
           <div className={`mb-4 p-3 border border-red-400 rounded ${errorColor} bg-red-100 dark:bg-red-900`}>
@@ -1319,7 +1195,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
                 : 'bg-blue-500 hover:bg-blue-600 text-white'
             }`}
           >
-            History {tcfHistory.length > 0 && `(${tcfHistory.length})`}
+            History
           </button>
           <span className={`text-sm font-normal px-2 py-1 rounded ${highlightColor}`}>
             {processedTcfData?.version ? `Detected: TCF v${processedTcfData.version}` : 'Supports TCF v2.0 & v2.2'}
@@ -1327,8 +1203,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
         </div>
       </h1>
       
-      {/* History Panel */}
-      {showHistoryPanel && (
+      {/* History Panel wird nicht mehr hier gerendert, sondern in TCFDecoderPage */}
+      {/* {showHistoryPanel && (
         <TCFHistoryPanel 
           isDarkMode={isDarkMode}
           history={tcfHistory}
@@ -1338,7 +1214,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
           }}
           onClose={() => setShowHistoryPanel(false)}
         />
-      )}
+      )} */}
       
       {/* Tab navigation */}
       <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">

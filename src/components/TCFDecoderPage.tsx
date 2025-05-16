@@ -3,7 +3,6 @@ import TCFDecoder from './TCFDecoder';
 import { Helmet } from 'react-helmet-async';
 import { Section } from './shared';
 import ApplicationHeader from './ApplicationHeader';
-import { loadHistory } from '../services/historyService';
 
 // URL parameter for direct decoding
 interface TCFDecoderPageProps {
@@ -17,10 +16,10 @@ interface TCFDecoderPageProps {
 const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, toggleDarkMode }) => {
   // State für automatisches Dekodieren aus URL-Parameter
   const [autoDecodeString, setAutoDecodeString] = useState<string | null>(null);
-  // State für die History-Anzeige
+  // History-State für TCF Strings
+  const [tcfHistory, setTcfHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const tcfHistory = loadHistory('tcf');
-  
+
   // Auto-decode if string is passed in URL
   useEffect(() => {
     if (location?.search) {
@@ -32,6 +31,18 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
       }
     }
   }, [location]);
+
+  // Lade History aus LocalStorage
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem('tcf_decoderHistory');
+      if (savedHistory) {
+        setTcfHistory(JSON.parse(savedHistory));
+      }
+    } catch (error) {
+      console.error('Failed to load TCF history:', error);
+    }
+  }, []);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -54,7 +65,6 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
         activeTab="tcf-decoder"
       />
       
-      {/* Container mit responsiven Abständen angepasst an JsonToolsApp */}
       <div className="mt-4 sm:mt-6 md:mt-8 px-2 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
         <Section 
           isDarkMode={isDarkMode} 
