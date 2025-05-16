@@ -71,6 +71,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
   // State for History feature
   const [tcfHistory, setTcfHistory] = useState<{id: number; string: string; timestamp: number}[]>([]);
   const [nextHistoryId, setNextHistoryId] = useState(1);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  
+  // Neuer State für Vendor-Liste Suche
+  const [vendorListSearchTerm, setVendorListSearchTerm] = useState<string>('');
   
   // State for advanced functions
   const [selectedVendor, setSelectedVendor] = useState<any | null>(null); // Muss ggf. an ProcessedVendorInfo angepasst werden
@@ -141,6 +145,25 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     }
   }, [gvlExplorerInstance, vendorSearchTerm]);
   
+  // Lade die History aus dem lokalen Speicher beim Komponentenstart
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem('tcfDecoder_history');
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        setTcfHistory(parsedHistory);
+        
+        // Set nextHistoryId to be higher than any existing id
+        const maxId = parsedHistory.reduce(
+          (max: number, item: {id: number}) => Math.max(max, item.id), 0
+        );
+        setNextHistoryId(maxId + 1);
+      }
+    } catch (error) {
+      console.error('Failed to load history from localStorage:', error);
+    }
+  }, []);
+  
   // Filter function for vendors (muss mit GVL-Instanz arbeiten)
   function updateFilteredVendors(gvl: GVL, searchTerm: string) {
     if (!gvl || !gvl.vendors) {
@@ -193,8 +216,16 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
       timestamp: Date.now()
     };
     
-    setTcfHistory(prev => [newHistoryItem, ...prev].slice(0, 10)); // Keep only last 10 items
+    const newHistory = [newHistoryItem, ...tcfHistory].slice(0, 10); // Keep only last 10 items
+    setTcfHistory(newHistory);
     setNextHistoryId(prev => prev + 1);
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem('tcfDecoder_history', JSON.stringify(newHistory));
+    } catch (error) {
+      console.error('Failed to save history to localStorage:', error);
+    }
   };
 
   // Load string from history
@@ -696,6 +727,89 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     );
   };
 
+  // TCF History Panel Komponente innerhalb der Datei definieren
+  const TCFHistoryPanel: React.FC<{
+    isDarkMode: boolean,
+    history: {id: number; string: string; timestamp: number}[],
+    onRestore: (str: string) => void,
+    onClose: () => void
+  }> = ({ isDarkMode, history, onRestore, onClose }) => {
+    return (
+      <div className={`mb-6 p-4 border rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+            Recent TCF Strings
+          </h3>
+          <button 
+            onClick={onClose}
+            className={`p-1 rounded-md hover:bg-gray-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
+          {history.length > 0 ? (
+            history.map((item, index) => (
+              <div 
+                key={item.id} 
+                className={`p-3 mb-2 rounded-lg cursor-pointer hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-between ${
+                  isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                }`}
+                onClick={() => onRestore(item.string)}
+              >
+                <div>
+                  <div className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                    TCF String
+                    <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                      isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {item.string.length > 20 ? `${item.string.substring(0, 20)}...` : item.string}
+                    </span>
+                  </div>
+                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {new Date(item.timestamp).toLocaleString()}
+                  </div>
+                </div>
+                <div className={`text-xs px-2 py-1 rounded-lg ${
+                  isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                }`}>
+                  #{index + 1}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className={`p-3 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+              No history yet. Decode a TCF String to get started.
+            </div>
+          )}
+        </div>
+        
+        {history.length > 0 && (
+          <div className="mt-3 text-right">
+            <button 
+              className={`text-xs px-2 py-1 rounded ${
+                isDarkMode 
+                  ? 'bg-red-700 hover:bg-red-600 text-white' 
+                  : 'bg-red-200 hover:bg-red-300 text-red-700'
+              }`}
+              onClick={() => {
+                if (window.confirm('Are you sure you want to clear all history?')) {
+                  setTcfHistory([]);
+                  localStorage.removeItem('tcfDecoder_history');
+                }
+              }}
+            >
+              Clear All History
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderDecoder = () => (
      <div className={`p-6 ${bgColor} ${textColor}`}>
         {/* Input Area */}
@@ -874,62 +988,16 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                             </div>
                           </div>
                           
-                          {/* Neuer Debug-Button und Debug-Anzeige */}
+                          {/* Details Button für Haupt-Vendoren */}
                           <div className="mt-3">
                             <Button 
-                              onClick={() => {
-                                // Toggle Debug-Anzeige durch Hinzufügen einer Klasse
-                                const debugElement = document.getElementById(`debug-info-${vendor.id}`);
-                                if (debugElement) {
-                                  debugElement.classList.toggle('hidden');
-                                }
-                              }}
+                              onClick={() => handleViewVendorDetails(vendor)}
                               isDarkMode={isDarkMode}
-                              variant="secondary"
+                              variant="primary"
                               size="sm"
                             >
-                              Show Debug Information
+                              View Details
                             </Button>
-                          </div>
-                          
-                          <div id={`debug-info-${vendor.id}`} className="hidden mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-md text-xs overflow-auto max-h-96">
-                            <h5 className="font-bold mb-2">TCF Debug Information for Vendor {vendor.id}</h5>
-                            
-                            <div className="mb-2">
-                              <strong>Vendor Consent-Bit in TCF-String:</strong> {vendor.debugInfo?.hasConsent ? 'Yes' : 'No'}
-                            </div>
-                            
-                            <div className="mb-2">
-                              <strong>Vendor LI-Bit in TCF-String:</strong> {vendor.debugInfo?.hasLegitimateInterestBit ? 'Yes' : 'No'}
-                            </div>
-                            
-                            <div className="mb-2">
-                              <strong>Global Purpose Consents:</strong> {vendor.debugInfo?.globalPurposeConsents?.join(', ') || 'None'}
-                            </div>
-                            
-                            <div className="mb-2">
-                              <strong>Global LI Purposes:</strong> {vendor.debugInfo?.globalPurposesLI?.join(', ') || 'None'}
-                            </div>
-                            
-                            <div className="mb-2">
-                              <strong>Vendor supports these Purposes (GVL):</strong> {vendor.debugInfo?.vendorConsentPurposes?.join(', ') || 'None'}
-                            </div>
-                            
-                            <div className="mb-2">
-                              <strong>Vendor supports these LI Purposes (GVL):</strong> {vendor.debugInfo?.vendorLIPurposes?.join(', ') || 'None'}
-                            </div>
-                            
-                            <div className="mb-2">
-                              <strong>Active Consent Purposes (Intersection):</strong> {vendor.debugInfo?.activeConsentPurposesForVendor?.join(', ') || 'None'}
-                            </div>
-                            
-                            <div className="mb-2">
-                              <strong>Active LI Purposes (Intersection):</strong> {vendor.debugInfo?.activeLIPurposesForVendor?.join(', ') || 'None'}
-                            </div>
-                            
-                            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                              <pre className="whitespace-pre-wrap">{JSON.stringify(vendor.debugInfo, null, 2)}</pre>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -1077,7 +1145,19 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             {/* Vollständige Vendor-Liste mit Consent-Status */}
             {processedTcfData.rawTCModel?.gvl?.vendors && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">Alle Vendoren mit Consent-Status</h3>
+                <h3 className="text-lg font-semibold mb-3">All Vendors with Consent Status</h3>
+                
+                {/* Suchfeld für die Vendor-Liste */}
+                <div className="mb-4">
+                  <input 
+                    type="text"
+                    placeholder="Search for vendor name or ID..."
+                    className={`w-full px-3 py-2 rounded ${inputBgColor} ${inputBorderColor} border`}
+                    value={vendorListSearchTerm}
+                    onChange={(e) => setVendorListSearchTerm(e.target.value)}
+                  />
+                </div>
+                
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className={tableHeaderBg}>
@@ -1092,6 +1172,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                     <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${bgColor}`}>
                       {Object.values(processedTcfData.rawTCModel.gvl.vendors)
                         .sort((a, b) => a.id - b.id)
+                        // Filtere basierend auf der Suche
+                        .filter(vendor => {
+                          if (!vendorListSearchTerm) return true;
+                          const term = vendorListSearchTerm.toLowerCase();
+                          return vendor.id.toString().includes(term) || 
+                                 vendor.name.toLowerCase().includes(term);
+                        })
                         .map((vendor) => {
                           const vendorId = vendor.id;
                           const hasConsent = processedTcfData.rawTCModel?.vendorConsents?.has(vendorId) || false;
@@ -1129,12 +1216,12 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
                               <td className="px-4 py-2">{vendor.name}</td>
                               <td className="px-4 py-2">
                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${hasConsent ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
-                                  {hasConsent ? 'Ja' : 'Nein'}
+                                  {hasConsent ? 'Yes' : 'No'}
                                 </span>
                               </td>
                               <td className="px-4 py-2">
                                 <span className={`px-2 py-0.5 rounded text-xs font-medium ${hasLegitimateInterest ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}`}>
-                                  {hasLegitimateInterest ? 'Ja' : 'Nein'}
+                                  {hasLegitimateInterest ? 'Yes' : 'No'}
                                 </span>
                               </td>
                               <td className="px-4 py-2">
@@ -1222,10 +1309,35 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
     <div className={`${bgColor} ${textColor} p-6 rounded-lg shadow-lg w-full max-w-full mx-auto`}>
       <h1 className="text-2xl font-bold mb-4 flex items-center justify-between">
         <span>TCF String Decoder</span>
-        <span className={`text-sm font-normal px-2 py-1 rounded ${highlightColor}`}>
-          {processedTcfData?.version ? `Detected: TCF v${processedTcfData.version}` : 'Supports TCF v2.0 & v2.2'}
-        </span>
+        <div className="flex items-center">
+          <button
+            onClick={() => setShowHistoryPanel(!showHistoryPanel)}
+            className={`text-sm mr-3 px-3 py-1 rounded ${
+              isDarkMode 
+                ? 'bg-blue-700 hover:bg-blue-600 text-white' 
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+          >
+            History {tcfHistory.length > 0 && `(${tcfHistory.length})`}
+          </button>
+          <span className={`text-sm font-normal px-2 py-1 rounded ${highlightColor}`}>
+            {processedTcfData?.version ? `Detected: TCF v${processedTcfData.version}` : 'Supports TCF v2.0 & v2.2'}
+          </span>
+        </div>
       </h1>
+      
+      {/* History Panel */}
+      {showHistoryPanel && (
+        <TCFHistoryPanel 
+          isDarkMode={isDarkMode}
+          history={tcfHistory}
+          onRestore={(str) => {
+            setTcfString(str);
+            setShowHistoryPanel(false);
+          }}
+          onClose={() => setShowHistoryPanel(false)}
+        />
+      )}
       
       {/* Tab navigation */}
       <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
@@ -1284,6 +1396,18 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             <h2 className="text-xl font-semibold ml-3">{selectedVendor.name} (ID: {selectedVendor.id})</h2>
           </div>
           
+          {/* Policy URL gleich am Anfang anzeigen */}
+          {selectedVendor.policyUrl && (
+            <div className="mb-4">
+              <p className="text-sm">
+                <strong>Policy URL:</strong>{" "}
+                <a href={selectedVendor.policyUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                  {selectedVendor.policyUrl}
+                </a>
+              </p>
+            </div>
+          )}
+          
           {/* Vendor Consent and LI Status Badges */}
           <div className="flex flex-wrap gap-3 mb-4">
             <span className={`px-3 py-1 rounded-full text-sm ${selectedVendor.hasConsent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
@@ -1301,6 +1425,68 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode }) => {
             )}
           </div>
           
+          {/* Debug-Information Button zur Detailansicht hinzufügen */}
+          <div className="mt-6">
+            <Button 
+              onClick={() => {
+                // Toggle Debug-Anzeige durch Hinzufügen einer Klasse
+                const debugElement = document.getElementById(`detail-debug-info-${selectedVendor.id}`);
+                if (debugElement) {
+                  debugElement.classList.toggle('hidden');
+                }
+              }}
+              isDarkMode={isDarkMode}
+              variant="secondary"
+              size="sm"
+            >
+              Show Debug Information
+            </Button>
+            
+            <div id={`detail-debug-info-${selectedVendor.id}`} className="hidden mt-3 p-3 bg-gray-100 dark:bg-gray-800 rounded-md text-xs overflow-auto max-h-96">
+              <h5 className="font-bold mb-2">TCF Debug Information for Vendor {selectedVendor.id}</h5>
+              
+              {selectedVendor.debugInfo && (
+                <>
+                  <div className="mb-2">
+                    <strong>Vendor Consent-Bit in TCF-String:</strong> {selectedVendor.debugInfo?.hasConsent ? 'Yes' : 'No'}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <strong>Vendor LI-Bit in TCF-String:</strong> {selectedVendor.debugInfo?.hasLegitimateInterestBit ? 'Yes' : 'No'}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <strong>Global Purpose Consents:</strong> {selectedVendor.debugInfo?.globalPurposeConsents?.join(', ') || 'None'}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <strong>Global LI Purposes:</strong> {selectedVendor.debugInfo?.globalPurposesLI?.join(', ') || 'None'}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <strong>Vendor supports these Purposes (GVL):</strong> {selectedVendor.debugInfo?.vendorConsentPurposes?.join(', ') || 'None'}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <strong>Vendor supports these LI Purposes (GVL):</strong> {selectedVendor.debugInfo?.vendorLIPurposes?.join(', ') || 'None'}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <strong>Active Consent Purposes (Intersection):</strong> {selectedVendor.debugInfo?.activeConsentPurposesForVendor?.join(', ') || 'None'}
+                  </div>
+                  
+                  <div className="mb-2">
+                    <strong>Active LI Purposes (Intersection):</strong> {selectedVendor.debugInfo?.activeLIPurposesForVendor?.join(', ') || 'None'}
+                  </div>
+                  
+                  <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <pre className="whitespace-pre-wrap">{JSON.stringify(selectedVendor.debugInfo, null, 2)}</pre>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
           {/* GVL Information (if available) */}
           {processedTcfData?.rawTCModel?.gvl?.vendors && processedTcfData.rawTCModel.gvl.vendors[selectedVendor.id] && (
             <div className="mb-6 p-4 border rounded-lg border-gray-300 dark:border-gray-700">
