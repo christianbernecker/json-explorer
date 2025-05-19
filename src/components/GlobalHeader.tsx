@@ -6,18 +6,12 @@ import InfoPanel from './InfoPanel';
 interface GlobalHeaderProps {
   isDarkMode: boolean;
   toggleDarkMode?: () => void;
-  showHistory?: boolean;
-  setShowHistory?: (value: boolean | ((prev: boolean) => boolean)) => void;
-  historyLength?: number;
   activeTab?: string;
 }
 
 const GlobalHeader: React.FC<GlobalHeaderProps> = ({ 
   isDarkMode, 
   toggleDarkMode, 
-  showHistory, 
-  setShowHistory,
-  historyLength = 0,
   activeTab 
 }) => {
   const location = useLocation();
@@ -127,24 +121,6 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                       </svg>
-                    )}
-                  </button>
-                )}
-                
-                {setShowHistory && (
-                  <button 
-                    onClick={() => setShowHistory(prev => !prev)}
-                    className={`p-2 rounded-full ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors ${showHistory ? 'ring-2 ring-blue-500' : ''}`}
-                    aria-label="View History"
-                    title="View History"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {historyLength > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                        {historyLength}
-                      </span>
                     )}
                   </button>
                 )}

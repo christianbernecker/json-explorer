@@ -11,7 +11,7 @@ import { HistoryItem } from './shared';
 // JSON Diff Inspector Component
 const JsonDiffInspector = React.memo(({ 
   isDarkMode, 
-  history,
+  historyItems,
   setHistory,
   showHistory,
   setShowHistory
@@ -507,8 +507,8 @@ const JsonDiffInspector = React.memo(({
           </div>
           
           <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
-            {history.length > 0 ? (
-              history.map((item, index) => (
+            {historyItems.length > 0 ? (
+              historyItems.map((item, index) => (
                 <HistoryItem 
                   key={item.timestamp} 
                   item={item} 

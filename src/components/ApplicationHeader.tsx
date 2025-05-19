@@ -5,9 +5,6 @@ import InfoPanel from './InfoPanel';
 interface ApplicationHeaderProps {
   isDarkMode: boolean;
   toggleDarkMode?: () => void;
-  showHistory?: boolean;
-  setShowHistory?: (value: boolean | ((prev: boolean) => boolean)) => void;
-  historyLength?: number;
   title?: string;
   subtitle?: string;
   activeTab?: string;
@@ -16,9 +13,6 @@ interface ApplicationHeaderProps {
 const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ 
   isDarkMode, 
   toggleDarkMode, 
-  showHistory, 
-  setShowHistory, 
-  historyLength = 0,
   title = "JSON Explorer",
   subtitle = "Visualize and analyze JSON data",
   activeTab
@@ -30,9 +24,6 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
       <GlobalHeader 
         isDarkMode={isDarkMode} 
         toggleDarkMode={toggleDarkMode}
-        showHistory={showHistory}
-        setShowHistory={setShowHistory}
-        historyLength={historyLength}
         activeTab={activeTab}
       />
       

@@ -36,7 +36,7 @@ const useAddLineNumbers = (isDarkMode: boolean) => {
 // Component Start
 const JsonVastExplorer = React.memo(({ 
   isDarkMode, 
-  history, 
+  historyItems, 
   setHistory,
   showHistory,
   setShowHistory
@@ -1217,7 +1217,7 @@ const JsonVastExplorer = React.memo(({
       {showHistory && (
         <JsonHistoryPanel
           isDarkMode={isDarkMode}
-          history={history}
+          historyItems={historyItems}
           onRestore={restoreFromHistory}
           onClose={() => setShowHistory(false)}
         />

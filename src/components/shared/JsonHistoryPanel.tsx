@@ -4,14 +4,14 @@ import HistoryItem from './HistoryItem';
 
 interface JsonHistoryPanelProps {
   isDarkMode: boolean;
-  history: HistoryItemType[];
+  historyItems: HistoryItemType[];
   onRestore: (item: HistoryItemType) => void;
   onClose: () => void;
 }
 
 const JsonHistoryPanel: React.FC<JsonHistoryPanelProps> = ({ 
   isDarkMode, 
-  history, 
+  historyItems, 
   onRestore, 
   onClose 
 }) => {
@@ -32,8 +32,8 @@ const JsonHistoryPanel: React.FC<JsonHistoryPanelProps> = ({
       </div>
       
       <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
-        {history.length > 0 ? (
-          history.map((item, index) => (
+        {historyItems.length > 0 ? (
+          historyItems.map((item, index) => (
             <HistoryItem 
               key={item.timestamp} 
               item={item} 

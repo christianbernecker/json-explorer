@@ -27,7 +27,7 @@ export interface SearchPanelProps {
 
 export interface JsonVastExplorerProps {
   isDarkMode: boolean;
-  history: HistoryItem[];
+  historyItems: HistoryItem[];
   setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
   showHistory: boolean;
   setShowHistory: React.Dispatch<React.SetStateAction<boolean>>;
@@ -36,7 +36,7 @@ export interface JsonVastExplorerProps {
 
 export interface JsonDiffInspectorProps {
   isDarkMode: boolean;
-  history: HistoryItem[];
+  historyItems: HistoryItem[];
   setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
   showHistory: boolean;
   setShowHistory: React.Dispatch<React.SetStateAction<boolean>>;
