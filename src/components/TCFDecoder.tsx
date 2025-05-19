@@ -1,25 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 // Entferne alte Imports
 // import { purposeNames, decodeTCStringIAB } from '../utils/tcf-decoder';
-// import { loadGVL, getVendors, GVLData, GVLVendor, clearGVLCache } from '../utils/gvl-loader';
-
-// Neue Imports vom tcfService
 import {
-  loadAndCacheGVL, 
-  decodeTCStringStrict, 
-  getProcessedTCData, 
-  ProcessedTCData, 
+  decodeTCStringIAB,
+  getVendorCombinedConsent,
+  getVendorCombinedLI,
   getVendorCombinedPurposes,
   // ProcessedVendorInfo, // Wird ggf. später für Detailansichten benötigt
 } from '../services/tcfService';
 import { GVL } from '@iabtechlabtcf/core'; // GVL-Typ wird weiterhin benötigt für GVL-Explorer
-import { addHistoryItem } from '../services/historyService';
+import { addHistoryItem, HistoryItem } from '../services/historyService';
 
 import Button from './shared/Button';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
   initialTcString?: string | null;
+  showHistory?: boolean;
+  historyItems?: HistoryItem[];
+  onAddToHistory?: (content: string, title?: string) => void;
+  onSelectHistoryItem?: (item: HistoryItem) => void;
+  onRemoveHistoryItem?: (id: number) => void;
+  onClearHistory?: () => void;
 }
 
 // Tabs for display
@@ -44,7 +46,7 @@ interface VendorFilterOptions {
 // String 3 (Neuer Versuch): Vendor 136 hat Consent, Global nur Purpose 1 und 4, und LI Purpose 2 und 7 
 // const EXAMPLE_TCF_STRING = "CPz2y3oPz2y3oAGABCENAuCoAP_AAH_AAAiQI3Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1LBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgAkDSFaoCEAwkOFEAIAAGIAAIAAKABAIgMMAAAEFB0JACAQFgIYAARIAMEgBIIACQAIgEAAIAEAiABAACABAAKABEAAIABAAgAAAACEAiABEABAAAAQAAEABIgAAAIOrCDNACAAQsCXCIQAAgAEQAAAAA.YAAAAAAAAAAAA";
 
-const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) => {
+const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, showHistory, historyItems, onAddToHistory, onSelectHistoryItem, onRemoveHistoryItem, onClearHistory }) => {
   // State für den Decoder
   const [tcfString, setTcfString] = useState(initialTcString || '');
   // const [additionalVendorId, setAdditionalVendorId] = useState<number>(136); // Entfernt, da ungenutzt

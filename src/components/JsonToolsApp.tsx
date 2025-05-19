@@ -105,12 +105,9 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
       <ApplicationHeader 
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
-        activeTab={activeTab}
-        showHistory={activeShowHistory}
-        setShowHistory={activeSetShowHistory}
-        historyLength={activeHistory.length}
-        title="JSON Toolkit"
-        subtitle="Validate, Compare & Explore VAST/JSON"
+        title={activeTab === 'diff' ? 'JSON Diff Tool' : 'JSON Explorer & VAST Decoder'} 
+        subtitle={activeTab === 'diff' ? 'Compare JSON structures and find differences' : 'Validate JSON and explore VAST tags'}
+        activeTab="json-explorer"
       />
       
       {/* Container mit responsiven Abständen */}
@@ -119,18 +116,18 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
           {activeTab === 'explorer' ? (
             <JsonVastExplorer 
               isDarkMode={isDarkMode}
-              history={vastExplorerHistory}
-              setHistory={setVastExplorerHistory}
               showHistory={showVastExplorerHistory}
               setShowHistory={setShowVastExplorerHistory}
+              historyItems={vastExplorerHistory}
+              setHistory={setVastExplorerHistory}
             />
           ) : (
             <JsonDiffInspector 
               isDarkMode={isDarkMode}
-              history={diffInspectorHistory}
-              setHistory={setDiffInspectorHistory}
               showHistory={showDiffInspectorHistory}
               setShowHistory={setShowDiffInspectorHistory}
+              historyItems={diffInspectorHistory}
+              setHistory={setDiffInspectorHistory}
             />
           )}
         </PrimaryContainer>

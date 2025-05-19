@@ -3,6 +3,7 @@ import TCFDecoder from './TCFDecoder';
 import { Helmet } from 'react-helmet-async';
 import { Section } from './shared';
 import ApplicationHeader from './ApplicationHeader';
+import { HistoryItem, loadHistory, addHistoryItem, removeHistoryItem, clearHistory } from '../services/historyService';
 
 // URL parameter for direct decoding
 interface TCFDecoderPageProps {
@@ -16,6 +17,9 @@ interface TCFDecoderPageProps {
 const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, toggleDarkMode }) => {
   // State für automatisches Dekodieren aus URL-Parameter
   const [autoDecodeString, setAutoDecodeString] = useState<string | null>(null);
+  // State für History-Verwaltung
+  const [tcfHistory, setTcfHistory] = useState<HistoryItem[]>(loadHistory('tcf'));
+  const [showHistory, setShowHistory] = useState(false);
   
   // Auto-decode if string is passed in URL
   useEffect(() => {
@@ -28,6 +32,31 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
       }
     }
   }, [location]);
+
+  // Callback-Funktion zum Hinzufügen eines TCF-Strings zur History
+  const handleAddToHistory = (content: string, title?: string) => {
+    const newHistory = addHistoryItem('tcf', content, title);
+    setTcfHistory(newHistory);
+  };
+
+  // Callback-Funktion zum Entfernen eines History-Eintrags
+  const handleRemoveHistoryItem = (id: number) => {
+    const newHistory = removeHistoryItem('tcf', id);
+    setTcfHistory(newHistory);
+  };
+
+  // Callback-Funktion zum Löschen der gesamten History
+  const handleClearHistory = () => {
+    clearHistory('tcf');
+    setTcfHistory([]);
+  };
+
+  // Callback-Funktion für die Auswahl eines History-Eintrags
+  const handleSelectHistoryItem = (item: HistoryItem) => {
+    // Automatisch den TCF String aus der History laden
+    setAutoDecodeString(item.content);
+    setShowHistory(false); // History-Panel schließen
+  };
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -42,9 +71,6 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
       <ApplicationHeader 
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
-        showHistory={showHistory}
-        setShowHistory={setShowHistory}
-        historyLength={tcfHistory.length}
         title="TCF Decoder"
         subtitle="Decode and analyze IAB TCF consent strings"
         activeTab="tcf-decoder"
@@ -57,11 +83,6 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
           className="mb-0"
           fullWidth={true}
         >
-          <TCFDecoder 
-            isDarkMode={isDarkMode} 
-            initialTcString={autoDecodeString}
-          />
-        </Section>
       </div>
     </div>
   );
