@@ -20,24 +20,24 @@ interface TCFDecoderProps {
 // Tabs for display
 type ActiveTab = 'decoder' | 'gvl-explorer' | 'vendor-details';
 
-// Filter options for display (bleibt für GVL Explorer relevant)
-/* // Entfernt, da ungenutzt
-interface VendorFilterOptions {
-  onlyWithConsent: boolean;
-  onlyWithLegitimateInterest: boolean;
-  purposeFilter: number | null;
-}
-*/
-
-// Example TCF string - mit bekannten LI-Eigenschaften für Vendor 136
-// String 1 (erster Versuch): 
-// const EXAMPLE_TCF_STRING = "CQRemBOQRemBOAGACAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA";
-
-// String 2 (zweiter Versuch): Vendor 136, LI Purpose 2 und 3
-// const EXAMPLE_TCF_STRING = "CQRfAHIQRfAHIAGABAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA";
-
-// String 3 (Neuer Versuch): Vendor 136 hat Consent, Global nur Purpose 1 und 4, und LI Purpose 2 und 7 
-// const EXAMPLE_TCF_STRING = "CPz2y3oPz2y3oAGABCENAuCoAP_AAH_AAAiQI3Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1LBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgAkDSFaoCEAwkOFEAIAAGIAAIAAKABAIgMMAAAEFB0JACAQFgIYAARIAMEgBIIACQAIgEAAIAEAiABAACABAAKABEAAIABAAgAAAACEAiABEABAAAAQAAEABIgAAAIOrCDNACAAQsCXCIQAAgAEQAAAAA.YAAAAAAAAAAAA";
+// Implementierung der fehlenden Funktion getVendorCombinedPurposes
+const getVendorCombinedPurposes = (vendor: any): number[] => {
+  // Wir erstellen eine Set, um doppelte Einträge zu vermeiden
+  const uniquePurposes = new Set<number>();
+  
+  // Füge Consent-Purposes hinzu
+  if (vendor.purposesConsent && Array.isArray(vendor.purposesConsent)) {
+    vendor.purposesConsent.forEach((purposeId: number) => uniquePurposes.add(purposeId));
+  }
+  
+  // Füge LI-Purposes hinzu
+  if (vendor.purposesLI && Array.isArray(vendor.purposesLI)) {
+    vendor.purposesLI.forEach((purposeId: number) => uniquePurposes.add(purposeId));
+  }
+  
+  // Konvertiere Set zurück zu Array und sortiere
+  return Array.from(uniquePurposes).sort((a, b) => a - b);
+};
 
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, showHistory, historyItems, onAddToHistory, onSelectHistoryItem, onRemoveHistoryItem, onClearHistory }) => {
   // State für den Decoder
