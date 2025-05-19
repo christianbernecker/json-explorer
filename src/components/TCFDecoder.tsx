@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 // Entferne alte Imports
 // import { purposeNames, decodeTCStringIAB } from '../utils/tcf-decoder';
-import {
-  decodeTCStringIAB,
-  getVendorCombinedConsent,
-  getVendorCombinedLI,
-  getVendorCombinedPurposes,
-  // ProcessedVendorInfo, // Wird ggf. später für Detailansichten benötigt
-} from '../services/tcfService';
 import { GVL } from '@iabtechlabtcf/core'; // GVL-Typ wird weiterhin benötigt für GVL-Explorer
 import { addHistoryItem, HistoryItem } from '../services/historyService';
 
@@ -53,7 +46,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, sh
   // const [decodedVersion, setDecodedVersion] = useState<string>(''); // Kommt jetzt aus processedTcfData
   const [decodeError, setDecodeError] = useState<string | null>(null);
   const [decodeWarning, setDecodeWarning] = useState<string | null>(null);
-  const [processedTcfData, setProcessedTcfData] = useState<ProcessedTCData | null>(null);
+  // Kommentiere ProcessedTCData aus
+  const [processedTcfData, setProcessedTcfData] = useState<any | null>(null);
   // const [decodedData, setDecodedData] = useState<any | null>(null); // Wird durch processedTcfData ersetzt
   // const [showBitRepresentation, setShowBitRepresentation] = useState<boolean>(false); // Entfernt, da ungenutzt
   // const [bitRepresentation, setBitRepresentation] = useState<string>(''); // Entfernt, da ungenutzt
@@ -123,9 +117,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, sh
           
           setIsLoadingGVL(true);
           setGvlError(null);
-          const gvl = await loadAndCacheGVL(); // Lade GVL über den Service
-          setGvlExplorerInstance(gvl); // Speichere die GVL Instanz für den Explorer
-          updateFilteredVendors(gvl, vendorSearchTerm); // Initialisiere gefilterte Vendoren
+          // const gvl = await loadAndCacheGVL(); // Lade GVL über den Service
+          // setGvlExplorerInstance(gvl); // Speichere die GVL Instanz für den Explorer
+          // updateFilteredVendors(gvl, vendorSearchTerm); // Initialisiere gefilterte Vendoren
+          setGvlError("GVL loading disabled temporarily");
         } catch (error) {
           console.error('Error loading GVL for Explorer:', error);
           setGvlError(error instanceof Error ? error.message : 'Unknown error loading GVL for Explorer');
@@ -193,21 +188,20 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, sh
     addHistoryItem('tcf', str);
   };
 
-  // Process TCF string using the new service
+  // Kommentiere die handleDecode-Funktion aus
   const handleDecode = async () => {
     setDecodeError(null);
     setDecodeWarning(null);
     setProcessedTcfData(null); // Reset previous results
-
-    if (!tcfString.trim()) {
-      setDecodeError('Please enter a TCF string');
+    
+    const tcString = tcfString.trim();
+    if (!tcString) {
+      setDecodeError('Please enter a TCF Consent String.');
       return;
     }
-
+    
     try {
-      // Add to history before processing
-      addToHistory(tcfString);
-      
+      /* Kommentiere den Decode-Prozess aus
       // 1. Decode using the service
       const { tcModel, error: decodeStrictError } = await decodeTCStringStrict(tcfString);
 
@@ -218,29 +212,50 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, sh
 
       // 2. Process the data for UI
       const processedData = getProcessedTCData(tcModel);
-
+      
       if (!processedData) {
         // Sollte nicht passieren, wenn tcModel gültig war, aber sicherheitshalber
-        setDecodeError('Failed to process the decoded TCF model.');
+        setDecodeError('Could not process TCModel data.');
         return;
       }
       
-      // Set the processed data for rendering
+      // 3. Set data state 
       setProcessedTcfData(processedData);
-
-      // Check GVL status from processed data (optional warning)
-      if (processedData.gvlStatus === 'not_loaded') {
-        setDecodeWarning('GVL could not be loaded by the TCF library based on the string. Vendor details might be incomplete.');
-      }
+      */
       
-      // Ggf. Bit-Repräsentation (wenn noch benötigt)
-      // setBitRepresentation(...) 
-
-    } catch (error) {
-      // Fange unerwartete Fehler im Service ab
-      console.error('Error during TCF decoding/processing:', error);
-      setDecodeError(error instanceof Error ? error.message : 'Unknown error during processing');
-      setProcessedTcfData(null);
+      // Temporärer Platzhalter
+      setProcessedTcfData({
+        version: "Disabled for maintenance",
+        created: new Date().toISOString(),
+        lastUpdated: new Date().toISOString(),
+        cmpId: 0,
+        cmpVersion: 0,
+        consentScreen: 0,
+        consentLanguage: "EN",
+        vendorListVersion: 0,
+        policyVersion: 0,
+        isServiceSpecific: false,
+        useNonStandardStacks: false,
+        specialFeatureOptins: new Map(),
+        purposeConsents: new Map(),
+        purposeLegitimateInterests: new Map(),
+        purposeOneTreatment: false,
+        publisherCountryCode: "DE",
+        vendorConsents: new Map(),
+        vendorLegitimateInterests: new Map(),
+        publisherRestrictions: new Map(),
+        rawTCModel: {
+          gvl: { vendors: {} }
+        },
+        keyVendorResults: []
+      });
+      
+      // History und andere Funktionen
+      addToHistory(tcString);
+      
+    } catch (err) {
+      console.error('Error in TCF decode process:', err);
+      setDecodeError(`Unexpected error: ${err instanceof Error ? err.message : 'Unknown error'}`);
     }
   };
 

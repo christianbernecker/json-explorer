@@ -42,15 +42,11 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
       <ApplicationHeader 
         isDarkMode={isDarkMode}
         toggleDarkMode={toggleDarkMode}
-        showHistory={showHistory}
-        setShowHistory={setShowHistory}
-        historyLength={tcfHistory.length}
         title="TCF Decoder"
         subtitle="Decode and analyze IAB TCF consent strings"
         activeTab="tcf-decoder"
       />
       
-      {/* Container mit responsiven Abständen */}
       <div className="mt-4 sm:mt-6 md:mt-8 px-2 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
         <Section 
           isDarkMode={isDarkMode} 
