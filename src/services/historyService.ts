@@ -1,121 +1,95 @@
 /**
- * HistoryService - Ein gemeinsamer Dienst zur Verwaltung von Verlaufsdaten für alle Tools
+ * Service zur Verwaltung der Verlaufsdaten
+ * Speichert und lädt Verlaufsdaten für verschiedene Funktionen der Anwendung
  */
 
-// Gemeinsame Schnittstelle für alle Verlaufseinträge
+// Konstante für maximale Anzahl von History-Einträgen
+const MAX_HISTORY_ITEMS = 20;
+
+// Typen von History (können erweitert werden)
+export type HistoryType = 'tcf' | 'json' | 'vast';
+
+/**
+ * Repräsentiert einen Eintrag im Verlauf
+ */
 export interface HistoryItem {
   id: number;
-  type: 'json' | 'tcf' | 'vast' | 'data' | 'other';
-  content: string;
   timestamp: number;
+  content: string;
   title?: string;
-  metadata?: Record<string, any>;
+  type: HistoryType;
 }
 
-// Service-Einstellungen
-const STORAGE_KEY_PREFIX = 'adtech_toolbox_history_';
-const MAX_HISTORY_ITEMS = 50; // Maximale Anzahl von Verlaufseinträgen pro Tool
-
 /**
- * Lädt den Verlauf für einen bestimmten Tool-Typ aus dem Local Storage
+ * Lädt Verlaufsdaten für einen bestimmten Typ
+ * 
+ * @param type Typ des Verlaufs ('tcf', 'json', 'vast')
+ * @returns Array von Verlaufseinträgen
  */
-export const loadHistory = (type: HistoryItem['type']): HistoryItem[] => {
+export const getHistoryItems = (type: HistoryType): HistoryItem[] => {
   try {
-    const storageKey = `${STORAGE_KEY_PREFIX}${type}`;
-    const savedHistory = localStorage.getItem(storageKey);
+    const key = `${type}_history`;
+    const historyJson = localStorage.getItem(key);
     
-    if (savedHistory) {
-      return JSON.parse(savedHistory);
-    }
+    if (!historyJson) return [];
+    
+    const historyData = JSON.parse(historyJson);
+    if (!Array.isArray(historyData)) return [];
+    
+    return historyData.map((item: any) => ({
+      ...item,
+      type
+    }));
   } catch (error) {
-    console.error(`Failed to load ${type} history:`, error);
+    console.error(`Error loading ${type} history:`, error);
+    return [];
   }
-  
-  return [];
 };
 
 /**
- * Speichert den Verlauf für einen bestimmten Tool-Typ im Local Storage
+ * Fügt einen neuen Eintrag zum Verlauf hinzu
+ * 
+ * @param type Typ des Verlaufs
+ * @param content Inhalt des Eintrags
  */
-export const saveHistory = (type: HistoryItem['type'], history: HistoryItem[]): void => {
+export const addHistoryItem = (type: HistoryType, content: string): void => {
+  if (!content.trim()) return;
+  
   try {
-    const storageKey = `${STORAGE_KEY_PREFIX}${type}`;
-    localStorage.setItem(storageKey, JSON.stringify(history));
+    const key = `${type}_history`;
+    const existingHistory = getHistoryItems(type);
+    
+    // Wenn der Eintrag bereits existiert, ihn nach vorne bringen
+    const filteredHistory = existingHistory.filter(item => item.content !== content);
+    
+    // Neuen Eintrag am Anfang hinzufügen
+    const newHistory = [{
+      id: Date.now(),
+      timestamp: Date.now(),
+      content,
+      type
+    }, ...filteredHistory];
+    
+    // Auf maximale Anzahl begrenzen
+    const limitedHistory = newHistory.slice(0, MAX_HISTORY_ITEMS);
+    
+    // In localStorage speichern
+    localStorage.setItem(key, JSON.stringify(limitedHistory));
   } catch (error) {
-    console.error(`Failed to save ${type} history:`, error);
+    console.error(`Error adding to ${type} history:`, error);
   }
 };
 
 /**
- * Fügt einen neuen Eintrag zum Verlauf eines Tools hinzu
+ * Löscht den gesamten Verlauf für einen Typ
+ * 
+ * @param type Typ des Verlaufs
  */
-export const addHistoryItem = (
-  type: HistoryItem['type'], 
-  content: string, 
-  title?: string,
-  metadata?: Record<string, any>
-): HistoryItem[] => {
-  const history = loadHistory(type);
-  
-  // Prüfen ob der Inhalt bereits existiert
-  const exists = history.some(item => item.content === content);
-  if (exists) {
-    // Optional: Bestehenden Eintrag nach vorne verschieben und Zeitstempel aktualisieren
-    const updatedHistory = history
-      .filter(item => item.content !== content)
-      .concat([{
-        ...history.find(item => item.content === content)!,
-        timestamp: Date.now()
-      }])
-      .sort((a, b) => b.timestamp - a.timestamp);
-      
-    saveHistory(type, updatedHistory);
-    return updatedHistory;
+export const clearHistory = (type: HistoryType): void => {
+  try {
+    const key = `${type}_history`;
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.error(`Error clearing ${type} history:`, error);
   }
-  
-  // Neuen Eintrag erstellen
-  const newItem: HistoryItem = {
-    id: Date.now(), // Eindeutige ID basierend auf aktuellem Zeitstempel
-    type,
-    content,
-    timestamp: Date.now(),
-    title,
-    metadata
-  };
-  
-  // Füge neuen Eintrag hinzu und begrenze auf maximale Anzahl
-  const newHistory = [newItem, ...history].slice(0, MAX_HISTORY_ITEMS);
-  saveHistory(type, newHistory);
-  
-  return newHistory;
-};
-
-/**
- * Löscht einen bestimmten Eintrag aus dem Verlauf
- */
-export const removeHistoryItem = (type: HistoryItem['type'], id: number): HistoryItem[] => {
-  const history = loadHistory(type);
-  const filteredHistory = history.filter(item => item.id !== id);
-  
-  saveHistory(type, filteredHistory);
-  return filteredHistory;
-};
-
-/**
- * Löscht den gesamten Verlauf eines Tools
- */
-export const clearHistory = (type: HistoryItem['type']): void => {
-  saveHistory(type, []);
-};
-
-/**
- * Holt den gesamten verlauf für alle Tools
- */
-export const getAllHistory = (): Record<string, HistoryItem[]> => {
-  const types: HistoryItem['type'][] = ['json', 'tcf', 'vast', 'data', 'other'];
-  
-  return types.reduce((result, type) => {
-    result[type] = loadHistory(type);
-    return result;
-  }, {} as Record<string, HistoryItem[]>);
 }; 

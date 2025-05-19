@@ -21,7 +21,7 @@ const NotFound: React.FC<NotFoundProps> = ({ isDarkMode }) => {
           The page you are looking for does not exist.
         </p>
         <Link to="/">
-          <Button isDarkMode={isDarkMode}>
+          <Button>
             Go to Home
           </Button>
         </Link>

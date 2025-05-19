@@ -699,16 +699,10 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
         </div>
 
         <div className="flex flex-wrap gap-2 mb-4">
-          <Button onClick={handleDecode} isDarkMode={isDarkMode} variant="primary">
-            Decode String
-          </Button>
-          <Button onClick={clearInput} isDarkMode={isDarkMode} variant="secondary">
-            Clear
-          </Button>
+          <Button onClick={handleDecode}>Decode String</Button>
+          <Button onClick={clearInput}>Clear</Button>
           {processedTcfData && (
-            <Button onClick={handleExportJSON} isDarkMode={isDarkMode} variant="secondary">
-              Export Results as JSON
-            </Button>
+            <Button onClick={handleExportJSON}>Export Results as JSON</Button>
           )}
         </div>
         
@@ -1163,7 +1157,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
                                   size="sm"
                                   className="text-xs"
                                 >
-                                  Details
+                                  View Details
                                 </Button>
                               </td>
                             </tr>

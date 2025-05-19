@@ -1,50 +1,65 @@
-import React, { ButtonHTMLAttributes } from 'react';
+import React from 'react';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'export' | 'danger';
-  isDarkMode: boolean;
+interface ButtonProps {
+  children: React.ReactNode;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  className?: string;
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+  variant?: 'primary' | 'secondary' | 'danger' | 'export';
+  isDarkMode?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  fullWidth?: boolean;
+  title?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
-  variant = 'primary',
-  isDarkMode,
-  size = 'md',
-  fullWidth = false,
   children,
+  onClick,
   className = '',
-  ...props
+  disabled = false,
+  type = 'button',
+  variant = 'primary',
+  isDarkMode = false,
+  size = 'md',
+  title
 }) => {
-  // Basisstile für alle Buttons
-  const baseStyles = 'rounded-md shadow-md hover:shadow-lg transition-all duration-200 inline-flex items-center justify-center';
-  
-  // Größenstile
-  const sizeStyles = {
-    sm: 'px-3 py-1 text-sm',
-    md: 'px-4 py-2',
-    lg: 'px-5 py-3 text-lg'
-  };
-  
-  // Variantenstile
-  const variantStyles = {
-    primary: isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white',
-    secondary: isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : 'bg-gray-200 hover:bg-gray-300 text-gray-600',
-    export: isDarkMode ? 'bg-green-700 hover:bg-green-800 text-white' : 'bg-green-500 hover:bg-green-600 text-white',
-    danger: isDarkMode ? 'bg-red-700 hover:bg-red-800 text-white' : 'bg-red-500 hover:bg-red-600 text-white'
-  };
-  
-  // Breite
-  const widthStyle = fullWidth ? 'w-full' : '';
-  
-  // Kombinieren der Stilklassen
-  const buttonClasses = `${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${widthStyle} ${className}`;
-  
+  const baseClasses = [
+    'rounded-md',
+    'font-medium',
+    'transition-colors',
+    'duration-200',
+    disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+    'text-white',
+    variant === 'primary'
+      ? isDarkMode
+        ? 'bg-blue-600 hover:bg-blue-700'
+        : 'bg-blue-500 hover:bg-blue-600'
+      : variant === 'danger'
+        ? isDarkMode
+          ? 'bg-red-600 hover:bg-red-700'
+          : 'bg-red-500 hover:bg-red-600'
+        : variant === 'export'
+          ? isDarkMode
+            ? 'bg-green-600 hover:bg-green-700'
+            : 'bg-green-500 hover:bg-green-600'
+          : isDarkMode
+            ? 'bg-gray-600 hover:bg-gray-700'
+            : 'bg-gray-500 hover:bg-gray-600',
+    size === 'sm' ? 'text-xs px-2 py-1' : size === 'lg' ? 'text-base px-4 py-2' : 'text-sm px-3 py-1.5',
+    className
+  ].join(' ');
+
   return (
-    <button className={buttonClasses} {...props}>
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={baseClasses}
+      title={title}
+    >
       {children}
     </button>
   );
 };
 
-export default Button; 
+export default Button;
