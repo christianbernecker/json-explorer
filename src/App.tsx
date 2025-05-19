@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AppProvider } from './context/AppContext';
 import JsonToolsApp from './components/JsonToolsApp';
 import DataVisualizer from './components/DataVisualizer';
 import Homepage from './components/Homepage';
@@ -12,7 +13,22 @@ import TCFDecoderPage from './components/TCFDecoderPage';
 import HelpPage from './components/HelpPage';
 import { Footer } from './components/shared';
 
+/**
+ * Hauptkomponente der Anwendung
+ * Verwendet den AppProvider für globale Zustände
+ */
 function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  );
+}
+
+/**
+ * Inhaltskomponente der Anwendung mit Routing
+ */
+function AppContent() {
   // Global dark mode state
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedDarkMode = localStorage.getItem('app_darkMode');
