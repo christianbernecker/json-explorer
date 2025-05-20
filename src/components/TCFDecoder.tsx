@@ -58,8 +58,15 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
   // const [showBitRepresentation, setShowBitRepresentation] = useState<boolean>(false); // Entfernt, da ungenutzt
   // const [bitRepresentation, setBitRepresentation] = useState<string>(''); // Entfernt, da ungenutzt
   
-  // State für GVL und Tabs
-  const [activeTab, setActiveTab] = useState<ActiveTab>('decoder');
+  // State für GVL und Tabs - Initialisiere basierend auf URL-Parameter
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
+    // Prüfe, ob ein tab-Parameter in der URL vorhanden ist
+    if (window.location.search.includes('tab=gvl-explorer')) {
+      return 'gvl-explorer';
+    }
+    return 'decoder';
+  });
+  
   // GVL-Instanz für den GVL-Explorer (direkt vom Service laden)
   const [gvlExplorerInstance, setGvlExplorerInstance] = useState<GVL | null>(null);
   const [isLoadingGVL, setIsLoadingGVL] = useState<boolean>(false); // Für GVL-Explorer Ladevorgang
@@ -147,6 +154,28 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
       updateFilteredVendors(gvlExplorerInstance, vendorSearchTerm);
     }
   }, [gvlExplorerInstance, vendorSearchTerm]);
+  
+  // useEffect, um auf URL-Änderungen zu reagieren
+  useEffect(() => {
+    const handleURLChange = () => {
+      if (window.location.search.includes('tab=gvl-explorer')) {
+        setActiveTab('gvl-explorer');
+      } else {
+        setActiveTab('decoder');
+      }
+    };
+    
+    // Initialisierung
+    handleURLChange();
+    
+    // Event-Listener für URL-Änderungen
+    window.addEventListener('popstate', handleURLChange);
+    
+    // Cleanup
+    return () => {
+      window.removeEventListener('popstate', handleURLChange);
+    };
+  }, []);
   
   // Filter function for vendors (muss mit GVL-Instanz arbeiten)
   function updateFilteredVendors(gvl: GVL, searchTerm: string) {
