@@ -73,7 +73,7 @@ const TCFTabs: React.FC<TCFTabsProps> = ({
   };
 
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       <ModernTabs
         tabs={tabs}
         activeTabId={activeTab}
