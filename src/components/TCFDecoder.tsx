@@ -16,8 +16,7 @@ import { GVL } from '@iabtechlabtcf/core'; // GVL-Typ wird weiterhin benötigt f
 import { addHistoryItem } from '../services/historyService';
 
 import Button from './shared/Button';
-// Entferne den Import von ModernTabs, da wir nur die obere Navigation verwenden
-// import ModernTabs from './shared/ModernTabs';
+import ModernTabs from './shared/ModernTabs';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
@@ -58,15 +57,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
   // const [showBitRepresentation, setShowBitRepresentation] = useState<boolean>(false); // Entfernt, da ungenutzt
   // const [bitRepresentation, setBitRepresentation] = useState<string>(''); // Entfernt, da ungenutzt
   
-  // State für GVL und Tabs - Initialisiere basierend auf URL-Parameter
-  const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
-    // Prüfe, ob ein tab-Parameter in der URL vorhanden ist
-    if (window.location.search.includes('tab=gvl-explorer')) {
-      return 'gvl-explorer';
-    }
-    return 'decoder';
-  });
-  
+  // State für GVL und Tabs
+  const [activeTab, setActiveTab] = useState<ActiveTab>('decoder');
   // GVL-Instanz für den GVL-Explorer (direkt vom Service laden)
   const [gvlExplorerInstance, setGvlExplorerInstance] = useState<GVL | null>(null);
   const [isLoadingGVL, setIsLoadingGVL] = useState<boolean>(false); // Für GVL-Explorer Ladevorgang
@@ -154,28 +146,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
       updateFilteredVendors(gvlExplorerInstance, vendorSearchTerm);
     }
   }, [gvlExplorerInstance, vendorSearchTerm]);
-  
-  // useEffect, um auf URL-Änderungen zu reagieren
-  useEffect(() => {
-    const handleURLChange = () => {
-      if (window.location.search.includes('tab=gvl-explorer')) {
-        setActiveTab('gvl-explorer');
-      } else {
-        setActiveTab('decoder');
-      }
-    };
-    
-    // Initialisierung
-    handleURLChange();
-    
-    // Event-Listener für URL-Änderungen
-    window.addEventListener('popstate', handleURLChange);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('popstate', handleURLChange);
-    };
-  }, []);
   
   // Filter function for vendors (muss mit GVL-Instanz arbeiten)
   function updateFilteredVendors(gvl: GVL, searchTerm: string) {
@@ -278,7 +248,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
   // Die Vendor-Daten kommen jetzt aufbereitet vom Service in processedTcfData.keyVendorResults
   // const getFilteredVendorResults = (): any[] => { ... };
 
-  // Export JSON results
+  // Export JSON (muss processedTcfData verwenden)
   const handleExportJSON = () => {
     if (!processedTcfData) {
       setDecodeError('No data to export');
@@ -326,14 +296,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
     }
   };
 
-  // Tab change handler - Wird nicht mehr benötigt, da die Tabs jetzt über GlobalHeader gesteuert werden
-  // const handleTabChange = (tab: ActiveTab) => {
-  //   setActiveTab(tab);
-  //   // Reset vendor details when switching tabs
-  //   if (tab === 'gvl-explorer') {
-  //     setSelectedGvlVendor(null);
-  //   }
-  // };
+  // Tab change handler
+  const handleTabChange = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    // Reset vendor details when switching tabs
+    if (tab === 'gvl-explorer') {
+      setSelectedGvlVendor(null);
+    }
+  };
   
   // Export GVL as JSON
   const handleExportGVL = () => {
@@ -1229,7 +1199,20 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
         </div>
       </h1>
       
-      {/* Tab-Navigation wurde entfernt, da sie bereits im GlobalHeader existiert */}
+      {/* Tab navigation direkt unter dem Header */}
+      <div className="mb-4">
+        <ModernTabs
+          tabs={[
+            { id: 'decoder', label: 'TCF Decoder' },
+            { id: 'gvl-explorer', label: 'GVL Explorer' },
+            ...(selectedVendor ? [{ id: 'vendor-details', label: 'Vendor Details' }] : [])
+          ]}
+          activeTabId={activeTab}
+          onTabChange={(tabId) => handleTabChange(tabId as ActiveTab)}
+          isDarkMode={isDarkMode}
+          size="medium"
+        />
+      </div>
       
       {/* History Panel */}
       {showHistoryPanel && (
