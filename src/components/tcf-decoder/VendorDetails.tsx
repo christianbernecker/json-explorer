@@ -1,21 +1,14 @@
 import React from 'react';
 import Button from '../shared/Button';
 import { getVendorCombinedPurposes } from '../../services/tcfService';
+import { GVLVendor, ProcessedVendorInfo, ProcessedTCData, CombinedPurposesData } from '../../services/types';
 
 interface VendorDetailsProps {
-  vendor: any;
+  vendor: ProcessedVendorInfo;
   isDarkMode: boolean;
   onBack: () => void;
   type: 'gvl' | 'tcf';
-  tcfData?: any;
-}
-
-// Interface für die kombinierten Zwecke
-interface CombinedPurposesData {
-  purposes: Array<{id: number, name: string, consent: boolean, li: boolean}>;
-  specialPurposes: Array<{id: number, name: string}>;
-  features: Array<{id: number, name: string}>;
-  specialFeatures: Array<{id: number, name: string, consent: boolean}>;
+  tcfData?: ProcessedTCData;
 }
 
 /**

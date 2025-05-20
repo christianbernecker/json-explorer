@@ -6,8 +6,9 @@ export interface HistoryItemProps {
 }
 
 export interface HistoryItem {
-  type: 'json' | 'json_vast' | 'json_diff';
-  content?: any;
+  id?: string | number;
+  type: 'json' | 'json_vast' | 'json_diff' | 'tcf' | 'vast';
+  content: any;
   jsonContent?: any;
   vastContent?: string;
   vastPath?: string;
@@ -16,6 +17,7 @@ export interface HistoryItem {
   rightJson?: string;
   comparisonMode?: string;
   timestamp: number;
+  title?: string;
 }
 
 export interface SearchPanelProps {

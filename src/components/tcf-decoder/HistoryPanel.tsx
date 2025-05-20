@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { getHistoryItems, clearHistory, HistoryItem } from '../../services/historyService';
+import { getHistoryItems, clearHistory } from '../../services/historyService';
+import { HistoryItem } from '../../services/types';
 import Button from '../shared/Button';
 
 interface HistoryPanelProps {

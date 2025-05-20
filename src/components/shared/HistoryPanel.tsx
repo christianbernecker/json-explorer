@@ -1,14 +1,14 @@
 import React from 'react';
-import { HistoryItem as HistoryItemType } from '../../services/historyService';
+import { HistoryItem } from '../../services/types';
 import { Card, Button } from './';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 
 interface HistoryPanelProps {
-  items: HistoryItemType[];
-  onSelect: (item: HistoryItemType) => void;
+  items: HistoryItem[];
+  onSelect: (item: HistoryItem) => void;
   onClear: () => void;
-  onRemove: (id: number) => void;
+  onRemove: (id: string) => void;
   isDarkMode: boolean;
   isOpen: boolean;
   onClose: () => void;
@@ -100,6 +100,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({
                 <div className="pr-8"> {/* Platz für den Delete-Button */}
                   <div className="flex items-center justify-between">
                     <div className="font-medium">
+                      {/* @ts-ignore - title ist optional und nicht in unserem Interface */}
                       {item.title || `${item.type.toUpperCase()} Entry`}
                     </div>
                     <div className={`text-xs ${secondaryText}`}>

@@ -3,22 +3,13 @@
  * Speichert und lädt Verlaufsdaten für verschiedene Funktionen der Anwendung
  */
 
+import { HistoryItem } from './types';
+
 // Konstante für maximale Anzahl von History-Einträgen
 const MAX_HISTORY_ITEMS = 20;
 
 // Typen von History (können erweitert werden)
 export type HistoryType = 'tcf' | 'json' | 'vast';
-
-/**
- * Repräsentiert einen Eintrag im Verlauf
- */
-export interface HistoryItem {
-  id: number;
-  timestamp: number;
-  content: string;
-  title?: string;
-  type: HistoryType;
-}
 
 /**
  * Lädt Verlaufsdaten für einen bestimmten Typ
@@ -36,7 +27,7 @@ export const getHistoryItems = (type: HistoryType): HistoryItem[] => {
     const historyData = JSON.parse(historyJson);
     if (!Array.isArray(historyData)) return [];
     
-    return historyData.map((item: any) => ({
+    return historyData.map((item: HistoryItem) => ({
       ...item,
       type
     }));
@@ -64,7 +55,7 @@ export const addHistoryItem = (type: HistoryType, content: string): void => {
     
     // Neuen Eintrag am Anfang hinzufügen
     const newHistory = [{
-      id: Date.now(),
+      id: Date.now().toString(),
       timestamp: Date.now(),
       content,
       type

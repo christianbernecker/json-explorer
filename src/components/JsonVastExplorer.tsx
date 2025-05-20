@@ -583,7 +583,9 @@ const JsonVastExplorer = React.memo(({
         }
         
         const newHistoryItem: HistoryItemType = {
+          id: Date.now().toString(),
           type: 'json_vast',
+          content: JSON.stringify(currentParsedJson).slice(0, 50) + '...', // Kurze Zusammenfassung für content
           jsonContent: currentParsedJson,
           vastContent: currentRawVast,
           vastUrl: extractVastUrl(currentRawVast) || '', // Still store in history if needed, but not in state

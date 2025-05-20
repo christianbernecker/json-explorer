@@ -216,7 +216,9 @@ const JsonDiffInspector = React.memo(({
       
       // Add to history
       const newHistoryItem: HistoryItemType = {
+        id: Date.now().toString(),
         type: 'json_diff',
+        content: `Comparison of JSON objects (${comparisonMode} mode)`,
         leftJson: leftJsonInput,
         rightJson: rightJsonInput,
         comparisonMode: comparisonMode,

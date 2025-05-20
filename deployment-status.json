@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Mon May 19 10:30:20 CEST 2025", "commit": "Refactoring Phase 2: Komponenten modularisiert und Architektur verbessert"}
+{"deployment": "staging", "timestamp": "Mon May 19 16:26:46 CEST 2025", "commit": "TCF Decoder Typfehler behoben - falsches Datenstruktur-Format bei VendorDetails korrigiert"}

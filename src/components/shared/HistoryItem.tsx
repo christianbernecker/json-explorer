@@ -13,6 +13,10 @@ const HistoryItem = React.memo(({ item, index, onRestore, isDarkMode }: HistoryI
         return 'JSON+VAST';
       case 'json_diff':
         return `JSON Diff ${item.comparisonMode ? `(${item.comparisonMode} mode)` : ''}`;
+      case 'tcf':
+        return 'TCF String';
+      case 'vast':
+        return 'VAST XML';
       default:
         return 'Item';
     }

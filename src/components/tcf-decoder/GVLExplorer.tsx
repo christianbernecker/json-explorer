@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { GVL } from '@iabtechlabtcf/core';
 import { loadAndCacheGVL } from '../../services/tcfService';
 import Button from '../shared/Button';
+import { ProcessedVendorInfo, GVLVendor } from '../../services/types';
 
 interface GVLExplorerProps {
   isDarkMode: boolean;
-  onViewVendorDetails: (vendor: any) => void;
+  onViewVendorDetails: (vendor: ProcessedVendorInfo) => void;
 }
 
 /**
@@ -23,7 +24,7 @@ const GVLExplorer: React.FC<GVLExplorerProps> = ({
   const [isLoadingGVL, setIsLoadingGVL] = useState<boolean>(false);
   const [gvlError, setGvlError] = useState<string | null>(null);
   const [vendorSearchTerm, setVendorSearchTerm] = useState<string>('');
-  const [filteredVendors, setFilteredVendors] = useState<any[]>([]);
+  const [filteredVendors, setFilteredVendors] = useState<GVLVendor[]>([]);
 
   // Styling
   const textColor = isDarkMode ? 'text-gray-100' : 'text-gray-800';
@@ -54,7 +55,7 @@ const GVLExplorer: React.FC<GVLExplorerProps> = ({
     }
     
     fetchGVLForExplorer();
-  }, [vendorSearchTerm]);
+  }, []);
 
   // Update filtered vendors wenn GVL-Instanz oder Suchbegriff sich ändert
   useEffect(() => {
@@ -71,7 +72,9 @@ const GVLExplorer: React.FC<GVLExplorerProps> = ({
     }
     
     // `gvl.vendors` ist ein Objekt { id: vendorObject }. Konvertiere zu Array.
-    let filtered = Object.values(gvl.vendors);
+    const vendorsArray = Object.values(gvl.vendors) as unknown as GVLVendor[];
+    
+    let filtered = vendorsArray;
     
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
@@ -87,6 +90,31 @@ const GVLExplorer: React.FC<GVLExplorerProps> = ({
 
     setFilteredVendors(filtered);
   }
+
+  // GVL-Vendor in ProcessedVendorInfo konvertieren für die Details-Ansicht
+  const convertGVLVendorToProcessedVendor = (gvlVendor: GVLVendor): ProcessedVendorInfo => {
+    return {
+      id: gvlVendor.id,
+      name: gvlVendor.name,
+      hasConsent: false, // Default-Werte für GVL-Vendors
+      hasLegitimateInterest: false,
+      purposesConsent: [],
+      purposesLI: [],
+      specialFeaturesOptIn: [],
+      features: gvlVendor.features ? Object.keys(gvlVendor.features).map(Number) : [],
+      specialPurposes: gvlVendor.specialPurposes ? Object.keys(gvlVendor.specialPurposes).map(Number) : [],
+      gvlVendor: gvlVendor,
+      debugInfo: null,
+      // GVL-spezifische Felder direkt kopieren
+      deletedDate: gvlVendor.deletedDate,
+      usesCookies: gvlVendor.usesCookies,
+      cookieMaxAgeSeconds: gvlVendor.cookieMaxAgeSeconds,
+      deviceStorageDisclosureUrl: gvlVendor.deviceStorageDisclosureUrl,
+      purposes: gvlVendor.purposes,
+      legIntPurposes: gvlVendor.legIntPurposes,
+      specialFeatures: gvlVendor.specialFeatures
+    };
+  };
 
   // Export the entire GVL as JSON
   const handleExportGVL = () => {
@@ -110,6 +138,12 @@ const GVLExplorer: React.FC<GVLExplorerProps> = ({
     } catch (error) {
       console.error('Error exporting GVL:', error);
     }
+  };
+
+  // Handler für die Detail-Ansicht eines Vendors
+  const handleViewVendorDetails = (gvlVendor: GVLVendor) => {
+    const processedVendor = convertGVLVendorToProcessedVendor(gvlVendor);
+    onViewVendorDetails(processedVendor);
   };
 
   return (
@@ -189,7 +223,7 @@ const GVLExplorer: React.FC<GVLExplorerProps> = ({
                     </td>
                     <td className="px-4 py-2">
                       <Button 
-                        onClick={() => onViewVendorDetails(vendor)}
+                        onClick={() => handleViewVendorDetails(vendor)}
                         isDarkMode={isDarkMode}
                         className="text-xs"
                         variant="primary"

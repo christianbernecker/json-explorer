@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import Button from '../shared/Button';
-import { decodeTCStringStrict, getProcessedTCData, ProcessedTCData } from '../../services/tcfService';
+import { decodeTCStringStrict, getProcessedTCData } from '../../services/tcfService';
 import { addHistoryItem } from '../../services/historyService';
+import { ProcessedTCData, ProcessedVendorInfo } from '../../services/types';
 
-// Hilfsinterface für die Vendor-Ansicht
+// Hilfsinterface für die Vendor-Ansicht in der Tabelle
 interface VendorInfo {
   id: number;
   name?: string;
@@ -14,7 +15,7 @@ interface VendorInfo {
 interface TCFDecoderFormProps {
   isDarkMode: boolean;
   initialTcString?: string | null;
-  onViewVendorDetails: (vendor: any) => void;
+  onViewVendorDetails: (vendor: ProcessedVendorInfo) => void;
 }
 
 /**
@@ -116,6 +117,12 @@ const TCFDecoderForm: React.FC<TCFDecoderFormProps> = ({
     }
   };
 
+  // Finde den Original-Vendor aus dem ProcessedTCData
+  const getOriginalVendor = (vendorId: number): ProcessedVendorInfo | undefined => {
+    if (!processedTcfData) return undefined;
+    return processedTcfData.keyVendorResults.find(vendor => vendor.id === vendorId);
+  };
+
   // Erstelle Vendor-Info-Objekte aus dem ProcessedTCData
   const getVendorList = (): VendorInfo[] => {
     if (!processedTcfData) return [];
@@ -141,6 +148,14 @@ const TCFDecoderForm: React.FC<TCFDecoderFormProps> = ({
       const nameMatch = v.name?.toLowerCase().includes(term);
       return idMatch || nameMatch;
     });
+  };
+
+  // Funktion zum Behandeln von Klicks auf "Details"
+  const handleViewVendorDetails = (vendorInfo: VendorInfo) => {
+    const originalVendor = getOriginalVendor(vendorInfo.id);
+    if (originalVendor) {
+      onViewVendorDetails(originalVendor);
+    }
   };
 
   return (
@@ -291,7 +306,7 @@ const TCFDecoderForm: React.FC<TCFDecoderFormProps> = ({
                         </td>
                         <td className="px-4 py-2">
                           <Button 
-                            onClick={() => onViewVendorDetails(vendor)}
+                            onClick={() => handleViewVendorDetails(vendor)}
                             isDarkMode={isDarkMode}
                             size="sm"
                           >

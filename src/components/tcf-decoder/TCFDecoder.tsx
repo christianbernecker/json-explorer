@@ -4,7 +4,7 @@ import VendorDetails from './VendorDetails';
 import TCFDecoderForm from './TCFDecoderForm';
 import TCFTabs, { ActiveTCFTab } from './TCFTabs';
 import HistoryPanel from './HistoryPanel';
-import { ProcessedTCData } from '../../services/tcfService';
+import { ProcessedTCData, ProcessedVendorInfo } from '../../services/types';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
@@ -28,7 +28,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
   const [tcfString, setTcfString] = useState<string>(initialTcString || '');
   const [processedTcfData, setProcessedTcfData] = useState<ProcessedTCData | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTCFTab>('decoder');
-  const [selectedVendor, setSelectedVendor] = useState<any>(null);
+  const [selectedVendor, setSelectedVendor] = useState<ProcessedVendorInfo | null>(null);
   // Neuer State für die Quelle des ausgewählten Vendors (GVL oder TCF)
   const [vendorSource, setVendorSource] = useState<VendorSource>('tcf');
   
@@ -41,7 +41,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
     setActiveTab(tab);
   };
   
-  const handleViewVendorDetails = (vendor: any, source: VendorSource = 'tcf') => {
+  const handleViewVendorDetails = (vendor: ProcessedVendorInfo, source: VendorSource = 'tcf') => {
     setSelectedVendor(vendor);
     setVendorSource(source);
     setActiveTab('vendor-details');
@@ -89,7 +89,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
             isDarkMode={isDarkMode}
             onBack={handleBackFromVendorDetails}
             type={vendorSource}
-            tcfData={processedTcfData}
+            tcfData={processedTcfData || undefined}
           />
         );
         

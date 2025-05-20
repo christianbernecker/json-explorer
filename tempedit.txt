@@ -1,0 +1,6 @@
+        const newHistoryItem: HistoryItemType = {
+          id: Date.now().toString(),
+          type: 'json',
+          content: currentParsedJson,
+          timestamp: Date.now()
+        };
