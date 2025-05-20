@@ -16,6 +16,7 @@ import { GVL } from '@iabtechlabtcf/core'; // GVL-Typ wird weiterhin benötigt f
 import { addHistoryItem } from '../services/historyService';
 
 import Button from './shared/Button';
+import ModernTabs from './shared/ModernTabs';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
@@ -1212,39 +1213,18 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
       )} */}
       
       {/* Tab navigation */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
-        <button
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-            activeTab === 'decoder' 
-              ? `${tabActiveBg} text-white` 
-              : `${tabInactiveBg} ${secondaryTextColor}`
-          }`}
-          onClick={() => handleTabChange('decoder')}
-        >
-          TCF Decoder
-        </button>
-        <button
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-            activeTab === 'gvl-explorer' 
-              ? `${tabActiveBg} text-white` 
-              : `${tabInactiveBg} ${secondaryTextColor}`
-          }`}
-          onClick={() => handleTabChange('gvl-explorer')}
-        >
-          GVL Explorer
-        </button>
-        {selectedVendor && (
-          <button
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg ${
-              activeTab === 'vendor-details' 
-                ? `${tabActiveBg} text-white` 
-                : `${tabInactiveBg} ${secondaryTextColor}`
-            }`}
-            onClick={() => handleTabChange('vendor-details')}
-          >
-            Vendor Details
-          </button>
-        )}
+      <div className="mb-6">
+        <ModernTabs
+          tabs={[
+            { id: 'decoder', label: 'TCF Decoder' },
+            { id: 'gvl-explorer', label: 'GVL Explorer' },
+            ...(selectedVendor ? [{ id: 'vendor-details', label: 'Vendor Details' }] : [])
+          ]}
+          activeTabId={activeTab}
+          onTabChange={(tabId) => handleTabChange(tabId as ActiveTab)}
+          isDarkMode={isDarkMode}
+          size="medium"
+        />
       </div>
       
       {/* TCF Decoder Tab */}
