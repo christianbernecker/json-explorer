@@ -27,6 +27,7 @@
     "ag-grid-react": "^33.2.4",
     "chart.js": "^4.4.9",
     "date-fns": "^4.1.0",
+    "framer-motion": "^12.12.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.1",
     "klaro": "^0.7.21",

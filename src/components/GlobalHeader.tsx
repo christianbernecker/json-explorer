@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import InfoPanel from './InfoPanel';
+import ModernTabs, { TabItem } from './shared/ModernTabs';
 
 interface GlobalHeaderProps {
   isDarkMode: boolean;
@@ -21,6 +21,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   activeTab 
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isJSONExplorer = location.pathname.includes('/apps/json-explorer');
   const isDataVisualizer = location.pathname.includes('/apps/data-visualizer');
   const isTCFDecoder = activeTab === 'tcf-decoder' || location.pathname.includes('/apps/tcf-decoder');
@@ -77,6 +78,50 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
     } else {
       return "Tools for AdTech professionals";
     }
+  };
+
+  // JSON Explorer Tab-Komponente mit ModernTabs
+  const renderJsonExplorerTabs = () => {
+    // Icons für die Tabs
+    const validatorIcon = (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+    
+    const diffIcon = (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+      </svg>
+    );
+    
+    // Tab-Definitionen
+    const tabs: TabItem[] = [
+      { id: 'validator', label: 'JSON Validator & VAST Explorer', icon: validatorIcon },
+      { id: 'diff', label: 'JSON Diff Comparison Tool', icon: diffIcon }
+    ];
+    
+    // Aktiver Tab
+    const activeTabId = location.pathname.includes('/diff') ? 'diff' : 'validator';
+    
+    // Tab-Wechsel-Handler
+    const handleTabChange = (tabId: string) => {
+      if (tabId === 'validator') {
+        navigate('/apps/json-explorer/validator');
+      } else if (tabId === 'diff') {
+        navigate('/apps/json-explorer/diff');
+      }
+    };
+    
+    return (
+      <ModernTabs
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onTabChange={handleTabChange}
+        isDarkMode={isDarkMode}
+        size="medium"
+      />
+    );
   };
 
   return (
@@ -163,30 +208,10 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
             </div>
           </div>
           
-          {/* Tab navigation for JSON Explorer - Angepasst für responsives Layout */}
+          {/* Neue Tab-Navigation für JSON Explorer mit ModernTabs */}
           {isJSONExplorer && (
-            <div className={`ml-20 sm:ml-24 md:ml-28 px-2 sm:px-4 md:px-6 lg:px-10 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-              <div className="flex border-b border-gray-300">
-                <Link 
-                  to="/apps/json-explorer/validator"
-                  className={`py-3 px-4 flex items-center space-x-2 border-b-2 ${location.pathname.includes('/validator') ? `border-blue-500 ${isDarkMode ? 'text-white' : 'text-blue-600'}` : `border-transparent ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'}`} transition-colors`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>JSON Validator & VAST Explorer</span>
-                </Link>
-                
-                <Link 
-                  to="/apps/json-explorer/diff"
-                  className={`py-3 px-4 flex items-center space-x-2 border-b-2 ${location.pathname.includes('/diff') ? `border-blue-500 ${isDarkMode ? 'text-white' : 'text-blue-600'}` : `border-transparent ${isDarkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-blue-600'}`} transition-colors`}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                  <span>JSON Diff Comparison Tool</span>
-                </Link>
-              </div>
+            <div className={`ml-20 sm:ml-24 md:ml-28 px-2 sm:px-4 md:px-6 lg:px-10`}>
+              {renderJsonExplorerTabs()}
             </div>
           )}
           
