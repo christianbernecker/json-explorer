@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Tue May 20 12:35:32 CEST 2025", "commit": "Fix: GVL Explorer Tab Navigation mit Query-Parametern statt 404-Fehler"}
+{"deployment": "staging", "timestamp": "Tue May 20 14:04:37 CEST 2025", "commit": "Fix: GVL Explorer Tab Navigation mit URL-Parametern statt 404-Fehler"}
