@@ -1180,7 +1180,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
   
   return (
     <div className={`${bgColor} ${textColor} p-6 rounded-lg shadow-lg w-full max-w-full mx-auto`}>
-      <h1 className="text-2xl font-bold mb-4 flex items-center justify-between">
+      <h1 className="text-2xl font-bold mb-2 flex items-center justify-between">
         <span>TCF String Decoder</span>
         <div className="flex items-center">
           <button
@@ -1199,21 +1199,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
         </div>
       </h1>
       
-      {/* History Panel wird nicht mehr hier gerendert, sondern in TCFDecoderPage */}
-      {/* {showHistoryPanel && (
-        <TCFHistoryPanel 
-          isDarkMode={isDarkMode}
-          history={tcfHistory}
-          onRestore={(str) => {
-            setTcfString(str);
-            setShowHistoryPanel(false);
-          }}
-          onClose={() => setShowHistoryPanel(false)}
-        />
-      )} */}
-      
-      {/* Tab navigation */}
-      <div className="mb-6">
+      {/* Tab navigation direkt unter dem Header */}
+      <div className="mb-4">
         <ModernTabs
           tabs={[
             { id: 'decoder', label: 'TCF Decoder' },
@@ -1226,6 +1213,28 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
           size="medium"
         />
       </div>
+      
+      {/* History Panel */}
+      {showHistoryPanel && (
+        <div className={`p-4 mb-4 border ${borderColor} rounded-md`}>
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-lg font-semibold">Recent TCF Strings</h3>
+            <button 
+              onClick={() => setShowHistoryPanel(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {/* Hier würden History-Einträge gerendert werden */}
+            <div className="text-center text-gray-500 py-4">
+              History-Funktion wurde in TCFDecoderPage ausgelagert
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* TCF Decoder Tab */}
       {activeTab === 'decoder' && renderDecoder()}
