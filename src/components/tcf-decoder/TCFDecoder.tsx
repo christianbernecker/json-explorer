@@ -111,14 +111,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
   
   return (
     <div className={`tcf-decoder ${textColor} ${bgColor} p-4 rounded-md`}>
-      <TCFTabs 
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        isDarkMode={isDarkMode}
-        showDetailsTab={Boolean(selectedVendor)}
-        showHistoryTab={true}
-      />
-      
+      {/* Entferne TCFTabs, da wir jetzt die Tabs im Header haben */}
       {renderActiveTabContent()}
     </div>
   );
