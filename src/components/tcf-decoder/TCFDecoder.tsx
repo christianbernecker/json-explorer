@@ -10,6 +10,7 @@ import { ProcessedVendorInfo } from '../../services/types';
 interface TCFDecoderProps {
   isDarkMode: boolean;
   initialTcString?: string | null;
+  initialTab?: string;
 }
 
 // Typ für die Herkunft eines Vendors
@@ -23,12 +24,13 @@ type VendorSource = 'gvl' | 'tcf';
  */
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ 
   isDarkMode, 
-  initialTcString 
+  initialTcString,
+  initialTab = 'decoder'
 }) => {
   // State
   const [tcfString, setTcfString] = useState<string>(initialTcString || '');
   const [processedTcfData] = useState<ProcessedTCData | null>(null);
-  const [activeTab, setActiveTab] = useState<ActiveTCFTab>('decoder');
+  const [activeTab, setActiveTab] = useState<ActiveTCFTab>(initialTab as ActiveTCFTab);
   const [selectedVendor, setSelectedVendor] = useState<ProcessedVendorInfo | null>(null);
   // Neuer State für die Quelle des ausgewählten Vendors (GVL oder TCF)
   const [vendorSource, setVendorSource] = useState<VendorSource>('tcf');
