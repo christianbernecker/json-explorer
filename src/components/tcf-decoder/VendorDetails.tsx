@@ -1,6 +1,5 @@
 import React from 'react';
 import Button from '../shared/Button';
-import { getVendorCombinedPurposes } from '../../services/tcfService';
 import { ProcessedVendorInfo, ProcessedTCData, CombinedPurposesData } from '../../services/types';
 
 interface VendorDetailsProps {
