@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import TCFDecoder from './TCFDecoder';
 import { Helmet } from "react-helmet-async";
-import { useLocation } from "react-router-dom";
 import { Section } from './shared';
 import ApplicationHeader from './ApplicationHeader';
 
