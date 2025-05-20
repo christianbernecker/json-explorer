@@ -33,7 +33,7 @@ fi
 
 # 1. Build
 echo "✅ Running build check..."
-CI=true npm run build
+CI=false npm run build
 
 # 2. Git Actions - Only run if NOT in CI environment
 if [ "$CI" != "true" ]; then

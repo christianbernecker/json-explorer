@@ -4,7 +4,8 @@ import VendorDetails from './VendorDetails';
 import TCFDecoderForm from './TCFDecoderForm';
 import TCFTabs, { ActiveTCFTab } from './TCFTabs';
 import HistoryPanel from './HistoryPanel';
-import { ProcessedTCData, ProcessedVendorInfo } from '../../services/types';
+import { ProcessedTCData } from '../../services/tcfService';
+import { ProcessedVendorInfo } from '../../services/types';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
@@ -26,7 +27,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
 }) => {
   // State
   const [tcfString, setTcfString] = useState<string>(initialTcString || '');
-  const [processedTcfData, setProcessedTcfData] = useState<ProcessedTCData | null>(null);
+  const [processedTcfData] = useState<ProcessedTCData | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTCFTab>('decoder');
   const [selectedVendor, setSelectedVendor] = useState<ProcessedVendorInfo | null>(null);
   // Neuer State für die Quelle des ausgewählten Vendors (GVL oder TCF)
