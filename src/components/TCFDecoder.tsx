@@ -102,8 +102,9 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString }) 
   const exportBtnColor = isDarkMode ? 'bg-green-700 hover:bg-green-800 text-white' : 'bg-green-500 hover:bg-green-600 text-white';
   const secondaryTextColor = isDarkMode ? 'text-gray-300' : 'text-gray-600';
   // const bitTextColor = isDarkMode ? 'text-blue-300' : 'text-blue-600'; // Entfernt, da ungenutzt
-  const tabActiveBg = isDarkMode ? 'bg-blue-700' : 'bg-blue-500';
-  const tabInactiveBg = isDarkMode ? 'bg-gray-700' : 'bg-gray-200';
+  // Entferne die ungenutzten Variablen
+  // const tabActiveBg = isDarkMode ? 'bg-blue-700' : 'bg-blue-500';
+  // const tabInactiveBg = isDarkMode ? 'bg-gray-700' : 'bg-gray-200';
   const tableHeaderBg = isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-800';
   const tableRowBg = isDarkMode ? 'bg-gray-900' : 'bg-white';
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
