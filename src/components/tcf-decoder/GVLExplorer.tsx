@@ -55,7 +55,7 @@ const GVLExplorer: React.FC<GVLExplorerProps> = ({
     }
     
     fetchGVLForExplorer();
-  }, []);
+  }, [vendorSearchTerm]);
 
   // Update filtered vendors wenn GVL-Instanz oder Suchbegriff sich ändert
   useEffect(() => {

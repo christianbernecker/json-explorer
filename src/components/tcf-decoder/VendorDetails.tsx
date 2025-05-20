@@ -1,7 +1,7 @@
 import React from 'react';
 import Button from '../shared/Button';
 import { getVendorCombinedPurposes } from '../../services/tcfService';
-import { GVLVendor, ProcessedVendorInfo, ProcessedTCData, CombinedPurposesData } from '../../services/types';
+import { ProcessedVendorInfo, ProcessedTCData, CombinedPurposesData } from '../../services/types';
 
 interface VendorDetailsProps {
   vendor: ProcessedVendorInfo;
@@ -34,10 +34,6 @@ const VendorDetails: React.FC<VendorDetailsProps> = ({
   const highlightColor = isDarkMode ? 'text-yellow-300' : 'text-yellow-600';
   const secondaryTextColor = isDarkMode ? 'text-gray-300' : 'text-gray-600';
 
-  // Zwecke kombinieren für TCF-Vendors, falls TCF-Daten vorhanden
-  // Hier hole ich nur die kombinierten Purposes IDs (number[])
-  const combinedPurposesIds = type === 'tcf' ? getVendorCombinedPurposes(vendor) : null;
-  
   // Erstelle eine Struktur mit detaillierten Daten für die Anzeige 
   // Dies ersetzt die frühere Verwendung von combinedPurposesData
   const combinedPurposesData: CombinedPurposesData = {
