@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May 21 11:33:24 CEST 2025", "commit": "Fix doppelte Tab-Navigation im TCF Decoder"}
+{"deployment": "staging", "timestamp": "Wed May 21 12:08:23 CEST 2025", "commit": "Fix TCF Decoder Probleme: Vollständige Vendoren-Liste, detaillierte Vendor-Ansicht und GVL Explorer-Tab wiederhergestellt"}
