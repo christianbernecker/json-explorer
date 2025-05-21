@@ -6,7 +6,7 @@ import HistoryPanel from './HistoryPanel';
 import { ProcessedTCData } from '../../services/tcfService';
 import { ProcessedVendorInfo } from '../../services/types';
 
-// Definiere den Typ für die Tabs direkt hier, da TCFTabs entfernt wird
+// Definiere den Typ für die Tabs direkt hier
 export type TcfContentTab = 'decoder' | 'gvl-explorer' | 'vendor-details' | 'history';
 
 interface TCFDecoderProps {
@@ -115,7 +115,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
   
   return (
     <div className={`tcf-decoder ${textColor} ${bgColor} p-4 rounded-md`}>
-      {/* Die TCFTabs-Komponente (untere Navigation) wurde entfernt. Die Navigation erfolgt über den GlobalHeader. */}
+      {/* Kein zusätzliches Tab-System hier - nur der Inhalt des aktiven Tabs wird angezeigt */}
       {renderActiveTabContent()}
     </div>
   );

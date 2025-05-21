@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May 21 09:03:16 CEST 2025", "commit": "Fix TCFDecoder und ApplicationHeader: Behebung fehlender Props und Verbesserung der TCF-Komponenten"}
+{"deployment": "staging", "timestamp": "Wed May 21 09:54:32 CEST 2025", "commit": "Fix: Doppelte Tab-Navigation im TCF Decoder entfernt und Navigation verbessert"}
