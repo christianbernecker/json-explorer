@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May 21 12:08:38 CEST 2025", "commit": "Fix TCF Decoder Probleme"}
+{"deployment": "staging", "timestamp": "Wed May 21 14:52:43 CEST 2025", "commit": "Fix doppelte Navigation im TCF Decoder und Wiederherstellung der Vendor-Liste"}

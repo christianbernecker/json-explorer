@@ -30,6 +30,27 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
   // State für Vendor Details
   const [selectedVendor, setSelectedVendor] = useState<any | null>(null);
   
+  // GVL laden für GVL Explorer
+  const loadGVL = async () => {
+    if (isLoadingGVL || gvlExplorerInstance) return;
+    
+    try {
+      setIsLoadingGVL(true);
+      const gvl = await loadAndCacheGVL();
+      setGvlExplorerInstance(gvl);
+      
+      // Alle Vendors filtern
+      if (gvl && gvl.vendors) {
+        const allVendors = Object.values(gvl.vendors).sort((a, b) => a.id - b.id);
+        setFilteredVendors(allVendors);
+      }
+    } catch (error) {
+      console.error('Error loading GVL:', error);
+    } finally {
+      setIsLoadingGVL(false);
+    }
+  };
+  
   // Wenn sich der initialTab ändert, aktualisiere den aktiven Tab
   useEffect(() => {
     if (initialTab) {
@@ -45,7 +66,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
         setSelectedVendor(null);
       }
     }
-  }, [initialTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialTab, activeTab, gvlExplorerInstance]);
   
   // Styling
   const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-white';
@@ -156,27 +178,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
   const handleBackFromVendorDetails = () => {
     setSelectedVendor(null);
     setActiveTab('decoder');
-  };
-  
-  // GVL laden für GVL Explorer
-  const loadGVL = async () => {
-    if (isLoadingGVL || gvlExplorerInstance) return;
-    
-    try {
-      setIsLoadingGVL(true);
-      const gvl = await loadAndCacheGVL();
-      setGvlExplorerInstance(gvl);
-      
-      // Alle Vendors filtern
-      if (gvl && gvl.vendors) {
-        const allVendors = Object.values(gvl.vendors).sort((a, b) => a.id - b.id);
-        setFilteredVendors(allVendors);
-      }
-    } catch (error) {
-      console.error('Error loading GVL:', error);
-    } finally {
-      setIsLoadingGVL(false);
-    }
   };
 
   return (
