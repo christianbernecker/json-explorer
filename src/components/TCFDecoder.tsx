@@ -197,10 +197,43 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
           </div>
 
           <div className="flex flex-wrap gap-2 mb-4">
-            <Button onClick={handleDecode}>Decode String</Button>
-            <Button onClick={clearInput}>Clear</Button>
+            <Button 
+              onClick={handleDecode}
+              variant="primary"
+              isDarkMode={isDarkMode}
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              }
+            >
+              Decode String
+            </Button>
+            <Button 
+              onClick={clearInput}
+              variant="secondary"
+              isDarkMode={isDarkMode}
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              }
+            >
+              Clear
+            </Button>
             {processedTcfData && (
-              <Button onClick={handleExportJSON}>Export Results as JSON</Button>
+              <Button 
+                onClick={handleExportJSON}
+                variant="export"
+                isDarkMode={isDarkMode}
+                icon={
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                }
+              >
+                Export Results as JSON
+              </Button>
             )}
           </div>
           
