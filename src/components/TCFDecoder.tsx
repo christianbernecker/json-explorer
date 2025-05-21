@@ -181,12 +181,12 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
   };
 
   return (
-    <div className={`px-0 sm:px-1 md:px-3 lg:px-4 ${textColor}`}>
+    <div className={`flex-1 ${bgColor} ${textColor}`}>
       {/* TCF Decoder Tab */}
       {(activeTab === 'decoder' || !activeTab) && (
         <>
-          {/* Input Area */}
-          <div className="mb-2 sm:mb-3 md:mb-4">
+          {/* Input Area - Hinzufügen einer umgebenden Card mit Schatten für Konsistenz mit JSON Explorer */}
+          <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md mb-4 p-4 sm:p-5 border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="flex flex-row space-x-2 sm:space-x-3 md:space-x-4">
               <div className="flex-1">
                 <h3 className={`text-base md:text-lg font-semibold mb-1 md:mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>TCF String Input</h3>
