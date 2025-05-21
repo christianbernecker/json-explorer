@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import GVLExplorer from './GVLExplorer';
 import VendorDetails from './VendorDetails';
 import TCFDecoderForm from './TCFDecoderForm';
-import TCFTabs, { ActiveTCFTab } from './TCFTabs';
 import HistoryPanel from './HistoryPanel';
 import { ProcessedTCData } from '../../services/tcfService';
 import { ProcessedVendorInfo } from '../../services/types';
 
+// Definiere den Typ für die Tabs direkt hier, da TCFTabs entfernt wird
+export type TcfContentTab = 'decoder' | 'gvl-explorer' | 'vendor-details' | 'history';
+
 interface TCFDecoderProps {
   isDarkMode: boolean;
   initialTcString?: string | null;
-  initialTab?: string;
+  initialTab?: string; // Wird von TCFDecoderPage übergeben, basierend auf URL-Parametern
 }
 
 // Typ für die Herkunft eines Vendors
@@ -25,25 +27,27 @@ type VendorSource = 'gvl' | 'tcf';
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ 
   isDarkMode, 
   initialTcString,
-  initialTab = 'decoder'
+  initialTab = 'decoder' // Standard-Tab ist 'decoder'
 }) => {
   // State
   const [tcfString, setTcfString] = useState<string>(initialTcString || '');
-  const [processedTcfData] = useState<ProcessedTCData | null>(null);
-  const [activeTab, setActiveTab] = useState<ActiveTCFTab>(initialTab as ActiveTCFTab);
+  const [processedTcfData, setProcessedTcfData] = useState<ProcessedTCData | null>(null);
+  const [activeTab, setActiveTab] = useState<TcfContentTab>(initialTab as TcfContentTab);
   const [selectedVendor, setSelectedVendor] = useState<ProcessedVendorInfo | null>(null);
-  // Neuer State für die Quelle des ausgewählten Vendors (GVL oder TCF)
   const [vendorSource, setVendorSource] = useState<VendorSource>('tcf');
   
   // Styling
   const textColor = isDarkMode ? 'text-gray-100' : 'text-gray-800';
   const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-white';
   
-  // Event-Handler
-  const handleTabChange = (tab: ActiveTCFTab) => {
-    setActiveTab(tab);
-  };
+  // Effekt, um den activeTab zu aktualisieren, wenn sich initialTab ändert
+  useEffect(() => {
+    if (initialTab === 'decoder' || initialTab === 'gvl-explorer' || initialTab === 'history' || initialTab === 'vendor-details') {
+      setActiveTab(initialTab as TcfContentTab);
+    }
+  }, [initialTab]);
   
+  // Event-Handler
   const handleViewVendorDetails = (vendor: ProcessedVendorInfo, source: VendorSource = 'tcf') => {
     setSelectedVendor(vendor);
     setVendorSource(source);
@@ -52,7 +56,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
   
   const handleBackFromVendorDetails = () => {
     setSelectedVendor(null);
-    // Zurück zur letzten Tab basierend auf der Vendor-Quelle
+    // Zurück zum vorherigen Tab (decoder oder gvl-explorer), basierend auf vendorSource
     setActiveTab(vendorSource === 'gvl' ? 'gvl-explorer' : 'decoder');
   };
   
@@ -61,7 +65,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
     setActiveTab('decoder');
   };
   
-  // Renderfunktionen für die Tabs
   const renderActiveTabContent = () => {
     switch (activeTab) {
       case 'decoder':
@@ -69,6 +72,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
           <TCFDecoderForm 
             isDarkMode={isDarkMode}
             initialTcString={tcfString}
+            onProcessTCData={setProcessedTcfData}
             onViewVendorDetails={(vendor) => handleViewVendorDetails(vendor, 'tcf')}
           />
         );
@@ -111,7 +115,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
   
   return (
     <div className={`tcf-decoder ${textColor} ${bgColor} p-4 rounded-md`}>
-      {/* Entferne TCFTabs, da wir jetzt die Tabs im Header haben */}
+      {/* Die TCFTabs-Komponente (untere Navigation) wurde entfernt. Die Navigation erfolgt über den GlobalHeader. */}
       {renderActiveTabContent()}
     </div>
   );

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '../shared/Button';
-import { decodeTCStringStrict, getProcessedTCData } from '../../services/tcfService';
+import { decodeTCStringStrict, getProcessedTCData, ProcessedTCData } from '../../services/tcfService';
 import { addHistoryItem } from '../../services/historyService';
-import { ProcessedTCData, ProcessedVendorInfo } from '../../services/types';
+import { ProcessedVendorInfo } from '../../services/types';
 
 // Hilfsinterface für die Vendor-Ansicht in der Tabelle
 interface VendorInfo {
@@ -16,6 +16,7 @@ interface TCFDecoderFormProps {
   isDarkMode: boolean;
   initialTcString?: string | null;
   onViewVendorDetails: (vendor: ProcessedVendorInfo) => void;
+  onProcessTCData: (data: ProcessedTCData | null) => void;
 }
 
 /**
@@ -27,13 +28,14 @@ interface TCFDecoderFormProps {
 const TCFDecoderForm: React.FC<TCFDecoderFormProps> = ({ 
   isDarkMode, 
   initialTcString, 
-  onViewVendorDetails 
+  onViewVendorDetails,
+  onProcessTCData
 }) => {
   // State
   const [tcfString, setTcfString] = useState(initialTcString || '');
   const [decodeError, setDecodeError] = useState<string | null>(null);
   const [decodeWarning, setDecodeWarning] = useState<string | null>(null);
-  const [processedTcfData, setProcessedTcfData] = useState<ProcessedTCData | null>(null);
+  const [processedTcfData, setLocalProcessedTcfData] = useState<ProcessedTCData | null>(null);
   const [vendorListSearchTerm, setVendorListSearchTerm] = useState<string>('');
 
   // Styling
@@ -47,10 +49,20 @@ const TCFDecoderForm: React.FC<TCFDecoderFormProps> = ({
   const tableHeaderBg = isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-800';
   const tableRowBg = isDarkMode ? 'bg-gray-900' : 'bg-white';
 
+  // Effekt, um initialTcString zu verarbeiten, wenn er sich ändert oder beim ersten Rendern
+  useEffect(() => {
+    if (initialTcString) {
+      setTcfString(initialTcString);
+      // Optional: Automatisch decodieren, wenn initialTcString vorhanden ist
+      // handleDecode(initialTcString); // Übergebe initialTcString direkt
+    }
+  }, [initialTcString]);
+
   // Funktionen
   const clearInput = () => {
     setTcfString('');
-    setProcessedTcfData(null);
+    setLocalProcessedTcfData(null);
+    onProcessTCData(null); // Auch die übergeordnete Komponente informieren
     setDecodeError(null);
     setDecodeWarning(null);
   };
@@ -60,33 +72,31 @@ const TCFDecoderForm: React.FC<TCFDecoderFormProps> = ({
     addHistoryItem('tcf', str);
   };
 
-  // TCF-String decodieren
-  const handleDecode = async () => {
+  // TCF-String decodieren - akzeptiert optional einen String für den direkten Aufruf
+  const handleDecode = async (stringToDecode?: string) => {
+    const currentString = stringToDecode || tcfString;
     setDecodeError(null);
     setDecodeWarning(null);
-    setProcessedTcfData(null);
+    setLocalProcessedTcfData(null);
+    onProcessTCData(null); // Informiere Parent über Reset
 
-    if (!tcfString.trim()) {
+    if (!currentString.trim()) {
       setDecodeError('Bitte geben Sie einen TCF-String ein.');
       return;
     }
 
     try {
-      // Decodieren des TCF-Strings
-      const { tcModel, error } = await decodeTCStringStrict(tcfString.trim());
-      
-      // Prüfen, ob ein Fehler aufgetreten ist
+      const { tcModel, error } = await decodeTCStringStrict(currentString.trim());
       if (error || !tcModel) {
         setDecodeError(error || 'Unbekannter Fehler beim Decodieren des TCF-Strings');
         return;
       }
       
-      // Verarbeiten der decodierten Daten
       const processed = await getProcessedTCData(tcModel);
-      setProcessedTcfData(processed);
+      setLocalProcessedTcfData(processed);
+      onProcessTCData(processed); // Daten an Parent-Komponente weitergeben
       
-      // Zur History hinzufügen
-      addToHistory(tcfString.trim());
+      addToHistory(currentString.trim());
     } catch (error) {
       console.error('Error decoding TCF string:', error);
       setDecodeError(error instanceof Error ? error.message : 'Unknown error decoding TCF string');
@@ -175,7 +185,7 @@ const TCFDecoderForm: React.FC<TCFDecoderFormProps> = ({
         
         <div className="flex flex-wrap gap-2">
           <Button 
-            onClick={handleDecode}
+            onClick={() => handleDecode()}
             isDarkMode={isDarkMode}
             variant="primary"
           >

@@ -16,8 +16,8 @@ interface ApplicationHeaderProps {
 const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ 
   isDarkMode, 
   toggleDarkMode, 
-  showHistory, 
-  setShowHistory, 
+  showHistory,
+  setShowHistory,
   historyLength = 0,
   title = "JSON Explorer",
   subtitle = "Visualize and analyze JSON data",
