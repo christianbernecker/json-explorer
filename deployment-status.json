@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May 21 10:34:56 CEST 2025", "commit": "Fix: Wiederherstellung der englischen Version des TCF Decoders mit korrektem Tab-Wechsel"}
+{"deployment": "staging", "timestamp": "Wed May 21 10:48:08 CEST 2025", "commit": "Fix TCF Decoder: Switch to English UI version"}
