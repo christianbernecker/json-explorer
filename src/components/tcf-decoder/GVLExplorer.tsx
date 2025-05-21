@@ -149,7 +149,7 @@ const GVLExplorer: React.FC<GVLExplorerProps> = ({
   return (
     <div className={`${textColor}`}>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-2">Vendor Database</h2>
+        <h2 className="text-2xl font-bold mb-2">Global Vendor List (GVL) Explorer</h2>
         <p className={`mb-4 ${secondaryTextColor}`}>
           Durchsuche und erforsche die aktuelle Global Vendor List
         </p>

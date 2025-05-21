@@ -172,7 +172,7 @@ const TCFDecoderForm: React.FC<TCFDecoderFormProps> = ({
     <div className={`${textColor}`}>
       {/* Formular */}
       <div className={`p-4 mb-6 rounded-md border ${borderColor} ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
-        <h2 className="text-xl font-bold mb-4">Decoder Tool</h2>
+        <h2 className="text-xl font-bold mb-4">TCF String Decoder</h2>
         
         <div className="mb-4">
           <textarea

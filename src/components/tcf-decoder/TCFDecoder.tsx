@@ -115,7 +115,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
   
   return (
     <div className={`tcf-decoder ${textColor} ${bgColor} p-4 rounded-md`}>
-      {/* Kein zusätzliches Tab-System hier - nur der Inhalt des aktiven Tabs wird angezeigt */}
+      {/* Keine zusätzliche Tab-Navigation - nur der Inhalt des aktiven Tabs wird angezeigt */}
       {renderActiveTabContent()}
     </div>
   );
