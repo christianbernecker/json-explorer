@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May 21 15:04:32 CEST 2025", "commit": "Fix ESLint-Fehler in TCFDecoder.tsx"}
+{"deployment": "staging", "timestamp": "Wed May 21 16:32:00 CEST 2025", "commit": "Vereinheitlichung des Button-Designs mit Verlauf-Hintergrund und konsistenten Icons"}

@@ -187,9 +187,13 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
         <>
           {/* Input Area */}
           <div className="mb-4">
+            <h3 className={`text-base md:text-lg font-semibold mb-1 md:mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>TCF String Input</h3>
             <textarea
-              className={`w-full p-2 border rounded ${inputBgColor} ${inputBorderColor} ${textColor} focus:ring-2 focus:ring-blue-500`}
-              rows={4}
+              className={`w-full h-28 sm:h-32 p-2 sm:p-3 border rounded-lg font-mono text-xs mb-1 md:mb-2 outline-none transition ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                  : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              }`}
               placeholder="Enter TCF String here..."
               value={tcfString}
               onChange={(e) => setTcfString(e.target.value)}
@@ -201,24 +205,22 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
               onClick={handleDecode}
               variant="primary"
               isDarkMode={isDarkMode}
-              icon={
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              }
+              title="Decode TCF String"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
               Decode String
             </Button>
             <Button 
               onClick={clearInput}
               variant="secondary"
               isDarkMode={isDarkMode}
-              icon={
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              }
+              title="Clear Input"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
               Clear
             </Button>
             {processedTcfData && (
@@ -226,12 +228,11 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
                 onClick={handleExportJSON}
                 variant="export"
                 isDarkMode={isDarkMode}
-                icon={
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                }
+                title="Export Results as JSON"
               >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
                 Export Results as JSON
               </Button>
             )}
