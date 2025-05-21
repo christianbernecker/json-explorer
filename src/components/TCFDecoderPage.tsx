@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import TCFDecoder from './tcf-decoder';
+import TCFDecoder from './TCFDecoder';
 import { Helmet } from 'react-helmet-async';
 import { Section } from './shared';
 import ApplicationHeader from './ApplicationHeader';
-import { useLocation } from 'react-router-dom';
 
 // URL parameter for direct decoding
 interface TCFDecoderPageProps {
@@ -15,16 +14,6 @@ interface TCFDecoderPageProps {
 }
 
 const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, toggleDarkMode }) => {
-  const routeLocation = useLocation();
-
-  // Bestimme den aktiven Tab basierend auf der URL
-  const getActiveTabFromURL = () => {
-    if (routeLocation.pathname.includes('/gvl-explorer')) {
-      return 'gvl-explorer';
-    }
-    return 'decoder';
-  };
-
   // State für automatisches Dekodieren aus URL-Parameter
   const [autoDecodeString, setAutoDecodeString] = useState<string | null>(null);
   // History-State für TCF Strings
@@ -85,7 +74,6 @@ const TCFDecoderPage: React.FC<TCFDecoderPageProps> = ({ location, isDarkMode, t
           <TCFDecoder 
             isDarkMode={isDarkMode} 
             initialTcString={autoDecodeString}
-            initialTab={getActiveTabFromURL()}
           />
         </Section>
       </div>
