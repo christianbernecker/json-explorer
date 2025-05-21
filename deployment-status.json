@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May 21 10:09:29 CEST 2025", "commit": "Fix: Doppelte Tab-Navigation im TCF Decoder entfernt und Titel angepasst für bessere UI"}
+{"deployment": "staging", "timestamp": "Wed May 21 10:22:27 CEST 2025", "commit": "Fix: Originale TCF Decoder Version mit korrektem Tab-System wiederhergestellt"}

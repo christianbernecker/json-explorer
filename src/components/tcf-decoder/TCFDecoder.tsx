@@ -40,9 +40,17 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
   const textColor = isDarkMode ? 'text-gray-100' : 'text-gray-800';
   const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-white';
   
+  // Debug-Logging für bessere Fehleranalyse
+  useEffect(() => {
+    console.log('TCFDecoder initialTab:', initialTab);
+    console.log('TCFDecoder activeTab:', activeTab);
+  }, [initialTab, activeTab]);
+  
   // Effekt, um den activeTab zu aktualisieren, wenn sich initialTab ändert
   useEffect(() => {
+    // Nur gültige Tab-Werte akzeptieren
     if (initialTab === 'decoder' || initialTab === 'gvl-explorer' || initialTab === 'history' || initialTab === 'vendor-details') {
+      console.log('TCFDecoder updating activeTab to:', initialTab);
       setActiveTab(initialTab as TcfContentTab);
     }
   }, [initialTab]);
@@ -66,6 +74,8 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
   };
   
   const renderActiveTabContent = () => {
+    console.log('renderActiveTabContent, activeTab =', activeTab);
+    
     switch (activeTab) {
       case 'decoder':
         return (
@@ -109,7 +119,15 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({
         );
         
       default:
-        return null;
+        console.error('Unknown activeTab value:', activeTab);
+        return (
+          <TCFDecoderForm 
+            isDarkMode={isDarkMode}
+            initialTcString={tcfString}
+            onProcessTCData={setProcessedTcfData}
+            onViewVendorDetails={(vendor) => handleViewVendorDetails(vendor, 'tcf')}
+          />
+        );
     }
   };
   
