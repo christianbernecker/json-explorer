@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 22:01:40 CEST 2025", "commit": "Harmonisierung: JSON Explorer Eingabemaske jetzt identisch Card-Layout wie TCF Decoder"}
+{"deployment": "staging", "timestamp": "Thu May 22 22:10:02 CEST 2025", "commit": "Harmonisierung: Keine doppelten Cards, Ausgabebereiche nur noch schlichtes Padding/Border"}

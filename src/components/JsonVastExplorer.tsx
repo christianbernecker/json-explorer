@@ -1423,7 +1423,7 @@ const JsonVastExplorer = React.memo(({
 
                 {/* Toggle zwischen JSON und Structure */}
                 {showJsonStructure ? (
-                  <div className="p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} h-full overflow-auto">
+                  <div className={`p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} h-full overflow-auto`}>
                     <div className="text-xs font-mono">
                       {generateJsonOutline(parsedJson)}
                     </div>
@@ -1432,7 +1432,7 @@ const JsonVastExplorer = React.memo(({
                   <div 
                     ref={jsonRef}
                     key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
-                    className="flex-1 p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} overflow-auto"
+                    className={`flex-1 p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} overflow-auto`}
                     style={{ height: 'calc(100vh - 300px)' }}
                   >
                     <div 
@@ -1629,13 +1629,13 @@ const JsonVastExplorer = React.memo(({
                 
                 {/* Toggle zwischen VAST und Structure */}
                 {showVastStructure ? (
-                  <div className="p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} h-full overflow-auto">
+                  <div className={`p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} h-full overflow-auto`}>
                     <div className="text-xs font-mono">
                       {generateVastOutline(rawVastContent)}
                     </div>
                   </div>
                 ) : (
-                  <div className="p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} overflow-auto" style={{ height: 'calc(100vh - 280px)' }}>
+                  <div className={`p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} overflow-auto`} style={{ height: 'calc(100vh - 280px)' }}>
                     {/* Content des aktuellen Tabs */}
                     <div className="p-2 bg-transparent border-b-0">
                       <div className="text-xs">
