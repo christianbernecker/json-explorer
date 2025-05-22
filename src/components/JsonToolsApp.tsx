@@ -7,7 +7,6 @@ import JsonVastExplorer from './JsonVastExplorer';
 import JsonDiffInspector from './JsonDiffInspector';
 import { SEO, StructuredData } from './seo';
 import ApplicationHeader from './ApplicationHeader';
-import PrimaryContainer from './shared/PrimaryContainer';
 import { useLocation } from 'react-router-dom';
 
 // Main Application Component

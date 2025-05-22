@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 22:46:01 CEST 2025", "commit": "Finale Harmonisierung: PrimaryContainer entfernt, Card direkt im Wrapper (100% identisch zu TCFDecoder)"}
+{"deployment": "staging", "timestamp": "Thu May 22 22:47:40 CEST 2025", "commit": "User-Request: Staging Deploy nach finaler Layout-Harmonisierung"}
