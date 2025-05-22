@@ -26,6 +26,20 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   const isDataVisualizer = location.pathname.includes('/apps/data-visualizer');
   const isTCFDecoder = activeTab === 'tcf-decoder' || location.pathname.includes('/apps/tcf-decoder');
   const [showInfo, setShowInfo] = useState(false);
+  
+  // TCF Decoder Icons - für die inline Tab-Navigation
+  const decoderIcon = (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+      <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
+    </svg>
+  );
+  
+  const gvlIcon = (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M21 6.375c0 2.692-4.03 4.875-9 4.875s-9-2.183-9-4.875 4.03-4.875 9-4.875 9 2.183 9 4.875z" />
+      <path d="M12 12.75c-2.685 0-5.19-.586-7.078-1.609a8.283 8.283 0 001.944-1.266c.166-.123.337-.24.514-.352C8.734 10.489 10.315 10.875 12 10.875c1.685 0 3.266-.387 4.62-1.352.177.112.348.23.514.352a8.283 8.283 0 001.944 1.266c-1.888 1.023-4.393 1.609-7.078 1.609z" />
+    </svg>
+  );
 
   // App-specific icons and text
   const getAppIcon = () => {
@@ -215,7 +229,27 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
             </div>
           )}
           
-          {/* Tab navigation for TCF Decoder could be added here if needed */}
+          {/* Tab-Navigation für TCF Decoder */}
+          {isTCFDecoder && (
+            <div className={`ml-20 sm:ml-24 md:ml-28 px-2 sm:px-4 md:px-6 lg:px-10`}>
+              <ModernTabs
+                tabs={[
+                  { id: "decoder", label: "TCF Decoder", icon: decoderIcon },
+                  { id: "gvl-explorer", label: "GVL Explorer", icon: gvlIcon }
+                ]}
+                activeTabId={location.search.includes("tab=gvl-explorer") ? "gvl-explorer" : "decoder"}
+                onTabChange={(tabId) => {
+                  if (tabId === "decoder") {
+                    navigate("/apps/tcf-decoder");
+                  } else if (tabId === "gvl-explorer") {
+                    navigate("/apps/tcf-decoder?tab=gvl-explorer");
+                  }
+                }}
+                isDarkMode={isDarkMode}
+                size="medium"
+              />
+            </div>
+          )}
         </div>
       </header>
 

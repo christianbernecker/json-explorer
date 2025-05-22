@@ -170,7 +170,22 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
 
   // Vendor-Details anzeigen
   const handleViewVendorDetails = (vendor: any) => {
-    setSelectedVendor(vendor);
+    // Standardisiere das Vendor-Objekt
+    const safeVendor = {
+      id: vendor.id,
+      name: vendor.name,
+      policyUrl: vendor.policyUrl || '',
+      purposesConsent: vendor.purposesConsent || vendor.purposes || [],
+      purposesLI: vendor.purposesLI || vendor.legIntPurposes || [],
+      specialFeaturesOptIn: vendor.specialFeaturesOptIn || vendor.specialFeatures || [],
+      features: vendor.features || [],
+      specialPurposes: vendor.specialPurposes || [],
+      hasConsent: typeof vendor.hasConsent === 'boolean' ? vendor.hasConsent : false,
+      hasLegitimateInterest: typeof vendor.hasLegitimateInterest === 'boolean' ? vendor.hasLegitimateInterest : false,
+      debugInfo: vendor.debugInfo || {},
+      publisherRestrictions: vendor.publisherRestrictions || []
+    };
+    setSelectedVendor(safeVendor);
     setActiveTab('vendor-details');
   };
   
@@ -181,12 +196,11 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
   };
 
   return (
-    <div className={`flex-1 ${bgColor} ${textColor}`}>
+    <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* TCF Decoder Tab */}
       {(activeTab === 'decoder' || !activeTab) && (
         <>
-          {/* Input Area - Hinzufügen einer umgebenden Card mit Schatten für Konsistenz mit JSON Explorer */}
-          <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md mb-4 p-4 sm:p-5 border ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className="mb-2 sm:mb-3 md:mb-4">
             <div className="flex flex-row space-x-2 sm:space-x-3 md:space-x-4">
               <div className="flex-1">
                 <h3 className={`text-base md:text-lg font-semibold mb-1 md:mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>TCF String Input</h3>
@@ -202,7 +216,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
                 />
               </div>
             </div>
-
+            
             <div className="flex space-x-3 mt-4">
               <Button 
                 onClick={handleDecode}
@@ -404,22 +418,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
                                 <td className="px-4 py-2">
                                   <Button 
                                     onClick={() => {
-                                      // Erstelle ein Vendor-Objekt für die Details-Ansicht
-                                      const vendorInfo = {
-                                        id: vendorId,
-                                        name: vendor.name,
-                                        hasConsent: hasConsent,
-                                        hasLegitimateInterest: hasLegitimateInterest,
-                                        policyUrl: vendor.policyUrl,
-                                        purposesConsent: [],
-                                        purposesLI: [],
-                                        specialFeaturesOptIn: [],
-                                        features: vendor.features || [],
-                                        specialPurposes: vendor.specialPurposes || [],
-                                        debugInfo: {}
-                                      };
-                                      
-                                      handleViewVendorDetails(vendorInfo);
+                                      handleViewVendorDetails(vendor);
                                     }}
                                     isDarkMode={isDarkMode}
                                     variant="secondary"
@@ -673,21 +672,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
                             <div className="flex space-x-2">
                               <Button 
                                 onClick={() => {
-                                  // Erstelle ein Vendor-Objekt für die Details-Ansicht
-                                  const vendorInfo = {
-                                    id: vendor.id,
-                                    name: vendor.name,
-                                    policyUrl: vendor.policyUrl,
-                                    purposesConsent: vendor.purposes || [],
-                                    purposesLI: vendor.legIntPurposes || [],
-                                    specialFeaturesOptIn: vendor.specialFeatures || [],
-                                    features: vendor.features || [],
-                                    specialPurposes: vendor.specialPurposes || [],
-                                    hasConsent: false,
-                                    hasLegitimateInterest: false
-                                  };
-                                  
-                                  handleViewVendorDetails(vendorInfo);
+                                  handleViewVendorDetails(vendor);
                                 }}
                                 isDarkMode={isDarkMode}
                                 variant="secondary"

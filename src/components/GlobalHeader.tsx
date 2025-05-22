@@ -25,6 +25,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
   const isJSONExplorer = location.pathname.includes('/apps/json-explorer');
   const isDataVisualizer = location.pathname.includes('/apps/data-visualizer');
   const isTCFDecoder = activeTab === 'tcf-decoder' || location.pathname.includes('/apps/tcf-decoder');
+  
   const [showInfo, setShowInfo] = useState(false);
   
   // TCF Decoder Icons - für die inline Tab-Navigation
@@ -33,14 +34,16 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
       <path fillRule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clipRule="evenodd" />
     </svg>
   );
-  
   const gvlIcon = (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M21 6.375c0 2.692-4.03 4.875-9 4.875s-9-2.183-9-4.875 4.03-4.875 9-4.875 9 2.183 9 4.875z" />
-      <path d="M12 12.75c-2.685 0-5.19-.586-7.078-1.609a8.283 8.283 0 001.944-1.266c.166-.123.337-.24.514-.352C8.734 10.489 10.315 10.875 12 10.875c1.685 0 3.266-.387 4.62-1.352.177.112.348.23.514.352a8.283 8.283 0 001.944 1.266c-1.888 1.023-4.393 1.609-7.078 1.609z" />
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <path d="M3 12h18" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M12 3a9 9 0 0 1 0 18" stroke="currentColor" strokeWidth="1.2" fill="none" />
+      <rect x="15.5" y="7.5" width="4" height="1.2" rx="0.6" fill="currentColor" />
+      <rect x="15.5" y="10.2" width="4" height="1.2" rx="0.6" fill="currentColor" />
+      <rect x="15.5" y="12.9" width="4" height="1.2" rx="0.6" fill="currentColor" />
     </svg>
   );
-
   // App-specific icons and text
   const getAppIcon = () => {
     if (isTCFDecoder) {
@@ -102,22 +105,18 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     );
-    
     const diffIcon = (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
       </svg>
     );
-    
     // Tab-Definitionen
     const tabs: TabItem[] = [
       { id: 'validator', label: 'JSON Validator & VAST Explorer', icon: validatorIcon },
       { id: 'diff', label: 'JSON Diff Comparison Tool', icon: diffIcon }
     ];
-    
     // Aktiver Tab
     const activeTabId = location.pathname.includes('/diff') ? 'diff' : 'validator';
-    
     // Tab-Wechsel-Handler
     const handleTabChange = (tabId: string) => {
       if (tabId === 'validator') {
@@ -126,7 +125,6 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
         navigate('/apps/json-explorer/diff');
       }
     };
-    
     return (
       <ModernTabs
         tabs={tabs}
@@ -240,9 +238,7 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
                 activeTabId={location.search.includes("tab=gvl-explorer") ? "gvl-explorer" : "decoder"}
                 onTabChange={(tabId) => {
                   if (tabId === "decoder") {
-                    navigate("/apps/tcf-decoder");
                   } else if (tabId === "gvl-explorer") {
-                    navigate("/apps/tcf-decoder?tab=gvl-explorer");
                   }
                 }}
                 isDarkMode={isDarkMode}
