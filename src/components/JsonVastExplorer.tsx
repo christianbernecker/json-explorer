@@ -1267,407 +1267,54 @@ const JsonVastExplorer = React.memo(({
         </div>
       </Card>
 
+      {/* Fehlermeldungen vereinheitlichen */}
       {error && (
-        <div className={`p-3 md:p-4 mb-3 md:mb-4 rounded-lg flex items-center ${
-          isDarkMode 
-            ? 'bg-red-900 text-red-200 border-l-4 border-red-600' 
-            : 'bg-red-50 text-red-600 border-l-4 border-red-500'
-        }`}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span>{error}</span>
+        <div className={`mb-4 p-3 border border-red-400 rounded bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200`}>
+          <strong>Error:</strong> {error}
         </div>
       )}
       
       {(parsedJson || rawVastContent) && (
-        <div className="flex-1 flex flex-col min-h-0 mt-1 sm:mt-2">
+        <div className="my-6 flex flex-col min-h-0">
           <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 lg:space-x-3 flex-1 min-h-0">
             {/* JSON Content - Left column */}
             {parsedJson && (
               <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
-                <div className="flex justify-between items-center mb-1 md:mb-2">
-                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-                    Formatted JSON
-                  </h3>
-                  
-                  {/* Control buttons mit Toggle für Structure */}
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => setShowJsonStructure(!showJsonStructure)}
-                      className={`flex items-center px-2 py-1 rounded-md text-xs ${
-                        showJsonStructure 
-                          ? (isDarkMode ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white') 
-                          : (isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')
-                      }`}
-                      title="Toggle between JSON view and structure view"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                      </svg>
-                      Structure
-                    </button>
-                    <button 
-                      onClick={() => setIsWordWrapEnabled(!isWordWrapEnabled)}
-                      className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                      title={isWordWrapEnabled ? "Disable Word Wrap" : "Enable Word Wrap"}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                      </svg>
-                      Wrap
-                    </button>
-                    <button 
-                      onClick={copyJsonToClipboard} 
-                      className={`flex items-center px-2 py-1 rounded-md text-xs ${isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700'}`}
-                      title="Copy JSON"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Copy
-                    </button>
-                    
-                    {/* Integrierte Suchleiste direkt im UI - jetzt ganz rechts und mit Outline */}
-                    <div className="relative flex items-center ml-auto">
-                      <div className={`flex items-center border ${isDarkMode ? 'border-blue-500' : 'border-blue-400'} rounded-md overflow-hidden`}>
-                        <input
-                          type="text"
-                          className={`w-32 sm:w-48 px-2 py-1 text-xs search-input ${
-                            isDarkMode 
-                              ? 'bg-gray-700 text-gray-200 focus:outline-none' 
-                              : 'bg-white text-gray-700 focus:outline-none'
-                          }`}
-                          placeholder="JSON suchen..."
-                          value={jsonSearchTerm}
-                          onChange={(e) => setJsonSearchTerm(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              if (e.shiftKey) {
-                                // Shift+Enter für die Suche rückwärts
-                                if (jsonSearchStatus === 'results') {
-                                  goToPrevJsonResult();
-                                } else {
-                                  performJsonSearch();
-                                }
-                              } else {
-                                // Enter für die Suche vorwärts
-                                if (jsonSearchStatus === 'results' && jsonSearchResults.length > 0) {
-                                  goToNextJsonResult();
-                                } else {
-                                  performJsonSearch();
-                                }
-                              }
-                            }
-                          }}
-                        />
-                        <button
-                          onClick={performJsonSearch}
-                          className={`px-2 py-1 text-xs ${
-                            isDarkMode 
-                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                              : 'bg-blue-500 text-white hover:bg-blue-600'
-                          }`}
-                          title="Suche (Enter)"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
-                        </button>
-                      </div>
-                      
-                      {jsonSearchStatus === 'no-results' && (
-                        <div className="absolute top-full mt-1 right-0 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 text-xs px-2 py-1 rounded">
-                          Keine Treffer
-                        </div>
-                      )}
-                      
-                      {jsonSearchResults.length > 0 && (
-                        <div className="flex items-center ml-1">
-                          <span className="text-xs text-gray-600 dark:text-gray-300 mr-1">
-                            {jsonCurrentResultIndex + 1}/{jsonSearchResults.length}
-                          </span>
-                          
-                          <button 
-                            onClick={goToPrevJsonResult}
-                            className={`p-1 rounded ${
-                              isDarkMode 
-                                ? 'text-gray-300 hover:bg-gray-700' 
-                                : 'text-gray-600 hover:bg-gray-200'
-                            }`}
-                            title="Vorheriges Ergebnis (Shift+Enter)"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                          
-                          <button 
-                            onClick={goToNextJsonResult}
-                            className={`p-1 rounded ${
-                              isDarkMode 
-                                ? 'text-gray-300 hover:bg-gray-700' 
-                                : 'text-gray-600 hover:bg-gray-200'
-                            }`}
-                            title="Nächstes Ergebnis (Enter)"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h3>
+                    {/* Control buttons ... */}
+                    {/* ... bestehender Button-Code ... */}
                   </div>
-                </div>
-
-                {/* Toggle zwischen JSON und Structure */}
-                {showJsonStructure ? (
-                  <div className={`p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} h-full overflow-auto`}>
+                  {/* Toggle zwischen JSON und Structure */}
+                  {showJsonStructure ? (
                     <div className="text-xs font-mono">
                       {generateJsonOutline(parsedJson)}
                     </div>
-                  </div>
-                ) : (
-                  <div 
-                    ref={jsonRef}
-                    key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
-                    className={`flex-1 p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} overflow-auto`}
-                    style={{ height: 'calc(100vh - 300px)' }}
-                  >
+                  ) : (
                     <div 
-                      dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
+                      ref={jsonRef}
+                      key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
                       className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
                       style={{ maxWidth: "100%" }}
-                    />
-                  </div>
-                )}
+                    >
+                      <div 
+                        dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             )}
-            
             {/* VAST Content - Right column or full width if no JSON */}
             {rawVastContent && (
               <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
-                <h3 className={`text-lg font-semibold mb-1 md:mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
-                
-                {/* Tabs und Toggle für Structure - MIT MEHR ABSTAND */}
-                <div className="flex flex-col mb-3 md:mb-4">
-                  <div className={`rounded-t-lg bg-gray-100 dark:bg-gray-700 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'} overflow-hidden mb-1 md:mb-2`} style={{ maxWidth: 'calc(100% - 8px)' }}>
-                    <div className="overflow-x-auto" style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none' }}>
-                      <div className="flex whitespace-nowrap" style={{ minWidth: 'max-content' }}>
-                        {vastChain.length > 0 ? (
-                          <>
-                            <button
-                              onClick={() => handleVastTabChange(0)}
-                              className={`${
-                                activeVastTabIndex === 0
-                                  ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
-                                  : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
-                              } px-4 py-2 text-sm font-medium rounded-t-lg flex-shrink-0`}
-                            >
-                              Embedded VAST
-                            </button>
-                            {vastChain.map((item, index) => (
-                              <button
-                                key={index}
-                                onClick={() => {
-                                  handleVastTabChange(index + 1);
-                                }}
-                                className={`${
-                                  activeVastTabIndex === index + 1
-                                    ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
-                                    : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
-                                } px-4 py-2 text-sm font-medium rounded-t-lg flex-shrink-0`}
-                              >
-                                VASTAdTagURI ({index + 1})
-                              </button>
-                            ))}
-                          </>
-                        ) : (
-                          <button
-                            className={`${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500 px-4 py-2 text-sm font-medium rounded-t-lg flex-shrink-0`}
-                          >
-                            Embedded VAST
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-2 mt-3">
-                    <button
-                      onClick={() => setShowVastStructure(!showVastStructure)}
-                      className={`flex items-center px-2 py-1 rounded-md text-xs ${
-                        showVastStructure 
-                          ? (isDarkMode ? 'bg-blue-700 text-white' : 'bg-blue-500 text-white') 
-                          : (isDarkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-700')
-                      }`}
-                      title="Toggle between VAST view and structure view"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                      </svg>
-                      Structure
-                    </button>
-                    <button
-                      onClick={toggleWordWrap}
-                      className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      <div className="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                        </svg>
-                        Wrap
-                      </div>
-                    </button>
-                    <button
-                      onClick={copyVastToClipboard}
-                      className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                    >
-                      <div className="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        Copy
-                      </div>
-                    </button>
-                    
-                    {/* Integrierte Suchleiste auch im VAST-Panel - jetzt ganz rechts und mit Outline */}
-                    <div className="relative flex items-center ml-auto">
-                      <div className={`flex items-center border ${isDarkMode ? 'border-blue-500' : 'border-blue-400'} rounded-md overflow-hidden`}>
-                        <input
-                          type="text"
-                          className={`w-32 sm:w-48 px-2 py-1 text-xs search-input ${
-                            isDarkMode 
-                              ? 'bg-gray-700 text-gray-200 focus:outline-none' 
-                              : 'bg-white text-gray-700 focus:outline-none'
-                          }`}
-                          placeholder="VAST suchen..."
-                          value={vastSearchTerm}
-                          onChange={(e) => setVastSearchTerm(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              const currentTabSearch = vastTabSearches[activeVastTabIndex];
-                              
-                              if (e.shiftKey) {
-                                // Shift+Enter für die Suche rückwärts
-                                if (currentTabSearch?.status === 'results') {
-                                  goToPrevVastResult();
-                                } else {
-                                  performVastSearch();
-                                }
-                              } else {
-                                // Enter für die Suche vorwärts
-                                if (currentTabSearch?.status === 'results' && currentTabSearch.results.length > 0) {
-                                  goToNextVastResult();
-                                } else {
-                                  performVastSearch();
-                                }
-                              }
-                            }
-                          }}
-                        />
-                        <button
-                          onClick={performVastSearch}
-                          className={`px-2 py-1 text-xs ${
-                            isDarkMode 
-                              ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                              : 'bg-blue-500 text-white hover:bg-blue-600'
-                          }`}
-                          title="Suche (Enter)"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
-                        </button>
-                      </div>
-                      
-                      {vastTabSearches[activeVastTabIndex]?.status === 'no-results' && (
-                        <div className="absolute top-full mt-1 right-0 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-200 text-xs px-2 py-1 rounded">
-                          Keine Treffer
-                        </div>
-                      )}
-                      
-                      {vastTabSearches[activeVastTabIndex]?.results.length > 0 && (
-                        <div className="flex items-center ml-1">
-                          <span className="text-xs text-gray-600 dark:text-gray-300 mr-1">
-                            {vastTabSearches[activeVastTabIndex]?.currentIndex + 1}/{vastTabSearches[activeVastTabIndex]?.results.length}
-                          </span>
-                          
-                          <button 
-                            onClick={goToPrevVastResult}
-                            className={`p-1 rounded ${
-                              isDarkMode 
-                                ? 'text-gray-300 hover:bg-gray-700' 
-                                : 'text-gray-600 hover:bg-gray-200'
-                            }`}
-                            title="Vorheriges Ergebnis (Shift+Enter)"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                          
-                          <button 
-                            onClick={goToNextVastResult}
-                            className={`p-1 rounded ${
-                              isDarkMode 
-                                ? 'text-gray-300 hover:bg-gray-700' 
-                                : 'text-gray-600 hover:bg-gray-200'
-                            }`}
-                            title="Nächstes Ergebnis (Enter)"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
+                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
+                  {/* Tabs und Toggle für Structure ... */}
+                  {/* ... bestehender Tab/Button-Code ... */}
+                  {/* VAST Content Display ... */}
                 </div>
-                
-                {/* Toggle zwischen VAST und Structure */}
-                {showVastStructure ? (
-                  <div className={`p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} h-full overflow-auto`}>
-                    <div className="text-xs font-mono">
-                      {generateVastOutline(rawVastContent)}
-                    </div>
-                  </div>
-                ) : (
-                  <div className={`p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} overflow-auto`} style={{ height: 'calc(100vh - 280px)' }}>
-                    {/* Content des aktuellen Tabs */}
-                    <div className="p-2 bg-transparent border-b-0">
-                      <div className="text-xs">
-                        Source: {activeVastTabIndex === 0 
-                          ? <span className={isDarkMode ? 'text-blue-400' : 'text-blue-600'}>JSON</span> 
-                          : (vastChain[activeVastTabIndex - 1]?.uri && (
-                            <span 
-                              className={`cursor-pointer hover:underline ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
-                              onClick={() => {
-                                if (vastChain[activeVastTabIndex - 1]?.uri) {
-                                  window.open(vastChain[activeVastTabIndex - 1].uri, '_blank', 'noopener,noreferrer');
-                                }
-                              }}
-                              title={vastChain[activeVastTabIndex - 1]?.uri}
-                            >
-                              {vastChain[activeVastTabIndex - 1]?.uri}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-                    {/* VAST Content Display */}
-                    <div className="text-sm p-0 overflow-x-auto" 
-                      ref={activeVastTabIndex === 0 ? embeddedVastOutputRef : getFetchedVastRef(activeVastTabIndex - 1)}
-                      key={`vast-output-${activeVastTabIndex}`}
-                    >
-                      {activeVastTabIndex === 0 
-                        ? renderVastContent(rawVastContent)
-                        : renderVastContent(vastChain[activeVastTabIndex - 1]?.content || null)
-                      }
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
