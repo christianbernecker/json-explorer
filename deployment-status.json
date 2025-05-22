@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 23:12:54 CEST 2025", "commit": "Lint-Fix: Unbenutzte States und Funktionen entfernt (JsonVastExplorer)"}
+{"deployment": "staging", "timestamp": "Thu May 22 23:16:25 CEST 2025", "commit": "Fix: getFetchedVastRef jetzt korrekt platziert, Outline-Toggle bleibt erhalten"}

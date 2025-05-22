@@ -61,7 +61,6 @@ const JsonVastExplorer = React.memo(({
   const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
   
   // Suchvariablen für VAST - jetzt als Array für jeden Tab
-  const [vastSearchTerm, setVastSearchTerm] = useState('');
   const [vastTabSearches, setVastTabSearches] = useState<{
     results: {element: HTMLElement, text: string, startPos: number}[];
     currentIndex: number;
@@ -81,7 +80,7 @@ const JsonVastExplorer = React.memo(({
   
   // Alte Variablen für Abwärtskompatibilität - markiert als unbenutzt
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [directSearchTerm, setDirectSearchTerm] = useState('');
+  const [vastSearchTerm, setVastSearchTerm] = useState('');
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [directSearchResults, setDirectSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -223,7 +222,6 @@ const JsonVastExplorer = React.memo(({
 
   // Zuerst füge ich einen State für die aufgeklappten JSON-Elemente hinzu
   const [expandedJsonPaths, setExpandedJsonPaths] = useState<Set<string>>(new Set());
-  const [expandedVastNodes, setExpandedVastNodes] = useState<Set<string>>(new Set());
 
   // Funktion zum Anzeigen der JSON-Outline
   const generateJsonOutline = (json: any, path: string = ''): React.ReactNode => {
@@ -360,7 +358,7 @@ const JsonVastExplorer = React.memo(({
       // Starte mit dem Root-Element
       traverseNode(xmlDoc.documentElement);
       
-      setExpandedVastNodes(paths);
+      setExpandedJsonPaths(paths);
     } catch (error) {
       console.error("Error initializing expanded VAST nodes:", error);
     }
@@ -523,7 +521,6 @@ const JsonVastExplorer = React.memo(({
     setIsSearchOpen(false); // Also hide search on clear
     // Leere die aufgeklappten Pfade
     setExpandedJsonPaths(new Set());
-    setExpandedVastNodes(new Set());
   }, []);
 
   // Format XML for display - adding proper styling and line breaks
@@ -887,7 +884,6 @@ const JsonVastExplorer = React.memo(({
     };
   }, []);
 
-  // Stelle sicher, dass showJsonStructure und setShowJsonStructure als State existieren und im Render-Teil verwendet werden
   const [showJsonStructure, setShowJsonStructure] = useState(false);
 
   return (
