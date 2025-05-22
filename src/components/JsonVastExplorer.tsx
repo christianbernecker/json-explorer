@@ -1226,7 +1226,7 @@ const JsonVastExplorer = React.memo(({
         />
       )}
 
-      <Card isDarkMode={isDarkMode} className="mt-16 mb-8" withPadding>
+      <Card isDarkMode={isDarkMode} className="mt-8 mb-8" withPadding>
         <div className="mb-2">
           <h3 className={`text-base md:text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>JSON Input</h3>
           <textarea
