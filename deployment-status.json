@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 22:19:56 CEST 2025", "commit": "Harmonisierung: Card-Abstände (mt-8 mb-8) in beiden Masken vereinheitlicht"}
+{"deployment": "staging", "timestamp": "Thu May 22 22:43:11 CEST 2025", "commit": "Harmonisierung: Wrapper- und Container-Abstände in JSON Explorer exakt wie im TCF Decoder"}
