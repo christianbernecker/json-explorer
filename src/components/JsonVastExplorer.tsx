@@ -109,6 +109,13 @@ const JsonVastExplorer = React.memo(({
   // Ref for Embedded VAST output
   const embeddedVastOutputRef = useRef<HTMLDivElement>(null);
   const fetchedVastOutputRefs = useRef<Map<number, React.RefObject<HTMLDivElement>>>(new Map());
+  const getFetchedVastRef = useCallback((index: number): React.RefObject<HTMLDivElement> => {
+    if (!fetchedVastOutputRefs.current.has(index)) {
+      // Create refs on demand
+      fetchedVastOutputRefs.current.set(index, React.createRef<HTMLDivElement>());
+    }
+    return fetchedVastOutputRefs.current.get(index)!;
+  }, []);
   
   // Custom hook for Syntax Highlighting
   const { highlightJson, highlightXml /* formatXml */ } = useHighlighter();
@@ -302,149 +309,6 @@ const JsonVastExplorer = React.memo(({
       </ul>
     );
   };
-
-  // Funktion zum Generieren der XML-Outline - Verbesserte Version
-  const generateVastOutline = useCallback((xmlContent: string | null): React.ReactNode => {
-    if (!xmlContent) return null;
-    
-    try {
-      // XML parsen und als Baumstruktur darstellen
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
-      
-      // Rekursive Funktion zum Aufbau der Outline
-      const traverseNode = (node: Node, depth: number = 0, parentPath: string = ''): React.ReactNode => {
-        // Textknoten ignorieren
-        if (node.nodeType === Node.TEXT_NODE) {
-          const textContent = node.textContent?.trim();
-          if (!textContent) return null;
-          
-          // Nur Textknoten mit Inhalt anzeigen (maximal 20 Zeichen)
-          return (
-            <li className="py-1 pl-2 ml-4 text-gray-500 text-xs">
-              {textContent.length > 20 ? `${textContent.substring(0, 20)}...` : textContent}
-            </li>
-          );
-        }
-        
-        // Element-Knoten verarbeiten
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const element = node as Element;
-          const nodeName = element.nodeName;
-          const hasChildren = element.childNodes.length > 0;
-          const attributes = element.attributes;
-          const nodePath = `${parentPath}/${nodeName}`;
-          const isExpanded = expandedVastNodes.has(nodePath);
-          
-          return (
-            <li key={`${nodeName}-${depth}`} className="py-1">
-              <div className="flex items-start">
-                <span 
-                  className={`cursor-pointer flex items-center ${isDarkMode ? 'hover:text-blue-300' : 'hover:text-blue-600'}`}
-                  onClick={() => {
-                    if (hasChildren) {
-                      // Toggle expanded state für diesen Pfad
-                      const newExpandedNodes = new Set(expandedVastNodes);
-                      if (isExpanded) {
-                        newExpandedNodes.delete(nodePath);
-                      } else {
-                        newExpandedNodes.add(nodePath);
-                      }
-                      setExpandedVastNodes(newExpandedNodes);
-                    }
-                  }}
-                >
-                  {hasChildren && (
-                    <svg xmlns="http://www.w3.org/2000/svg" 
-                      className={`h-4 w-4 mr-1 transition-transform duration-200 ${isExpanded ? 'transform rotate-90' : ''}`} 
-                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  )}
-                  <span className="text-orange-500 dark:text-orange-400">
-                    {nodeName}
-                  </span>
-                  
-                  {/* Zeige Attribute an, wenn vorhanden */}
-                  {attributes.length > 0 && (
-                    <span className="ml-2 text-blue-500 text-xs">
-                      {Array.from(attributes).map((attr) => 
-                        <span key={attr.name}>{attr.name}="{attr.value}" </span>
-                      )}
-                    </span>
-                  )}
-                </span>
-              </div>
-              
-              {/* Rekursion für Kinder-Elemente, nur wenn ausgeklappt */}
-              {hasChildren && isExpanded && (
-                <ul className="ml-4">
-                  {Array.from(element.childNodes).map((childNode, index) => (
-                    <React.Fragment key={index}>
-                      {traverseNode(childNode, depth + 1, nodePath)}
-                    </React.Fragment>
-                  ))}
-                </ul>
-              )}
-            </li>
-          );
-        }
-        
-        // CDATA-Knoten explizit verarbeiten
-        if (node.nodeType === Node.CDATA_SECTION_NODE) {
-          const cdataContent = node.nodeValue?.trim();
-          if (!cdataContent) return null;
-          
-          return (
-            <li className="py-1 pl-2 ml-4">
-              <span className="text-purple-500 dark:text-purple-400 text-xs">
-                {'<![CDATA['}{cdataContent.length > 30 ? `${cdataContent.substring(0, 30)}...` : cdataContent}{']]>'}
-              </span>
-            </li>
-          );
-        }
-        
-        // Comment-Knoten verarbeiten
-        if (node.nodeType === Node.COMMENT_NODE) {
-          const commentContent = node.nodeValue?.trim();
-          if (!commentContent) return null;
-          
-          return (
-            <li className="py-1 pl-2 ml-4 text-gray-400 text-xs">
-              {'<!-- '}{commentContent.length > 20 ? `${commentContent.substring(0, 20)}...` : commentContent}{' -->'}
-            </li>
-          );
-        }
-        
-        return null;
-      };
-      
-      // Traversiere vom Root-Element aus
-      const rootElement = xmlDoc.documentElement;
-      return (
-        <ul className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          {traverseNode(rootElement)}
-        </ul>
-      );
-    } catch (error) {
-      console.error("Error generating XML outline:", error);
-      return <p className="text-red-500">Failed to parse XML</p>;
-    }
-  }, [isDarkMode, expandedVastNodes]);
-
-  // Zuerst füge ich die State-Variablen für die Ansichtsumschaltung hinzu
-  const [showJsonStructure, setShowJsonStructure] = useState(false);
-  const [showVastStructure, setShowVastStructure] = useState(false);
-
-  // Helper function für VAST Refs
-  const getFetchedVastRef = useCallback((index: number): React.RefObject<HTMLDivElement> => {
-    if (!fetchedVastOutputRefs.current.has(index)) {
-      // Create refs on demand
-      fetchedVastOutputRefs.current.set(index, React.createRef<HTMLDivElement>());
-    }
-    return fetchedVastOutputRefs.current.get(index)!;
-  }, []);
 
   // Hilfsfunktion, um alle JSON-Pfade rekursiv aufzuklappen
   const initializeExpandedPaths = useCallback((json: any, path: string = '', paths: Set<string> = new Set<string>()) => {
@@ -662,13 +526,6 @@ const JsonVastExplorer = React.memo(({
     setExpandedVastNodes(new Set());
   }, []);
 
-  // Kopieren des JSON-Inhalts in die Zwischenablage
-  const copyJsonToClipboard = useCallback(() => {
-    if (parsedJson) {
-      copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
-    }
-  }, [parsedJson, copyToClipboard]);
-
   // Format XML for display - adding proper styling and line breaks
   const formatXmlForDisplay = useCallback((xml: string | null): string => {
     if (!xml) return '';
@@ -743,42 +600,6 @@ const JsonVastExplorer = React.memo(({
   const toggleWordWrap = useCallback(() => {
     setIsWordWrapEnabled(prev => !prev);
   }, []);
-  
-  // Copy VAST content to clipboard
-  const copyVastToClipboard = useCallback(() => {
-    if (activeVastTabIndex === 0 && rawVastContent) {
-      copyToClipboard(rawVastContent, 'VAST');
-    } else if (activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1]?.content) {
-      // Stellen sicher, dass content nicht null ist
-      const content = vastChain[activeVastTabIndex - 1].content;
-      if (content) {
-        copyToClipboard(content, 'VAST');
-      }
-    }
-  }, [activeVastTabIndex, rawVastContent, vastChain, copyToClipboard]);
-  
-  // Render VAST content with proper formatting
-  const renderVastContent = useCallback((vastContent: string | null) => {
-    if (!vastContent) return <p className="mt-4 text-red-500">No VAST content found</p>;
-    
-    const formattedVast = formatXmlForDisplay(vastContent);
-    
-    // Verwende die highlightXml-Funktion aus useHighlighter statt eigener Implementierung
-    const highlightedVast = (
-      <div 
-        dangerouslySetInnerHTML={{ 
-          __html: addLineNumbersGlobal(highlightXml(formattedVast, isDarkMode), 'xml')
-        }}
-        className={isWordWrapEnabled ? 'whitespace-normal' : 'whitespace-pre'}
-      />
-    );
-    
-    return (
-      <div className="mt-2">
-        {highlightedVast}
-      </div>
-    );
-  }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
   // Referenzen für DOM-Elemente
   const jsonRef = useRef<HTMLDivElement>(null);
@@ -1065,6 +886,9 @@ const JsonVastExplorer = React.memo(({
       document.head.removeChild(style);
     };
   }, []);
+
+  // Stelle sicher, dass showJsonStructure und setShowJsonStructure als State existieren und im Render-Teil verwendet werden
+  const [showJsonStructure, setShowJsonStructure] = useState(false);
 
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
