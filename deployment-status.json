@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 22:50:17 CEST 2025", "commit": "Lint-Fix: Unbenutzten PrimaryContainer-Import entfernt (Build-Fehler)"}
+{"deployment": "staging", "timestamp": "Thu May 22 22:55:44 CEST 2025", "commit": "UI-Harmonisierung: Doppelte Card im TCF Decoder entfernt (jetzt wie JSON Explorer)"}
