@@ -71,7 +71,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
   
   // Styling
   const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-white';
-  const textColor = isDarkMode ? 'text-gray-100' : 'text-gray-800';
   const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-200';
   const errorColor = isDarkMode ? 'text-red-300' : 'text-red-600';
   const inputBgColor = isDarkMode ? 'bg-gray-700' : 'bg-gray-50';
