@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { decodeTCStringStrict, getProcessedTCData, ProcessedTCData, loadAndCacheGVL } from '../services/tcfService';
 import { addHistoryItem } from '../services/historyService';
 import Button from './shared/Button';
@@ -33,14 +33,12 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
   const [selectedVendor, setSelectedVendor] = useState<any | null>(null);
   
   // GVL laden für GVL Explorer
-  const loadGVL = async () => {
+  const loadGVL = useCallback(async () => {
     if (isLoadingGVL || gvlExplorerInstance) return;
-    
     try {
       setIsLoadingGVL(true);
       const gvl = await loadAndCacheGVL();
       setGvlExplorerInstance(gvl);
-      
       // Alle Vendors filtern
       if (gvl && gvl.vendors) {
         const allVendors = Object.values(gvl.vendors).sort((a, b) => a.id - b.id);
@@ -51,7 +49,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
     } finally {
       setIsLoadingGVL(false);
     }
-  };
+  }, [isLoadingGVL, gvlExplorerInstance]);
   
   // Tab aus URL-Query lesen
   useEffect(() => {
