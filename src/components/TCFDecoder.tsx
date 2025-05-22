@@ -3,6 +3,7 @@ import { decodeTCStringStrict, getProcessedTCData, ProcessedTCData, loadAndCache
 import { addHistoryItem } from '../services/historyService';
 import Button from './shared/Button';
 import { GVL } from '@iabtechlabtcf/core';
+import { useLocation } from 'react-router-dom';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
@@ -14,6 +15,7 @@ interface TCFDecoderProps {
 type ActiveTab = 'decoder' | 'gvl-explorer' | 'vendor-details';
 
 const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, initialTab = 'decoder' }) => {
+  const location = useLocation();
   // State für den Decoder
   const [tcfString, setTcfString] = useState(initialTcString || '');
   const [decodeError, setDecodeError] = useState<string | null>(null);
@@ -51,23 +53,18 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
     }
   };
   
-  // Wenn sich der initialTab ändert, aktualisiere den aktiven Tab
+  // Tab aus URL-Query lesen
   useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab as ActiveTab);
-      
-      // Wenn GVL Explorer aktiviert wird und noch keine Daten geladen sind
-      if (initialTab === 'gvl-explorer' && !gvlExplorerInstance) {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab === 'gvl-explorer' || tab === 'decoder') {
+      setActiveTab(tab as ActiveTab);
+      if (tab === 'gvl-explorer' && !gvlExplorerInstance) {
         loadGVL();
       }
-      
-      // Bei Wechsel von vendor-details zurück zum Haupttab
-      if (initialTab !== 'vendor-details' && activeTab === 'vendor-details') {
-        setSelectedVendor(null);
-      }
+      setSelectedVendor(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialTab, activeTab, gvlExplorerInstance]);
+  }, [location.search]);
   
   // Styling
   const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-white';

@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 20:57:24 CEST 2025", "commit": "Syntaxfehler behoben, neues GVL Icon & Vendor-Details-Bugfix"}
+{"deployment": "staging", "timestamp": "Thu May 22 21:00:49 CEST 2025", "commit": "Lint-Fehler (textColor ungenutzt) entfernt"}

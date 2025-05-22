@@ -238,7 +238,9 @@ const GlobalHeader: React.FC<GlobalHeaderProps> = ({
                 activeTabId={location.search.includes("tab=gvl-explorer") ? "gvl-explorer" : "decoder"}
                 onTabChange={(tabId) => {
                   if (tabId === "decoder") {
+                    navigate("/apps/tcf-decoder?tab=decoder");
                   } else if (tabId === "gvl-explorer") {
+                    navigate("/apps/tcf-decoder?tab=gvl-explorer");
                   }
                 }}
                 isDarkMode={isDarkMode}
