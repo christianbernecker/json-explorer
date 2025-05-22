@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 22:13:50 CEST 2025", "commit": "Fix: Template-String Fehler in className korrigiert (ESLint Build)"}
+{"deployment": "staging", "timestamp": "Thu May 22 22:19:56 CEST 2025", "commit": "Harmonisierung: Card-Abstände (mt-8 mb-8) in beiden Masken vereinheitlicht"}
