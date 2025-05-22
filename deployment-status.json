@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 23:03:14 CEST 2025", "commit": "UI-Finetuning: Card-Abstand im JSON Explorer auf mt-8 (wie TCF Decoder)"}
+{"deployment": "staging", "timestamp": "Thu May 22 23:10:17 CEST 2025", "commit": "Output-Bereich JSON Explorer harmonisiert: Cards entfernt, Boxen wie im TCF Decoder, Abstände und Fehlermeldungen vereinheitlicht"}

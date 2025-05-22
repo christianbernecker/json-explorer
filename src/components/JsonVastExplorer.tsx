@@ -60,13 +60,6 @@ const JsonVastExplorer = React.memo(({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
   
-  // Separate Suchvariablen für JSON und VAST
-  const [jsonSearchTerm, setJsonSearchTerm] = useState('');
-  const [jsonSearchResults, setJsonSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
-  const [jsonCurrentResultIndex, setJsonCurrentResultIndex] = useState(-1);
-  const [jsonSearchCleanup, setJsonSearchCleanup] = useState<(() => void) | null>(null);
-  const [jsonSearchStatus, setJsonSearchStatus] = useState<'idle' | 'no-results' | 'results'>('idle');
-  
   // Suchvariablen für VAST - jetzt als Array für jeden Tab
   const [vastSearchTerm, setVastSearchTerm] = useState('');
   const [vastTabSearches, setVastTabSearches] = useState<{
@@ -93,8 +86,6 @@ const JsonVastExplorer = React.memo(({
   const [directSearchResults, setDirectSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentDirectResultIndex, setCurrentDirectResultIndex] = useState(-1);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [directSearchCleanup, setDirectSearchCleanup] = useState<(() => void) | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTabIndex, _setActiveTabIndex] = useState(0);
   
@@ -848,27 +839,6 @@ const JsonVastExplorer = React.memo(({
     }
   }, []);
 
-  // Navigate to next/previous result - jetzt ohne zirkuläre Abhängigkeit
-  const goToNextJsonResult = useCallback(() => {
-    if (jsonSearchResults.length === 0) return;
-    
-    const nextIndex = (jsonCurrentResultIndex + 1) % jsonSearchResults.length;
-    setJsonCurrentResultIndex(nextIndex);
-    
-    const { highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
-    highlightMatch(nextIndex, jsonSearchResults);
-  }, [jsonSearchResults, jsonCurrentResultIndex, jsonSearchTerm, jsonRef]);
-  
-  const goToPrevJsonResult = useCallback(() => {
-    if (jsonSearchResults.length === 0) return;
-    
-    const prevIndex = (jsonCurrentResultIndex - 1 + jsonSearchResults.length) % jsonSearchResults.length;
-    setJsonCurrentResultIndex(prevIndex);
-    
-    const { highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
-    highlightMatch(prevIndex, jsonSearchResults);
-  }, [jsonSearchResults, jsonCurrentResultIndex, jsonSearchTerm, jsonRef]);
-
   // Initialisiere neue VAST-Tab-Suchobjekte, wenn sich die Chain ändert
   useEffect(() => {
     // Erstelle ein Array mit einem Eintrag für den Embedded VAST-Tab 
@@ -919,105 +889,6 @@ const JsonVastExplorer = React.memo(({
       performVastSearch();
     }
   }, [activeVastTabIndex]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Perform JSON search function
-  const performJsonSearch = useCallback(() => {
-    // Reset previous search results
-    setJsonSearchResults([]);
-    setJsonCurrentResultIndex(-1);
-    
-    if (!jsonSearchTerm.trim()) {
-      setJsonSearchStatus('idle');
-      return;
-    }
-    
-    // Perform the search
-    const { matches, cleanup, highlightMatch } = performSearch(
-      jsonSearchTerm,
-      jsonRef.current,
-      jsonSearchCleanup
-    );
-    
-    // Set the results and cleanup function
-    setJsonSearchResults(matches);
-    setJsonSearchCleanup(() => cleanup);
-    
-    // Set appropriate status
-    if (matches.length > 0) {
-      setJsonSearchStatus('results');
-      setJsonCurrentResultIndex(0);
-      highlightMatch(0, matches);
-      
-      // Scroll zum ersten Ergebnis (auch horizontal)
-      if (matches[0] && matches[0].element) {
-        const element = matches[0].element;
-        
-        // Verbesserte Scroll-Funktion mit horizontalem Scrollen
-        scrollToElement(element);
-      }
-    } else {
-      setJsonSearchStatus('no-results');
-    }
-  }, [jsonSearchTerm, jsonRef, jsonSearchCleanup, scrollToElement]);
-
-  // Navigation für die VAST-Tabs
-  const goToNextVastResult = useCallback(() => {
-    const currentTabSearch = vastTabSearches[activeVastTabIndex];
-    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
-    
-    const nextIndex = (currentTabSearch.currentIndex + 1) % currentTabSearch.results.length;
-    
-    // Aktualisiere den Index im Tab-spezifischen Zustand
-    const updatedSearches = [...vastTabSearches];
-    updatedSearches[activeVastTabIndex] = {
-      ...updatedSearches[activeVastTabIndex],
-      currentIndex: nextIndex
-    };
-    setVastTabSearches(updatedSearches);
-    
-    // Get the appropriate VAST container for the current tab
-    const vastContainer = activeVastTabIndex === 0 
-      ? embeddedVastOutputRef.current 
-      : getFetchedVastRef(activeVastTabIndex - 1).current;
-    
-    // Perform the highlight
-    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
-    highlightMatch(nextIndex, currentTabSearch.results);
-    
-    // Scroll zum Ergebnis
-    if (currentTabSearch.results[nextIndex]?.element) {
-      scrollToElement(currentTabSearch.results[nextIndex].element);
-    }
-  }, [vastTabSearches, activeVastTabIndex, vastSearchTerm, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
-
-  const goToPrevVastResult = useCallback(() => {
-    const currentTabSearch = vastTabSearches[activeVastTabIndex];
-    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
-    
-    const prevIndex = (currentTabSearch.currentIndex - 1 + currentTabSearch.results.length) % currentTabSearch.results.length;
-    
-    // Aktualisiere den Index im Tab-spezifischen Zustand
-    const updatedSearches = [...vastTabSearches];
-    updatedSearches[activeVastTabIndex] = {
-      ...updatedSearches[activeVastTabIndex],
-      currentIndex: prevIndex
-    };
-    setVastTabSearches(updatedSearches);
-    
-    // Get the appropriate VAST container for the current tab
-    const vastContainer = activeVastTabIndex === 0 
-      ? embeddedVastOutputRef.current 
-      : getFetchedVastRef(activeVastTabIndex - 1).current;
-    
-    // Perform the highlight
-    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
-    highlightMatch(prevIndex, currentTabSearch.results);
-    
-    // Scroll zum Ergebnis
-    if (currentTabSearch.results[prevIndex]?.element) {
-      scrollToElement(currentTabSearch.results[prevIndex].element);
-    }
-  }, [vastTabSearches, activeVastTabIndex, vastSearchTerm, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
 
   // Perform VAST search function - jetzt tabspezifisch
   const performVastSearch = useCallback(() => {
