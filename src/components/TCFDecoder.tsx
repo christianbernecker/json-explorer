@@ -716,7 +716,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
             </Button>
             <h2 className="text-xl font-semibold ml-3">{selectedVendor.name} (ID: {selectedVendor.id})</h2>
           </div>
-          
           {/* Policy URL gleich am Anfang anzeigen */}
           {selectedVendor.policyUrl && (
             <div className="mb-4">
@@ -728,17 +727,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
               </p>
             </div>
           )}
-          
-          {/* Vendor Consent and LI Status Badges */}
-          <div className="flex flex-wrap gap-3 mb-4">
-            <span className={`px-3 py-1 rounded-full text-sm ${selectedVendor.hasConsent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-              Consent: {selectedVendor.hasConsent ? 'Yes' : 'No'}
-            </span>
-            <span className={`px-3 py-1 rounded-full text-sm ${selectedVendor.hasLegitimateInterest ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
-              Legitimate Interest: {selectedVendor.hasLegitimateInterest ? 'Yes' : 'No'}
-            </span>
-          </div>
-          
+          {/* Die Badges für Consent und Legitimate Interest wurden entfernt */}
           {/* Decoded Purposes and Special Features */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
