@@ -64,7 +64,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
       }
       setSelectedVendor(null);
     }
-  }, [location.search]);
+  }, [location.search, gvlExplorerInstance, loadGVL]);
   
   // Styling
   const bgColor = isDarkMode ? 'bg-gray-800' : 'bg-white';
