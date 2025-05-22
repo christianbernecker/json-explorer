@@ -1423,7 +1423,7 @@ const JsonVastExplorer = React.memo(({
 
                 {/* Toggle zwischen JSON und Structure */}
                 {showJsonStructure ? (
-                  <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} h-full overflow-auto">
                     <div className="text-xs font-mono">
                       {generateJsonOutline(parsedJson)}
                     </div>
@@ -1432,7 +1432,7 @@ const JsonVastExplorer = React.memo(({
                   <div 
                     ref={jsonRef}
                     key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
-                    className={`flex-1 p-2 sm:p-3 md:p-4 rounded-lg border shadow-inner overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}
+                    className="flex-1 p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} overflow-auto"
                     style={{ height: 'calc(100vh - 300px)' }}
                   >
                     <div 
@@ -1629,15 +1629,15 @@ const JsonVastExplorer = React.memo(({
                 
                 {/* Toggle zwischen VAST und Structure */}
                 {showVastStructure ? (
-                  <div className={`p-4 rounded-lg border h-full overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} h-full overflow-auto">
                     <div className="text-xs font-mono">
                       {generateVastOutline(rawVastContent)}
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-inner" style={{ height: 'calc(100vh - 280px)', overflow: 'auto' }}>
+                  <div className="p-2 md:p-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} overflow-auto" style={{ height: 'calc(100vh - 280px)' }}>
                     {/* Content des aktuellen Tabs */}
-                    <div className="p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                    <div className="p-2 bg-transparent border-b-0">
                       <div className="text-xs">
                         Source: {activeVastTabIndex === 0 
                           ? <span className={isDarkMode ? 'text-blue-400' : 'text-blue-600'}>JSON</span> 
@@ -1656,9 +1656,8 @@ const JsonVastExplorer = React.memo(({
                           ))}
                       </div>
                     </div>
-                    
                     {/* VAST Content Display */}
-                    <div className="text-sm p-4 overflow-x-auto" 
+                    <div className="text-sm p-0 overflow-x-auto" 
                       ref={activeVastTabIndex === 0 ? embeddedVastOutputRef : getFetchedVastRef(activeVastTabIndex - 1)}
                       key={`vast-output-${activeVastTabIndex}`}
                     >
