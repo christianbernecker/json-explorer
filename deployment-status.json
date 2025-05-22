@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 22:43:11 CEST 2025", "commit": "Harmonisierung: Wrapper- und Container-Abstände in JSON Explorer exakt wie im TCF Decoder"}
+{"deployment": "staging", "timestamp": "Thu May 22 22:46:01 CEST 2025", "commit": "Finale Harmonisierung: PrimaryContainer entfernt, Card direkt im Wrapper (100% identisch zu TCFDecoder)"}
