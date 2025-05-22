@@ -5,6 +5,7 @@ import JsonHistoryPanel from './shared/JsonHistoryPanel';
 import JsonSearch from './search/JsonSearch';
 import { performSearch } from './search/SearchFix';
 import Button from './shared/Button';
+import Card from './shared/Card';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -1225,49 +1226,46 @@ const JsonVastExplorer = React.memo(({
         />
       )}
 
-      <div className="mb-2 sm:mb-3 md:mb-4">
-        <div className="flex flex-row space-x-2 sm:space-x-3 md:space-x-4">
-          <div className="flex-1">
-            <h3 className={`text-base md:text-lg font-semibold mb-1 md:mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>JSON Input</h3>
-            <textarea
-              ref={textAreaRef}
-              value={jsonInput}
-              onChange={handleJsonInputChange}
-              placeholder="Paste your JSON here..."
-              className={`w-full h-28 sm:h-32 p-2 sm:p-3 border rounded-lg font-mono text-xs mb-1 md:mb-2 outline-none transition ${
-                isDarkMode 
-                  ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                  : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-              }`}
-            />
+      <Card isDarkMode={isDarkMode} className="mb-6" withPadding>
+        <div className="mb-2">
+          <h3 className={`text-base md:text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>JSON Input</h3>
+          <textarea
+            ref={textAreaRef}
+            value={jsonInput}
+            onChange={handleJsonInputChange}
+            placeholder="Paste your JSON here..."
+            className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }`}
+          />
+          <div className="flex flex-wrap gap-3 mt-4">
+            <Button
+              onClick={handleFormat}
+              variant="primary"
+              isDarkMode={isDarkMode}
+              title="Format JSON (Ctrl+Shift+F)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+              </svg>
+              Format
+            </Button>
+            <Button
+              onClick={handleClear}
+              variant="secondary"
+              isDarkMode={isDarkMode}
+              title="Clear Input (Ctrl+Shift+L)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear
+            </Button>
           </div>
         </div>
-        
-        <div className="flex space-x-3 mt-4">
-          <Button
-            onClick={handleFormat}
-            variant="primary"
-            isDarkMode={isDarkMode}
-            title="Format JSON (Ctrl+Shift+F)"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" /> 
-            </svg>
-            Format
-          </Button>
-          <Button
-            onClick={handleClear}
-            variant="secondary"
-            isDarkMode={isDarkMode}
-            title="Clear Input (Ctrl+Shift+L)"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Clear
-          </Button>
-        </div>
-      </div>
+      </Card>
 
       {error && (
         <div className={`p-3 md:p-4 mb-3 md:mb-4 rounded-lg flex items-center ${
