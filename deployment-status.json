@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 22:10:02 CEST 2025", "commit": "Harmonisierung: Keine doppelten Cards, Ausgabebereiche nur noch schlichtes Padding/Border"}
+{"deployment": "staging", "timestamp": "Thu May 22 22:13:50 CEST 2025", "commit": "Fix: Template-String Fehler in className korrigiert (ESLint Build)"}

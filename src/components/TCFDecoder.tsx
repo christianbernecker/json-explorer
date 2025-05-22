@@ -194,7 +194,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* TCF Decoder Tab */}
       {(activeTab === 'decoder' || !activeTab) && (
-        <Card isDarkMode={isDarkMode} className="mb-6" withPadding>
+        <Card isDarkMode={isDarkMode} className="mt-8 mb-8" withPadding>
           <div className="mb-2">
             <h3 className={`text-base md:text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>TCF String Input</h3>
             <textarea
