@@ -4,6 +4,7 @@ import { addHistoryItem } from '../services/historyService';
 import Button from './shared/Button';
 import { GVL } from '@iabtechlabtcf/core';
 import { useLocation } from 'react-router-dom';
+import Card from './shared/Card';
 
 interface TCFDecoderProps {
   isDarkMode: boolean;
@@ -164,7 +165,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
 
   // Vendor-Details anzeigen
   const handleViewVendorDetails = (vendor: any) => {
-    // Standardisiere das Vendor-Objekt
+    // Vendor-Objekt IMMER aus GVL-Daten ableiten
     const safeVendor = {
       id: vendor.id,
       name: vendor.name,
@@ -193,25 +194,20 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* TCF Decoder Tab */}
       {(activeTab === 'decoder' || !activeTab) && (
-        <>
-          <div className="mb-2 sm:mb-3 md:mb-4">
-            <div className="flex flex-row space-x-2 sm:space-x-3 md:space-x-4">
-              <div className="flex-1">
-                <h3 className={`text-base md:text-lg font-semibold mb-1 md:mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>TCF String Input</h3>
-                <textarea
-                  className={`w-full h-28 sm:h-32 p-2 sm:p-3 border rounded-lg font-mono text-xs mb-1 md:mb-2 outline-none transition ${
-                    isDarkMode 
-                      ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
-                      : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                  }`}
-                  placeholder="Enter TCF String here..."
-                  value={tcfString}
-                  onChange={(e) => setTcfString(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <div className="flex space-x-3 mt-4">
+        <Card isDarkMode={isDarkMode} className="mb-6" withPadding>
+          <div className="mb-2">
+            <h3 className={`text-base md:text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>TCF String Input</h3>
+            <textarea
+              className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
+                isDarkMode 
+                  ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                  : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              }`}
+              placeholder="Enter TCF String here..."
+              value={tcfString}
+              onChange={(e) => setTcfString(e.target.value)}
+            />
+            <div className="flex flex-wrap gap-3 mt-4">
               <Button 
                 onClick={handleDecode}
                 variant="primary"
@@ -568,7 +564,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
               )}
             </div>
           )}
-        </>
+        </Card>
       )}
       
       {/* GVL Explorer Tab */}
@@ -720,7 +716,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
           {selectedVendor.policyUrl && (
             <div className="mb-4">
               <p className="text-sm">
-                <strong>Policy URL:</strong>{" "}
+                <strong>Policy URL:</strong>{' '}
                 <a href={selectedVendor.policyUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
                   {selectedVendor.policyUrl}
                 </a>
@@ -750,7 +746,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
                 </ul>
               ) : <p className="text-sm italic">None</p>}
             </div>
-            
             <div>
               <h4 className="font-semibold mb-2">Special Purposes</h4>
               {selectedVendor.specialPurposes && selectedVendor.specialPurposes.length > 0 ? (
@@ -761,7 +756,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
                 </ul>
               ) : <p className="text-sm italic">None</p>}
             </div>
-            
             <div>
               <h4 className="font-semibold mb-2">Features</h4>
               {selectedVendor.features && selectedVendor.features.length > 0 ? (
@@ -772,7 +766,6 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
                 </ul>
               ) : <p className="text-sm italic">None</p>}
             </div>
-            
             <div>
               <h4 className="font-semibold mb-2">Special Features with Opt-in</h4>
               {selectedVendor.specialFeaturesOptIn && selectedVendor.specialFeaturesOptIn.length > 0 ? (
@@ -790,4 +783,4 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
   );
 };
 
-export default TCFDecoder; 
+export default TCFDecoder;

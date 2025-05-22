@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Thu May 22 21:23:00 CEST 2025", "commit": "Lint-Fehler: loadGVL jetzt useCallback (React Hooks compliant)"}
+{"deployment": "staging", "timestamp": "Thu May 22 21:35:03 CEST 2025", "commit": "GVL Vendor-Details: Consent/Legit-Interest-Badges entfernt (nur GVL-Daten)"}
