@@ -1101,6 +1101,7 @@ const JsonVastExplorer = React.memo(({
     };
     
     highlightVastMatches(nextIndex);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, [vastTabSearches, activeVastTabIndex, scrollToElement]);
 
   const goToPrevVastResult = useCallback(() => {
@@ -1142,6 +1143,7 @@ const JsonVastExplorer = React.memo(({
     };
     
     highlightVastMatches(prevIndex);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, [vastTabSearches, activeVastTabIndex, scrollToElement]);
 
   // WICHTIG: Tab-Wechsel-Handler um Hervorhebungen zu aktualisieren
