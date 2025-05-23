@@ -117,7 +117,7 @@ const JsonVastExplorer = React.memo(({
   }, []);
   
   // Custom hook for Syntax Highlighting
-  const { highlightJson, highlightXml /* formatXml */ } = useHighlighter();
+  const { highlightJson } = useHighlighter();
   
   // Hook für Zeilennummern aufrufen
   const addLineNumbersGlobal = useAddLineNumbers(isDarkMode);
@@ -472,17 +472,6 @@ const JsonVastExplorer = React.memo(({
       setIsSearchOpen(false); // Also hide search on error
     }
   }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastChainRecursive, addToHistoryItem, initializeExpandedPaths, initializeExpandedVastNodes]);
-  
-  // Copy content to clipboard - Optimized with useCallback
-  const copyToClipboard = useCallback((text: string, type: string) => {
-    navigator.clipboard.writeText(text).then(
-      () => {
-        setCopyMessage(`${type} copied!`);
-        setTimeout(() => setCopyMessage(''), 2000);
-      },
-      (err) => console.error('Error copying: ', err)
-    );
-  }, []);
   
   // Handle JSON input change
   const handleJsonInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
