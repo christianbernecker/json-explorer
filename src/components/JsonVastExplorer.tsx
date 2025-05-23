@@ -55,6 +55,8 @@ const JsonVastExplorer = React.memo(({
   // Suche und Tab-Verwaltung
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
+  const [showStructure, setShowStructure] = useState(false); // State für JSON-Struktur-Ansicht
+  const [showVastStructure, setShowVastStructure] = useState(false); // State für VAST-Struktur-Ansicht
   
   // Für Debugging-Nachrichten
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -719,8 +721,8 @@ const JsonVastExplorer = React.memo(({
     const nextIndex = (jsonCurrentResultIndex + 1) % jsonSearchResults.length;
     setJsonCurrentResultIndex(nextIndex);
     
-    const { highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
-    highlightMatch(nextIndex, jsonSearchResults);
+    const { matches, highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
+    highlightMatch(nextIndex, matches);
   }, [jsonSearchResults, jsonCurrentResultIndex, jsonSearchTerm, jsonRef]);
   
   const goToPrevJsonResult = useCallback(() => {
@@ -729,8 +731,8 @@ const JsonVastExplorer = React.memo(({
     const prevIndex = (jsonCurrentResultIndex - 1 + jsonSearchResults.length) % jsonSearchResults.length;
     setJsonCurrentResultIndex(prevIndex);
     
-    const { highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
-    highlightMatch(prevIndex, jsonSearchResults);
+    const { matches, highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
+    highlightMatch(prevIndex, matches);
   }, [jsonSearchResults, jsonCurrentResultIndex, jsonSearchTerm, jsonRef]);
 
   // Initialisiere neue VAST-Tab-Suchobjekte, wenn sich die Chain ändert
@@ -795,7 +797,7 @@ const JsonVastExplorer = React.memo(({
     }
     
     // Perform the search
-    const { matches, cleanup, highlightMatch } = performSearch(
+    const { matches, cleanup, /* eslint-disable-next-line @typescript-eslint/no-unused-vars */ highlightMatch } = performSearch(
       jsonSearchTerm,
       jsonRef.current,
       jsonSearchCleanup
@@ -915,7 +917,7 @@ const JsonVastExplorer = React.memo(({
     }
     
     // Perform the search
-    const { matches, cleanup, highlightMatch } = performSearch(
+    const { matches, cleanup, /* eslint-disable-next-line @typescript-eslint/no-unused-vars */ highlightMatch } = performSearch(
       vastSearchTerm,
       vastContainer,
       null // Kein direktes Cleanup, wir verwalten es selbst im Array
@@ -1061,9 +1063,8 @@ const JsonVastExplorer = React.memo(({
           setIsSearchOpen(false);
         }}
         onSearchComplete={(count) => {
-          // count Parameter beibehalten, aber nicht verwenden
           console.log(`Search completed with ${count} results`);
-          // Die Variable searchResults wurde entfernt und wird hier nicht mehr gesetzt
+          performJsonSearch();
         }}
       />
     
@@ -1134,11 +1135,103 @@ const JsonVastExplorer = React.memo(({
                 <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h3>
-                    {/* Control buttons ... */}
-                    {/* ... bestehender Button-Code ... */}
+                    {/* Control buttons für JSON */}
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => setIsSearchOpen(true)}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title="Suche (Ctrl+F)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </Button>
+                      <Button
+                        onClick={toggleWordWrap}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title={isWordWrapEnabled ? "Zeilenumbruch deaktivieren" : "Zeilenumbruch aktivieren"}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                      </Button>
+                      <Button
+                        onClick={copyJsonToClipboard}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title="JSON in Zwischenablage kopieren"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                      </Button>
+                      {/* Buttons für JSON-Suche */}
+                      {jsonSearchResults.length > 0 && (
+                        <>
+                          <Button
+                            onClick={goToPrevJsonResult}
+                            variant="secondary"
+                            isDarkMode={isDarkMode}
+                            size="sm"
+                            title="Vorheriges Ergebnis"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </Button>
+                          <Button
+                            onClick={goToNextJsonResult}
+                            variant="secondary"
+                            isDarkMode={isDarkMode}
+                            size="sm"
+                            title="Nächstes Ergebnis"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  {/* Toggle zwischen JSON und Structure */}
-                  {generateJsonOutline(parsedJson)}
+                  {/* JSON Outline/Content */}
+                  <div className="flex mb-2 mt-2">
+                    <Button
+                      onClick={() => setShowStructure(!showStructure)}
+                      variant="secondary"
+                      isDarkMode={isDarkMode}
+                      size="sm"
+                      title={showStructure ? "JSON anzeigen" : "Struktur anzeigen"}
+                    >
+                      {showStructure ? "JSON anzeigen" : "Struktur anzeigen"}
+                    </Button>
+                    {jsonSearchStatus !== 'idle' && (
+                      <div className={`ml-4 text-sm ${jsonSearchStatus === 'results' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {jsonSearchStatus === 'results' ? `${jsonSearchResults.length} Treffer gefunden` : 'Keine Treffer'}
+                      </div>
+                    )}
+                  </div>
+                  {!showStructure ? (
+                    <div 
+                      ref={jsonRef}
+                      key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
+                      className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                      style={{ maxWidth: "100%" }}
+                    >
+                      <div 
+                        dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-xs font-mono">
+                      {generateJsonOutline(parsedJson)}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1146,10 +1239,144 @@ const JsonVastExplorer = React.memo(({
             {rawVastContent && (
               <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
                 <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
-                  <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
-                  {/* Tabs und Toggle für Structure ... */}
-                  {/* ... bestehender Tab/Button-Code ... */}
-                  {/* VAST Content Display ... */}
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
+                    {/* Control buttons für VAST */}
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => setIsSearchOpen(true)}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title="Suche (Ctrl+F)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </Button>
+                      <Button
+                        onClick={toggleWordWrap}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title={isWordWrapEnabled ? "Zeilenumbruch deaktivieren" : "Zeilenumbruch aktivieren"}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                      </Button>
+                      <Button
+                        onClick={copyVastToClipboard}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title="VAST in Zwischenablage kopieren"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                      </Button>
+                      {/* Buttons für VAST-Suche */}
+                      {vastTabSearches[activeVastTabIndex]?.results.length > 0 && (
+                        <>
+                          <Button
+                            onClick={goToPrevVastResult}
+                            variant="secondary"
+                            isDarkMode={isDarkMode}
+                            size="sm"
+                            title="Vorheriges Ergebnis"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                          </Button>
+                          <Button
+                            onClick={goToNextVastResult}
+                            variant="secondary"
+                            isDarkMode={isDarkMode}
+                            size="sm"
+                            title="Nächstes Ergebnis"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* VAST Tabs */}
+                  <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+                    <button
+                      onClick={() => handleVastTabChange(0)}
+                      className={`py-2 px-4 text-sm font-medium ${
+                        activeVastTabIndex === 0
+                          ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      Embedded VAST
+                    </button>
+                    
+                    {vastChain.map((item, index) => (
+                      <button
+                        key={`vast-tab-${index}`}
+                        onClick={() => handleVastTabChange(index + 1)}
+                        className={`py-2 px-4 text-sm font-medium ${
+                          activeVastTabIndex === index + 1
+                            ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        {item.isLoading ? (
+                          <span>Wrapper {index + 1} (lädt...)</span>
+                        ) : item.error ? (
+                          <span>Wrapper {index + 1} (Fehler)</span>
+                        ) : (
+                          <span>Wrapper {index + 1}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* VAST Struktur-Toggle */}
+                  <div className="flex mb-2 mt-2">
+                    <Button
+                      onClick={() => setShowVastStructure(!showVastStructure)}
+                      variant="secondary"
+                      isDarkMode={isDarkMode}
+                      size="sm"
+                      title={showVastStructure ? "VAST anzeigen" : "Struktur anzeigen"}
+                    >
+                      {showVastStructure ? "VAST anzeigen" : "Struktur anzeigen"}
+                    </Button>
+                    <div className={`ml-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {expandedVastNodes.size} XML-Knoten
+                    </div>
+                  </div>
+
+                  {/* VAST Content Display */}
+                  {activeVastTabIndex === 0 ? (
+                    <div ref={embeddedVastOutputRef} className={isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}>
+                      {renderVastContent(rawVastContent)}
+                    </div>
+                  ) : (
+                    <div ref={getFetchedVastRef(activeVastTabIndex - 1)} className={isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}>
+                      {vastChain[activeVastTabIndex - 1]?.isLoading ? (
+                        <div className="flex justify-center items-center p-10">
+                          <span className="animate-pulse text-blue-500 dark:text-blue-400">Lade VAST-Daten...</span>
+                        </div>
+                      ) : vastChain[activeVastTabIndex - 1]?.error ? (
+                        <div className="text-red-500 dark:text-red-400 p-4">
+                          <p className="font-bold">Fehler beim Laden des VAST:</p>
+                          <p>{vastChain[activeVastTabIndex - 1].error}</p>
+                        </div>
+                      ) : (
+                        renderVastContent(vastChain[activeVastTabIndex - 1]?.content)
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

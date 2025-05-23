@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 08:57:47 CEST 2025", "commit": "Rollback: JSON Explorer auf Stand vor Linter-Fixes mit voller Funktionalität wiederhergestellt"}
+{"deployment": "staging", "timestamp": "Fri May 23 09:10:59 CEST 2025", "commit": "Linter-Fehler nachhaltig behoben: Nur tote States/Handler entfernt, Funktionalität erhalten. Code-Review durchgeführt."}
