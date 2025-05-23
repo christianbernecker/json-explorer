@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Wed May  7 10:13:02 CEST 2025", "commit": "Fix: VAST-Ausgabe komplett überarbeitet mit korrektem Styling, Einrückung, Farben, Suchfunktion. JSON Explorer und VAST Viewer mit identischem Styling und Funktionen"}
+{"deployment": "staging", "timestamp": "Fri May 23 17:15:00 CEST 2025", "commit": "Erneuter Versuch: Verbesserte TCF-String-Erkennung mit Debug-Logs"}

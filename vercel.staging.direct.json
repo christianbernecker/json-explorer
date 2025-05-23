@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "^/$", "status": 307, "headers": { "Location": "/json-explorer" } },
+    { "src": "/json-explorer", "dest": "/index.html" },
+    { "src": "/json-explorer/(.*\\.(js|css|png|jpg|svg|ico))", "dest": "/$1" },
+    { "src": "/json-explorer/(.*)", "dest": "/index.html" },
+    { "handle": "filesystem" }
+  ]
+} 

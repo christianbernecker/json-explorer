@@ -1,10 +1,10 @@
 // LLM Service für die Datenanalyse und Visualisierungsvorschläge
-// Dieser Service kommuniziert mit LLM-APIs (Claude 3.5 oder ChatGPT 4 mini)
+// Dieser Service kommuniziert mit unserer eigenen API-Route (/api/analyze-data)
 
 import { AggregatedData, DataRow } from '../types';
 import type { MessageRole } from '../types/index';
 
-// Interface für den LLM-Request
+// Interface für den LLM-Request (an unsere API-Route)
 interface LLMAnalysisRequest {
   data: DataRow[];
   dimensions: string[];
@@ -12,301 +12,79 @@ interface LLMAnalysisRequest {
   aggregatedData?: AggregatedData[];
   selectedDimension?: string;
   selectedMetric?: string;
+  provider: 'openai' | 'anthropic'; // Provider wird an die API-Route gesendet
 }
 
-// Interface für die LLM-Antwort
+// Interface für die LLM-Antwort (von unserer API-Route)
 export interface LLMAnalysisResponse {
-  insights: string[]; // Bulletpoints mit Erkenntnissen
+  insights: string[];
   visualizationSuggestion: {
-    type: 'bar' | 'line' | 'pie' | 'radar' | 'area'; // empfohlener Chart-Typ
-    dimension: string; // empfohlene Dimension
-    metric: string; // empfohlene Metrik
-    explanation: string; // Erklärung der Empfehlung
+    type: 'bar' | 'line' | 'pie' | 'radar' | 'area';
+    dimension: string;
+    metric: string;
+    explanation: string;
   };
-  additionalQuestions: string[]; // Vorschläge für weitere Analysen
+  additionalQuestions: string[];
 }
 
-// Nachrichten-Interface für die API
+// Nachrichten-Interface für die API (wird aktuell nur für die alte sendMessageToClaude verwendet)
 interface Message {
   role: MessageRole;
   content: string;
 }
 
-// Claude-spezifische Typen
-interface ClaudeMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-interface ClaudeResponse {
-  id: string;
-  type: string;
-  role: string;
-  model: string;
-  content: { type: string; text: string }[];
-  stop_reason: string;
-  stop_sequence: string | null;
-  usage: {
-    input_tokens: number;
-    output_tokens: number;
-    cache_creation_input_tokens: number;
-    cache_read_input_tokens: number;
-  };
-}
-
-// API-Einstellungen
-// Sicherheitsoptimierung: API-Schlüssel nur als Umgebungsvariable
-const CLAUDE_API_KEY = process.env.REACT_APP_ANTHROPIC_API_KEY || '';
-const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
-
 /**
- * Generiert einen Prompt für das LLM basierend auf den Daten
+ * Sendet eine Analyseanfrage an unsere Backend API-Route
  */
-const generatePrompt = (request: LLMAnalysisRequest): string => {
-  const { data, dimensions, metrics, aggregatedData, selectedDimension, selectedMetric } = request;
-  
-  // Erstelle eine Übersicht der Daten
-  const totalRows = data.length;
-  const sampleData = data.slice(0, 5); // Nur die ersten 5 Zeilen
-  
-  // Basisinformationen
-  let prompt = `
-Du bist ein Datenanalyse-Experte. Analysiere die folgenden Daten und gib Erkenntnisse sowie Visualisierungsempfehlungen.
-
-DATENÜBERSICHT:
-- Anzahl der Datensätze: ${totalRows}
-- Dimensionen (kategorische Spalten): ${dimensions.join(', ')}
-- Metriken (numerische Spalten): ${metrics.join(', ')}
-`;
-
-  // Ergänze Beispieldaten
-  prompt += `\nBEISPIELDATEN (erste 5 Zeilen):\n`;
-  sampleData.forEach((row, index) => {
-    prompt += `Zeile ${index + 1}: ${JSON.stringify(row)}\n`;
-  });
-  
-  // Füge aggregierte Daten hinzu, wenn vorhanden
-  if (aggregatedData && selectedDimension && selectedMetric) {
-    prompt += `\nAGGREGIERTE DATEN für ${selectedDimension} und ${selectedMetric}:\n`;
-    prompt += JSON.stringify(aggregatedData);
-  }
-  
-  // Anweisungen für die Analyse
-  prompt += `
-AUFGABE:
-1. Analysiere die Daten und gib 3-5 wichtige Erkenntnisse in Bulletpoints.
-2. Schlage einen geeigneten Visualisierungstyp vor (bar, line, pie, radar oder area).
-3. Begründe deine Empfehlung.
-4. Schlage eine geeignete Dimension und Metrik für die Visualisierung vor.
-5. Formuliere 2-3 zusätzliche Fragen, die man an diese Daten stellen könnte.
-
-Antworte in diesem JSON-Format:
-{
-  "insights": ["Erkenntnis 1", "Erkenntnis 2", "Erkenntnis 3"],
-  "visualizationSuggestion": {
-    "type": "bar|line|pie|radar|area",
-    "dimension": "empfohlene_dimension",
-    "metric": "empfohlene_metrik",
-    "explanation": "Begründung für die Empfehlung"
-  },
-  "additionalQuestions": ["Frage 1", "Frage 2", "Frage 3"]
-}
-`;
-
-  return prompt;
-};
-
-/**
- * Sendet eine Anfrage an die OpenAI API (ChatGPT)
- */
-const queryOpenAI = async (prompt: string): Promise<LLMAnalysisResponse> => {
+const queryApiRoute = async (request: LLMAnalysisRequest): Promise<LLMAnalysisResponse> => {
+  console.log('llmService: Sende Anfrage an /api/analyze-data', request);
   try {
-    // Echte API-Implementierung
-    const apiKey = process.env.REACT_APP_OPENAI_API_KEY || '';
-    
-    if (!apiKey) {
-      console.warn('Kein OpenAI API-Key gefunden, verwende Mock-Antwort');
-      return {
-        insights: [
-          "Dimension X zeigt einen kontinuierlichen Anstieg der Metrik Y über die letzten 3 Monate",
-          "Die Top 3 Einträge machen 45% des Gesamtwertes aus",
-          "Es gibt eine statistische Anomalie bei Eintrag Z"
-        ],
-        visualizationSuggestion: {
-          type: "bar",
-          dimension: "", // Wird im Hauptcode gefüllt
-          metric: "", // Wird im Hauptcode gefüllt
-          explanation: "Ein Balkendiagramm eignet sich am besten für den Vergleich kategorischer Daten"
-        },
-        additionalQuestions: [
-          "Wie entwickelt sich der Trend über einen längeren Zeitraum?",
-          "Gibt es saisonale Schwankungen in den Daten?"
-        ]
-      };
-    }
-    
-    console.log('Sende Anfrage an OpenAI API...');
-    
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('/api/analyze-data', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'Du bist ein Datenanalyse-Experte. Antworte nur im angeforderten JSON-Format.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3
-      })
+      body: JSON.stringify(request)
     });
     
     if (!response.ok) {
-      const errorData = await response.text();
-      console.error('OpenAI API Fehler:', errorData);
-      throw new Error(`API-Fehler: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    console.log('OpenAI Antwort erhalten:', data);
-    
-    const rawResponse = data.choices[0].message.content;
-    
-    // Parse die JSON-Antwort
-    try {
-      return JSON.parse(rawResponse) as LLMAnalysisResponse;
-    } catch (error) {
-      console.error('Fehler beim Parsen der LLM-Antwort:', error);
-      throw new Error('Ungültiges Antwortformat vom LLM');
-    }
-    
-  } catch (error) {
-    console.error('Fehler bei der OpenAI-Anfrage:', error);
-    
-    // Fallback auf Mock-Antwort bei Fehlern
-    return {
-      insights: [
-        "Fehler bei der API-Anfrage - Fallback-Antwort",
-        "Bitte überprüfe deine API-Schlüssel und Netzwerkverbindung",
-        "Dies ist eine generierte Beispielantwort"
-      ],
-      visualizationSuggestion: {
-        type: "bar",
-        dimension: "",
-        metric: "",
-        explanation: "Dies ist eine Fallback-Erklärung"
-      },
-      additionalQuestions: [
-        "Sind alle notwendigen API-Konfigurationen korrekt?",
-        "Ist die Netzwerkverbindung stabil?"
-      ]
-    };
-  }
-};
-
-/**
- * Sendet eine Anfrage an die Anthropic API (Claude)
- */
-const queryAnthropicClaude = async (prompt: string): Promise<LLMAnalysisResponse> => {
-  try {
-    // Echte API-Implementierung
-    const apiKey = process.env.REACT_APP_ANTHROPIC_API_KEY || '';
-    
-    if (!apiKey) {
-      console.warn('Kein Anthropic API-Key gefunden, verwende Mock-Antwort');
-      return {
-        insights: [
-          "Dimension X zeigt einen klaren Aufwärtstrend mit Wachstum von 23% im letzten Quartal",
-          "Es gibt eine hohe Korrelation (0.87) zwischen Metrik Y und Metrik Z",
-          "Die geografische Verteilung zeigt eine Konzentration in Region A und B"
-        ],
-        visualizationSuggestion: {
-          type: "bar",
-          dimension: "", // Wird im Hauptcode gefüllt
-          metric: "", // Wird im Hauptcode gefüllt
-          explanation: "Ein Balkendiagramm visualisiert die Unterschiede zwischen den Kategorien am deutlichsten"
-        },
-        additionalQuestions: [
-          "Wie verteilen sich die Werte innerhalb der Top-Kategorie?",
-          "Gibt es Ausreißer, die näher untersucht werden sollten?"
-        ]
-      };
-    }
-    
-    console.log('Sende Anfrage an Anthropic Claude API...');
-    
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20240620',
-        max_tokens: 1000,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.3
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.text();
-      console.error('Claude API Fehler:', errorData);
-      throw new Error(`API-Fehler: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    console.log('Anthropic Claude Antwort erhalten:', data);
-    
-    const rawResponse = data.content[0].text;
-    
-    // Parse die JSON-Antwort
-    try {
-      // Suche nach JSON in der Antwort (Claude gibt manchmal Text um das JSON herum aus)
-      const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]) as LLMAnalysisResponse;
-      } else {
-        throw new Error('Kein JSON in der Antwort gefunden');
+      // Versuche, die Fehlermeldung vom Backend zu parsen
+      let errorMessage = `API route error: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+        console.error('Fehlerdetails von API-Route:', errorData);
+      } catch (jsonError) {
+        // Fallback, wenn die Antwort kein JSON ist
+        const textError = await response.text();
+        console.error('Nicht-JSON Fehler von API-Route:', textError);
+        errorMessage = `${errorMessage} - ${textError}`;
       }
-    } catch (error) {
-      console.error('Fehler beim Parsen der Claude-Antwort:', error);
-      throw new Error('Ungültiges Antwortformat von Claude');
+      throw new Error(errorMessage);
     }
     
-  } catch (error) {
-    console.error('Fehler bei der Anthropic-Anfrage:', error);
-    // Fallback auf Mock-Antwort bei Fehlern
+    const data = await response.json();
+    console.log('llmService: Antwort von /api/analyze-data erhalten');
+    return data as LLMAnalysisResponse;
+
+  } catch (error: any) {    
+    console.error('llmService: Fehler bei der Anfrage an /api/analyze-data:', error);
+    // Fallback auf Mock-Antwort bei Netzwerkfehlern etc.
     return {
       insights: [
         "Fehler bei der API-Anfrage - Fallback-Antwort",
-        "Bitte überprüfe deine API-Schlüssel und Netzwerkverbindung",
+        error.message || "Bitte überprüfe deine Netzwerkverbindung und die Serverlogs",
         "Dies ist eine generierte Beispielantwort"
       ],
       visualizationSuggestion: {
         type: "bar",
-        dimension: "",
-        metric: "",
+        dimension: request.selectedDimension || request.dimensions[0] || "",
+        metric: request.selectedMetric || request.metrics[0] || "",
         explanation: "Dies ist eine Fallback-Erklärung"
       },
       additionalQuestions: [
-        "Sind alle notwendigen API-Konfigurationen korrekt?",
-        "Ist die Netzwerkverbindung stabil?"
+        "Ist die API-Route (/api/analyze-data) erreichbar?",
+        "Sind die Server-Logs auf Vercel aufschlussreich?"
       ]
     };
   }
@@ -314,19 +92,20 @@ const queryAnthropicClaude = async (prompt: string): Promise<LLMAnalysisResponse
 
 /**
  * Hauptfunktion zur Analyse der Daten mit einem LLM
+ * Ruft jetzt die interne API-Route auf.
  */
 export const analyzeDatatWithLLM = async (
-  request: LLMAnalysisRequest,
-  provider: 'openai' | 'anthropic' = 'anthropic'
+  request: Omit<LLMAnalysisRequest, 'provider'>, // Frontend muss keinen Provider mehr angeben, API entscheidet
+  provider: 'openai' | 'anthropic' = 'anthropic' // Behalte den Parameter für evtl. zukünftige Frontend-Auswahl
 ): Promise<LLMAnalysisResponse> => {
-  const prompt = generatePrompt(request);
   
-  // Wähle den Provider basierend auf dem Parameter
-  const response = provider === 'openai' 
-    ? await queryOpenAI(prompt) 
-    : await queryAnthropicClaude(prompt);
+  // Erstelle das vollständige Request-Objekt für die API-Route
+  const apiRequest: LLMAnalysisRequest = { ...request, provider };
+
+  // Rufe die API-Route auf
+  const response = await queryApiRoute(apiRequest);
   
-  // Fülle die fehlenden Werte aus
+  // Fülle ggf. fehlende Werte aus der Antwort (obwohl die API das jetzt tun sollte)
   if (!response.visualizationSuggestion.dimension && request.dimensions.length > 0) {
     response.visualizationSuggestion.dimension = request.selectedDimension || request.dimensions[0];
   }
@@ -345,60 +124,30 @@ const llmService = {
 
 export default llmService;
 
+// --- Alte Funktionen (können entfernt oder überarbeitet werden) ---
+
+// Die folgenden Funktionen machen jetzt keinen Sinn mehr im Frontend,
+// da die API-Keys nicht mehr hier verfügbar sind.
+// Sie bleiben vorerst hier, falls sie für andere Zwecke (z.B. Chat) benötigt werden.
+
 export async function sendMessageToClaude(messages: Message[]): Promise<string> {
+  // DIESE FUNKTION FUNKTIONIERT NICHT MEHR DIREKT VOM FRONTEND
+  // WEGEN FEHLENDEM SICHEREN API KEY ZUGRIFF
+  console.error('sendMessageToClaude direkt vom Frontend ist nicht mehr sicher und wird nicht unterstützt.');
+  throw new Error('Direkte Frontend-Aufrufe an Claude sind nicht sicher implementiert.');
+
+  /* Alter, unsicherer Code:
   try {
-    // Konvertiere Nachrichten ins Claude-Format
-    const claudeMessages: ClaudeMessage[] = messages
-      .filter(msg => msg.role !== 'system')
-      .map(msg => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content
-      }));
+    const CLAUDE_API_KEY = process.env.REACT_APP_ANTHROPIC_API_KEY || '';
+    if (!CLAUDE_API_KEY) throw new Error('Claude API Key fehlt (REACT_APP_)');
     
-    // System-Nachricht als Benutzer-Nachricht zum Beginn hinzufügen
-    const systemMessages = messages.filter(msg => msg.role === 'system');
-    let systemPrompt = '';
-    
-    if (systemMessages.length > 0) {
-      systemPrompt = systemMessages.map(msg => msg.content).join('\n\n');
-    }
-    
-    // Claude API-Anfrage
-    const response = await fetch(CLAUDE_API_URL, {
-      method: 'POST',
-      headers: {
-        'x-api-key': CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: CLAUDE_MODEL,
-        max_tokens: 1024,
-        messages: claudeMessages,
-        system: systemPrompt || undefined
-      })
-    });
-    
-    // Fehler abfangen
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`Claude API error (${response.status}): ${errorData}`);
-    }
-    
-    // Erfolgreiche Antwort verarbeiten
-    const data: ClaudeResponse = await response.json();
-    
-    // Text aus der Antwort extrahieren
-    const responseText = data.content
-      .filter(item => item.type === 'text')
-      .map(item => item.text)
-      .join('');
-    
-    return responseText;
+    // ... restlicher alter Code ...
+
   } catch (error) {
     console.error('Error sending message to Claude:', error);
     throw error;
   }
+  */
 }
 
 // Generische Funktion zum Senden an jeden LLM-Dienst
@@ -406,9 +155,14 @@ export async function sendMessageToLLM(
   provider: 'Claude' | 'ChatGPT',
   messages: Message[]
 ): Promise<string> {
+  // DIESE FUNKTION MUSS ÜBERARBEITET WERDEN, UM EINE API-ROUTE ZU NUTZEN
+  console.error('sendMessageToLLM muss überarbeitet werden, um eine sichere API-Route zu nutzen.');
+  throw new Error('Direkte Frontend-Aufrufe an LLMs sind nicht sicher implementiert.');
+
+  /*
   try {
     if (provider === 'Claude') {
-      return await sendMessageToClaude(messages);
+      return await sendMessageToClaude(messages); // Unsicher!
     } else {
       // ChatGPT wird später implementiert
       throw new Error('ChatGPT is not yet implemented');
@@ -417,4 +171,5 @@ export async function sendMessageToLLM(
     console.error(`Error sending message to ${provider}:`, error);
     throw error;
   }
+  */
 } 

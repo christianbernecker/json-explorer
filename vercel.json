@@ -8,6 +8,10 @@
     }
   ],
   "routes": [
+    {
+      "src": "/api/gvl",
+      "dest": "https://vendor-list.consensu.org/v3/vendor-list.json"
+    },
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ],

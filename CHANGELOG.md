@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.0.0 (2025-05-23)
+
+### Neue Funktionen
+- Verbesserte TCF-String-Erkennung mit erweiterter Pattern-Prüfung
+- Debug-Logs für verbesserte Diagnose bei TCF-String-Erkennung
+- Unterstützung für verschiedene TCF-String-Formate mit Punkten und Sonderzeichen
+
+### Verbesserungen
+- Robustere Verarbeitung von TCF-Strings in verschiedenen JSON-Strukturen
+- Verbesserte Suchfunktionalität mit Keyboard-Shortcuts
+
 All notable changes to the JSON Explorer project will be documented in this file.
 
 ## [Upcoming - 1.1.5]

@@ -38,7 +38,7 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
   isDarkMode
 }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | React.ReactNode | null>(null);
   const [insights, setInsights] = useState<LLMAnalysisResponse | null>(null);
   const [provider, setProvider] = useState<'openai' | 'anthropic'>('anthropic');
 
@@ -54,30 +54,10 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
       metricsCount: metrics.length,
       selectedDimension,
       selectedMetric,
-      provider,
-      anthropicApiKey: process.env.REACT_APP_ANTHROPIC_API_KEY ? 'vorhanden' : 'fehlt',
-      openaiApiKey: process.env.REACT_APP_OPENAI_API_KEY ? 'vorhanden' : 'fehlt'
+      provider
     });
 
     try {
-      // Prüfe, ob API-Schlüssel konfiguriert sind
-      const anthropicKeyMissing = provider === 'anthropic' && !process.env.REACT_APP_ANTHROPIC_API_KEY;
-      const openaiKeyMissing = provider === 'openai' && !process.env.REACT_APP_OPENAI_API_KEY;
-      
-      if (anthropicKeyMissing) {
-        console.error('Kein Claude API-Schlüssel gefunden. Bitte stellen Sie sicher, dass REACT_APP_ANTHROPIC_API_KEY konfiguriert ist.');
-        setError('Claude API-Schlüssel fehlt. Bitte konfigurieren Sie die Umgebungsvariable REACT_APP_ANTHROPIC_API_KEY oder wählen Sie einen anderen Anbieter.');
-        setIsLoading(false);
-        return;
-      }
-      
-      if (openaiKeyMissing) {
-        console.error('Kein OpenAI API-Schlüssel gefunden. Bitte stellen Sie sicher, dass REACT_APP_OPENAI_API_KEY konfiguriert ist.');
-        setError('OpenAI API-Schlüssel fehlt. Bitte konfigurieren Sie die Umgebungsvariable REACT_APP_OPENAI_API_KEY oder wählen Sie einen anderen Anbieter.');
-        setIsLoading(false);
-        return;
-      }
-
       // Reduziere die Datenmenge für die API-Anfrage, um Timeout-Probleme zu vermeiden
       const maxSampleSize = 100; // Maximal 100 Datensätze senden
       const sampledData = data.length > maxSampleSize 
@@ -108,7 +88,19 @@ const DataVisualizerAITab: React.FC<DataVisualizerAITabProps> = ({
       }
     } catch (err: any) {
       console.error('KI-Analysefehler:', err);
+      
+      // Zeige eine verbesserte Fehlermeldung an
+      if (err.message && err.message.includes('API key missing')) {
+        setError(
+          <span>
+            <strong>Claude API-Schlüssel fehlt.</strong> Bitte konfigurieren Sie die Umgebungsvariable <code>ANTHROPIC_API_KEY</code> in den Vercel-Einstellungen.
+            <br />
+            <small>Siehe Dokumentation unter <code>src/docs/API_KEY_CONFIG.md</code> für weitere Details.</small>
+          </span>
+        );
+      } else {
       setError(`Fehler bei der KI-Analyse: ${err.message || 'Unbekannter Fehler'}`);
+      }
     } finally {
       setIsLoading(false);
     }

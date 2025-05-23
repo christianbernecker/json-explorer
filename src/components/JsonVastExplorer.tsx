@@ -1,8 +1,11 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
-import SearchPanel from './SearchPanel';
 import JsonHistoryPanel from './shared/JsonHistoryPanel';
+import Button from './shared/Button';
+import Card from './shared/Card';
+// Neue Suchkomponente importieren
+import EnhancedJsonSearch from './search/EnhancedJsonSearch';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -40,7 +43,6 @@ const JsonVastExplorer = React.memo(({
   setShowHistory
 }: JsonVastExplorerProps) => {
   // Explorer state
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   const [jsonInput, setJsonInput] = useState('');
   const [parsedJson, setParsedJson] = useState<any>(null);
   const [rawVastContent, setRawVastContent] = useState<string | null>(null);
@@ -48,13 +50,57 @@ const JsonVastExplorer = React.memo(({
   
   // copyMessage wird für Benachrichtigungen nach dem Kopieren verwendet
   const [copyMessage, setCopyMessage] = useState('');
+  const [copyMessageVisible, setCopyMessageVisible] = useState(false);
   
-  // Suche-States
-  const [showJsonSearch, setShowJsonSearch] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [showVastSearch, setShowVastSearch] = useState(false);
+  // Suche und Tab-Verwaltung
+  const [isJsonSearchOpen, setIsJsonSearchOpen] = useState(false);
+  const [isVastSearchOpen, setIsVastSearchOpen] = useState(false);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+  const [showStructure, setShowStructure] = useState(false); // State für JSON-Struktur-Ansicht
+  
+  // Für Debugging-Nachrichten
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
+  
+  // Separate Suchvariablen für JSON und VAST
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [jsonSearchTerm] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [jsonSearchResults, setJsonSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [jsonCurrentResultIndex, setJsonCurrentResultIndex] = useState(-1);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [jsonSearchCleanup, setJsonSearchCleanup] = useState<(() => void) | null>(null);
+  const [jsonSearchStatus] = useState<'idle' | 'no-results' | 'results'>('idle');
+  
+  // Suchvariablen für VAST - jetzt als Array für jeden Tab
+  const [vastSearchTerm] = useState('');
+  const [vastTabSearches, setVastTabSearches] = useState<{
+    results: {element: HTMLElement, text: string, startPos: number}[];
+    currentIndex: number;
+    cleanup: (() => void) | null;
+    status: 'idle' | 'no-results' | 'results';
+  }[]>([]);
+  
+  // Alte VAST-Suchvariablen für Abwärtskompatibilität - markiert als unbenutzt
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [vastSearchResults, setVastSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [vastCurrentResultIndex, setVastCurrentResultIndex] = useState(-1);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [vastSearchCleanup, setVastSearchCleanup] = useState<(() => void) | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [vastSearchStatus, setVastSearchStatus] = useState<'idle' | 'no-results' | 'results'>('idle');
+  
+  // Alte Variablen für Abwärtskompatibilität - markiert als unbenutzt
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [directSearchTerm, setDirectSearchTerm] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [directSearchResults, setDirectSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [currentDirectResultIndex, setCurrentDirectResultIndex] = useState(-1);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [activeTabIndex, _setActiveTabIndex] = useState(0);
   
   // State für die VAST Kette (Wrapper)
   interface VastChainItem {
@@ -63,30 +109,24 @@ const JsonVastExplorer = React.memo(({
     isLoading: boolean;
     error: string | null;
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [vastChain, setVastChain] = useState<VastChainItem[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const MAX_VAST_WRAPPER = 5; // Limit für Rekursion
   
   // State für aktiven Tab (0 = Embedded, 1 = Chain Item 0, 2 = Chain Item 1, ...)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeVastTabIndex, setActiveVastTabIndex] = useState<number>(0);
   
-  // Refs for search functionality
-  /* eslint-disable @typescript-eslint/no-unused-vars */
+  // Refs for DOM elements and content
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const jsonOutputRef = useRef<HTMLDivElement>(null);
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+  const jsonRef = useRef<HTMLDivElement>(null);
+  const vastRef = useRef<HTMLDivElement>(null);
   
   // Ref for Embedded VAST output
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const embeddedVastOutputRef = useRef<HTMLDivElement>(null);
-  // Refs for Fetched VAST outputs (dynamic)
   const fetchedVastOutputRefs = useRef<Map<number, React.RefObject<HTMLDivElement>>>(new Map());
   
   // Custom hook for Syntax Highlighting
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { highlightJson, highlightXml, formatXml } = useHighlighter();
+  const { highlightJson, highlightXml /* formatXml */ } = useHighlighter();
   
   // Hook für Zeilennummern aufrufen
   const addLineNumbersGlobal = useAddLineNumbers(isDarkMode);
@@ -132,13 +172,20 @@ const JsonVastExplorer = React.memo(({
   // Extract VAST URL from VASTAdTagURI tag - More specific than the previous one
   const extractAdTagUri = useCallback((content: string | null): string | null => {
     if (!content) return null;
-    // Regex to find VASTAdTagURI and extract URL, handles CDATA and trims whitespace
-    const match = content.match(/<VASTAdTagURI(?:\s[^>]*)?>(?:<!\[CDATA\[)?\s*(https?:\/\/[^<\s\]]+)\s*(?:\]\]>)?<\/VASTAdTagURI>/i);
-    return match ? match[1].trim() : null; // Return the captured group (the URL)
+    
+    // Verbesserte Regex, um VASTAdTagURI zu finden und URL zu extrahieren
+    // Behandelt CDATA und entfernt Whitespace
+    const regex = /<VASTAdTagURI(?:\s[^>]*)?>\s*(?:<!\[CDATA\[\s*)?(https?:\/\/[^\s<\]]+)\s*(?:\]\]>)?\s*<\/VASTAdTagURI>/i;
+    const match = content.match(regex);
+    
+    if (match && match[1]) {
+      return match[1].trim();
+    }
+    
+    return null;
   }, []);
 
   // Recursive function to fetch VAST chain
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const fetchVastChainRecursive = useCallback(async (uri: string, currentChain: VastChainItem[] = []) => {
     if (currentChain.length >= MAX_VAST_WRAPPER) {
       console.warn(`VAST wrapper limit (${MAX_VAST_WRAPPER}) reached. Stopping fetch for URI: ${uri}`);
@@ -182,6 +229,191 @@ const JsonVastExplorer = React.memo(({
     }
   }, [extractAdTagUri, MAX_VAST_WRAPPER]);
 
+  // Zuerst füge ich einen State für die aufgeklappten JSON-Elemente hinzu
+  const [expandedJsonPaths, setExpandedJsonPaths] = useState<Set<string>>(new Set());
+  
+  // Funktion zum Anzeigen der JSON-Outline
+  const generateJsonOutline = (json: any, path: string = ''): React.ReactNode => {
+    if (!json || typeof json !== 'object') return null;
+    
+    const isArray = Array.isArray(json);
+    
+    return (
+      <ul className={`${path ? 'ml-4' : ''} ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+        {Object.keys(json).map((key, index) => {
+          const currentPath = path ? `${path}.${key}` : key;
+          const currentValue = json[key];
+          const isObject = currentValue && typeof currentValue === 'object';
+          const isExpanded = expandedJsonPaths.has(currentPath);
+          
+          // Abkürzung für Arrays mit vielen Elementen
+          if (isArray && Object.keys(json).length > 20 && index >= 10 && index < Object.keys(json).length - 5) {
+            if (index === 10) {
+              return (
+                <li key={`${currentPath}-ellipsis`} className="py-1 pl-2 text-gray-500">
+                  ... {Object.keys(json).length - 15} more items ...
+                </li>
+              );
+            }
+            return null;
+          }
+          
+          return (
+            <li key={currentPath} className="py-1">
+              <div className="flex items-start">
+                <span 
+                  className={`cursor-pointer flex items-center ${isDarkMode ? 'hover:text-blue-300' : 'hover:text-blue-600'}`}
+                  onClick={() => {
+                    if (isObject) {
+                      // Toggle expanded state für diesen Pfad
+                      const newExpandedPaths = new Set(expandedJsonPaths);
+                      if (isExpanded) {
+                        newExpandedPaths.delete(currentPath);
+                      } else {
+                        newExpandedPaths.add(currentPath);
+                      }
+                      setExpandedJsonPaths(newExpandedPaths);
+                    } else {
+                      // Scroll zur entsprechenden Position im JSON
+                      const searchKey = isArray ? `\\[${key}\\]` : `"${key}"`;
+                      const elements = jsonOutputRef.current?.querySelectorAll(`[data-key="${searchKey}"]`);
+                      if (elements && elements.length > 0) {
+                        elements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // Kurzes Highlighting
+                        elements[0].classList.add(isDarkMode ? 'bg-blue-900' : 'bg-blue-100');
+                        setTimeout(() => {
+                          elements[0].classList.remove(isDarkMode ? 'bg-blue-900' : 'bg-blue-100');
+                        }, 1500);
+                      }
+                    }
+                  }}
+                >
+                  {isObject && (
+                    <svg xmlns="http://www.w3.org/2000/svg" 
+                      className={`h-4 w-4 mr-1 transition-transform duration-200 ${isExpanded ? 'transform rotate-90' : ''}`} 
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  )}
+                  <span className={isArray ? 'text-purple-500 dark:text-purple-400' : 'text-blue-500 dark:text-blue-400'}>
+                    {key}
+                  </span>
+                  {!isObject && (
+                    <span className="ml-2 text-gray-500 truncate max-w-[150px] text-xs">
+                      {typeof currentValue === 'string' 
+                        ? `"${currentValue.length > 20 ? currentValue.substring(0, 20) + '...' : currentValue}"`
+                        : String(currentValue)
+                      }
+                    </span>
+                  )}
+                </span>
+              </div>
+              {isObject && isExpanded && generateJsonOutline(currentValue, currentPath)}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  };
+
+  // Helper function für VAST Refs
+  const getFetchedVastRef = useCallback((index: number): React.RefObject<HTMLDivElement> => {
+    if (!fetchedVastOutputRefs.current.has(index)) {
+      // Create refs on demand
+      fetchedVastOutputRefs.current.set(index, React.createRef<HTMLDivElement>());
+    }
+    return fetchedVastOutputRefs.current.get(index)!;
+  }, []);
+
+  // Hilfsfunktion, um alle JSON-Pfade rekursiv aufzuklappen
+  const initializeExpandedPaths = useCallback((json: any, path: string = '', paths: Set<string> = new Set<string>()) => {
+    if (!json || typeof json !== 'object') return paths;
+    
+    // Aktuellen Pfad hinzufügen
+    if (path) {
+      paths.add(path);
+    }
+    
+    // Rekursiv alle Kinder durchgehen
+    Object.keys(json).forEach(key => {
+      const currentPath = path ? `${path}.${key}` : key;
+      if (json[key] && typeof json[key] === 'object') {
+        initializeExpandedPaths(json[key], currentPath, paths);
+      }
+    });
+    
+    setExpandedJsonPaths(paths);
+    return paths;
+  }, []);
+  
+  // Hilfsfunktion, um alle XML-Knoten rekursiv aufzuklappen
+  const initializeExpandedVastNodes = useCallback((xmlContent: string) => {
+    if (!xmlContent) return;
+    
+    try {
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
+      const paths = new Set<string>();
+      
+      // Rekursive Funktion, um alle Pfade zu sammeln
+      const traverseNode = (node: Node, parentPath: string = '') => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element;
+          const nodeName = element.nodeName;
+          const nodePath = `${parentPath}/${nodeName}`;
+          
+          // Pfad zur Liste hinzufügen
+          paths.add(nodePath);
+          
+          // Rekursiv für alle Kinder
+          Array.from(element.childNodes).forEach(childNode => {
+            traverseNode(childNode, nodePath);
+          });
+        }
+      };
+      
+      // Starte mit dem Root-Element
+      traverseNode(xmlDoc.documentElement);
+      
+      setExpandedJsonPaths(paths);
+    } catch (error) {
+      console.error("Error initializing expanded VAST nodes:", error);
+    }
+  }, []);
+
+  // Stelle sicher, dass die Refs korrekt initialisiert werden, wenn Daten verfügbar sind
+  useEffect(() => {
+    // Refs-Status loggen
+    if (parsedJson && jsonRef.current) {
+      console.log("JsonRef ist initialisiert und bereit für die Suche");
+    }
+    
+    if (rawVastContent && vastRef.current) {
+      console.log("VastRef ist initialisiert und bereit für die Suche");
+    }
+    
+    // Aktive Suche deaktivieren, wenn keine gültigen Refs mehr vorhanden sind
+    if (isJsonSearchOpen && (!jsonRef.current && !vastRef.current)) {
+      console.warn("Suche ist aktiv, aber keine Refs sind gültig - deaktiviere Suche");
+      setIsJsonSearchOpen(false);
+    }
+  }, [parsedJson, rawVastContent, isJsonSearchOpen]);
+
+  // Tastaturkürzel für die Suche
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd+F für Suchfunktion
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setIsJsonSearchOpen(true);
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   // Format JSON and initiate VAST chain fetching
   const handleFormat = useCallback(() => {
     // Reset fetch states on new format
@@ -208,6 +440,14 @@ const JsonVastExplorer = React.memo(({
         const currentRawVast = vastInfo.content;
         setRawVastContent(currentRawVast);
         
+        // Initialisiere die aufgeklappten JSON-Pfade, wenn neue Daten geladen werden
+        initializeExpandedPaths(currentParsedJson);
+        
+        // Initialisiere die aufgeklappten VAST-Nodes, wenn neue VAST-Daten geladen werden
+        if (currentRawVast) {
+          initializeExpandedVastNodes(currentRawVast);
+        }
+        
         // Now try to extract and fetch the AdTagURI from the raw VAST content
         const firstAdTagUri = extractAdTagUri(currentRawVast);
         if (firstAdTagUri) {
@@ -215,7 +455,9 @@ const JsonVastExplorer = React.memo(({
         }
         
         const newHistoryItem: HistoryItemType = {
+          id: Date.now().toString(),
           type: 'json_vast',
+          content: JSON.stringify(currentParsedJson).slice(0, 50) + '...', // Kurze Zusammenfassung für content
           jsonContent: currentParsedJson,
           vastContent: currentRawVast,
           vastUrl: extractVastUrl(currentRawVast) || '', // Still store in history if needed, but not in state
@@ -227,6 +469,9 @@ const JsonVastExplorer = React.memo(({
         setRawVastContent(null); // Already reset above, but good to be explicit
         setVastChain([]); // Ensure chain is clear if no VAST found
         setActiveVastTabIndex(0); // Reset tab
+        
+        // Initialisiere die aufgeklappten JSON-Pfade, auch wenn kein VAST gefunden wurde
+        initializeExpandedPaths(currentParsedJson);
         
         const newHistoryItem: HistoryItemType = {
           type: 'json',
@@ -242,23 +487,26 @@ const JsonVastExplorer = React.memo(({
       setRawVastContent(null);
       setVastChain([]);
       setActiveVastTabIndex(0);
-      setShowVastSearch(false); // Also hide VAST search on error
+      setIsJsonSearchOpen(false); // Also hide search on error
     }
-  }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastChainRecursive, addToHistoryItem]);
+  }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastChainRecursive, addToHistoryItem, initializeExpandedPaths, initializeExpandedVastNodes]);
   
   // Copy content to clipboard - Optimized with useCallback
   const copyToClipboard = useCallback((text: string, type: string) => {
     navigator.clipboard.writeText(text).then(
       () => {
         setCopyMessage(`${type} copied!`);
-        setTimeout(() => setCopyMessage(''), 2000);
+        setCopyMessageVisible(true);
+        setTimeout(() => {
+          setCopyMessageVisible(false);
+          setTimeout(() => setCopyMessage(''), 300); // Warte auf Fade-Out-Animation
+        }, 2000);
       },
       (err) => console.error('Error copying: ', err)
     );
   }, []);
   
   // Handle JSON input change
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   const handleJsonInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setJsonInput(e.target.value);
   }, []);
@@ -278,8 +526,8 @@ const JsonVastExplorer = React.memo(({
       // Restore VAST chain potentially? For now, just clear it.
       setVastChain([]);
     }
-    setShowHistory(false);
-  }, [setShowHistory, setJsonInput, setParsedJson, setRawVastContent, setError, setVastChain]);
+    setIsJsonSearchOpen(false);
+  }, [setIsJsonSearchOpen, setJsonInput, setParsedJson, setRawVastContent, setError, setVastChain]);
   
   // Clear all fields
   const handleClear = useCallback(() => {
@@ -288,125 +536,206 @@ const JsonVastExplorer = React.memo(({
     setRawVastContent(null);
     setError('');
     setCopyMessage('');
-    setShowJsonSearch(false);
+    setIsJsonSearchOpen(false);
     // Reset fetch states on clear
     setVastChain([]);
     setActiveVastTabIndex(0);
-    setShowVastSearch(false); // Also hide VAST search on clear
+    setIsJsonSearchOpen(false); // Also hide search on clear
+    // Leere die aufgeklappten Pfade
+    setExpandedJsonPaths(new Set());
   }, []);
 
-  // Kopieren des JSON-Inhalts in die Zwischenablage
-  const copyJsonToClipboard = useCallback(() => {
-    if (parsedJson) {
-      copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
-    }
-  }, [parsedJson, copyToClipboard]);
-  /* eslint-enable @typescript-eslint/no-unused-vars */
-  
   // Format XML for display - adding proper styling and line breaks
   const formatXmlForDisplay = useCallback((xml: string | null): string => {
     if (!xml) return '';
     
     try {
-      // XML mit einer verbesserten Formatierungslogik formatieren
-      const formatXml = (xmlText: string): string => {
-        // Entferne Leerzeichen und Zeilenumbrüche zwischen Tags
-        let xml = xmlText.replace(/>\s*</g, '><');
+      // Verbesserte XML-Formatierung mit korrekter Einrückung
+      const formatXml = (xml: string): string => {
+        // Entferne unnötige Leerzeichen aber behalte die Struktur
+        xml = xml.trim().replace(/>\s+</g, '><');
         
-        // Spezialfall: CDATA sollte inline mit Tags bleiben
-        xml = xml.replace(/(<[^>]*>)(<!\[CDATA\[(.*?)\]\]>)(<\/[^>]*>)/g, '$1$2$4');
+        // XML-Parser für korrekte Strukturierung
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xml, 'text/xml');
         
+        // Prüfen ob es Parsing-Fehler gab
+        const parseError = xmlDoc.getElementsByTagName('parsererror');
+        if (parseError.length > 0) {
+          // Fallback zur manuellen Formatierung, wenn Parsing fehlschlägt
+          return formatXmlManually(xml);
+        }
+        
+        // Rekursive Funktion zum Formatieren der XML-Struktur
+        const formatNode = (node: Node, level: number): string => {
+          const indent = '  '.repeat(level);
+          let result = '';
+          
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+            const tagName = element.tagName;
+            
+            // Öffnendes Tag mit Attributen
+            result += `${indent}<${tagName}`;
+            
+            // Attribute hinzufügen
+            for (let i = 0; i < element.attributes.length; i++) {
+              const attr = element.attributes[i];
+              result += ` ${attr.name}="${attr.value}"`;
+            }
+            
+            // Prüfen ob Element Kinder hat
+            if (element.childNodes.length === 0) {
+              // Selbstschließendes Tag
+              result += '/>\n';
+            } else if (element.childNodes.length === 1 && 
+                      element.childNodes[0].nodeType === Node.TEXT_NODE && 
+                      element.childNodes[0].textContent && 
+                      element.childNodes[0].textContent.trim().length < 50) {
+              // Kurzer Text-Inhalt - in einer Zeile darstellen
+              result += `>${element.childNodes[0].textContent.trim()}</${tagName}>\n`;
+            } else {
+              // Komplexer Inhalt - mit Einrückung formatieren
+              result += '>\n';
+              
+              // Alle Kindelemente formatieren
+              for (let i = 0; i < element.childNodes.length; i++) {
+                const child = element.childNodes[i];
+                
+                if (child.nodeType === Node.TEXT_NODE) {
+                  const text = child.textContent ? child.textContent.trim() : '';
+                  if (text) {
+                    result += `${indent}  ${text}\n`;
+                  }
+                } else if (child.nodeType === Node.CDATA_SECTION_NODE) {
+                  // CDATA-Abschnitte
+                  result += `${indent}  <![CDATA[${child.textContent}]]>\n`;
+                } else {
+                  // Rekursiver Aufruf für verschachtelte Elemente
+                  result += formatNode(child, level + 1);
+                }
+              }
+              
+              // Schließendes Tag
+              result += `${indent}</${tagName}>\n`;
+            }
+          } else if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent ? node.textContent.trim() : '';
+            if (text) {
+              result += `${indent}${text}\n`;
+            }
+          } else if (node.nodeType === Node.CDATA_SECTION_NODE) {
+            result += `${indent}<![CDATA[${node.textContent}]]>\n`;
+          } else if (node.nodeType === Node.COMMENT_NODE) {
+            result += `${indent}<!-- ${node.textContent} -->\n`;
+          } else if (node.nodeType === Node.DOCUMENT_NODE) {
+            // Dokument-Knoten - alle Kinder verarbeiten
+            const doc = node as Document;
+            
+            // XML-Deklaration
+            result += '<?xml version="1.0" encoding="UTF-8"?>\n';
+            
+            // Root-Element formatieren
+            if (doc.documentElement) {
+              result += formatNode(doc.documentElement, 0);
+            }
+          }
+          
+          return result;
+        };
+        
+        // Formatieren des gesamten Dokuments
+        return formatNode(xmlDoc, 0);
+      };
+      
+      // Fallback-Methode für manuelles Formatieren
+      const formatXmlManually = (xml: string): string => {
         let formatted = '';
-        let indent = 0;
-        let inCdata = false;
+        let indent = '';
+        let inTag = false;
+        let inCData = false;
         
-        // Gehe jeden Zeichen durch
+        // XML-Deklaration extrahieren
+        const xmlHeaderMatch = xml.match(/^\s*<\?xml[^>]*\?>/);
+        if (xmlHeaderMatch) {
+          formatted += xmlHeaderMatch[0] + '\n';
+          xml = xml.substring(xmlHeaderMatch[0].length);
+        }
+        
+        // Zeichen für Zeichen durchgehen
         for (let i = 0; i < xml.length; i++) {
           const char = xml.charAt(i);
+          const nextChar = i < xml.length - 1 ? xml.charAt(i + 1) : '';
           
-          // Prüfe auf CDATA-Beginn
-          if (i + 8 < xml.length && xml.substring(i, i+9) === '<![CDATA[') {
-            inCdata = true;
+          // CDATA-Marker erkennen
+          if (char === '<' && xml.substr(i, 9) === '<![CDATA[') {
+            inCData = true;
             formatted += '<![CDATA[';
-            i += 8;
+            i += 8; // Überspringe <![CDATA[
             continue;
-          }
-          
-          // Prüfe auf CDATA-Ende
-          if (inCdata && i + 2 < xml.length && xml.substring(i, i+3) === ']]>') {
-            inCdata = false;
+          } else if (inCData && xml.substr(i, 3) === ']]>') {
+            inCData = false;
             formatted += ']]>';
-            i += 2;
+            i += 2; // Überspringe ]]>
             continue;
           }
           
-          // Wenn in CDATA, füge Zeichen direkt hinzu
-          if (inCdata) {
+          // Im CDATA-Bereich alles unverändert übernehmen
+          if (inCData) {
             formatted += char;
             continue;
           }
           
-          // Behandle öffnende Tags
-          if (char === '<' && xml.charAt(i+1) !== '/') {
-            // Ist es ein selbstschließendes Tag?
-            const selfClosing = xml.indexOf('/>', i) < xml.indexOf('>', i) && xml.indexOf('/>', i) !== -1;
-            // Ist es ein kombiniertes Tag (öffnen + schließen in einem)?
-            const combinedTag = xml.substring(i).match(/^<[^>]*>[^<]*<\/[^>]*>/);
+          // Tag-Anfang
+          if (char === '<' && !inTag) {
+            // Prüfe, ob es ein schließendes Tag ist
+            if (nextChar === '/') {
+              indent = indent.slice(2); // Einrückung verringern
+            }
             
-            if (!selfClosing && !combinedTag) {
-              formatted += '\n' + ' '.repeat(indent * 2) + '<';
-              indent++;
-            } else {
-              formatted += '\n' + ' '.repeat(indent * 2) + '<';
+            // Zeilenumbruch vor dem Tag, außer es ist das erste
+            if (formatted.length > 0) formatted += '\n';
+            formatted += indent + '<';
+            inTag = true;
+          } 
+          // Tag-Ende
+          else if (char === '>' && inTag) {
+            formatted += '>';
+            inTag = false;
+            
+            // Prüfen, ob selbstschließend oder schließendes Tag
+            if (xml.charAt(i - 1) !== '/' && xml.charAt(i - 1) !== '-' && nextChar !== '<' && nextChar !== '\r' && nextChar !== '\n') {
+              formatted += '\n' + indent + '  ';
+            }
+            
+            // Einrückung erhöhen bei öffnenden, nicht-selbstschließenden Tags
+            if (xml.charAt(i - 1) !== '/' && xml.charAt(i - 2) !== '?' && xml.charAt(i - 1) !== '-' && nextChar !== '/') {
+              if (nextChar !== '<') {
+                indent += '  ';
+              }
             }
           } 
-          // Behandle schließende Tags
-          else if (char === '<' && xml.charAt(i+1) === '/') {
-            indent--;
-            formatted += '\n' + ' '.repeat(indent * 2) + '<';
-          }
-          // Für das Ende eines selbstschließenden Tags oder normalen Tags
-          else if (char === '>') {
-            formatted += '>';
-            
-            // Wenn das nächste Zeichen ein öffnendes '<' ist, füge keinen Zeilenumbruch ein
-            if (i + 1 < xml.length && xml.charAt(i+1) === '<') {
-              // nichts tun
-            } else {
-              formatted += '\n' + ' '.repeat(indent * 2);
-            }
-          }
-          // Für alle anderen Zeichen
+          // Text innerhalb der Tags
           else {
             formatted += char;
           }
         }
         
-        return formatted.trim();
+        return formatted;
       };
       
-      return formatXml(xml);
+      // Versuche zuerst den DOM-Parser, falls das fehlschlägt, verwende den manuellen Ansatz
+      try {
+        return formatXml(xml);
+      } catch (e) {
+        console.error('DOM parsing failed, using manual formatting', e);
+        return formatXmlManually(xml);
+      }
     } catch (error) {
       console.error('Error formatting XML:', error);
       return xml;
     }
   }, []);
-  
-  // Handle toggle word wrap
-  const toggleWordWrap = useCallback(() => {
-    setIsWordWrapEnabled(prev => !prev);
-  }, []);
-  
-  // Copy VAST content to clipboard
-  const copyVastToClipboard = useCallback(() => {
-    if (activeVastTabIndex === 0 && rawVastContent) {
-      copyToClipboard(rawVastContent, 'VAST');
-    } else if (activeVastTabIndex === 1 && vastChain[0]?.content) {
-      copyToClipboard(vastChain[0].content, 'VAST');
-    } else if (activeVastTabIndex === 2 && vastChain[1]?.content) {
-      copyToClipboard(vastChain[1].content, 'VAST');
-    }
-  }, [activeVastTabIndex, rawVastContent, vastChain, copyToClipboard]);
   
   // Render VAST content with proper formatting
   const renderVastContent = useCallback((vastContent: string | null) => {
@@ -414,44 +743,13 @@ const JsonVastExplorer = React.memo(({
     
     const formattedVast = formatXmlForDisplay(vastContent);
     
-    // Verbesserte Syntax-Highlighting für XML/VAST
-    const colorizeVast = (text: string, isDark: boolean): string => {
-      // HTML Entities zuerst umwandeln, um sie richtig darzustellen
-      let colorized = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-      
-      // Tags in Blau (mit korrigiertem Regex-Pattern)
-      colorized = colorized.replace(/&lt;(\/?)([\w:]+)/g, 
-        '&lt;$1<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">$2</span>');
-      
-      // Attribute in Grün (mit korrigiertem Regex-Pattern)
-      colorized = colorized.replace(/\s([\w:]+)=/g, 
-        ' <span style="color: ' + (isDark ? '#48bb78' : '#38a169') + '">$1</span>=');
-      
-      // Attributwerte in Gelb (mit korrigiertem Regex-Pattern)
-      colorized = colorized.replace(/="([^"]*)"/g, 
-        '="<span style="color: ' + (isDark ? '#ecc94b' : '#d69e2e') + '">$1</span>"');
-      
-      // CDATA-Markierung in Grau
-      colorized = colorized.replace(/(&lt;!\[CDATA\[|\]\]&gt;)/g, 
-        '<span style="color: ' + (isDark ? '#a0aec0' : '#718096') + '">$1</span>');
-      
-      // CDATA-Inhalt in Blau - Fix für überlappende Spans
-      colorized = colorized.replace(/(&lt;!\[CDATA\[)(.+?)(\]\]&gt;)/g, function(match, p1, p2, p3) {
-        return p1 + '<span style="color: ' + (isDark ? '#4299e1' : '#3182ce') + '">' + p2 + '</span>' + p3;
-      });
-      
-      return colorized;
-    };
-    
+    // Verwende die highlightXml-Funktion aus useHighlighter statt eigener Implementierung
     const highlightedVast = (
       <div 
         dangerouslySetInnerHTML={{ 
-          __html: addLineNumbersGlobal(colorizeVast(formattedVast, isDarkMode), 'xml')
+          __html: addLineNumbersGlobal(highlightXml(formattedVast, isDarkMode), 'xml')
         }}
-        className={isWordWrapEnabled ? 'whitespace-normal' : 'whitespace-pre'}
+        className={`overflow-auto break-words ${isWordWrapEnabled ? 'whitespace-normal' : 'whitespace-pre'}`}
       />
     );
     
@@ -460,538 +758,798 @@ const JsonVastExplorer = React.memo(({
         {highlightedVast}
       </div>
     );
-  }, [addLineNumbersGlobal, formatXmlForDisplay, isDarkMode, isWordWrapEnabled]);
+  }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
 
-  // Render the VAST tabs
-  const renderVastTabs = useCallback(() => {
-    // Helper function to get or create ref for fetched VAST tabs
-    const getFetchedVastRef = (index: number): React.RefObject<HTMLDivElement> => {
-      if (!fetchedVastOutputRefs.current.has(index)) {
-          // Create refs on demand
-          fetchedVastOutputRefs.current.set(index, React.createRef<HTMLDivElement>());
+  // Log search state changes
+  useEffect(() => {
+    console.log("Search state changed:", isJsonSearchOpen);
+    setSearchDebugMessage(`Search state: ${isJsonSearchOpen ? 'OPEN' : 'CLOSED'}`);
+    // Clear message after 3 seconds
+    const timer = setTimeout(() => setSearchDebugMessage(null), 3000);
+    return () => clearTimeout(timer);
+  }, [isJsonSearchOpen]);
+
+  // Hilfsfunktion zum Scrollen zu einem Element (vertikal UND horizontal)
+  const scrollToElement = useCallback((element: HTMLElement) => {
+    // Prüfen, ob das Element existiert
+    if (!element) return;
+    
+    // Finde das nächste scrollbare Elternelement
+    let scrollContainer = element.parentElement;
+    while (scrollContainer) {
+      // Prüfe, ob das Element scrollbar ist
+      const hasVerticalScroll = scrollContainer.scrollHeight > scrollContainer.clientHeight;
+      const hasHorizontalScroll = scrollContainer.scrollWidth > scrollContainer.clientWidth;
+      
+      if (hasVerticalScroll || hasHorizontalScroll) {
+        break;
       }
-      return fetchedVastOutputRefs.current.get(index)!;
-    };
-
-    // Interface for tab items
-    interface TabItem {
-      id: number;
-      label: string;
-      ref: React.RefObject<HTMLDivElement>;
-      content: string | null;
-      error?: string | null;
-      isLoading?: boolean;
-      source?: string;
+      scrollContainer = scrollContainer.parentElement;
     }
-
-    // If no VAST content, show empty state
-    if (!rawVastContent && vastChain.length === 0) {
-      return (
-        <div className={`p-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} rounded-lg mt-4`}>
-          <p className="text-center text-gray-500">No VAST content detected in the JSON</p>
-        </div>
-      );
+    
+    if (scrollContainer) {
+      // Element-Position im Container ermitteln
+      const elementRect = element.getBoundingClientRect();
+      const containerRect = scrollContainer.getBoundingClientRect();
+      
+      // Berechne die Scroll-Positionen
+      const verticalScroll = 
+        element.offsetTop - scrollContainer.offsetTop - (containerRect.height / 2) + (elementRect.height / 2);
+      
+      const horizontalScroll = 
+        element.offsetLeft - scrollContainer.offsetLeft - (containerRect.width / 2) + (elementRect.width / 2);
+      
+      // Scrolle vertikal und horizontal
+      scrollContainer.scrollTo({
+        top: verticalScroll,
+        left: Math.max(0, horizontalScroll), // Sicherstellen, dass wir nicht negativ scrollen
+        behavior: 'smooth'
+      });
+    } else {
+      // Fallback zur normalen scrollIntoView-Methode
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'center' // Zentrieren auch horizontal
+      });
     }
+  }, []);
 
-    // Create all tabs
-    const tabs: TabItem[] = [
-      {
-        id: 0,
-        label: 'Embedded VAST',
-        ref: embeddedVastOutputRef,
-        content: rawVastContent,
-        source: 'JSON'
-      }
-    ];
+  // Initialisiere neue VAST-Tab-Suchobjekte, wenn sich die Chain ändert
+  useEffect(() => {
+    // Erstelle ein Array mit einem Eintrag für den Embedded VAST-Tab 
+    // und je einem für jeden Chain-Tab
+    const initialSearches = Array(vastChain.length + 1).fill(null).map(() => ({
+      results: [],
+      currentIndex: -1,
+      cleanup: null,
+      status: 'idle' as const
+    }));
     
-    // Füge statische Wrapper-Tabs hinzu
-    tabs.push({
-      id: 1,
-      label: 'VASTAdTagURI (1)',
-      ref: getFetchedVastRef(0),
-      content: vastChain[0]?.content || null,
-      error: vastChain[0]?.error || null,
-      isLoading: vastChain[0]?.isLoading || false,
-      source: vastChain[0]?.uri || ''
-    });
-    
-    tabs.push({
-      id: 2,
-      label: 'VASTAdTagURI (2)',
-      ref: getFetchedVastRef(1),
-      content: vastChain[1]?.content || null,
-      error: vastChain[1]?.error || null,
-      isLoading: vastChain[1]?.isLoading || false,
-      source: vastChain[1]?.uri || ''
-    });
-    
-    // Erstelle Search Panel für den aktuellen Tab
-    const renderSearchPanel = (targetRef: React.RefObject<HTMLDivElement> | null) => {
-      if (!showVastSearch || !targetRef?.current) return null;
-      
-      return (
-        <SearchPanel
-          contentType="VAST"
-          targetRef={targetRef}
-          isDarkMode={isDarkMode}
-        />
-      );
-    };
-    
-    // Render source link
-    const renderSource = (source?: string) => {
-      if (!source) return null;
-      
-      let displaySource = source;
-      
-      // Wenn nicht JSON, dann zeige die volle URL an
-      if (source !== 'JSON') {
-        // Keine Kürzung mehr, zeige die volle URL an
-        displaySource = source;
-      }
-      
-      const handleSourceClick = () => {
-        if (source !== 'JSON') {
-          window.open(source, '_blank', 'noopener,noreferrer');
-        }
-      };
-      
-      return (
-        <span 
-          className={`cursor-pointer hover:underline ${
-            isDarkMode ? 'text-blue-400' : 'text-blue-600'
-          }`}
-          onClick={handleSourceClick}
-          title={source}
-        >
-          {displaySource}
-        </span>
-      );
-    };
-    
-    return (
-      <div className="mt-4">
-        {/* Tab Headers */}
-        <div className={`rounded-t-lg bg-gray-100 dark:bg-gray-700 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-200'}`}>
-          <div className="flex flex-wrap">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveVastTabIndex(tab.id)}
-                className={`${
-                  activeVastTabIndex === tab.id
-                    ? `${isDarkMode ? 'bg-gray-200 text-gray-900' : 'bg-white text-blue-600'} border-b-2 border-blue-500`
-                    : `${isDarkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`
-                } px-4 py-2 text-sm font-medium rounded-t-lg`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Tab Content */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-b-lg" style={{ height: 'calc(100vh - 350px)', overflow: 'auto' }}>
-          {/* Embedded VAST */}
-          <div 
-            className={activeVastTabIndex === 0 ? 'block' : 'hidden'}
-            ref={embeddedVastOutputRef}
-          >
-            <div className="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-              <div className="text-xs">
-                Source: {renderSource(tabs[0].source)}
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={toggleWordWrap}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                    Wrap
-                  </div>
-                </button>
-                <button
-                  onClick={() => setShowVastSearch(!showVastSearch)}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    Find
-                  </div>
-                </button>
-                <button
-                  onClick={copyVastToClipboard}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Copy
-                  </div>
-                </button>
-              </div>
-            </div>
-            
-            {/* Search Panel for Embedded VAST */}
-            {renderSearchPanel(embeddedVastOutputRef)}
-            
-            <div className="text-sm p-4 overflow-x-auto">
-              {renderVastContent(rawVastContent)}
-            </div>
-          </div>
-          
-          {/* VASTAdTagURI (1) */}
-          <div 
-            className={activeVastTabIndex === 1 ? 'block' : 'hidden'}
-            ref={getFetchedVastRef(0)}
-          >
-            <div className="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-              <div className="text-xs">
-                Source: {renderSource(tabs[1].source)}
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={toggleWordWrap}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                    Wrap
-                  </div>
-                </button>
-                <button
-                  onClick={() => setShowVastSearch(!showVastSearch)}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    Find
-                  </div>
-                </button>
-                <button
-                  onClick={copyVastToClipboard}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Copy
-                  </div>
-                </button>
-              </div>
-            </div>
-            
-            {/* Search Panel for VASTAdTagURI (1) */}
-            {renderSearchPanel(getFetchedVastRef(0))}
-            
-            <div className="text-sm p-4 overflow-x-auto">
-              {vastChain[0]?.isLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </div>
-              ) : vastChain[0]?.error ? (
-                <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
-                  <p className="font-medium">Error fetching VAST:</p>
-                  <p>{vastChain[0]?.error}</p>
-                </div>
-              ) : vastChain[0]?.content ? (
-                renderVastContent(vastChain[0]?.content)
-              ) : (
-                <div className="text-center py-4">Kein Wrapper gefunden</div>
-              )}
-            </div>
-          </div>
-          
-          {/* VASTAdTagURI (2) */}
-          <div 
-            className={activeVastTabIndex === 2 ? 'block' : 'hidden'}
-            ref={getFetchedVastRef(1)}
-          >
-            <div className="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-              <div className="text-xs">
-                Source: {renderSource(tabs[2].source)}
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={toggleWordWrap}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                    Wrap
-                  </div>
-                </button>
-                <button
-                  onClick={() => setShowVastSearch(!showVastSearch)}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    Find
-                  </div>
-                </button>
-                <button
-                  onClick={copyVastToClipboard}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Copy
-                  </div>
-                </button>
-              </div>
-            </div>
-            
-            {/* Search Panel for VASTAdTagURI (2) */}
-            {renderSearchPanel(getFetchedVastRef(1))}
-            
-            <div className="text-sm p-4 overflow-x-auto">
-              {vastChain[1]?.isLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <svg className="animate-spin h-8 w-8 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </div>
-              ) : vastChain[1]?.error ? (
-                <div className="text-red-500 p-4 rounded-lg bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
-                  <p className="font-medium">Error fetching VAST:</p>
-                  <p>{vastChain[1]?.error}</p>
-                </div>
-              ) : vastChain[1]?.content ? (
-                renderVastContent(vastChain[1]?.content)
-              ) : (
-                <div className="text-center py-4">Kein Wrapper gefunden</div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }, [rawVastContent, vastChain, activeVastTabIndex, isDarkMode, embeddedVastOutputRef, renderVastContent, showVastSearch, setShowVastSearch, toggleWordWrap, copyVastToClipboard]);
+    setVastTabSearches(initialSearches);
+  }, [vastChain.length]);
 
-  // Funktion zum Anzeigen der JSON-Outline
-  const generateJsonOutline = (json: any, path: string = ''): React.ReactNode => {
-    if (!json || typeof json !== 'object') return null;
-    
-    const isArray = Array.isArray(json);
-    
-    return (
-      <ul className={`${path ? 'ml-4' : ''} ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-        {Object.keys(json).map((key, index) => {
-          const currentPath = path ? `${path}.${key}` : key;
-          const currentValue = json[key];
-          const isObject = currentValue && typeof currentValue === 'object';
-          
-          // Abkürzung für Arrays mit vielen Elementen
-          if (isArray && Object.keys(json).length > 20 && index >= 10 && index < Object.keys(json).length - 5) {
-            if (index === 10) {
-              return (
-                <li key={`${currentPath}-ellipsis`} className="py-1 pl-2 text-gray-500">
-                  ... {Object.keys(json).length - 15} more items ...
-                </li>
-              );
-            }
-            return null;
+  // Cleanup beim Tab-Wechsel
+  useEffect(() => {
+    // Wenn wir unsere VAST-Tabs wechseln, rufen wir die Cleanup-Funktion 
+    // des aktuellen Tabs auf, um Hervorhebungen zu entfernen
+    return () => {
+      if (vastTabSearches[activeVastTabIndex]?.cleanup) {
+        vastTabSearches[activeVastTabIndex].cleanup?.();
+      }
+    };
+  }, [activeVastTabIndex, vastTabSearches]);
+
+  // Aktiver Tab hat sich geändert - saubere Trennung der Tabs sicherstellen
+  useEffect(() => {
+    // Entferne alle Hervorhebungen im DOM, wenn sich der Tab ändert
+    const removeAllHighlights = () => {
+      document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+        if (el instanceof HTMLElement) {
+          // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
+          const text = el.textContent || '';
+          const textNode = document.createTextNode(text);
+          // Und ersetzen das hervorgehobene Element durch diesen TextNode
+          if (el.parentNode) {
+            el.parentNode.replaceChild(textNode, el);
           }
-          
-          return (
-            <li key={currentPath} className="py-1">
-              <div className="flex items-start">
-                <span 
-                  className={`cursor-pointer flex items-center ${isDarkMode ? 'hover:text-blue-300' : 'hover:text-blue-600'}`}
-                  onClick={() => {
-                    // Scroll zur entsprechenden Position im JSON
-                    const searchKey = isArray ? `\\[${key}\\]` : `"${key}"`;
-                    const elements = jsonOutputRef.current?.querySelectorAll(`[data-key="${searchKey}"]`);
-                    if (elements && elements.length > 0) {
-                      elements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      // Kurzes Highlighting
-                      elements[0].classList.add(isDarkMode ? 'bg-blue-900' : 'bg-blue-100');
-                      setTimeout(() => {
-                        elements[0].classList.remove(isDarkMode ? 'bg-blue-900' : 'bg-blue-100');
-                      }, 1500);
-                    }
-                  }}
-                >
-                  {isObject && (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  )}
-                  <span className={isArray ? 'text-purple-500 dark:text-purple-400' : 'text-blue-500 dark:text-blue-400'}>
-                    {key}
-                  </span>
-                  {!isObject && (
-                    <span className="ml-2 text-gray-500 truncate max-w-[150px] text-xs">
-                      {typeof currentValue === 'string' 
-                        ? `"${currentValue.length > 20 ? currentValue.substring(0, 20) + '...' : currentValue}"`
-                        : String(currentValue)
-                      }
-                    </span>
-                  )}
-                </span>
-              </div>
-              {isObject && generateJsonOutline(currentValue, currentPath)}
-            </li>
-          );
-        })}
-      </ul>
-    );
-  };
-
-  // Funktion zum Rendern der JSON-Outline
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-  const renderJsonOutline = () => {
-    if (!parsedJson) return null;
+        }
+      });
+    };
     
-    return (
-      <div className={`p-4 rounded-lg border overflow-auto ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'}`}>
-        <h4 className={`text-md font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>JSON Structure</h4>
-        <div className="text-xs font-mono">
-          {generateJsonOutline(parsedJson)}
-        </div>
-      </div>
-    );
-  };
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+    // Rufe die Bereinigungsfunktion auf
+    removeAllHighlights();
+    
+    // Setze auch die Tab-spezifischen Such-Statuswerte zurück
+    if (vastTabSearches.length > 0) {
+      performVastSearch();
+    }
+  }, [activeVastTabIndex]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Perform VAST search function - robustere Implementation
+  const performVastSearch = useCallback(() => {
+    // Hole den aktuellen Tab-Suchstatus
+    const currentTabSearch = vastTabSearches[activeVastTabIndex];
+    if (!currentTabSearch) return;
+    
+    // Entferne zuerst alle vorherigen Hervorhebungen
+    document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+      if (el instanceof HTMLElement) {
+        const text = el.textContent || '';
+        const textNode = document.createTextNode(text);
+        if (el.parentNode) {
+          el.parentNode.replaceChild(textNode, el);
+        }
+      }
+    });
+    
+    // Führe die alte Cleanup-Funktion aus, falls vorhanden
+    if (currentTabSearch.cleanup) {
+      currentTabSearch.cleanup();
+    }
+    
+    // Aktualisiere das Array mit leeren Ergebnissen für die aktuelle Suche
+    const updatedSearches = [...vastTabSearches];
+    updatedSearches[activeVastTabIndex] = {
+      ...updatedSearches[activeVastTabIndex],
+      results: [],
+      currentIndex: -1,
+      status: 'idle' as const
+    };
+    setVastTabSearches(updatedSearches);
+    
+    // Wenn Suchbegriff leer ist, breche ab
+    if (!vastSearchTerm.trim()) {
+      return;
+    }
+    
+    try {
+      // Get the appropriate VAST container for the current tab
+      const vastContainer = activeVastTabIndex === 0 
+        ? embeddedVastOutputRef.current 
+        : getFetchedVastRef(activeVastTabIndex - 1).current;
+      
+      if (!vastContainer) {
+        console.error("VAST container not found for search");
+        return;
+      }
+      
+      console.log("Performing VAST search for:", vastSearchTerm);
+      
+      // Sammle alle Textelemente im VAST-Container
+      const allTextElements: Array<{ node: Node, text: string, parent: HTMLElement | null }> = [];
+      const walker = document.createTreeWalker(
+        vastContainer,
+        NodeFilter.SHOW_TEXT,
+        { acceptNode: (node) => node.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT }
+      );
+      
+      let currentNode: Node | null;
+      // eslint-disable-next-line no-cond-assign
+      while (currentNode = walker.nextNode()) {
+        // Überspringe Elemente, die bereits Teil einer Suche sind
+        if (currentNode.parentElement?.classList.contains('search-term-highlight') ||
+            currentNode.parentElement?.classList.contains('search-term-current')) {
+          continue;
+        }
+        
+        allTextElements.push({
+          node: currentNode,
+          text: currentNode.textContent || '',
+          parent: currentNode.parentElement
+        });
+      }
+      
+      // Suche nach dem Term in allen Textelementen
+      const matches: Array<{ element: HTMLElement | null, text: string, startPos: number, node: Node }> = [];
+      const searchTermLower = vastSearchTerm.toLowerCase();
+      
+      for (const element of allTextElements) {
+        const textLower = element.text.toLowerCase();
+        let startPos = 0;
+        let pos;
+        
+        // Finde alle Vorkommen im Text
+        while ((pos = textLower.indexOf(searchTermLower, startPos)) !== -1) {
+          if (element.parent) {
+            matches.push({
+              element: element.parent,
+              text: element.text,
+              startPos: pos,
+              node: element.node
+            });
+          }
+          startPos = pos + searchTermLower.length;
+        }
+      }
+      
+      console.log(`Found ${matches.length} VAST search matches for tab ${activeVastTabIndex}`);
+      
+      // Filtere gültige Matches
+      const validMatches = matches.filter(match => match.element !== null) as { 
+        element: HTMLElement, 
+        text: string, 
+        startPos: number, 
+        node: Node 
+      }[];
+      
+      // Update the current tab's search state
+      const newUpdatedSearches = [...vastTabSearches];
+      
+      if (validMatches.length > 0) {
+        // Highlight-Funktion für VAST-Suche
+        const highlightVastMatches = (currentIndex: number) => {
+          // Entferne alte Highlights
+          document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+            if (el instanceof HTMLElement) {
+              const text = el.textContent || '';
+              const textNode = document.createTextNode(text);
+              if (el.parentNode) {
+                el.parentNode.replaceChild(textNode, el);
+              }
+            }
+          });
+          
+          // Markiere alle Treffer
+          validMatches.forEach((match, index) => {
+            if (!match.node || !match.node.textContent) return;
+            
+            const originalText = match.node.textContent;
+            const startPos = match.startPos;
+            const endPos = startPos + vastSearchTerm.length;
+            
+            const before = originalText.substring(0, startPos);
+            const term = originalText.substring(startPos, endPos);
+            const after = originalText.substring(endPos);
+            
+            const spanClass = index === currentIndex ? 'search-term-current' : 'search-term-highlight';
+            
+            const newContent = document.createRange().createContextualFragment(
+              `${before}<span class="${spanClass}">${term}</span>${after}`
+            );
+            
+            if (match.node.parentNode) {
+              match.node.parentNode.replaceChild(newContent, match.node);
+            }
+          });
+          
+          // Scroll zum aktuellen Ergebnis
+          if (validMatches[currentIndex]?.element) {
+            scrollToElement(validMatches[currentIndex].element);
+          }
+        };
+        
+        // Cleanup-Funktion für VAST-Suche
+        const cleanup = () => {
+          document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+            if (el instanceof HTMLElement) {
+              const text = el.textContent || '';
+              const textNode = document.createTextNode(text);
+              if (el.parentNode) {
+                el.parentNode.replaceChild(textNode, el);
+              }
+            }
+          });
+        };
+        
+        // Aktualisiere den Suchstatus für den aktuellen Tab
+        newUpdatedSearches[activeVastTabIndex] = {
+          results: validMatches.map(({ element, text, startPos }) => ({
+            element,
+            text,
+            startPos
+          })),
+          currentIndex: 0,
+          cleanup: cleanup,
+          status: 'results' as const
+        };
+        
+        // Highlight first match
+        highlightVastMatches(0);
+      } else {
+        newUpdatedSearches[activeVastTabIndex] = {
+          results: [],
+          currentIndex: -1,
+          cleanup: null,
+          status: 'no-results' as const
+        };
+      }
+      
+      setVastTabSearches(newUpdatedSearches);
+    } catch (error) {
+      console.error("Error in VAST search:", error);
+    }
+  }, [vastSearchTerm, activeVastTabIndex, vastTabSearches, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
+
+  // Navigation für die VAST-Tabs
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const goToNextVastResult = useCallback(() => {
+    const currentTabSearch = vastTabSearches[activeVastTabIndex];
+    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
+    
+    const nextIndex = (currentTabSearch.currentIndex + 1) % currentTabSearch.results.length;
+    
+    // Aktualisiere den Index im Tab-spezifischen Zustand und führe Highlight durch
+    const updatedSearches = [...vastTabSearches];
+    updatedSearches[activeVastTabIndex] = {
+      ...updatedSearches[activeVastTabIndex],
+      currentIndex: nextIndex
+    };
+    setVastTabSearches(updatedSearches);
+    
+    // Highlight ohne vollständige Neusuche
+    const highlightVastMatches = (idx: number) => {
+      // Entferne nur die "current" Hervorhebung, behalte alle anderen
+      document.querySelectorAll('.search-term-current').forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.classList.remove('search-term-current');
+          el.classList.add('search-term-highlight');
+        }
+      });
+      
+      // Setze die neue "current" Hervorhebung
+      const allHighlights = document.querySelectorAll('.search-term-highlight');
+      if (idx >= 0 && idx < allHighlights.length) {
+        const currentElement = allHighlights[idx];
+        if (currentElement instanceof HTMLElement) {
+          currentElement.classList.remove('search-term-highlight');
+          currentElement.classList.add('search-term-current');
+          
+          // Scroll zum Ergebnis
+          scrollToElement(currentElement);
+        }
+      }
+    };
+    
+    highlightVastMatches(nextIndex);
+  }, [vastTabSearches, activeVastTabIndex, scrollToElement]);
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const goToPrevVastResult = useCallback(() => {
+    const currentTabSearch = vastTabSearches[activeVastTabIndex];
+    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
+    
+    const prevIndex = (currentTabSearch.currentIndex - 1 + currentTabSearch.results.length) % currentTabSearch.results.length;
+    
+    // Aktualisiere den Index im Tab-spezifischen Zustand und führe Highlight durch
+    const updatedSearches = [...vastTabSearches];
+    updatedSearches[activeVastTabIndex] = {
+      ...updatedSearches[activeVastTabIndex],
+      currentIndex: prevIndex
+    };
+    setVastTabSearches(updatedSearches);
+    
+    // Highlight ohne vollständige Neusuche
+    const highlightVastMatches = (idx: number) => {
+      // Entferne nur die "current" Hervorhebung, behalte alle anderen
+      document.querySelectorAll('.search-term-current').forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.classList.remove('search-term-current');
+          el.classList.add('search-term-highlight');
+        }
+      });
+      
+      // Setze die neue "current" Hervorhebung
+      const allHighlights = document.querySelectorAll('.search-term-highlight');
+      if (idx >= 0 && idx < allHighlights.length) {
+        const currentElement = allHighlights[idx];
+        if (currentElement instanceof HTMLElement) {
+          currentElement.classList.remove('search-term-highlight');
+          currentElement.classList.add('search-term-current');
+          
+          // Scroll zum Ergebnis
+          scrollToElement(currentElement);
+        }
+      }
+    };
+    
+    highlightVastMatches(prevIndex);
+  }, [vastTabSearches, activeVastTabIndex, scrollToElement]);
+
+  // WICHTIG: Tab-Wechsel-Handler um Hervorhebungen zu aktualisieren
+  const handleVastTabChange = useCallback((newTabIndex: number) => {
+    // Wenn der aktuelle Tab mit dem neuen Tab identisch ist, nichts tun
+    if (activeVastTabIndex === newTabIndex) return;
+    
+    // Entferne alle Hervorhebungen
+    document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+      if (el instanceof HTMLElement) {
+        // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
+        const text = el.textContent || '';
+        const textNode = document.createTextNode(text);
+        // Und ersetzen das hervorgehobene Element durch diesen TextNode
+        if (el.parentNode) {
+          el.parentNode.replaceChild(textNode, el);
+        }
+      }
+    });
+    
+    // Führe die Cleanup-Funktion für den aktuellen Tab aus
+    if (vastTabSearches[activeVastTabIndex]?.cleanup) {
+      vastTabSearches[activeVastTabIndex].cleanup?.();
+    }
+    
+    // Setze den neuen Tab-Index
+    setActiveVastTabIndex(newTabIndex);
+    
+    // Verzögert die Hervorhebung neu erstellen, wenn der neue Tab gerendert wurde
+    setTimeout(() => {
+      // Wenn es Ergebnisse im neuen Tab gibt, hervorheben
+      if (vastTabSearches[newTabIndex]?.results.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const vastContainer = newTabIndex === 0 
+          ? embeddedVastOutputRef.current 
+          : getFetchedVastRef(newTabIndex - 1).current;
+        
+        /* TODO: Diese Stelle nutzte performSearch, die aus dem Code entfernt wurde
+        // Hervorhebe das letzte aktive Ergebnis im neuen Tab
+        const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
+        const currentIndex = vastTabSearches[newTabIndex].currentIndex;
+        
+        if (currentIndex >= 0 && vastTabSearches[newTabIndex].results.length > currentIndex) {
+          highlightMatch(currentIndex, vastTabSearches[newTabIndex].results);
+          
+          // Scroll zum Ergebnis
+          if (vastTabSearches[newTabIndex].results[currentIndex]?.element) {
+            scrollToElement(vastTabSearches[newTabIndex].results[currentIndex].element);
+          }
+        }
+        */
+      }
+    }, 100);
+  }, [activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, vastTabSearches]);
+
+  // Wenn sich die Tab-Struktur ändert, müssen wir die VAST-Tabs-Suche neu initialisieren
+  useEffect(() => {
+    if (vastChain.length > 0) {
+      // Beim Ändern der VAST-Kette die Suchhervorhebungen entfernen
+      document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+        if (el instanceof HTMLElement) {
+          // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
+          const text = el.textContent || '';
+          const textNode = document.createTextNode(text);
+          // Und ersetzen das hervorgehobene Element durch diesen TextNode
+          if (el.parentNode) {
+            el.parentNode.replaceChild(textNode, el);
+          }
+        }
+      });
+    }
+  }, [vastChain]);
+
+  // Add CSS for search highlighting - jetzt mit Hervorhebung aller Treffer
+  useEffect(() => {
+    // Create a style element
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .search-term-highlight {
+        background-color: rgba(59, 130, 246, 0.3);
+        padding: 1px;
+        border-radius: 2px;
+        font-weight: bold;
+      }
+      .search-term-current {
+        background-color: rgba(239, 68, 68, 0.7);
+        color: white;
+        padding: 1px;
+        border-radius: 2px;
+        outline: 2px solid rgba(239, 68, 68, 0.9);
+        font-weight: bold;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // Füge diese Handler-Definitionen nach performJsonSearch und performVastSearch ein
+  const handleJsonSearchButtonClick = useCallback(() => {
+    setIsJsonSearchOpen(prev => !prev);
+  }, []);
+
+  const handleVastSearchButtonClick = useCallback(() => {
+    setIsVastSearchOpen(prev => !prev);
+  }, []);
+
+  const handleToggleWordWrapClick = useCallback(() => {
+    setIsWordWrapEnabled(prev => !prev);
+  }, []);
+
+  const handleCopyJsonButtonClick = useCallback(() => {
+    if (parsedJson) {
+      copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
+    }
+  }, [parsedJson, copyToClipboard]);
+
+  const handleCopyVastButtonClick = useCallback(() => {
+    if (activeVastTabIndex === 0 && rawVastContent) {
+      copyToClipboard(rawVastContent, 'VAST');
+    } else if (activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1]?.content) {
+      const content = vastChain[activeVastTabIndex - 1].content;
+      if (content) {
+        copyToClipboard(content, 'VAST');
+      }
+    }
+  }, [activeVastTabIndex, rawVastContent, vastChain, copyToClipboard]);
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* History Panel */}
       {showHistory && (
         <JsonHistoryPanel
           isDarkMode={isDarkMode}
           history={history}
-          onRestore={restoreFromHistory}
+          onClick={restoreFromHistory}
           onClose={() => setShowHistory(false)}
         />
       )}
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* JSON Input/Output Section */}
-        <div className="flex flex-col h-full">
-          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
-            JSON Eingabe
-          </h2>
-          
-          <div className={`mb-4 rounded-lg border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'}`}>
-            <div className="bg-gray-100 dark:bg-gray-700 p-2 rounded-t-lg border-b border-gray-300 dark:border-gray-600 flex justify-between items-center">
-              <div className="flex space-x-2">
-                <label 
-                  htmlFor="json-input"
-                  className={`text-xs uppercase font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}
-                >
-                  Eingabe: JSON
-                </label>
-              </div>
-              
-              <div className="flex space-x-2">
-                <button
-                  onClick={handleClear}
-                  className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500"
-                >
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Leeren
-                  </div>
-                </button>
-              </div>
-            </div>
-            
-            <textarea
-              id="json-input"
-              className={`w-full p-4 font-mono text-sm resize-none outline-none ${
-                isDarkMode 
-                  ? 'bg-gray-800 text-gray-200 placeholder-gray-500' 
-                  : 'bg-white text-gray-800 placeholder-gray-400'
-              }`}
-              style={{ height: '40vh', minHeight: '350px', maxHeight: '50vh' }}
-              value={jsonInput}
-              onChange={(e) => setJsonInput(e.target.value)}
-              placeholder="Füge hier dein JSON mit VAST-Inhalt ein..."
-              aria-label="JSON input"
-            />
-          </div>
-          
-          <div className="flex space-x-3">
-            <button
+      {/* Copy Confirmation Message - Jetzt rechts unten mit Icon */}
+      {copyMessageVisible && (
+        <div className={`fixed bottom-4 right-4 flex items-center p-3 rounded-md shadow-lg transition-opacity duration-300 z-50 ${
+          isDarkMode ? 'bg-gray-700 text-white' : 'bg-green-100 text-green-800'
+        } ${copyMessageVisible ? 'opacity-100' : 'opacity-0'}`}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          {copyMessage}
+        </div>
+      )}
+
+      <Card isDarkMode={isDarkMode} className="mt-8 mb-8" withPadding>
+        <div className="mb-2">
+          <h3 className={`text-base md:text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>JSON Input</h3>
+          <textarea
+            ref={textAreaRef}
+            value={jsonInput}
+            onChange={handleJsonInputChange}
+            placeholder="Paste your JSON here..."
+            className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+            }`}
+          />
+          <div className="flex flex-wrap gap-3 mt-4">
+            <Button
               onClick={handleFormat}
-              className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
-                isDarkMode
-                  ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white'
-                  : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white'
-              }`}
+              variant="primary"
+              isDarkMode={isDarkMode}
               title="Format JSON (Ctrl+Shift+F)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" /> 
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
               </svg>
               Format
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleClear}
-              className={`px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition flex items-center ${
-                isDarkMode
-                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 border border-gray-600'
-                  : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
+              variant="secondary"
+              isDarkMode={isDarkMode}
               title="Clear Input (Ctrl+Shift+L)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
               Clear
-            </button>
+            </Button>
           </div>
         </div>
-        
-        {/* VAST Viewer Section */}
-        <div className="flex flex-col h-full">
-          <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-slate-800'} mb-2`}>
-            VAST Viewer
-          </h2>
-          
-          <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg border ${
-            isDarkMode ? 'border-gray-700' : 'border-gray-300'} h-full flex flex-col`}
-          >
-            {renderVastTabs()}
-          </div>
+      </Card>
+
+      {/* Fehlermeldungen vereinheitlichen */}
+      {error && (
+        <div className={`mb-4 p-3 border border-red-400 rounded bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200`}>
+          <strong>Error:</strong> {error}
         </div>
-      </div>
+      )}
       
-      {/* CopyMessage anzeigen */}
-      {copyMessage && (
-        <div 
-          className={`fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg text-sm font-medium z-50 animate-fade-out ${ 
-            isDarkMode 
-            ? 'bg-green-800 text-green-100' 
-            : 'bg-green-100 text-green-800' 
-          }`}
-        >
-          {copyMessage}
+      {(parsedJson || rawVastContent) && (
+        <div className="my-6 flex flex-col min-h-0">
+          <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 lg:space-x-3 flex-1 min-h-0">
+            {/* JSON Content - Left column */}
+            {parsedJson && (
+              <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
+                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 shadow-md">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h3>
+                    {/* Control buttons für JSON */}
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={handleJsonSearchButtonClick}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title="Search (Ctrl+F)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </Button>
+                      <Button
+                        onClick={handleToggleWordWrapClick}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title={isWordWrapEnabled ? "Disable word wrap" : "Enable word wrap"}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                      </Button>
+                      <Button
+                        onClick={handleCopyJsonButtonClick}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title="Copy JSON to clipboard"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Inline JSON Search */}
+                  <EnhancedJsonSearch 
+                    isDarkMode={isDarkMode}
+                    containerRef={jsonRef}
+                    isVisible={isJsonSearchOpen}
+                    onClose={() => setIsJsonSearchOpen(false)}
+                  />
+                  
+                  {/* JSON Outline/Content */}
+                  <div className="flex mb-2 mt-2">
+                    <Button
+                      onClick={() => setShowStructure(!showStructure)}
+                      variant="secondary"
+                      isDarkMode={isDarkMode}
+                      size="sm"
+                      title={showStructure ? "Show JSON" : "Show Structure"}
+                    >
+                      {showStructure ? "Show JSON" : "Show Structure"}
+                    </Button>
+                    {jsonSearchStatus !== 'idle' && (
+                      <div className={`ml-4 text-sm ${jsonSearchStatus === 'results' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {jsonSearchStatus === 'results' ? `${jsonSearchResults.length} matches found` : 'No matches'}
+                      </div>
+                    )}
+                  </div>
+                  {!showStructure ? (
+                    <div 
+                      ref={jsonRef}
+                      key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
+                      className={`w-full overflow-auto ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                      style={{ maxWidth: "100%" }}
+                    >
+                      <div 
+                        dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-xs font-mono">
+                      {generateJsonOutline(parsedJson)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* VAST Content - Right column or full width if no JSON */}
+            {rawVastContent && (
+              <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
+                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 shadow-md overflow-hidden">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
+                    {/* Control buttons für VAST */}
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={handleVastSearchButtonClick}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title="Search (Ctrl+F)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </Button>
+                      <Button
+                        onClick={handleToggleWordWrapClick}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title={isWordWrapEnabled ? "Disable word wrap" : "Enable word wrap"}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                      </Button>
+                      <Button
+                        onClick={handleCopyVastButtonClick}
+                        variant="secondary"
+                        isDarkMode={isDarkMode}
+                        size="sm"
+                        title="Copy VAST to clipboard"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Inline VAST Search */}
+                  <EnhancedJsonSearch 
+                    isDarkMode={isDarkMode}
+                    containerRef={vastRef}
+                    isVisible={isVastSearchOpen}
+                    onClose={() => setIsVastSearchOpen(false)}
+                  />
+
+                  {/* VAST Tabs */}
+                  <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+                    <button
+                      onClick={() => handleVastTabChange(0)}
+                      className={`py-2 px-4 text-sm font-medium ${
+                        activeVastTabIndex === 0
+                          ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      Embedded VAST
+                    </button>
+                    
+                    {vastChain.map((item, index) => (
+                      <button
+                        key={`vast-tab-${index}`}
+                        onClick={() => handleVastTabChange(index + 1)}
+                        className={`py-2 px-4 text-sm font-medium ${
+                          activeVastTabIndex === index + 1
+                            ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
+                      >
+                        {item.isLoading ? (
+                          <span>Wrapper {index + 1} (loading...)</span>
+                        ) : item.error ? (
+                          <span>Wrapper {index + 1} (error)</span>
+                        ) : (
+                          <span>Wrapper {index + 1}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* VAST Content Display */}
+                  <div ref={vastRef} className="vast-content-container overflow-auto">
+                    {activeVastTabIndex === 0 ? (
+                      <div ref={embeddedVastOutputRef} className={`break-words ${isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}`}>
+                        {renderVastContent(rawVastContent)}
+                      </div>
+                    ) : (
+                      <div ref={getFetchedVastRef(activeVastTabIndex - 1)} className={`break-words ${isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}`}>
+                        {vastChain[activeVastTabIndex - 1]?.isLoading ? (
+                          <div className="flex justify-center items-center p-10">
+                            <span className="animate-pulse text-blue-500 dark:text-blue-400">Loading VAST data...</span>
+                          </div>
+                        ) : vastChain[activeVastTabIndex - 1]?.error ? (
+                          <div className="text-red-500 dark:text-red-400 p-4">
+                            <p className="font-bold">Error loading VAST:</p>
+                            <p>{vastChain[activeVastTabIndex - 1].error}</p>
+                          </div>
+                        ) : (
+                          renderVastContent(vastChain[activeVastTabIndex - 1]?.content)
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

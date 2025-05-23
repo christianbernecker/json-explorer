@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TCF String Analyzer</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #output { white-space: pre-wrap; font-family: monospace; background: #f5f5f5; padding: 10px; border-radius: 5px; }
+        .section { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+        h2 { margin-top: 0; }
+        button { padding: 8px 16px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #3367d6; }
+        textarea { width: 100%; height: 80px; margin-bottom: 10px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>TCF String Analyzer</h1>
+    
+    <div class="section">
+        <h2>TCF String Input</h2>
+        <textarea id="tcfString">CQRemBOQRemBOAGACAENCZAAAAAAAAAAAAAAAAAAAAA.II7Nd_X__bX9n-_7_6ft0eY1f9_r37uQzDhfNk-8F3L_W_LwX32E7NF36tq4KmR4ku1bBIQNtHMnUDUmxaolVrzHsak2cpyNKJ_JkknsZe2dYGF9Pn9lD-YKZ7_5_9_f52T_9_9_-39z3_9f___dv_-__3_W474Ek8_n_v-_v_dFLgEkB1RgCQAgGyChQoUKCRQUKBIQEIoggYJJBZEJACQQKIEIKNEHABAIQCgEAACIAAQgCQAIgAAAIAkACQAg0AAAIKAgAwAICRQAMgABCIgIAECAAEIgACGAARBAASwAApACSAAACLAIkAAMASmAUhgAD.YAAAAAAAAAAAA</textarea>
+        <button onclick="decodeTCF()">Decode TCF String</button>
+        <button onclick="checkGVL()">Check GVL Status</button>
+    </div>
+    
+    <div class="section">
+        <h2>Output</h2>
+        <div id="output">Results will appear here...</div>
+    </div>
+    
+    <div class="section">
+        <h2>Debug Results</h2>
+        <div id="results">Debug results will appear here...</div>
+    </div>
+
+    <script>
+        // Load the necessary libraries for testing
+        let tcfLibsLoaded = false;
+        let TCString, GVL, TCModel;
+        
+        // Load the @iabtcf/core library dynamically
+        async function loadTcfLibraries() {
+            if (tcfLibsLoaded) return;
+            
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/@iabtcf/core@1.5.10/dist/iabtcf.core.min.js";
+                script.onload = () => {
+                    // Access the globals provided by the library
+                    TCString = window.iabtcf.core.TCString;
+                    GVL = window.iabtcf.core.GVL;
+                    TCModel = window.iabtcf.core.TCModel;
+                    tcfLibsLoaded = true;
+                    console.log("@iabtcf/core library loaded successfully");
+                    resolve();
+                };
+                script.onerror = (err) => {
+                    console.error("Failed to load @iabtcf/core library:", err);
+                    reject(err);
+                };
+                document.head.appendChild(script);
+            });
+        }
+        
+        // Load the GVL data 
+        async function loadGvlForAnalysis() {
+            try {
+                const gvlResponse = await fetch("/vendor-list.json");
+                if (!gvlResponse.ok) {
+                    throw new Error(`Failed to fetch GVL: ${gvlResponse.status}`);
+                }
+                const gvlData = await gvlResponse.json();
+                console.log("GVL loaded successfully", gvlData);
+                return new GVL(gvlData);
+            } catch (error) {
+                console.error("GVL loading error:", error);
+                
+                // Fallback to remote GVL
+                try {
+                    console.log("Trying to load GVL directly from remote source...");
+                    return await GVL.getLatest();
+                } catch (remoteError) {
+                    console.error("Remote GVL loading failed too:", remoteError);
+                    throw new Error("Failed to load GVL from all sources");
+                }
+            }
+        }
+
+        // Base64 decoding functions needed for TCF
+        const base64UrlDecode = (input) => {
+            // Replace URL-safe characters
+            input = input.replace(/-/g, '+').replace(/_/g, '/');
+            
+            // Add padding if needed
+            const pad = input.length % 4;
+            if (pad) {
+                if (pad === 1) {
+                    throw new Error('Invalid base64url string');
+                }
+                input += new Array(5-pad).join('=');
+            }
+            
+            // Decode
+            try {
+                return atob(input);
+            } catch (e) {
+                throw new Error('Failed to decode base64url: ' + e.message);
+            }
+        };
+        
+        const uint8ArrayToHex = (array) => {
+            return Array.from(array)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        };
+        
+        const binaryToUint8Array = (binary) => {
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        };
+
+        // Returns a bit value at a specific position in a Uint8Array
+        const getBit = (bytes, pos) => {
+            const bytePos = Math.floor(pos / 8);
+            const bitPos = pos % 8;
+            if (bytePos >= bytes.length) return 0;
+            return (bytes[bytePos] & (1 << (7 - bitPos))) !== 0 ? 1 : 0;
+        };
+        
+        // Extracts an integer from a range of bits
+        const extractInt = (bytes, startPos, length) => {
+            let result = 0;
+            for (let i = 0; i < length; i++) {
+                result = (result << 1) | getBit(bytes, startPos + i);
+            }
+            return result;
+        };
+        
+        // Simple TCF string decoder focused on vendor consent and LI
+        const decodeSimpleTCF = (tcString) => {
+            const parts = tcString.split('.');
+            if (parts.length < 2) {
+                return { error: 'Invalid TCF string format (missing parts)' };
+            }
+            
+            try {
+                // Decode core string
+                const coreBytes = binaryToUint8Array(base64UrlDecode(parts[0]));
+                
+                // Get version (first 6 bits)
+                const version = extractInt(coreBytes, 0, 6);
+                
+                // Check if we have a supported version
+                if (version !== 2) {
+                    return { error: `Unsupported TCF version: ${version}` };
+                }
+                
+                // Decode the vendor section
+                const vendorBytes = parts.length >= 2 ? 
+                    binaryToUint8Array(base64UrlDecode(parts[1])) : 
+                    new Uint8Array(0);
+                
+                // Output object
+                const result = {
+                    version,
+                    created: new Date(extractInt(coreBytes, 6, 36) * 100),
+                    lastUpdated: new Date(extractInt(coreBytes, 42, 36) * 100),
+                    cmpId: extractInt(coreBytes, 78, 12),
+                    cmpVersion: extractInt(coreBytes, 90, 12),
+                    consentScreen: extractInt(coreBytes, 102, 6),
+                    consentLanguage: String.fromCharCode(
+                        extractInt(coreBytes, 108, 6) + 65,
+                        extractInt(coreBytes, 114, 6) + 65
+                    ),
+                    vendorListVersion: extractInt(coreBytes, 120, 12),
+                    purposesConsent: [],
+                    purposesLI: [],
+                    vendorConsents: [],
+                    vendorLI: []
+                };
+                
+                // Extract Purpose Consents (24 bits starting at bit 132)
+                for (let i = 0; i < 24; i++) {
+                    if (getBit(coreBytes, 132 + i)) {
+                        result.purposesConsent.push(i + 1);
+                    }
+                }
+                
+                // Extract Purpose LI (24 bits starting at bit 156)
+                for (let i = 0; i < 24; i++) {
+                    if (getBit(coreBytes, 156 + i)) {
+                        result.purposesLI.push(i + 1);
+                    }
+                }
+                
+                // Get the special feature start bit (deduced from TCF spec)
+                let bitPosition = 180 + 24; // After purposes LI
+                
+                // Skip special features (12 bits)
+                bitPosition += 12;
+                
+                // Check if vendor consents and LI is in range encoding or bit field
+                const vendorConsentIsRangeEncoding = getBit(coreBytes, bitPosition) === 1;
+                bitPosition++;
+                
+                // Determine vendor consent bit field
+                if (!vendorConsentIsRangeEncoding) {
+                    const vendorConsentMaxId = extractInt(coreBytes, bitPosition, 16);
+                    bitPosition += 16;
+                    
+                    // Extract Vendor Consents
+                    for (let i = 0; i < vendorConsentMaxId; i++) {
+                        if (getBit(coreBytes, bitPosition + i)) {
+                            result.vendorConsents.push(i + 1);
+                        }
+                    }
+                    bitPosition += vendorConsentMaxId;
+                }
+                
+                // Check for LI encoding
+                const vendorLIIsRangeEncoding = getBit(coreBytes, bitPosition) === 1;
+                bitPosition++;
+                
+                // Determine vendor LI bit field
+                if (!vendorLIIsRangeEncoding) {
+                    const vendorLIMaxId = extractInt(coreBytes, bitPosition, 16);
+                    bitPosition += 16;
+                    
+                    // Extract Vendor LI
+                    for (let i = 0; i < vendorLIMaxId; i++) {
+                        if (getBit(coreBytes, bitPosition + i)) {
+                            result.vendorLI.push(i + 1);
+                        }
+                    }
+                }
+                
+                return result;
+                
+            } catch (e) {
+                return { error: `Decoding error: ${e.message}` };
+            }
+        };
+        
+        async function analyzeString(tcString) {
+            // Ensure the TCF libraries are loaded
+            if (!tcfLibsLoaded) {
+                try {
+                    await loadTcfLibraries();
+                    console.log("TCF libraries loaded successfully");
+                } catch (error) {
+                    document.getElementById('results').textContent = `Error loading TCF libraries: ${error.message}`;
+                    return;
+                }
+            }
+            
+            // Füge unsere Implementierung basierend auf der korrekten TCF-Spezifikation ein
+            try {
+                // Load GVL first
+                let gvl;
+                try {
+                    gvl = await loadGvlForAnalysis();
+                    console.log("GVL loaded for TCF analysis");
+                } catch (gvlError) {
+                    console.warn("GVL loading failed, proceeding without vendor details:", gvlError);
+                }
+                
+                // Create a TCModel Instance (from @iabtcf/core)
+                const tcModel = TCString.decode(tcString);
+                
+                // Attach GVL if available
+                if (gvl) {
+                    tcModel.gvl = gvl;
+                    // Wait for GVL to be ready
+                    try {
+                        await tcModel.gvl.readyPromise;
+                        console.log("GVL ready, vendor details should be available");
+                    } catch (readyError) {
+                        console.error("Error waiting for GVL ready:", readyError);
+                    }
+                }
+                
+                // Basic Info
+                const result = {
+                    tcString: tcString,
+                    version: tcModel.version,
+                    created: tcModel.created,
+                    lastUpdated: tcModel.lastUpdated,
+                    cmpId: tcModel.cmpId,
+                    cmpVersion: tcModel.cmpVersion,
+                    consentScreen: tcModel.consentScreen,
+                    consentLanguage: tcModel.consentLanguage,
+                    vendorListVersion: tcModel.vendorListVersion,
+                    policyVersion: tcModel.policyVersion,
+                    isServiceSpecific: tcModel.isServiceSpecific,
+                    useNonStandardStacks: tcModel.useNonStandardStacks,
+                    purposeConsents: Array.from(tcModel.purposeConsents.keys()),
+                    specialFeatureOptins: Array.from(tcModel.specialFeatureOptins.keys()),
+                    purposeLegitimateInterests: Array.from(tcModel.purposeLegitimateInterests.keys()),
+                    vendorConsents: Array.from(tcModel.vendorConsents.keys()),
+                    vendorLI: Array.from(tcModel.vendorLegitimateInterests.keys()),
+                    publisherRestrictions: Array.from(tcModel.publisherRestrictions.keys()),
+                    gvlLoaded: tcModel.gvl ? true : false
+                };
+                
+                // Format key vendors data
+                const keyVendorIds = [136, 137, 44];
+                let keyVendorsInfo = keyVendorIds.map(id => {
+                    const vendorConsent = tcModel.vendorConsents.has(id);
+                    const vendorLIBit = tcModel.vendorLegitimateInterests.has(id);
+                    
+                    // Prüfe LI Purposes für den Vendor (erfordert GVL)
+                    const vendorFromGVL = tcModel.gvl?.vendors?.[id] || null;
+                    const vendorConsentPurposes = vendorFromGVL?.purposes || [];
+                    const vendorLIPurposes = vendorFromGVL?.legIntPurposes || [];
+                    const vendorSpecialFeatures = vendorFromGVL?.specialFeatures || [];
+                    
+                    // Globale Purpose IDs aus dem TCF-String
+                    const globalPurposesConsent = Array.from(tcModel.purposeConsents.keys());
+                    const globalPurposesLI = Array.from(tcModel.purposeLegitimateInterests.keys());
+                    const globalSpecialFeatures = Array.from(tcModel.specialFeatureOptins.keys());
+                    
+                    // Berechne die Schnittmenge
+                    // 1. Für Consent: Wenn der Vendor im vendorConsents Bitfeld ist, geben wir alle seine Purposes zurück
+                    const activeConsentPurposesForVendor = vendorConsent 
+                        ? vendorConsentPurposes 
+                        : [];
+                        
+                    // 2. Für LI: Nur wenn der Vendor im LI-Bitfeld ist UND eine Überschneidung zwischen
+                    // seinen LI-Purposes und den globalen LI-Purposes besteht
+                    const activeLIPurposesForVendor = vendorLIBit 
+                        ? vendorLIPurposes.filter(purposeId => globalPurposesLI.includes(purposeId))
+                        : [];
+                        
+                    // 3. Für Special Features: Nur wenn der Vendor das Feature unterstützt UND global Opt-In für dieses Feature besteht
+                    const activeSpecialFeaturesForVendor = vendorSpecialFeatures.filter(featureId => 
+                        globalSpecialFeatures.includes(featureId)
+                    );
+                    
+                    // Nach TCF-Spezifikation: Ein Vendor hat nur dann LI, wenn beide Bedingungen erfüllt sind
+                    const hasLegitimateInterest = vendorLIBit && activeLIPurposesForVendor.length > 0;
+                    
+                    // Erweiterte Debug-Informationen zur GVL-Übereinstimmung
+                    let gvlInfo = '';
+                    if (vendorFromGVL) {
+                        gvlInfo = `
+  - GVL Vendor Information:
+    * Name in GVL: ${vendorFromGVL.name || 'Nicht angegeben'}
+    * Consent Purposes in GVL: ${(vendorFromGVL.purposes || []).join(', ') || 'Keine'}
+    * LI Purposes in GVL: ${(vendorFromGVL.legIntPurposes || []).join(', ') || 'Keine'}
+    * Flexible Purposes in GVL: ${(vendorFromGVL.flexiblePurposes || []).join(', ') || 'Keine'}`;
+                    } else {
+                        gvlInfo = `
+  - HINWEIS: Keine GVL-Daten für diesen Vendor verfügbar. 
+    Bitte stellen Sie sicher, dass die GVL korrekt geladen wurde.`;
+                    }
+                    
+                    return `Vendor ${id}:
+  - Consent: ${vendorConsent ? 'JA' : 'NEIN'}
+  - LI Bit im TCString: ${vendorLIBit ? 'JA' : 'NEIN'}
+  - LI Purposes des Vendors (GVL): ${vendorLIPurposes.join(', ') || 'Keine'}
+  - Globale LI Purposes im TCString: ${globalPurposesLI.join(', ') || 'Keine'}
+  - Aktive LI Purposes für diesen Vendor: ${activeLIPurposesForVendor.join(', ') || 'Keine'}
+  - Hat Legitimate Interest (nach TCF-Spezifikation): ${hasLegitimateInterest ? 'JA' : 'NEIN'}${gvlInfo}`;
+                }).join('\n\n');
+                
+                // Build the full output
+                const output = `TCF STRING ANALYSE:
+============================================
+Version: ${result.version}
+Erstellt: ${result.created.toISOString()}
+Letztes Update: ${result.lastUpdated.toISOString()}
+CMP ID: ${result.cmpId}
+CMP Version: ${result.cmpVersion}
+Consent Screen: ${result.consentScreen}
+Consent Language: ${result.consentLanguage}
+Vendor List Version: ${result.vendorListVersion}
+Policy Version: ${result.policyVersion}
+Service Specific: ${result.isServiceSpecific}
+Non-Standard Stacks: ${result.useNonStandardStacks}
+GVL geladen: ${result.gvlLoaded ? 'JA' : 'NEIN'}
+
+PURPOSES:
+============================================
+Purpose Consents: ${result.purposeConsents.join(', ')}
+Purpose Legitimate Interests: ${result.purposeLegitimateInterests.join(', ')}
+Special Feature Opt-ins: ${result.specialFeatureOptins.join(', ')}
+
+VENDORS:
+============================================
+Vendor Consents: ${result.vendorConsents.join(', ')}
+Vendor Legitimate Interests: ${result.vendorLI.join(', ')}
+
+KEY VENDORS ANALYSIS:
+============================================
+${keyVendorsInfo}
+
+PUBLISHER RESTRICTIONS:
+============================================
+${result.publisherRestrictions.join(', ') || 'Keine'}
+
+TECHNISCHE VALIDIERUNG:
+============================================
+Die Legitimate Interest Berechnung erfolgt gemäß offizieller IAB TCF Spezifikation:
+1. Der Vendor muss im vendorLegitimateInterests-Bitfeld auf TRUE gesetzt sein
+2. UND mindestens ein Purpose aus seinen legitimen Interessen muss aktiviert sein
+`;
+                
+                document.getElementById('results').textContent = output;
+                document.getElementById('output').textContent = output;
+            } catch (error) {
+                console.error('Error parsing TC string:', error);
+                document.getElementById('results').textContent = `ERROR: ${error.message}`;
+                document.getElementById('output').textContent = `ERROR: ${error.message}`;
+            }
+        }
+
+        function decodeTCF() {
+            const tcfString = document.getElementById('tcfString').value.trim();
+            if (!tcfString) {
+                document.getElementById('results').textContent = 'Please enter a TCF string';
+                return;
+            }
+            
+            // Rufe die neue analyzeString-Funktion auf
+            analyzeString(tcfString);
+        }
+
+        // Hilfsfunktion zur Überprüfung des GVL-Status
+        async function checkGVL() {
+            // Stelle sicher, dass TCF-Bibliotheken geladen sind
+            if (!tcfLibsLoaded) {
+                try {
+                    await loadTcfLibraries();
+                } catch (error) {
+                    document.getElementById('results').textContent = `Error loading TCF libraries: ${error.message}`;
+                    return;
+                }
+            }
+            
+            try {
+                const gvl = await loadGvlForAnalysis();
+                
+                // Wähle einen speziellen Vendor aus und überprüfe dessen Daten
+                const vendor136 = gvl.vendors[136];
+                const vendor137 = gvl.vendors[137];
+                
+                let output = "GVL ANALYSE:\n";
+                output += "============================================\n";
+                output += `GVL Version: ${gvl.vendorListVersion}\n`;
+                output += `Vendor-Anzahl: ${Object.keys(gvl.vendors).length}\n\n`;
+                
+                if (vendor136) {
+                    output += "VENDOR 136 (Ströer SSP GmbH):\n";
+                    output += `Name: ${vendor136.name}\n`;
+                    output += `Consent Purposes: ${(vendor136.purposes || []).join(', ')}\n`;
+                    output += `LI Purposes: ${(vendor136.legIntPurposes || []).join(', ')}\n`;
+                    output += `Flexible Purposes: ${(vendor136.flexiblePurposes || []).join(', ')}\n`;
+                    output += `Special Purposes: ${(vendor136.specialPurposes || []).join(', ')}\n\n`;
+                } else {
+                    output += "VENDOR 136 nicht in der GVL gefunden!\n\n";
+                }
+                
+                if (vendor137) {
+                    output += "VENDOR 137 (Ströer SSP GmbH (DSP)):\n";
+                    output += `Name: ${vendor137.name}\n`;
+                    output += `Consent Purposes: ${(vendor137.purposes || []).join(', ')}\n`;
+                    output += `LI Purposes: ${(vendor137.legIntPurposes || []).join(', ')}\n`;
+                    output += `Flexible Purposes: ${(vendor137.flexiblePurposes || []).join(', ')}\n`;
+                    output += `Special Purposes: ${(vendor137.specialPurposes || []).join(', ')}\n`;
+                } else {
+                    output += "VENDOR 137 nicht in der GVL gefunden!\n";
+                }
+                
+                document.getElementById('results').textContent = output;
+            } catch (error) {
+                document.getElementById('results').textContent = `Error checking GVL: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html> 

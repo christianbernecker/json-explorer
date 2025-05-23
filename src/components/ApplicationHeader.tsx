@@ -1,26 +1,27 @@
 import React, { useState } from 'react';
-import InfoPanel from './InfoPanel';
 import GlobalHeader from './GlobalHeader';
+import InfoPanel from './InfoPanel';
 
 interface ApplicationHeaderProps {
   isDarkMode: boolean;
-  toggleDarkMode: () => void;
-  activeTab?: string;
+  toggleDarkMode?: () => void;
   showHistory?: boolean;
   setShowHistory?: (value: boolean | ((prev: boolean) => boolean)) => void;
   historyLength?: number;
   title?: string;
   subtitle?: string;
+  activeTab?: string;
 }
 
 const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({ 
   isDarkMode, 
   toggleDarkMode, 
-  showHistory, 
-  setShowHistory, 
-  historyLength,
+  showHistory,
+  setShowHistory,
+  historyLength = 0,
   title = "JSON Explorer",
-  subtitle = "Visualize and analyze JSON data"
+  subtitle = "Visualize and analyze JSON data",
+  activeTab
 }) => {
   const [showInfo, setShowInfo] = useState(false);
 
@@ -31,6 +32,8 @@ const ApplicationHeader: React.FC<ApplicationHeaderProps> = ({
         toggleDarkMode={toggleDarkMode}
         showHistory={showHistory}
         setShowHistory={setShowHistory}
+        historyLength={historyLength}
+        activeTab={activeTab}
       />
       
       <div className="h-20"></div>

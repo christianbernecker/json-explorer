@@ -1,13 +1,14 @@
 export interface HistoryItemProps {
   item: HistoryItem;
-  index: number;
-  onRestore: (item: HistoryItem) => void;
+  index?: number;
+  onClick: (item: HistoryItem) => void;
   isDarkMode: boolean;
 }
 
 export interface HistoryItem {
-  type: 'json' | 'json_vast' | 'json_diff';
-  content?: any;
+  id?: string | number;
+  type: 'json' | 'json_vast' | 'json_diff' | 'tcf' | 'vast';
+  content: any;
   jsonContent?: any;
   vastContent?: string;
   vastPath?: string;
@@ -16,18 +17,14 @@ export interface HistoryItem {
   rightJson?: string;
   comparisonMode?: string;
   timestamp: number;
+  title?: string;
 }
 
 export interface SearchPanelProps {
-  targetRef: React.RefObject<HTMLDivElement | null>;
-  contentType: string;
+  targetRef: React.RefObject<HTMLDivElement>;
+  contentType: 'JSON' | 'VAST' | string;
   isDarkMode: boolean;
   onSearch?: (term: string) => void;
-}
-
-export interface SearchResult {
-  element: HTMLElement;
-  rowIndex: number;
 }
 
 export interface JsonVastExplorerProps {
@@ -82,3 +79,26 @@ export interface AggregatedData {
 }
 
 export type ChartType = 'bar' | 'line' | 'pie' | 'radar' | 'area'; 
+
+// Neue Typen für die Suchfunktionalität
+export enum ContentType {
+  JSON = 'JSON',
+  XML = 'XML',
+  TEXT = 'TEXT'
+}
+
+export interface SearchResult {
+  type: string;
+  path: string;
+  line: number;
+  context: string;
+  match: string;
+  contentType: ContentType;
+}
+
+export interface SearchOptions {
+  caseSensitive: boolean;
+  inKeys: boolean;
+  inValues: boolean;
+  useRegex: boolean;
+} 
