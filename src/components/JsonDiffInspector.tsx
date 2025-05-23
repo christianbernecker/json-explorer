@@ -289,7 +289,7 @@ const JsonDiffInspector = React.memo(({
   }, []);
   
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* History overlay */}
       {showHistory && history.length > 0 && (
         <div className="absolute z-10 top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex justify-center items-center">
@@ -321,7 +321,7 @@ const JsonDiffInspector = React.memo(({
       )}
       
       {/* Main content */}
-      <div className="w-full container mx-auto flex flex-col space-y-6">
+      <div className="w-full flex flex-col space-y-6">
         {/* Comparison mode selector */}
         <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700">
           <div className="flex flex-wrap gap-2 items-center">

@@ -117,6 +117,8 @@ const JsonVastExplorer = React.memo(({
   // Refs for DOM elements and content
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const jsonOutputRef = useRef<HTMLDivElement>(null);
+  const jsonRef = useRef<HTMLDivElement>(null);
+  const vastRef = useRef<HTMLDivElement>(null);
   
   // Ref for Embedded VAST output
   const embeddedVastOutputRef = useRef<HTMLDivElement>(null);
@@ -382,20 +384,20 @@ const JsonVastExplorer = React.memo(({
   // Stelle sicher, dass die Refs korrekt initialisiert werden, wenn Daten verfügbar sind
   useEffect(() => {
     // Refs-Status loggen
-    if (parsedJson && jsonOutputRef.current) {
-      console.log("JsonOutputRef ist initialisiert und bereit für die Suche");
+    if (parsedJson && jsonRef.current) {
+      console.log("JsonRef ist initialisiert und bereit für die Suche");
     }
     
-    if (rawVastContent && embeddedVastOutputRef.current) {
-      console.log("EmbeddedVastOutputRef ist initialisiert und bereit für die Suche");
+    if (rawVastContent && vastRef.current) {
+      console.log("VastRef ist initialisiert und bereit für die Suche");
     }
     
     // Aktive Suche deaktivieren, wenn keine gültigen Refs mehr vorhanden sind
-    if (isSearchOpen && !jsonOutputRef.current) {
-      console.warn("Suche ist aktiv, aber Ref ist nicht mehr gültig - deaktiviere Suche");
+    if (isSearchOpen && (!jsonRef.current && !vastRef.current)) {
+      console.warn("Suche ist aktiv, aber keine Refs sind gültig - deaktiviere Suche");
       setIsSearchOpen(false);
     }
-  }, [parsedJson, rawVastContent, jsonOutputRef, isSearchOpen]);
+  }, [parsedJson, rawVastContent, isSearchOpen]);
 
   // Tastaturkürzel für die Suche
   useEffect(() => {
@@ -756,10 +758,6 @@ const JsonVastExplorer = React.memo(({
       </div>
     );
   }, [addLineNumbersGlobal, formatXmlForDisplay, highlightXml, isDarkMode, isWordWrapEnabled]);
-
-  // Referenzen für DOM-Elemente
-  const jsonRef = useRef<HTMLDivElement>(null);
-  const vastRef = useRef<HTMLDivElement>(null);
 
   // Log search state changes
   useEffect(() => {
@@ -1564,7 +1562,7 @@ const JsonVastExplorer = React.memo(({
                   </div>
 
                   {/* VAST Content Display */}
-                  <div className="vast-content-container overflow-auto">
+                  <div ref={vastRef} className="vast-content-container overflow-auto">
                     {activeVastTabIndex === 0 ? (
                       <div ref={embeddedVastOutputRef} className={`break-words ${isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}`}>
                         {renderVastContent(rawVastContent)}

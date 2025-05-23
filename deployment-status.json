@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 13:50:06 CEST 2025", "commit": "Neue verbesserte Suche und Cards in voller Breite"}
+{"deployment": "staging", "timestamp": "Fri May 23 14:30:39 CEST 2025", "commit": "Fix ESLint-Fehler in JsonVastExplorer.tsx zur Behebung von Build-Problemen"}
