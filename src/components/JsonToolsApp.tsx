@@ -136,17 +136,17 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
       
       <ApplicationHeader 
         isDarkMode={isDarkMode}
-        toggleDarkMode={toggleDarkMode}
-        activeTab={activeTab}
-        showHistory={activeShowHistory}
-        setShowHistory={activeSetShowHistory}
+        toggleDarkMode={toggleDarkMode} 
+        showHistory={activeShowHistory} 
+        setShowHistory={activeSetShowHistory} 
         historyLength={activeHistory.length}
-        title="JSON Toolkit"
-        subtitle="Validate, Compare & Explore VAST/JSON"
+        title={activeTab === 'explorer' ? "JSON Validator & Explorer" : activeTab === 'comparator' ? "JSON Diff Tool" : "TCF String Analyzer"}
+        subtitle={activeTab === 'explorer' ? "Validate, format and explore JSON + VAST documents" : activeTab === 'comparator' ? "Compare two JSON objects" : "Parse and decode TCF strings"}
+        activeTab={activeTab} 
       />
       
       {/* Container mit responsiven Abständen */}
-      <div className="mt-2 sm:mt-3 md:mt-4 px-2 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
+      <div className="mt-4 sm:mt-6 md:mt-8 px-2 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4">
         {activeTab === 'explorer' ? (
           <JsonVastExplorer 
             isDarkMode={isDarkMode}
