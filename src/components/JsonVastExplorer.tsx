@@ -512,81 +512,6 @@ const JsonVastExplorer = React.memo(({
     setExpandedJsonPaths(new Set());
   }, []);
 
-  // Format XML for display - adding proper styling and line breaks
-  const formatXmlForDisplay = useCallback((xml: string | null): string => {
-    if (!xml) return '';
-    
-    try {
-      // Verbesserte XML-Formatierung mit korrekter Einrückung
-      const formatXml = (xml: string): string => {
-        // XML in einzelne Zeichen aufteilen für bessere Kontrolle
-        let formattedXml = '';
-        let indentLevel = 0;
-        let inCdata = false;
-        
-        // CDATA-Inhalte inline lassen und nicht umbrechen
-        xml = xml.replace(/(<!\[CDATA\[.*?\]\]>)/g, function(match) {
-          return match.replace(/\s+/g, ' ');
-        });
-        
-        // Tag-Inhalte und Tags durch Zeilenumbrüche trennen
-        xml = xml.replace(/>\s*</g, '>\n<');
-        
-        // Durch die Zeilen gehen und Einrückung hinzufügen
-        const lines = xml.split('\n');
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i].trim();
-          if (!line) continue;
-          
-          // Prüfen, ob es ein schließendes Tag ist
-          const isClosingTag = line.startsWith('</');
-          // Prüfen, ob es ein selbstschließendes Tag ist
-          const isSelfClosingTag = line.match(/<[^>]*\/>/);
-          // Prüfen, ob es ein CDATA-Block ist
-          const isCdataTag = line.match(/!\[CDATA\[.*?\]\]/);
-          
-          // Einrückung für schließende Tags reduzieren
-          if (isClosingTag) {
-            indentLevel--;
-          }
-          
-          // Einrückung hinzufügen (nur wenn nicht in CDATA-Block)
-          if (!inCdata) {
-            formattedXml += '  '.repeat(Math.max(0, indentLevel)) + line + '\n';
-          } else {
-            formattedXml += line + '\n';
-          }
-          
-          // Einrückung für öffnende Tags erhöhen
-          // Wenn es ein öffnendes, nicht selbstschließendes Tag ist
-          if (!isClosingTag && !isSelfClosingTag && line.startsWith('<') && !isCdataTag) {
-            indentLevel++;
-          }
-          
-          // CDATA-Status verfolgen
-          if (line.includes('<![CDATA[')) {
-            inCdata = true;
-          }
-          if (line.includes(']]>')) {
-            inCdata = false;
-          }
-        }
-        
-        return formattedXml;
-      };
-      
-      return formatXml(xml);
-    } catch (error) {
-      console.error('Error formatting XML:', error);
-      return xml;
-    }
-  }, []);
-  
-  // Handle toggle word wrap
-  const toggleWordWrap = useCallback(() => {
-    setIsWordWrapEnabled(prev => !prev);
-  }, []);
-
   // Referenzen für DOM-Elemente
   const jsonRef = useRef<HTMLDivElement>(null);
   const vastRef = useRef<HTMLDivElement>(null);
@@ -873,8 +798,6 @@ const JsonVastExplorer = React.memo(({
     };
   }, []);
 
-  const [showJsonStructure, setShowJsonStructure] = useState(false);
-
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* Original search component - keeping this for reference */}
@@ -967,22 +890,7 @@ const JsonVastExplorer = React.memo(({
                     {/* ... bestehender Button-Code ... */}
                   </div>
                   {/* Toggle zwischen JSON und Structure */}
-                  {showJsonStructure ? (
-                    <div className="text-xs font-mono">
-                      {generateJsonOutline(parsedJson)}
-                    </div>
-                  ) : (
-                    <div 
-                      ref={jsonRef}
-                      key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
-                      className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
-                      style={{ maxWidth: "100%" }}
-                    >
-                      <div 
-                        dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
-                      />
-                    </div>
-                  )}
+                  {/* ... bestehender Toggle-Code ... */}
                 </div>
               </div>
             )}
@@ -992,8 +900,7 @@ const JsonVastExplorer = React.memo(({
                 <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
                   <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                   {/* Tabs und Toggle für Structure ... */}
-                  {/* ... bestehender Tab/Button-Code ... */}
-                  {/* VAST Content Display ... */}
+                  {/* ... bestehender Tab/Toggle-Code ... */}
                 </div>
               </div>
             )}
