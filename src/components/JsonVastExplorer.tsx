@@ -56,7 +56,6 @@ const JsonVastExplorer = React.memo(({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
   const [showStructure, setShowStructure] = useState(false); // State für JSON-Struktur-Ansicht
-  const [showVastStructure, setShowVastStructure] = useState(false); // State für VAST-Struktur-Ansicht
   
   // Für Debugging-Nachrichten
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -565,6 +564,9 @@ const JsonVastExplorer = React.memo(({
           xml = xml.substring(xmlHeaderMatch[0].length).trim();
         }
         
+        // Verschachtelte Tags identifizieren, um korrekte Einrückung sicherzustellen
+        const tags = [];
+        
         // Tag-Inhalte und Tags durch Zeilenumbrüche trennen
         xml = xml.replace(/>\s*</g, '>\n<');
         
@@ -591,21 +593,32 @@ const JsonVastExplorer = React.memo(({
           
           // Einrückung für schließende Tags reduzieren (vor dem Hinzufügen)
           if (isClosingTag) {
-            indentLevel = Math.max(0, indentLevel - 1);
+            // Finde das passende öffnende Tag
+            const tagName = line.match(/<\/([^\s>]+)/)?.[1];
+            if (tagName && tags.length > 0 && tags[tags.length - 1] === tagName) {
+              // Regulärer geschlossener Tag in der erwarteten Reihenfolge
+              tags.pop();
+              indentLevel = Math.max(0, tags.length);
+            } else {
+              // Unerwartetes schließendes Tag - trotzdem einrücken
+              indentLevel = Math.max(0, indentLevel - 1);
+            }
           }
           
           // Einrückung hinzufügen (nur wenn nicht in CDATA-Block und keine Verarbeitungsanweisung)
           if (!inCdata && !isProcessingInstruction) {
-            formattedXml += '  '.repeat(Math.max(0, indentLevel)) + line + '\n';
+            formattedXml += '  '.repeat(indentLevel) + line + '\n';
           } else {
             formattedXml += line + '\n';
           }
           
-          // Einrückung für öffnende Tags erhöhen (nach dem Hinzufügen)
-          // Wenn es ein öffnendes, nicht selbstschließendes Tag ist
-          if (!isClosingTag && !isSelfClosingTag && line.startsWith('<') && 
-              !isProcessingInstruction && !isCdataTag) {
-            indentLevel++;
+          // Verfolge öffnende Tags für korrekte Einrückung
+          if (!isClosingTag && !isSelfClosingTag && !isProcessingInstruction && line.startsWith('<')) {
+            const tagMatch = line.match(/<([^\s>/]+)/);
+            if (tagMatch && tagMatch[1]) {
+              tags.push(tagMatch[1]);
+              indentLevel = tags.length;
+            }
           }
           
           // CDATA-Status verfolgen
@@ -639,7 +652,7 @@ const JsonVastExplorer = React.memo(({
         dangerouslySetInnerHTML={{ 
           __html: addLineNumbersGlobal(highlightXml(formattedVast, isDarkMode), 'xml')
         }}
-        className={isWordWrapEnabled ? 'whitespace-normal' : 'whitespace-pre'}
+        className={`overflow-auto break-words ${isWordWrapEnabled ? 'whitespace-normal' : 'whitespace-pre'}`}
       />
     );
     
@@ -1141,9 +1154,32 @@ const JsonVastExplorer = React.memo(({
     };
     setVastTabSearches(updatedSearches);
     
-    // Perform the search again to highlight the next result
-    performVastSearch();
-  }, [vastTabSearches, activeVastTabIndex, performVastSearch]);
+    // Highlight ohne vollständige Neusuche
+    const highlightVastMatches = (idx: number) => {
+      // Entferne nur die "current" Hervorhebung, behalte alle anderen
+      document.querySelectorAll('.search-term-current').forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.classList.remove('search-term-current');
+          el.classList.add('search-term-highlight');
+        }
+      });
+      
+      // Setze die neue "current" Hervorhebung
+      const allHighlights = document.querySelectorAll('.search-term-highlight');
+      if (idx >= 0 && idx < allHighlights.length) {
+        const currentElement = allHighlights[idx];
+        if (currentElement instanceof HTMLElement) {
+          currentElement.classList.remove('search-term-highlight');
+          currentElement.classList.add('search-term-current');
+          
+          // Scroll zum Ergebnis
+          scrollToElement(currentElement);
+        }
+      }
+    };
+    
+    highlightVastMatches(nextIndex);
+  }, [vastTabSearches, activeVastTabIndex, scrollToElement]);
 
   const goToPrevVastResult = useCallback(() => {
     const currentTabSearch = vastTabSearches[activeVastTabIndex];
@@ -1159,9 +1195,32 @@ const JsonVastExplorer = React.memo(({
     };
     setVastTabSearches(updatedSearches);
     
-    // Perform the search again to highlight the previous result
-    performVastSearch();
-  }, [vastTabSearches, activeVastTabIndex, performVastSearch]);
+    // Highlight ohne vollständige Neusuche
+    const highlightVastMatches = (idx: number) => {
+      // Entferne nur die "current" Hervorhebung, behalte alle anderen
+      document.querySelectorAll('.search-term-current').forEach(el => {
+        if (el instanceof HTMLElement) {
+          el.classList.remove('search-term-current');
+          el.classList.add('search-term-highlight');
+        }
+      });
+      
+      // Setze die neue "current" Hervorhebung
+      const allHighlights = document.querySelectorAll('.search-term-highlight');
+      if (idx >= 0 && idx < allHighlights.length) {
+        const currentElement = allHighlights[idx];
+        if (currentElement instanceof HTMLElement) {
+          currentElement.classList.remove('search-term-highlight');
+          currentElement.classList.add('search-term-current');
+          
+          // Scroll zum Ergebnis
+          scrollToElement(currentElement);
+        }
+      }
+    };
+    
+    highlightVastMatches(prevIndex);
+  }, [vastTabSearches, activeVastTabIndex, scrollToElement]);
 
   // WICHTIG: Tab-Wechsel-Handler um Hervorhebungen zu aktualisieren
   const handleVastTabChange = useCallback((newTabIndex: number) => {
@@ -1484,7 +1543,7 @@ const JsonVastExplorer = React.memo(({
                     <div 
                       ref={jsonRef}
                       key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
-                      className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
+                      className={`w-full overflow-auto ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
                       style={{ maxWidth: "100%" }}
                     >
                       <div 
@@ -1502,7 +1561,7 @@ const JsonVastExplorer = React.memo(({
             {/* VAST Content - Right column or full width if no JSON */}
             {rawVastContent && (
               <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
-                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 shadow-md">
+                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 shadow-md overflow-hidden">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                     {/* Control buttons für VAST */}
@@ -1604,40 +1663,29 @@ const JsonVastExplorer = React.memo(({
                     ))}
                   </div>
 
-                  {/* VAST Struktur-Toggle ohne XML Nodes Anzahl */}
-                  <div className="flex mb-2 mt-2">
-                    <Button
-                      onClick={() => setShowVastStructure(!showVastStructure)}
-                      variant="secondary"
-                      isDarkMode={isDarkMode}
-                      size="sm"
-                      title={showVastStructure ? "Show VAST" : "Show Structure"}
-                    >
-                      {showVastStructure ? "Show VAST" : "Show Structure"}
-                    </Button>
-                  </div>
-
                   {/* VAST Content Display */}
-                  {activeVastTabIndex === 0 ? (
-                    <div ref={embeddedVastOutputRef} className={isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}>
-                      {renderVastContent(rawVastContent)}
-                    </div>
-                  ) : (
-                    <div ref={getFetchedVastRef(activeVastTabIndex - 1)} className={isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}>
-                      {vastChain[activeVastTabIndex - 1]?.isLoading ? (
-                        <div className="flex justify-center items-center p-10">
-                          <span className="animate-pulse text-blue-500 dark:text-blue-400">Loading VAST data...</span>
-                        </div>
-                      ) : vastChain[activeVastTabIndex - 1]?.error ? (
-                        <div className="text-red-500 dark:text-red-400 p-4">
-                          <p className="font-bold">Error loading VAST:</p>
-                          <p>{vastChain[activeVastTabIndex - 1].error}</p>
-                        </div>
-                      ) : (
-                        renderVastContent(vastChain[activeVastTabIndex - 1]?.content)
-                      )}
-                    </div>
-                  )}
+                  <div className="vast-content-container overflow-auto">
+                    {activeVastTabIndex === 0 ? (
+                      <div ref={embeddedVastOutputRef} className={`break-words ${isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}`}>
+                        {renderVastContent(rawVastContent)}
+                      </div>
+                    ) : (
+                      <div ref={getFetchedVastRef(activeVastTabIndex - 1)} className={`break-words ${isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}`}>
+                        {vastChain[activeVastTabIndex - 1]?.isLoading ? (
+                          <div className="flex justify-center items-center p-10">
+                            <span className="animate-pulse text-blue-500 dark:text-blue-400">Loading VAST data...</span>
+                          </div>
+                        ) : vastChain[activeVastTabIndex - 1]?.error ? (
+                          <div className="text-red-500 dark:text-red-400 p-4">
+                            <p className="font-bold">Error loading VAST:</p>
+                            <p>{vastChain[activeVastTabIndex - 1].error}</p>
+                          </div>
+                        ) : (
+                          renderVastContent(vastChain[activeVastTabIndex - 1]?.content)
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
