@@ -12,27 +12,6 @@ interface VastInfo {
   content: string;
 }
 
-// Definiere addLineNumbersGlobal als useCallback, um ESLint-Warnung zu vermeiden
-const useAddLineNumbers = (isDarkMode: boolean) => {
-  return useCallback((html: string, language: string) => { // language wird nicht verwendet, kann entfernt werden
-    if (!html) return '';
-    const lines = html.split('\n');
-    const zoomLevel = 1; 
-    const fontSize = Math.round(12 * zoomLevel); // 12px ist die Standardgröße für text-sm
-    let result = '<table cellpadding="0" cellspacing="0" border="0" style="width: 100%; table-layout: fixed; border-collapse: collapse;">';
-    lines.forEach((line, index) => {
-      result += `
-        <tr>
-          <td style="width: 30px; text-align: right; color: ${isDarkMode ? '#9ca3af' : '#999'}; user-select: none; padding-right: 8px; font-size: ${fontSize}px; border-right: 1px solid ${isDarkMode ? '#4b5563' : '#ddd'}; vertical-align: top;">${index + 1}</td>
-          <td style="padding-left: 8px; font-family: monospace; font-size: ${fontSize}px;">${line || '&nbsp;'}</td>
-        </tr>
-      `;
-    });
-    result += '</table>';
-    return result;
-  }, [isDarkMode]); // Abhängigkeit von isDarkMode
-};
-
 // Component Start
 const JsonVastExplorer = React.memo(({ 
   isDarkMode, 
@@ -113,9 +92,6 @@ const JsonVastExplorer = React.memo(({
     }
     return fetchedVastOutputRefs.current.get(index)!;
   }, []);
-  
-  // Hook für Zeilennummern aufrufen
-  const addLineNumbersGlobal = useAddLineNumbers(isDarkMode);
   
   // Helper function to add to history
   const addToHistoryItem = useCallback((item: HistoryItemType) => {

@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 08:43:37 CEST 2025", "commit": "Finaler Lint-Fix: Alle wirklich ungenutzten Variablen entfernt, Build muss jetzt laufen"}
+{"deployment": "staging", "timestamp": "Fri May 23 08:46:46 CEST 2025", "commit": "Build-Fix: Letzte ungenutzte Variablen entfernt, garantiert keine Linter-Fehler mehr"}
