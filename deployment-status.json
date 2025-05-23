@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 17:15:00 CEST 2025", "commit": "Erneuter Versuch: Verbesserte TCF-String-Erkennung mit Debug-Logs"}
+{"deployment": "staging", "timestamp": "Fri May 23 21:39:11 CEST 2025", "commit": "Verbesserte Card-Darstellung für TCF Decoder mit konsistenten Abständen für v2.0.1"}
