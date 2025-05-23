@@ -40,9 +40,9 @@ const MaintenanceOverlay: React.FC<MaintenanceOverlayProps> = ({
         if (APP_VERSION === 'v2.0.0' && isProduction) {
           setIsVisible(true);
         }
-        // Nicht auf Staging/Preview/Dev für 2.0.1 anzeigen
-        else if (APP_VERSION.includes('2.0.1') && !isProduction) {
-          setIsVisible(false);
+        // Auch auf Staging/Preview für 2.0.1 anzeigen
+        else if (APP_VERSION.includes('2.0.1') && (isStaging || showOnEnv === 'all')) {
+          setIsVisible(true);
         }
       }
     }

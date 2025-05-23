@@ -1263,11 +1263,11 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Maintenance Overlay für Data Visualizer - nur in Produktionsversion angezeigt */}
+      {/* Maintenance Overlay für Data Visualizer - wird auf allen Umgebungen angezeigt */}
       <MaintenanceOverlay 
         isDarkMode={isDarkMode} 
         featureName="Data Visualizer"
-        showOnEnv="production" 
+        showOnEnv="all" 
       />
       
       <SEO
