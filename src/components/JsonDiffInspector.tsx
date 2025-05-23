@@ -29,7 +29,7 @@ const JsonDiffInspector = React.memo(({
   } | null>(null);
   const [comparisonMode, setComparisonMode] = useState('both'); // 'structure', 'values', or 'both'
   const [error, setError] = useState('');
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [fontSize, setFontSize] = useState(12); // Use fontSize directly instead of zoomLevel
   
   // Custom hook for syntax highlighting
   const { highlightJson } = useHighlighter();
@@ -40,9 +40,6 @@ const JsonDiffInspector = React.memo(({
     
     const lines = html.split('\n');
     let result = '<table cellpadding="0" cellspacing="0" border="0" style="width: 100%; table-layout: fixed; border-collapse: collapse;">';
-    
-    // Calculate font size based on zoom level
-    const fontSize = Math.round(12 * zoomLevel);
     
     lines.forEach((line, index) => {
       result += `
@@ -55,7 +52,7 @@ const JsonDiffInspector = React.memo(({
     
     result += '</table>';
     return result;
-  }, [zoomLevel, isDarkMode]);
+  }, [fontSize, isDarkMode]);
   
   // Find structural differences between two JSON objects
   const findStructuralDifferences = useCallback((sourceObj: any, targetObj: any, path: string, differences: StructuralDifference[], side: string) => {
@@ -278,218 +275,18 @@ const JsonDiffInspector = React.memo(({
     };
   }, [compareJson, handleClear]); // Add dependencies
   
-  // Render comparison results
-  const renderComparisonResults = useCallback(() => {
-    if (!comparisonResult) return null;
-    
-    const { structureDifferences, valueDifferences } = comparisonResult;
-    const hasStructuralDiffs = structureDifferences.length > 0 && (comparisonMode === 'structure' || comparisonMode === 'both');
-    const hasValueDiffs = valueDifferences.length > 0 && (comparisonMode === 'values' || comparisonMode === 'both');
-    
-    if (!hasStructuralDiffs && !hasValueDiffs) {
-      return (
-        <div className={`p-4 border rounded-lg ${
-          isDarkMode ? 'bg-green-900 text-green-100 border-green-800' : 'bg-green-50 text-green-800 border-green-100'
-        }`}>
-          <div className="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            <span className="font-medium">No differences found! The JSON objects are identical.</span>
-          </div>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="space-y-6">
-        {/* Summary of differences */}
-        <div className={`p-4 border rounded-lg ${
-          isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-        }`}>
-          <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-            Comparison Summary
-          </h3>
-          <div className="flex flex-wrap gap-4">
-            {hasStructuralDiffs && (
-              <div className={`p-3 rounded-lg ${
-                isDarkMode ? 'bg-red-900 bg-opacity-20 text-red-200' : 'bg-red-50 text-red-800'
-              }`}>
-                <div className="font-semibold">Structural Differences: {structureDifferences.length}</div>
-                <div className="text-sm mt-1">
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    isDarkMode ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-800'
-                  }`}>
-                    Missing in Right: {structureDifferences.filter(d => d.type === 'missing_in_right').length}
-                  </span>
-                  <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
-                    isDarkMode ? 'bg-blue-900 text-blue-200' : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    Missing in Left: {structureDifferences.filter(d => d.type === 'missing_in_left').length}
-                  </span>
-                </div>
-              </div>
-            )}
-            
-            {hasValueDiffs && (
-              <div className={`p-3 rounded-lg ${
-                isDarkMode ? 'bg-amber-900 bg-opacity-20 text-amber-200' : 'bg-amber-50 text-amber-800'
-              }`}>
-                <div className="font-semibold">Value Differences: {valueDifferences.length}</div>
-                <div className="text-sm mt-1">
-                  In fields that exist in both JSON objects
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {hasStructuralDiffs && (
-          <div>
-            <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-              Structural Differences ({structureDifferences.length})
-            </h3>
-            <div className={`border rounded-lg overflow-hidden ${
-              isDarkMode ? 'border-gray-700' : 'border-gray-200'
-            }`}>
-              <table className="w-full table-fixed">
-                <thead className={`${
-                  isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-600'
-                }`}>
-                  <tr>
-                    <th className="px-4 py-2 text-left w-2/5">Path</th>
-                    <th className="px-4 py-2 text-left w-3/5">Issue</th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${
-                  isDarkMode ? 'divide-gray-700 text-gray-300' : 'divide-gray-200'
-                }`}>
-                  {structureDifferences.map((diff, index) => (
-                    <tr key={`struct-${index}`} className={`${
-                      isDarkMode ? 'bg-gray-800' : 'bg-white'
-                    } ${diff.type === 'missing_in_right' 
-                      ? isDarkMode ? 'bg-red-900 bg-opacity-20' : 'bg-red-50' 
-                      : isDarkMode ? 'bg-blue-900 bg-opacity-20' : 'bg-blue-50'
-                    }`}>
-                      <td className="px-4 py-3 font-mono text-sm break-all w-2/5 overflow-hidden text-ellipsis">{diff.path}</td>
-                      <td className="px-4 py-3 break-words w-3/5">{diff.description}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-        
-        {hasValueDiffs && (
-          <div>
-            <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-              Value Differences ({valueDifferences.length})
-            </h3>
-            <div className={`border rounded-lg overflow-hidden ${
-              isDarkMode ? 'border-gray-700' : 'border-gray-200'
-            }`}>
-              <table className="w-full table-fixed">
-                <thead className={`${
-                  isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-50 text-gray-600'
-                }`}>
-                  <tr>
-                    <th className="px-4 py-2 text-left w-1/4">Path</th>
-                    <th className="px-4 py-2 text-left w-[37.5%]">Left Value</th>
-                    <th className="px-4 py-2 text-left w-[37.5%]">Right Value</th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${
-                  isDarkMode ? 'divide-gray-700 text-gray-300' : 'divide-gray-200'
-                }`}>
-                  {valueDifferences.map((diff, index) => (
-                    <tr key={`value-${index}`} className={`${
-                      isDarkMode ? 'bg-gray-800' : 'bg-white'
-                    }`}>
-                      <td className="px-4 py-3 font-mono text-sm break-all w-1/4 overflow-hidden text-ellipsis align-top">{diff.path}</td>
-                      <td className={`px-4 py-3 font-mono text-sm whitespace-pre-wrap break-all align-top w-[37.5%] overflow-hidden ${
-                        isDarkMode ? 'text-red-300' : 'text-red-600'
-                      }`}>
-                        {formatDiffValue(diff.leftValue)}
-                      </td>
-                      <td className={`px-4 py-3 font-mono text-sm whitespace-pre-wrap break-all align-top w-[37.5%] overflow-hidden ${
-                        isDarkMode ? 'text-green-300' : 'text-green-600'
-                      }`}>
-                        {formatDiffValue(diff.rightValue)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-        
-        {/* Side-by-Side View */}
-        <div>
-          <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-            Side-by-Side View
-          </h3>
-          <div className="flex flex-row gap-4 overflow-hidden">
-            <div className="w-1/2 min-w-0 overflow-hidden">
-              <div className={`p-2 rounded-lg font-semibold text-center ${
-                isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'
-              }`}>
-                Left JSON
-              </div>
-              <div className={`mt-2 p-4 rounded-lg border shadow-inner overflow-auto max-h-96 max-w-full ${
-                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-              }`}>
-                {leftJsonInput ? 
-                  <div dangerouslySetInnerHTML={{ 
-                    __html: addLineNumbers(highlightJson(JSON.parse(leftJsonInput), isDarkMode), 'json') 
-                  }} className="overflow-x-auto whitespace-pre break-words w-full" style={{ maxWidth: "100%" }} />
-                : ''}
-              </div>
-            </div>
-            <div className="w-1/2 min-w-0 overflow-hidden">
-              <div className={`p-2 rounded-lg font-semibold text-center ${
-                isDarkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-200'
-              }`}>
-                Right JSON
-              </div>
-              <div className={`mt-2 p-4 rounded-lg border shadow-inner overflow-auto max-h-96 max-w-full ${
-                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-              }`}>
-                {rightJsonInput ? 
-                  <div dangerouslySetInnerHTML={{ 
-                    __html: addLineNumbers(highlightJson(JSON.parse(rightJsonInput), isDarkMode), 'json') 
-                  }} className="overflow-x-auto whitespace-pre break-words w-full" style={{ maxWidth: "100%" }} />
-                : ''}
-              </div>
-            </div>
-          </div>
-          <div className="mt-3">
-            <div className="flex flex-wrap gap-2">
-              <div className={`px-3 py-1 rounded-lg text-sm flex items-center ${
-                isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-              }`}>
-                <span className="w-3 h-3 rounded-full bg-red-500 bg-opacity-30 mr-2"></span>
-                <span>Missing in Right</span>
-              </div>
-              <div className={`px-3 py-1 rounded-lg text-sm flex items-center ${
-                isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-              }`}>
-                <span className="w-3 h-3 rounded-full bg-green-500 bg-opacity-30 mr-2"></span>
-                <span>Missing in Left</span>
-              </div>
-              <div className={`px-3 py-1 rounded-lg text-sm flex items-center ${
-                isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-              }`}>
-                <span className="w-3 h-3 rounded-full bg-amber-500 bg-opacity-30 mr-2"></span>
-                <span>Different Values</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }, [comparisonResult, comparisonMode, isDarkMode, formatDiffValue, leftJsonInput, rightJsonInput, highlightJson, addLineNumbers]);
+  // Hilfsfunktion zum Anpassen der Schriftgröße
+  const increaseFontSize = useCallback(() => {
+    setFontSize(prev => Math.min(prev + 1, 20));
+  }, []);
+  
+  const decreaseFontSize = useCallback(() => {
+    setFontSize(prev => Math.max(prev - 1, 8));
+  }, []);
+  
+  const resetFontSize = useCallback(() => {
+    setFontSize(12);
+  }, []);
   
   return (
     <div className="w-full h-full">
@@ -623,6 +420,44 @@ const JsonDiffInspector = React.memo(({
             </svg>
             History ({history.length})
           </Button>
+          
+          {/* Font Size Controls */}
+          <div className="ml-auto flex items-center space-x-2">
+            <Button 
+              onClick={decreaseFontSize}
+              variant="secondary"
+              isDarkMode={isDarkMode}
+              size="sm"
+              title="Decrease font size"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+            </Button>
+            <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{fontSize}px</span>
+            <Button 
+              onClick={increaseFontSize}
+              variant="secondary"
+              isDarkMode={isDarkMode}
+              size="sm"
+              title="Increase font size"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </Button>
+            <Button 
+              onClick={resetFontSize}
+              variant="secondary"
+              isDarkMode={isDarkMode}
+              size="sm"
+              title="Reset font size"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </Button>
+          </div>
         </div>
         
         {/* Error message */}

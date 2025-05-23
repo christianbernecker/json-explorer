@@ -5,14 +5,14 @@ import HistoryItem from './HistoryItem';
 interface JsonHistoryPanelProps {
   isDarkMode: boolean;
   history: HistoryItemType[];
-  onRestore: (item: HistoryItemType) => void;
+  onClick: (item: HistoryItemType) => void;
   onClose: () => void;
 }
 
 const JsonHistoryPanel: React.FC<JsonHistoryPanelProps> = ({ 
   isDarkMode, 
   history, 
-  onRestore, 
+  onClick, 
   onClose 
 }) => {
   return (
@@ -38,7 +38,7 @@ const JsonHistoryPanel: React.FC<JsonHistoryPanelProps> = ({
               key={item.timestamp} 
               item={item} 
               index={index} 
-              onClick={onRestore}
+              onClick={onClick}
               isDarkMode={isDarkMode}
             />
           ))

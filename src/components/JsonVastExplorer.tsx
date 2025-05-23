@@ -1474,7 +1474,7 @@ const JsonVastExplorer = React.memo(({
         <JsonHistoryPanel
           isDarkMode={isDarkMode}
           history={history}
-          onRestore={restoreFromHistory}
+          onClick={restoreFromHistory}
           onClose={() => setShowHistory(false)}
         />
       )}
@@ -1569,7 +1569,7 @@ const JsonVastExplorer = React.memo(({
                         title={isWordWrapEnabled ? "Disable word wrap" : "Enable word wrap"}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
                         </svg>
                       </Button>
                       <Button
