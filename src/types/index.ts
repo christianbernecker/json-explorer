@@ -17,14 +17,32 @@ export interface JsonDiffToolProps {
   isDarkMode: boolean;
 }
 
+// Props für den JsonTcfAnalyzer
+export interface JsonTcfAnalyzerProps {
+  isDarkMode: boolean;
+  history: HistoryItem[];
+  setHistory: (history: HistoryItem[]) => void;
+  showHistory: boolean;
+  setShowHistory: (show: boolean) => void;
+}
+
+// Props für die JsonToolsApp
+export interface JsonToolsAppProps {
+  parentIsDarkMode: boolean;
+  toggleDarkMode?: () => void;
+}
+
 // HistoryItem für gespeicherte Dateneingaben
 export type HistoryItem = {
   id?: string;
-  type: string;
+  type: 'json' | 'json_vast' | 'json_diff' | 'json_tcf' | 'tcf' | 'vast';
   content: any;
   jsonContent?: any;
   vastContent?: string | null;
   vastUrl?: string;
+  vastPath?: string;
+  tcfString?: string | null;
+  comparisonMode?: string;
   timestamp: number;
 };
 
@@ -32,8 +50,17 @@ export type HistoryItem = {
 export interface JsonHistoryPanelProps {
   isDarkMode: boolean;
   history: HistoryItem[];
-  onRestore: (item: HistoryItem) => void;
+  onRestore?: (item: HistoryItem) => void;
+  onClick?: (item: HistoryItem) => void;
   onClose: () => void;
+}
+
+// Props für HistoryItem-Komponente
+export interface HistoryItemProps {
+  item: HistoryItem;
+  index: number;
+  onClick: (item: HistoryItem) => void;
+  isDarkMode: boolean;
 }
 
 // Props für JsonSearch

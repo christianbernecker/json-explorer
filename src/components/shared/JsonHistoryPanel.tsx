@@ -5,7 +5,8 @@ import HistoryItem from './HistoryItem';
 interface JsonHistoryPanelProps {
   isDarkMode: boolean;
   history: HistoryItemType[];
-  onClick: (item: HistoryItemType) => void;
+  onClick?: (item: HistoryItemType) => void;
+  onRestore?: (item: HistoryItemType) => void;
   onClose: () => void;
 }
 
@@ -13,8 +14,18 @@ const JsonHistoryPanel: React.FC<JsonHistoryPanelProps> = ({
   isDarkMode, 
   history, 
   onClick, 
+  onRestore,
   onClose 
 }) => {
+  // Verwende onRestore, wenn vorhanden, ansonsten onClick
+  const handleItemClick = (item: HistoryItemType) => {
+    if (onRestore) {
+      onRestore(item);
+    } else if (onClick) {
+      onClick(item);
+    }
+  };
+
   return (
     <div className={`mb-6 p-4 border rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
       <div className="flex items-center justify-between mb-3">
@@ -33,12 +44,12 @@ const JsonHistoryPanel: React.FC<JsonHistoryPanelProps> = ({
       
       <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
         {history.length > 0 ? (
-          history.map((item, index) => (
+          history.map((item: HistoryItemType, index: number) => (
             <HistoryItem 
               key={item.timestamp} 
               item={item} 
               index={index} 
-              onClick={onClick}
+              onClick={handleItemClick}
               isDarkMode={isDarkMode}
             />
           ))

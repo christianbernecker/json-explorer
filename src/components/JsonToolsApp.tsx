@@ -5,6 +5,7 @@ import {
 } from '../types';
 import JsonVastExplorer from './JsonVastExplorer';
 import JsonDiffInspector from './JsonDiffInspector';
+import JsonTcfAnalyzer from './JsonTcfAnalyzer';
 import { SEO, StructuredData } from './seo';
 import ApplicationHeader from './ApplicationHeader';
 import { useLocation } from 'react-router-dom';
@@ -15,13 +16,17 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
   // activeTab wird jetzt aus der URL abgeleitet
   const [activeTab, setActiveTab] = useState(() => {
     // Default ist 'explorer', aber wir prüfen die URL für das richtige Tab
-    return location.pathname.includes('/diff') ? 'comparator' : 'explorer';
+    if (location.pathname.includes('/diff')) return 'comparator';
+    if (location.pathname.includes('/tcf-analyzer')) return 'tcf-analyzer';
+    return 'explorer';
   });
   
   // URL-Änderungen überwachen
   useEffect(() => {
     if (location.pathname.includes('/diff')) {
       setActiveTab('comparator');
+    } else if (location.pathname.includes('/tcf-analyzer')) {
+      setActiveTab('tcf-analyzer');
     } else {
       setActiveTab('explorer');
     }
@@ -45,6 +50,8 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
               setShowVastExplorerHistory((prev: boolean) => !prev);
             } else if (activeTab === 'comparator') {
               setShowDiffInspectorHistory((prev: boolean) => !prev);
+            } else if (activeTab === 'tcf-analyzer') {
+              setShowTcfAnalyzerHistory((prev: boolean) => !prev);
             }
             break;
           default:
@@ -70,8 +77,15 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
     return savedHistory ? JSON.parse(savedHistory) : [];
   });
   
+  // Neuer History-State für den TCF-Analyzer
+  const [tcfAnalyzerHistory, setTcfAnalyzerHistory] = useState<HistoryItemType[]>(() => {
+    const savedHistory = localStorage.getItem('jsonTools_tcfAnalyzerHistory');
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
+  
   const [showVastExplorerHistory, setShowVastExplorerHistory] = useState(false);
   const [showDiffInspectorHistory, setShowDiffInspectorHistory] = useState(false);
+  const [showTcfAnalyzerHistory, setShowTcfAnalyzerHistory] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('jsonTools_vastExplorerHistory', JSON.stringify(vastExplorerHistory));
@@ -80,10 +94,29 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
   useEffect(() => {
     localStorage.setItem('jsonTools_diffInspectorHistory', JSON.stringify(diffInspectorHistory));
   }, [diffInspectorHistory]);
+  
+  useEffect(() => {
+    localStorage.setItem('jsonTools_tcfAnalyzerHistory', JSON.stringify(tcfAnalyzerHistory));
+  }, [tcfAnalyzerHistory]);
 
-  const activeHistory = activeTab === 'explorer' ? vastExplorerHistory : diffInspectorHistory;
-  const activeShowHistory = activeTab === 'explorer' ? showVastExplorerHistory : showDiffInspectorHistory;
-  const activeSetShowHistory = activeTab === 'explorer' ? setShowVastExplorerHistory : setShowDiffInspectorHistory;
+  // Wähle die aktiven History-States basierend auf dem aktiven Tab
+  let activeHistory;
+  let activeShowHistory;
+  let activeSetShowHistory;
+  
+  if (activeTab === 'explorer') {
+    activeHistory = vastExplorerHistory;
+    activeShowHistory = showVastExplorerHistory;
+    activeSetShowHistory = setShowVastExplorerHistory;
+  } else if (activeTab === 'comparator') {
+    activeHistory = diffInspectorHistory;
+    activeShowHistory = showDiffInspectorHistory;
+    activeSetShowHistory = setShowDiffInspectorHistory;
+  } else {
+    activeHistory = tcfAnalyzerHistory;
+    activeShowHistory = showTcfAnalyzerHistory;
+    activeSetShowHistory = setShowTcfAnalyzerHistory;
+  }
 
   return (
     <div className="w-full h-full flex flex-col p-0">
@@ -91,7 +124,7 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
         title="JSON Validator, Formatter & Diff Tool | Online JSON and VAST Analyzer"
         description="Free tools for comparing, validating, and analyzing JSON files and VAST AdTags. Easy to use with no installation required."
         additionalMetaTags={[
-          { name: 'keywords', content: 'JSON validator, JSON formatter, JSON comparison, VAST validator, AdTech tools' },
+          { name: 'keywords', content: 'JSON validator, JSON formatter, JSON comparison, VAST validator, AdTech tools, TCF analyzer' },
           { name: 'author', content: 'Christian Bernecker' }
         ]}
         canonical="https://www.adtech-toolbox.com/apps/json-explorer"
@@ -122,13 +155,21 @@ function JsonToolsApp({ parentIsDarkMode, toggleDarkMode }: JsonToolsAppProps) {
             showHistory={showVastExplorerHistory}
             setShowHistory={setShowVastExplorerHistory}
           />
-        ) : (
+        ) : activeTab === 'comparator' ? (
           <JsonDiffInspector 
             isDarkMode={isDarkMode}
             history={diffInspectorHistory}
             setHistory={setDiffInspectorHistory}
             showHistory={showDiffInspectorHistory}
             setShowHistory={setShowDiffInspectorHistory}
+          />
+        ) : (
+          <JsonTcfAnalyzer
+            isDarkMode={isDarkMode}
+            history={tcfAnalyzerHistory}
+            setHistory={setTcfAnalyzerHistory}
+            showHistory={showTcfAnalyzerHistory}
+            setShowHistory={setShowTcfAnalyzerHistory}
           />
         )}
       </div>
