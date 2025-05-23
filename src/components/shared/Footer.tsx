@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { APP_VERSION } from '../../constants'; 
 
 // For deployment script detection:
-// APP_VERSION = 'v1.1.4' // Keep this comment for context
+// APP_VERSION = 'v2.0.0' // Keep this comment for context
 
 interface FooterProps {
   isDarkMode: boolean;
