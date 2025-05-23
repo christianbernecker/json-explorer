@@ -40,7 +40,7 @@ const Footer: React.FC<FooterProps> = ({ isDarkMode }) => {
               © {currentYear} AdTech Toolbox | JSON Explorer | 
               {/* Zeige Preview-Version, wenn Hostname passt, sonst normale Version */}
               {isPreview ? (
-                <span> Version v1.1.5-preview</span> 
+                <span> Version v2.0.1-preview</span> 
               ) : (
                 <span> Version {APP_VERSION}</span> 
               )}

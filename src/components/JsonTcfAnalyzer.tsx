@@ -100,7 +100,7 @@ const JsonTcfAnalyzer: React.FC<JsonTcfAnalyzerProps> = ({
       }
     }
     
-    // TCF-String-Pattern: Verschiedene Formate akzeptieren, sehr breiter Match
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const tcfRegex = /^C[A-Za-z0-9_\-+/=.]{10,}$/;
     
     // Rekursiv durch JSON traversieren
