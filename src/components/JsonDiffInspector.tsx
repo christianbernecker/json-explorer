@@ -8,6 +8,7 @@ import {
 import useHighlighter from '../utils/highlighter';
 import { HistoryItem } from './shared';
 import Button from './shared/Button';
+import Card from './shared/Card';
 
 // JSON Diff Inspector Component
 const JsonDiffInspector = React.memo(({ 
@@ -491,231 +492,261 @@ const JsonDiffInspector = React.memo(({
   }, [comparisonResult, comparisonMode, isDarkMode, formatDiffValue, leftJsonInput, rightJsonInput, highlightJson, addLineNumbers]);
   
   return (
-    <div className="w-full">
-      {/* History panel */}
-      {showHistory && (
-        <div className={`mb-6 p-4 border rounded-lg ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
-              Recent Comparisons
-            </h3>
-            <button 
-              onClick={() => setShowHistory(false)}
-              className={`p-1 rounded-md hover:bg-gray-200 ${isDarkMode ? 'hover:bg-gray-700' : ''}`}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-          
-          <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
-            {history.length > 0 ? (
-              history.map((item, index) => (
+    <div className="w-full h-full">
+      {/* History overlay */}
+      {showHistory && history.length > 0 && (
+        <div className="absolute z-10 top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 flex justify-center items-center">
+          <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Recent Comparisons</h2>
+              <button 
+                onClick={() => setShowHistory(false)}
+                className={`p-1 rounded-full ${isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-200'}`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="space-y-2">
+              {history.map((item, index) => (
                 <HistoryItem 
-                  key={item.timestamp} 
+                  key={item.id || index}
                   item={item} 
-                  index={index} 
-                  onRestore={handleRestoreFromHistory}
-                  isDarkMode={isDarkMode}
+                  onClick={() => handleRestoreFromHistory(item)} 
+                  isDarkMode={isDarkMode} 
                 />
-              ))
-            ) : (
-              <div className={`p-3 text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                No history yet. Compare some JSON to get started.
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         </div>
       )}
       
-      <div className="mb-4">
-        <div className={`mb-4 p-3 rounded-lg text-sm ${
-          isDarkMode ? 'bg-gray-800 text-gray-300 border border-gray-700' : 'bg-blue-50 text-blue-800 border border-blue-100'
-        }`}>
-          <strong>Comparison Mode:</strong> 
-          <div className="mt-2 flex flex-wrap gap-2">
-            <label className={`flex items-center cursor-pointer ${
-              comparisonMode === 'both' 
-                ? isDarkMode ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white' : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white' 
-                : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-            } px-3 py-1 rounded-lg`}>
-              <input 
-                type="radio" 
-                name="comparisonMode" 
-                value="both" 
-                checked={comparisonMode === 'both'}
-                onChange={() => setComparisonMode('both')}
-                className="sr-only"
-              />
-              <span>Complete Comparison</span>
-            </label>
-            <label className={`flex items-center cursor-pointer ${
-              comparisonMode === 'structure' 
-                ? isDarkMode ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white' : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white' 
-                : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-            } px-3 py-1 rounded-lg`}>
-              <input 
-                type="radio" 
-                name="comparisonMode" 
-                value="structure" 
-                checked={comparisonMode === 'structure'}
-                onChange={() => setComparisonMode('structure')}
-                className="sr-only"
-              />
-              <span>Structure Only</span>
-            </label>
-            <label className={`flex items-center cursor-pointer ${
-              comparisonMode === 'values' 
-                ? isDarkMode ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 text-white' : 'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 text-white' 
-                : isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-            } px-3 py-1 rounded-lg`}>
-              <input 
-                type="radio" 
-                name="comparisonMode" 
-                value="values" 
-                checked={comparisonMode === 'values'}
-                onChange={() => setComparisonMode('values')}
-                className="sr-only"
-              />
-              <span>Values Only</span>
-            </label>
+      {/* Main content */}
+      <div className="w-full container mx-auto flex flex-col space-y-6">
+        {/* Comparison mode selector */}
+        <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-wrap gap-2 items-center">
+            <h3 className={`font-medium mr-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Comparison Mode:</h3>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => setComparisonMode('both')}
+                variant={comparisonMode === 'both' ? 'primary' : 'secondary'}
+                isDarkMode={isDarkMode}
+                size="sm"
+              >
+                Full Comparison
+              </Button>
+              <Button
+                onClick={() => setComparisonMode('structure')}
+                variant={comparisonMode === 'structure' ? 'primary' : 'secondary'}
+                isDarkMode={isDarkMode}
+                size="sm"
+              >
+                Structure Only
+              </Button>
+              <Button
+                onClick={() => setComparisonMode('values')}
+                variant={comparisonMode === 'values' ? 'primary' : 'secondary'}
+                isDarkMode={isDarkMode}
+                size="sm"
+              >
+                Values Only
+              </Button>
+            </div>
           </div>
-        </div>
+        </Card>
         
-        {/* JSON Inputs */}
-        <div className="flex flex-row space-x-4">
-          <div className="flex-1">
-            <h3 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Left JSON</h3>
+        {/* JSON input panels */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700">
+            <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Left JSON</h3>
             <textarea
               value={leftJsonInput}
               onChange={handleLeftInputChange}
               placeholder="Paste your first JSON here..."
-              className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
+              className={`w-full h-60 p-3 font-mono text-sm border rounded focus:outline-none transition ${
                 isDarkMode 
-                  ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                  ? 'bg-gray-800 border-gray-600 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
                   : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
               }`}
             />
-          </div>
-          <div className="flex-1">
-            <h3 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>Right JSON</h3>
+          </Card>
+          
+          <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700">
+            <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Right JSON</h3>
             <textarea
               value={rightJsonInput}
               onChange={handleRightInputChange}
               placeholder="Paste your second JSON here..."
-              className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
+              className={`w-full h-60 p-3 font-mono text-sm border rounded focus:outline-none transition ${
                 isDarkMode 
-                  ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
+                  ? 'bg-gray-800 border-gray-600 text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
                   : 'border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
               }`}
             />
-          </div>
+          </Card>
         </div>
         
-        <div className="flex space-x-3 mt-4">
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-2">
           <Button
             onClick={compareJson}
             variant="primary"
             isDarkMode={isDarkMode}
-            title="Compare (Ctrl+Shift+C)"
-            icon={
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            }
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
             Compare
           </Button>
           <Button
             onClick={handleClear}
             variant="secondary"
             isDarkMode={isDarkMode}
-            title="Clear Input and Results"
-            icon={
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            }
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
             Clear
           </Button>
+          <Button
+            onClick={() => setShowHistory(true)}
+            variant="secondary"
+            isDarkMode={isDarkMode}
+            disabled={history.length === 0}
+            title="Show recent comparisons"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            History ({history.length})
+          </Button>
         </div>
-      </div>
-
-      {/* Error message */}
-      {error && (
-        <div className={`p-4 mb-4 rounded-lg flex items-center ${
-          isDarkMode 
-            ? 'bg-red-900 text-red-200 border-l-4 border-red-600' 
-            : 'bg-red-50 text-red-600 border-l-4 border-red-500'
-        }`}>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
-          <span>{error}</span>
-        </div>
-      )}
-      
-      {/* Comparison Results */}
-      {comparisonResult && (
-        <div className="mt-6" ref={leftContentRef}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-              <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Comparison Results</h2>
-              <div className="ml-4 flex items-center space-x-2">
-                <button 
-                  onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.1))}
-                  className={`p-1 rounded-md ${
-                    isDarkMode 
-                      ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }`}
-                  title="Smaller Font Size"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
-                </button>
-                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>{Math.round(zoomLevel * 100)}%</span>
-                <button 
-                  onClick={() => setZoomLevel(Math.min(2, zoomLevel + 0.1))}
-                  className={`p-1 rounded-md ${
-                    isDarkMode 
-                      ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }`}
-                  title="Larger Font Size"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </button>
-                <button 
-                  onClick={() => setZoomLevel(1)}
-                  className={`p-1 rounded-md ${
-                    isDarkMode 
-                      ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }`}
-                  title="Reset Zoom"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
+        
+        {/* Error message */}
+        {error && (
+          <div className={`p-4 rounded-md ${isDarkMode ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-800'}`}>
+            <p>{error}</p>
+          </div>
+        )}
+        
+        {/* Comparison results */}
+        {comparisonResult && (
+          <div className="space-y-4">
+            <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700">
+              <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Comparison Results</h2>
+              
+              <div className="mb-4">
+                <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Summary</h3>
+                
+                <div className="flex flex-wrap gap-4">
+                  {comparisonResult.structureDifferences.length === 0 && comparisonResult.valueDifferences.length === 0 ? (
+                    <div className={`p-3 rounded-md ${isDarkMode ? 'bg-green-900 text-green-100' : 'bg-green-100 text-green-800'}`}>
+                      <p className="font-medium">JSON objects are identical</p>
+                    </div>
+                  ) : (
+                    <>
+                      {comparisonResult.structureDifferences.length > 0 && (
+                        <div className={`p-3 rounded-md ${isDarkMode ? 'bg-red-900 text-red-100' : 'bg-red-100 text-red-800'}`}>
+                          <p className="font-medium">Structure Differences: {comparisonResult.structureDifferences.length}</p>
+                          <p className="text-sm">Missing fields or type mismatches</p>
+                        </div>
+                      )}
+                      
+                      {comparisonResult.valueDifferences.length > 0 && (
+                        <div className={`p-3 rounded-md ${isDarkMode ? 'bg-yellow-900 text-yellow-100' : 'bg-yellow-100 text-yellow-800'}`}>
+                          <p className="font-medium">Value Differences: {comparisonResult.valueDifferences.length}</p>
+                          <p className="text-sm">Fields that exist in both but have different values</p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+              
+              {/* Structure differences */}
+              {comparisonResult.structureDifferences.length > 0 && (comparisonMode === 'structure' || comparisonMode === 'both') && (
+                <div className="mb-6">
+                  <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Structure Differences</h3>
+                  
+                  <div className="overflow-x-auto">
+                    <table className={`min-w-full divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                      <thead className={isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}>
+                        <tr>
+                          <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Path</th>
+                          <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Issue</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                        {comparisonResult.structureDifferences.map((diff, index) => (
+                          <tr key={index} className={isDarkMode ? 'bg-gray-900' : 'bg-white'}>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>{diff.path}</td>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'}`}>{diff.description}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              
+              {/* Value differences */}
+              {comparisonResult.valueDifferences.length > 0 && (comparisonMode === 'values' || comparisonMode === 'both') && (
+                <div>
+                  <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Value Differences</h3>
+                  
+                  <div className="overflow-x-auto">
+                    <table className={`min-w-full divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                      <thead className={isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}>
+                        <tr>
+                          <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Path</th>
+                          <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Left Value</th>
+                          <th scope="col" className={`px-6 py-3 text-left text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>Right Value</th>
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                        {comparisonResult.valueDifferences.map((diff, index) => (
+                          <tr key={index} className={isDarkMode ? 'bg-gray-900' : 'bg-white'}>
+                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>{diff.path}</td>
+                            <td className={`px-6 py-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} break-words`}>{formatDiffValue(diff.leftValue)}</td>
+                            <td className={`px-6 py-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-500'} break-words`}>{formatDiffValue(diff.rightValue)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </Card>
+            
+            {/* Side-by-side view */}
+            <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700">
+              <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Side-by-Side View</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className={`p-4 rounded-lg border overflow-auto break-words ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} h-[500px]`}>
+                  <h3 className={`text-lg font-medium mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Left JSON</h3>
+                  <div 
+                    ref={leftContentRef}
+                    dangerouslySetInnerHTML={{ 
+                      __html: addLineNumbers(highlightJson(JSON.parse(leftJsonInput), isDarkMode), 'json') 
+                    }}
+                  />
+                </div>
+                <div className={`p-4 rounded-lg border overflow-auto break-words ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} h-[500px]`}>
+                  <h3 className={`text-lg font-medium mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Right JSON</h3>
+                  <div 
+                    dangerouslySetInnerHTML={{ 
+                      __html: addLineNumbers(highlightJson(JSON.parse(rightJsonInput), isDarkMode), 'json') 
+                    }}
+                  />
+                </div>
+              </div>
+            </Card>
           </div>
-          
-          <div style={{ fontSize: `${Math.round(14 * zoomLevel)}px` }}>
-            {renderComparisonResults()}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 });

@@ -9,18 +9,24 @@ interface SearchMatch {
   startPos: number;
 }
 
+interface SearchOptions {
+  caseSensitive?: boolean;
+}
+
 /**
  * Verbesserte Suchfunktion für den JSON und VAST Explorer
  * 
  * @param searchTerm Der zu suchende Begriff
  * @param containerRef Die Referenz zum Container (JSON oder VAST)
  * @param directSearchCleanup Callback zum Aufräumen der vorherigen Suche
+ * @param options Zusätzliche Suchoptionen wie Groß-/Kleinschreibung
  * @returns Ein Objekt mit den Suchergebnissen und Hilfsfunktionen
  */
 export const performSearch = (
   searchTerm: string,
   containerRef: HTMLElement | null,
-  directSearchCleanup: (() => void) | null
+  directSearchCleanup: (() => void) | null,
+  options?: SearchOptions
 ): {
   matches: SearchMatch[];
   cleanup: (() => void) | null;
@@ -50,16 +56,19 @@ export const performSearch = (
     );
     
     const matches: SearchMatch[] = [];
+    const caseSensitive = options?.caseSensitive || false;
     
     let node: Text | null;
     while ((node = walker.nextNode() as Text)) {
       if (node.parentElement && node.textContent) {
         const parent = node.parentElement;
         const text = node.textContent;
-        const searchTermLower = searchTerm.toLowerCase();
-        const textLower = text.toLowerCase();
         
-        let position = textLower.indexOf(searchTermLower);
+        // Berücksichtige die Groß-/Kleinschreibung je nach Option
+        const searchTermForComparison = caseSensitive ? searchTerm : searchTerm.toLowerCase();
+        const textForComparison = caseSensitive ? text : text.toLowerCase();
+        
+        let position = textForComparison.indexOf(searchTermForComparison);
         while (position !== -1) {
           // Store only the first time we find a match in this element
           if (!originalContents.has(parent)) {
@@ -72,7 +81,7 @@ export const performSearch = (
             startPos: position
           });
           
-          position = textLower.indexOf(searchTermLower, position + 1);
+          position = textForComparison.indexOf(searchTermForComparison, position + 1);
         }
       }
     }
@@ -94,14 +103,16 @@ export const performSearch = (
       const text = match.text;
       const position = match.startPos;
       
+      // Original Suchbegriff extrahieren, um die Groß-/Kleinschreibung zu erhalten
+      const actualTerm = text.substring(position, position + searchTerm.length);
+      
       // Create a highlighted version of the element content
       const before = text.substring(0, position);
-      const term = text.substring(position, position + searchTerm.length);
       const after = text.substring(position + searchTerm.length);
       
       // Replace text node with highlight
       const newContent = document.createRange().createContextualFragment(
-        `${before}<span class="search-term-current">${term}</span>${after}`
+        `${before}<span class="search-term-current">${actualTerm}</span>${after}`
       );
       
       // Update element with highlighted content
@@ -116,8 +127,8 @@ export const performSearch = (
         } else {
           // If exact text node not found, try to replace similar content
           element.innerHTML = element.innerHTML.replace(
-            term, 
-            `<span class="search-term-current">${term}</span>`
+            actualTerm, 
+            `<span class="search-term-current">${actualTerm}</span>`
           );
         }
       } catch (err) {

@@ -38,7 +38,7 @@ const JsonHistoryPanel: React.FC<JsonHistoryPanelProps> = ({
               key={item.timestamp} 
               item={item} 
               index={index} 
-              onRestore={onRestore}
+              onClick={onRestore}
               isDarkMode={isDarkMode}
             />
           ))

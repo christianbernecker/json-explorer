@@ -545,96 +545,185 @@ const JsonVastExplorer = React.memo(({
     try {
       // Verbesserte XML-Formatierung mit korrekter Einrückung
       const formatXml = (xml: string): string => {
-        // XML in einzelne Zeichen aufteilen für bessere Kontrolle
-        let formattedXml = '';
-        let indentLevel = 0;
-        let inCdata = false;
+        // Entferne unnötige Leerzeichen aber behalte die Struktur
+        xml = xml.trim().replace(/>\s+</g, '><');
         
-        // CDATA-Inhalte inline lassen und nicht umbrechen
-        // Verwende mehrere Regex ohne s-Flag (dotall) für Abwärtskompatibilität
-        xml = xml.replace(/(<!\[CDATA\[)([^]*?)(\]\]>)/g, function(match, p1, p2, p3) {
-          return p1 + p2.replace(/\s+/g, ' ') + p3;
-        });
+        // XML-Parser für korrekte Strukturierung
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xml, 'text/xml');
         
-        // Spezialbehandlung für XML-Deklaration (startet mit <?)
-        const xmlHeaderMatch = xml.match(/^\s*<\?xml[^>]*\?>/);
-        let xmlHeader = '';
-        if (xmlHeaderMatch) {
-          xmlHeader = xmlHeaderMatch[0] + '\n';
-          xml = xml.substring(xmlHeaderMatch[0].length).trim();
+        // Prüfen ob es Parsing-Fehler gab
+        const parseError = xmlDoc.getElementsByTagName('parsererror');
+        if (parseError.length > 0) {
+          // Fallback zur manuellen Formatierung, wenn Parsing fehlschlägt
+          return formatXmlManually(xml);
         }
         
-        // Verschachtelte Tags identifizieren, um korrekte Einrückung sicherzustellen
-        const tags = [];
-        
-        // Tag-Inhalte und Tags durch Zeilenumbrüche trennen
-        xml = xml.replace(/>\s*</g, '>\n<');
-        
-        // Durch die Zeilen gehen und Einrückung hinzufügen
-        const lines = xml.split('\n');
-        
-        // Mit XML-Header beginnen, falls vorhanden
-        if (xmlHeader) {
-          formattedXml = xmlHeader;
-        }
-        
-        for (let i = 0; i < lines.length; i++) {
-          let line = lines[i].trim();
-          if (!line) continue;
+        // Rekursive Funktion zum Formatieren der XML-Struktur
+        const formatNode = (node: Node, level: number): string => {
+          const indent = '  '.repeat(level);
+          let result = '';
           
-          // Prüfen, ob es ein schließendes Tag ist
-          const isClosingTag = line.startsWith('</');
-          // Prüfen, ob es ein selbstschließendes Tag ist
-          const isSelfClosingTag = line.match(/<[^>]*\/>/);
-          // Prüfen, ob es ein Verarbeitungsanweisung ist
-          const isProcessingInstruction = line.startsWith('<?') && line.endsWith('?>');
-          // Prüfen, ob es ein CDATA-Block ist
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const isCdataTag = line.match(/!\[CDATA\[.*?\]\]/);
-          
-          // Einrückung für schließende Tags reduzieren (vor dem Hinzufügen)
-          if (isClosingTag) {
-            // Finde das passende öffnende Tag
-            const tagName = line.match(/<\/([^\s>]+)/)?.[1];
-            if (tagName && tags.length > 0 && tags[tags.length - 1] === tagName) {
-              // Regulärer geschlossener Tag in der erwarteten Reihenfolge
-              tags.pop();
-              indentLevel = Math.max(0, tags.length);
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+            const tagName = element.tagName;
+            
+            // Öffnendes Tag mit Attributen
+            result += `${indent}<${tagName}`;
+            
+            // Attribute hinzufügen
+            for (let i = 0; i < element.attributes.length; i++) {
+              const attr = element.attributes[i];
+              result += ` ${attr.name}="${attr.value}"`;
+            }
+            
+            // Prüfen ob Element Kinder hat
+            if (element.childNodes.length === 0) {
+              // Selbstschließendes Tag
+              result += '/>\n';
+            } else if (element.childNodes.length === 1 && 
+                      element.childNodes[0].nodeType === Node.TEXT_NODE && 
+                      element.childNodes[0].textContent && 
+                      element.childNodes[0].textContent.trim().length < 50) {
+              // Kurzer Text-Inhalt - in einer Zeile darstellen
+              result += `>${element.childNodes[0].textContent.trim()}</${tagName}>\n`;
             } else {
-              // Unerwartetes schließendes Tag - trotzdem einrücken
-              indentLevel = Math.max(0, indentLevel - 1);
+              // Komplexer Inhalt - mit Einrückung formatieren
+              result += '>\n';
+              
+              // Alle Kindelemente formatieren
+              for (let i = 0; i < element.childNodes.length; i++) {
+                const child = element.childNodes[i];
+                
+                if (child.nodeType === Node.TEXT_NODE) {
+                  const text = child.textContent ? child.textContent.trim() : '';
+                  if (text) {
+                    result += `${indent}  ${text}\n`;
+                  }
+                } else if (child.nodeType === Node.CDATA_SECTION_NODE) {
+                  // CDATA-Abschnitte
+                  result += `${indent}  <![CDATA[${child.textContent}]]>\n`;
+                } else {
+                  // Rekursiver Aufruf für verschachtelte Elemente
+                  result += formatNode(child, level + 1);
+                }
+              }
+              
+              // Schließendes Tag
+              result += `${indent}</${tagName}>\n`;
+            }
+          } else if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent ? node.textContent.trim() : '';
+            if (text) {
+              result += `${indent}${text}\n`;
+            }
+          } else if (node.nodeType === Node.CDATA_SECTION_NODE) {
+            result += `${indent}<![CDATA[${node.textContent}]]>\n`;
+          } else if (node.nodeType === Node.COMMENT_NODE) {
+            result += `${indent}<!-- ${node.textContent} -->\n`;
+          } else if (node.nodeType === Node.DOCUMENT_NODE) {
+            // Dokument-Knoten - alle Kinder verarbeiten
+            const doc = node as Document;
+            
+            // XML-Deklaration
+            result += '<?xml version="1.0" encoding="UTF-8"?>\n';
+            
+            // Root-Element formatieren
+            if (doc.documentElement) {
+              result += formatNode(doc.documentElement, 0);
             }
           }
           
-          // Einrückung hinzufügen (nur wenn nicht in CDATA-Block und keine Verarbeitungsanweisung)
-          if (!inCdata && !isProcessingInstruction) {
-            formattedXml += '  '.repeat(indentLevel) + line + '\n';
-          } else {
-            formattedXml += line + '\n';
-          }
-          
-          // Verfolge öffnende Tags für korrekte Einrückung
-          if (!isClosingTag && !isSelfClosingTag && !isProcessingInstruction && line.startsWith('<')) {
-            const tagMatch = line.match(/<([^\s>/]+)/);
-            if (tagMatch && tagMatch[1]) {
-              tags.push(tagMatch[1]);
-              indentLevel = tags.length;
-            }
-          }
-          
-          // CDATA-Status verfolgen
-          if (line.includes('<![CDATA[')) {
-            inCdata = true;
-          }
-          if (line.includes(']]>')) {
-            inCdata = false;
-          }
-        }
+          return result;
+        };
         
-        return formattedXml;
+        // Formatieren des gesamten Dokuments
+        return formatNode(xmlDoc, 0);
       };
       
-      return formatXml(xml);
+      // Fallback-Methode für manuelles Formatieren
+      const formatXmlManually = (xml: string): string => {
+        let formatted = '';
+        let indent = '';
+        let inTag = false;
+        let inCData = false;
+        
+        // XML-Deklaration extrahieren
+        const xmlHeaderMatch = xml.match(/^\s*<\?xml[^>]*\?>/);
+        if (xmlHeaderMatch) {
+          formatted += xmlHeaderMatch[0] + '\n';
+          xml = xml.substring(xmlHeaderMatch[0].length);
+        }
+        
+        // Zeichen für Zeichen durchgehen
+        for (let i = 0; i < xml.length; i++) {
+          const char = xml.charAt(i);
+          const nextChar = i < xml.length - 1 ? xml.charAt(i + 1) : '';
+          
+          // CDATA-Marker erkennen
+          if (char === '<' && xml.substr(i, 9) === '<![CDATA[') {
+            inCData = true;
+            formatted += '<![CDATA[';
+            i += 8; // Überspringe <![CDATA[
+            continue;
+          } else if (inCData && xml.substr(i, 3) === ']]>') {
+            inCData = false;
+            formatted += ']]>';
+            i += 2; // Überspringe ]]>
+            continue;
+          }
+          
+          // Im CDATA-Bereich alles unverändert übernehmen
+          if (inCData) {
+            formatted += char;
+            continue;
+          }
+          
+          // Tag-Anfang
+          if (char === '<' && !inTag) {
+            // Prüfe, ob es ein schließendes Tag ist
+            if (nextChar === '/') {
+              indent = indent.slice(2); // Einrückung verringern
+            }
+            
+            // Zeilenumbruch vor dem Tag, außer es ist das erste
+            if (formatted.length > 0) formatted += '\n';
+            formatted += indent + '<';
+            inTag = true;
+          } 
+          // Tag-Ende
+          else if (char === '>' && inTag) {
+            formatted += '>';
+            inTag = false;
+            
+            // Prüfen, ob selbstschließend oder schließendes Tag
+            if (xml.charAt(i - 1) !== '/' && xml.charAt(i - 1) !== '-' && nextChar !== '<' && nextChar !== '\r' && nextChar !== '\n') {
+              formatted += '\n' + indent + '  ';
+            }
+            
+            // Einrückung erhöhen bei öffnenden, nicht-selbstschließenden Tags
+            if (xml.charAt(i - 1) !== '/' && xml.charAt(i - 2) !== '?' && xml.charAt(i - 1) !== '-' && nextChar !== '/') {
+              if (nextChar !== '<') {
+                indent += '  ';
+              }
+            }
+          } 
+          // Text innerhalb der Tags
+          else {
+            formatted += char;
+          }
+        }
+        
+        return formatted;
+      };
+      
+      // Versuche zuerst den DOM-Parser, falls das fehlschlägt, verwende den manuellen Ansatz
+      try {
+        return formatXml(xml);
+      } catch (e) {
+        console.error('DOM parsing failed, using manual formatting', e);
+        return formatXmlManually(xml);
+      }
     } catch (error) {
       console.error('Error formatting XML:', error);
       return xml;

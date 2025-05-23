@@ -1,7 +1,7 @@
 export interface HistoryItemProps {
   item: HistoryItem;
-  index: number;
-  onRestore: (item: HistoryItem) => void;
+  index?: number;
+  onClick: (item: HistoryItem) => void;
   isDarkMode: boolean;
 }
 

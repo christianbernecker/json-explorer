@@ -1,7 +1,7 @@
 import React from 'react';
 import { HistoryItemProps } from '../../types';
 
-const HistoryItem = React.memo(({ item, index, onRestore, isDarkMode }: HistoryItemProps) => {
+const HistoryItem = React.memo(({ item, index = 0, onClick, isDarkMode }: HistoryItemProps) => {
   const formattedDate = new Date(item.timestamp).toLocaleString();
   
   // Dynamisches Label basierend auf Item-Type
@@ -27,7 +27,7 @@ const HistoryItem = React.memo(({ item, index, onRestore, isDarkMode }: HistoryI
       className={`p-3 mb-2 rounded-lg cursor-pointer hover:${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'} flex items-center justify-between ${
         isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
       }`}
-      onClick={() => onRestore(item)}
+      onClick={() => onClick(item)}
     >
       <div>
         <div className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>

@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 12:09:05 CEST 2025", "commit": "Fix: Suchfunktion, XML-Einrückung, VAST-Struktur entfernt, lange ADM-Inhalte in Cards wrappen, JsonDiffTool UI-Verbesserungen"}
+{"deployment": "staging", "timestamp": "Fri May 23 12:36:07 CEST 2025", "commit": "Fix: ESLint-Warnung für ungenutzte Variable behoben"}
