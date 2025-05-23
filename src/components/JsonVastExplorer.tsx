@@ -797,7 +797,7 @@ const JsonVastExplorer = React.memo(({
     }
     
     // Perform the search
-    const { matches, cleanup, /* eslint-disable-next-line @typescript-eslint/no-unused-vars */ highlightMatch } = performSearch(
+    const { matches, cleanup } = performSearch(
       jsonSearchTerm,
       jsonRef.current,
       jsonSearchCleanup
@@ -917,7 +917,7 @@ const JsonVastExplorer = React.memo(({
     }
     
     // Perform the search
-    const { matches, cleanup, /* eslint-disable-next-line @typescript-eslint/no-unused-vars */ highlightMatch } = performSearch(
+    const { matches, cleanup } = performSearch(
       vastSearchTerm,
       vastContainer,
       null // Kein direktes Cleanup, wir verwalten es selbst im Array
@@ -935,6 +935,7 @@ const JsonVastExplorer = React.memo(({
       };
       
       // Highlight first match
+      const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
       highlightMatch(0, matches);
       
       // Scroll zum ersten Ergebnis (auch horizontal)

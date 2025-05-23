@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 09:10:59 CEST 2025", "commit": "Linter-Fehler nachhaltig behoben: Nur tote States/Handler entfernt, Funktionalität erhalten. Code-Review durchgeführt."}
+{"deployment": "staging", "timestamp": "Fri May 23 09:22:00 CEST 2025", "commit": "JSON Explorer UI vollständig wiederhergestellt: Alle fehlenden UI-Elemente wieder hinzugefügt, Build-Fehler behoben und alle Handler korrekt eingebunden."}
