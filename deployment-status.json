@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 16:25:45 CEST 2025", "commit": "Verbesserte TCF-String-Erkennung mit Unterstützung für gdpr.consent und anderen Formaten"}
+{"deployment": "staging", "timestamp": "Fri May 23 16:36:03 CEST 2025", "commit": "Verbesserte TCF-String-Erkennung mit Debug-Logs und breiterer Pattern-Prüfung"}
