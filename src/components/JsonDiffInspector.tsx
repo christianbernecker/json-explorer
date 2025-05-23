@@ -470,28 +470,28 @@ const JsonDiffInspector = React.memo(({
         {/* Comparison results */}
         {comparisonResult && (
           <div className="space-y-4">
-            <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700">
+            <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700 w-full">
               <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Comparison Results</h2>
               
-              <div className="mb-4">
+              <div className="mb-4 w-full">
                 <h3 className={`text-lg font-medium mb-2 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Summary</h3>
                 
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-4 w-full">
                   {comparisonResult.structureDifferences.length === 0 && comparisonResult.valueDifferences.length === 0 ? (
-                    <div className={`p-3 rounded-md ${isDarkMode ? 'bg-green-900 text-green-100' : 'bg-green-100 text-green-800'}`}>
+                    <div className={`p-3 rounded-md ${isDarkMode ? 'bg-green-900 text-green-100' : 'bg-green-100 text-green-800'} w-full`}>
                       <p className="font-medium">JSON objects are identical</p>
                     </div>
                   ) : (
                     <>
                       {comparisonResult.structureDifferences.length > 0 && (
-                        <div className={`p-3 rounded-md ${isDarkMode ? 'bg-red-900 text-red-100' : 'bg-red-100 text-red-800'}`}>
+                        <div className={`p-3 rounded-md ${isDarkMode ? 'bg-red-900 text-red-100' : 'bg-red-100 text-red-800'} flex-grow`}>
                           <p className="font-medium">Structure Differences: {comparisonResult.structureDifferences.length}</p>
                           <p className="text-sm">Missing fields or type mismatches</p>
                         </div>
                       )}
                       
                       {comparisonResult.valueDifferences.length > 0 && (
-                        <div className={`p-3 rounded-md ${isDarkMode ? 'bg-yellow-900 text-yellow-100' : 'bg-yellow-100 text-yellow-800'}`}>
+                        <div className={`p-3 rounded-md ${isDarkMode ? 'bg-yellow-900 text-yellow-100' : 'bg-yellow-100 text-yellow-800'} flex-grow`}>
                           <p className="font-medium">Value Differences: {comparisonResult.valueDifferences.length}</p>
                           <p className="text-sm">Fields that exist in both but have different values</p>
                         </div>
@@ -557,24 +557,26 @@ const JsonDiffInspector = React.memo(({
             </Card>
             
             {/* Side-by-side view */}
-            <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700">
+            <Card isDarkMode={isDarkMode} withPadding className="border border-gray-200 dark:border-gray-700 w-full">
               <h2 className={`text-xl font-semibold mb-4 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Side-by-Side View</h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className={`p-4 rounded-lg border overflow-auto break-words ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} h-[500px]`}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
+                <div className={`p-4 rounded-lg border overflow-auto break-words ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} h-[500px] w-full`}>
                   <h3 className={`text-lg font-medium mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Left JSON</h3>
                   <div 
                     ref={leftContentRef}
                     dangerouslySetInnerHTML={{ 
                       __html: addLineNumbers(highlightJson(JSON.parse(leftJsonInput), isDarkMode), 'json') 
                     }}
+                    className="w-full"
                   />
                 </div>
-                <div className={`p-4 rounded-lg border overflow-auto break-words ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} h-[500px]`}>
+                <div className={`p-4 rounded-lg border overflow-auto break-words ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-gray-50 border-gray-200'} h-[500px] w-full`}>
                   <h3 className={`text-lg font-medium mb-1 ${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>Right JSON</h3>
                   <div 
                     dangerouslySetInnerHTML={{ 
                       __html: addLineNumbers(highlightJson(JSON.parse(rightJsonInput), isDarkMode), 'json') 
                     }}
+                    className="w-full"
                   />
                 </div>
               </div>

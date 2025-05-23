@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 13:07:41 CEST 2025", "commit": "Fix XML-Formatierung, UI-Verbesserungen für JSON Diff und Suchfunktion"}
+{"deployment": "staging", "timestamp": "Fri May 23 13:27:18 CEST 2025", "commit": "ESLint-Warnungen behoben und onRestore in onClick umbenannt"}

@@ -2,10 +2,10 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
 import useHighlighter from '../utils/highlighter';
 import JsonHistoryPanel from './shared/JsonHistoryPanel';
-import JsonSearch from './search/JsonSearch';
-import { performSearch } from './search/SearchFix';
 import Button from './shared/Button';
 import Card from './shared/Card';
+// Neue Suchkomponente importieren
+import EnhancedJsonSearch from './search/EnhancedJsonSearch';
 
 // VastInfo type for internal use
 interface VastInfo {
@@ -812,27 +812,6 @@ const JsonVastExplorer = React.memo(({
     }
   }, []);
 
-  // Navigate to next/previous result - jetzt ohne zirkuläre Abhängigkeit
-  const goToNextJsonResult = useCallback(() => {
-    if (jsonSearchResults.length === 0) return;
-    
-    const nextIndex = (jsonCurrentResultIndex + 1) % jsonSearchResults.length;
-    setJsonCurrentResultIndex(nextIndex);
-    
-    const { matches, highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
-    highlightMatch(nextIndex, matches);
-  }, [jsonSearchResults, jsonCurrentResultIndex, jsonSearchTerm, jsonRef]);
-  
-  const goToPrevJsonResult = useCallback(() => {
-    if (jsonSearchResults.length === 0) return;
-    
-    const prevIndex = (jsonCurrentResultIndex - 1 + jsonSearchResults.length) % jsonSearchResults.length;
-    setJsonCurrentResultIndex(prevIndex);
-    
-    const { matches, highlightMatch } = performSearch(jsonSearchTerm, jsonRef.current, null);
-    highlightMatch(prevIndex, matches);
-  }, [jsonSearchResults, jsonCurrentResultIndex, jsonSearchTerm, jsonRef]);
-
   // Initialisiere neue VAST-Tab-Suchobjekte, wenn sich die Chain ändert
   useEffect(() => {
     // Erstelle ein Array mit einem Eintrag für den Embedded VAST-Tab 
@@ -883,156 +862,6 @@ const JsonVastExplorer = React.memo(({
       performVastSearch();
     }
   }, [activeVastTabIndex]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Perform JSON search function - robustere Implementation
-  const performJsonSearch = useCallback(() => {
-    // Reset previous search results
-    if (jsonSearchCleanup) {
-      jsonSearchCleanup();
-    }
-    setJsonSearchResults([]);
-    setJsonCurrentResultIndex(-1);
-    
-    if (!jsonSearchTerm.trim() || !jsonRef.current) {
-      return;
-    }
-    
-    try {
-      console.log("Performing JSON search for:", jsonSearchTerm);
-      
-      // Sammle alle Textelemente im JSON-Container
-      const allTextElements: Array<{ node: Node, text: string, parent: HTMLElement | null }> = [];
-      const walker = document.createTreeWalker(
-        jsonRef.current,
-        NodeFilter.SHOW_TEXT,
-        { acceptNode: (node) => node.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT }
-      );
-      
-      let currentNode: Node | null;
-      // eslint-disable-next-line no-cond-assign
-      while (currentNode = walker.nextNode()) {
-        // Überspringe Elemente, die bereits Teil einer Suche sind
-        if (currentNode.parentElement?.classList.contains('search-term-highlight') ||
-            currentNode.parentElement?.classList.contains('search-term-current')) {
-          continue;
-        }
-        
-        allTextElements.push({
-          node: currentNode,
-          text: currentNode.textContent || '',
-          parent: currentNode.parentElement
-        });
-      }
-      
-      // Suche nach dem Term in allen Textelementen
-      const matches: Array<{ element: HTMLElement | null, text: string, startPos: number, node: Node }> = [];
-      const searchTermLower = jsonSearchTerm.toLowerCase();
-      
-      for (const element of allTextElements) {
-        const textLower = element.text.toLowerCase();
-        let startPos = 0;
-        let pos;
-        
-        // Finde alle Vorkommen im Text
-        while ((pos = textLower.indexOf(searchTermLower, startPos)) !== -1) {
-          if (element.parent) {
-            matches.push({
-              element: element.parent,
-              text: element.text,
-              startPos: pos,
-              node: element.node
-            });
-          }
-          startPos = pos + searchTermLower.length;
-        }
-      }
-      
-      console.log(`Found ${matches.length} JSON search matches`);
-      
-      // Speichere Ergebnisse im State - nur gültige Elemente
-      const validMatches = matches.filter(match => match.element !== null) as { 
-        element: HTMLElement, 
-        text: string, 
-        startPos: number, 
-        node: Node 
-      }[];
-      
-      setJsonSearchResults(validMatches.map(({ element, text, startPos }) => ({
-        element,
-        text,
-        startPos
-      })));
-      
-      // Highlight matches
-      if (validMatches.length > 0) {
-        const highlightElements = () => {
-          // Entferne alte Highlights
-          document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
-            if (el instanceof HTMLElement) {
-              const text = el.textContent || '';
-              const textNode = document.createTextNode(text);
-              if (el.parentNode) {
-                el.parentNode.replaceChild(textNode, el);
-              }
-            }
-          });
-          
-          // Markiere alle Treffer
-          validMatches.forEach((match, index) => {
-            if (!match.node || !match.node.textContent) return;
-            
-            const originalText = match.node.textContent;
-            const startPos = match.startPos;
-            const endPos = startPos + jsonSearchTerm.length;
-            
-            const before = originalText.substring(0, startPos);
-            const term = originalText.substring(startPos, endPos);
-            const after = originalText.substring(endPos);
-            
-            const spanClass = index === jsonCurrentResultIndex ? 'search-term-current' : 'search-term-highlight';
-            
-            const newContent = document.createRange().createContextualFragment(
-              `${before}<span class="${spanClass}">${term}</span>${after}`
-            );
-            
-            if (match.node.parentNode) {
-              match.node.parentNode.replaceChild(newContent, match.node);
-            }
-          });
-          
-          // Scroll zum aktuellen Ergebnis
-          if (validMatches[jsonCurrentResultIndex]?.element) {
-            scrollToElement(validMatches[jsonCurrentResultIndex].element);
-          }
-        };
-        
-        // Führe Highlighting aus
-        highlightElements();
-        
-        // Setze den aktuellen Index, wenn noch keiner gesetzt ist
-        if (jsonCurrentResultIndex === -1) {
-          setJsonCurrentResultIndex(0);
-        }
-        
-        // Erstelle Cleanup-Funktion
-        const cleanup = () => {
-          document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
-            if (el instanceof HTMLElement) {
-              const text = el.textContent || '';
-              const textNode = document.createTextNode(text);
-              if (el.parentNode) {
-                el.parentNode.replaceChild(textNode, el);
-              }
-            }
-          });
-        };
-        
-        setJsonSearchCleanup(() => cleanup);
-      }
-    } catch (error) {
-      console.error("Error in JSON search:", error);
-    }
-  }, [jsonSearchTerm, jsonRef, jsonSearchCleanup, jsonCurrentResultIndex, scrollToElement]);
 
   // Perform VAST search function - robustere Implementation
   const performVastSearch = useCallback(() => {
@@ -1346,6 +1175,7 @@ const JsonVastExplorer = React.memo(({
           ? embeddedVastOutputRef.current 
           : getFetchedVastRef(newTabIndex - 1).current;
         
+        /* TODO: Diese Stelle nutzte performSearch, die aus dem Code entfernt wurde
         // Hervorhebe das letzte aktive Ergebnis im neuen Tab
         const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
         const currentIndex = vastTabSearches[newTabIndex].currentIndex;
@@ -1358,9 +1188,10 @@ const JsonVastExplorer = React.memo(({
             scrollToElement(vastTabSearches[newTabIndex].results[currentIndex].element);
           }
         }
+        */
       }
     }, 100);
-  }, [activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, scrollToElement, vastSearchTerm, vastTabSearches]);
+  }, [activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, scrollToElement, vastTabSearches]);
 
   // Wenn sich die Tab-Struktur ändert, müssen wir die VAST-Tabs-Suche neu initialisieren
   useEffect(() => {
@@ -1410,19 +1241,7 @@ const JsonVastExplorer = React.memo(({
   // Füge diese Handler-Definitionen nach performJsonSearch und performVastSearch ein
   const handleSearchButtonClick = useCallback(() => {
     setIsSearchOpen(true);
-    setTimeout(() => {
-      if (activeVastTabIndex === 0 && !rawVastContent) {
-        // Nur JSON suche
-        performJsonSearch();
-      } else if (activeVastTabIndex === 0 && rawVastContent) {
-        // In Embedded VAST suchen
-        performVastSearch();
-      } else {
-        // In VAST Chain Item suchen
-        performVastSearch();
-      }
-    }, 100);
-  }, [performJsonSearch, performVastSearch, activeVastTabIndex, rawVastContent]);
+  }, []);
 
   const handleToggleWordWrapClick = useCallback(() => {
     setIsWordWrapEnabled(prev => !prev);
@@ -1447,26 +1266,12 @@ const JsonVastExplorer = React.memo(({
 
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
-      {/* Original search component - keeping this for reference */}
-      {console.log("Rendering with isSearchOpen:", isSearchOpen)}
-      <JsonSearch 
+      {/* Neue verbesserte Suchkomponente */}
+      <EnhancedJsonSearch 
         isDarkMode={isDarkMode}
-        jsonRef={jsonRef}
-        vastRef={vastRef}
-        activeTabIndex={0}
+        containerRef={activeVastTabIndex === 0 && !rawVastContent ? jsonRef : vastRef}
         isVisible={isSearchOpen}
-        onClose={() => {
-          console.log("Closing search panel");
-          setIsSearchOpen(false);
-        }}
-        onSearchComplete={(count) => {
-          console.log(`Search completed with ${count} results`);
-          if (activeVastTabIndex === 0 && !rawVastContent) {
-            performJsonSearch();
-          } else {
-            performVastSearch();
-          }
-        }}
+        onClose={() => setIsSearchOpen(false)}
       />
     
       {/* History Panel */}
@@ -1587,22 +1392,22 @@ const JsonVastExplorer = React.memo(({
                       {jsonSearchResults.length > 0 && (
                         <>
                           <Button
-                            onClick={goToPrevJsonResult}
+                            onClick={() => console.log("Suche nicht mehr implementiert")}
                             variant="secondary"
                             isDarkMode={isDarkMode}
                             size="sm"
-                            title="Previous Result"
+                            title="Previous Result (Suche wird ersetzt)"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                           </Button>
                           <Button
-                            onClick={goToNextJsonResult}
+                            onClick={() => console.log("Suche nicht mehr implementiert")}
                             variant="secondary"
                             isDarkMode={isDarkMode}
                             size="sm"
-                            title="Next Result"
+                            title="Next Result (Suche wird ersetzt)"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
