@@ -419,7 +419,7 @@ const JsonVastExplorer = React.memo(({
       const inputStr = jsonInput.trim();
       
       if (!inputStr) {
-        setError('Bitte gib JSON ein.');
+        setError('Please enter JSON.');
         setParsedJson(null); // Ensure parsedJson is also reset
         setRawVastContent(null);
         return;
@@ -477,7 +477,7 @@ const JsonVastExplorer = React.memo(({
         addToHistoryItem(newHistoryItem);
       }
     } catch (err: any) {
-      setError(`Parsing-Fehler: ${err.message}`);
+      setError(`Parsing error: ${err.message}`);
       setParsedJson(null);
       setRawVastContent(null);
       setVastChain([]);
@@ -634,7 +634,7 @@ const JsonVastExplorer = React.memo(({
   
   // Render VAST content with proper formatting
   const renderVastContent = useCallback((vastContent: string | null) => {
-    if (!vastContent) return <p className="mt-4 text-red-500">Keine VAST-Inhalte gefunden</p>;
+    if (!vastContent) return <p className="mt-4 text-red-500">No VAST content found</p>;
     
     const formattedVast = formatXmlForDisplay(vastContent);
     
@@ -1086,7 +1086,7 @@ const JsonVastExplorer = React.memo(({
             ref={textAreaRef}
             value={jsonInput}
             onChange={handleJsonInputChange}
-            placeholder="Füge dein JSON hier ein..."
+            placeholder="Paste your JSON here..."
             className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
               isDarkMode 
                 ? 'bg-gray-800 border-gray-600 text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500' 
@@ -1098,23 +1098,23 @@ const JsonVastExplorer = React.memo(({
               onClick={handleFormat}
               variant="primary"
               isDarkMode={isDarkMode}
-              title="JSON formatieren (Strg+Shift+F)"
+              title="Format JSON (Ctrl+Shift+F)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
               </svg>
-              Formatieren
+              Format
             </Button>
             <Button
               onClick={handleClear}
               variant="secondary"
               isDarkMode={isDarkMode}
-              title="Eingabe löschen (Strg+Shift+L)"
+              title="Clear Input (Ctrl+Shift+L)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
-              Leeren
+              Clear
             </Button>
           </div>
         </div>
@@ -1123,7 +1123,7 @@ const JsonVastExplorer = React.memo(({
       {/* Fehlermeldungen vereinheitlichen */}
       {error && (
         <div className={`mb-4 p-3 border border-red-400 rounded bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200`}>
-          <strong>Fehler:</strong> {error}
+          <strong>Error:</strong> {error}
         </div>
       )}
       
@@ -1135,7 +1135,7 @@ const JsonVastExplorer = React.memo(({
               <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
                 <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatiertes JSON</h3>
+                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h3>
                     {/* Control buttons für JSON */}
                     <div className="flex space-x-2">
                       <Button
@@ -1146,7 +1146,7 @@ const JsonVastExplorer = React.memo(({
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
-                        title="Suche (Strg+F)"
+                        title="Search (Ctrl+F)"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1157,7 +1157,7 @@ const JsonVastExplorer = React.memo(({
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
-                        title={isWordWrapEnabled ? "Zeilenumbruch deaktivieren" : "Zeilenumbruch aktivieren"}
+                        title={isWordWrapEnabled ? "Disable word wrap" : "Enable word wrap"}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
@@ -1168,7 +1168,7 @@ const JsonVastExplorer = React.memo(({
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
-                        title="JSON in Zwischenablage kopieren"
+                        title="Copy JSON to clipboard"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
@@ -1182,7 +1182,7 @@ const JsonVastExplorer = React.memo(({
                             variant="secondary"
                             isDarkMode={isDarkMode}
                             size="sm"
-                            title="Vorheriges Ergebnis"
+                            title="Previous Result"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1193,7 +1193,7 @@ const JsonVastExplorer = React.memo(({
                             variant="secondary"
                             isDarkMode={isDarkMode}
                             size="sm"
-                            title="Nächstes Ergebnis"
+                            title="Next Result"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -1210,13 +1210,13 @@ const JsonVastExplorer = React.memo(({
                       variant="secondary"
                       isDarkMode={isDarkMode}
                       size="sm"
-                      title={showStructure ? "JSON anzeigen" : "Struktur anzeigen"}
+                      title={showStructure ? "Show JSON" : "Show Structure"}
                     >
-                      {showStructure ? "JSON anzeigen" : "Struktur anzeigen"}
+                      {showStructure ? "Show JSON" : "Show Structure"}
                     </Button>
                     {jsonSearchStatus !== 'idle' && (
                       <div className={`ml-4 text-sm ${jsonSearchStatus === 'results' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {jsonSearchStatus === 'results' ? `${jsonSearchResults.length} Treffer gefunden` : 'Keine Treffer'}
+                        {jsonSearchStatus === 'results' ? `${jsonSearchResults.length} matches found` : 'No matches'}
                       </div>
                     )}
                   </div>
@@ -1255,7 +1255,7 @@ const JsonVastExplorer = React.memo(({
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
-                        title="Suche (Strg+F)"
+                        title="Search (Ctrl+F)"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -1266,7 +1266,7 @@ const JsonVastExplorer = React.memo(({
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
-                        title={isWordWrapEnabled ? "Zeilenumbruch deaktivieren" : "Zeilenumbruch aktivieren"}
+                        title={isWordWrapEnabled ? "Disable word wrap" : "Enable word wrap"}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
@@ -1277,7 +1277,7 @@ const JsonVastExplorer = React.memo(({
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
-                        title="VAST in Zwischenablage kopieren"
+                        title="Copy VAST to clipboard"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
@@ -1291,7 +1291,7 @@ const JsonVastExplorer = React.memo(({
                             variant="secondary"
                             isDarkMode={isDarkMode}
                             size="sm"
-                            title="Vorheriges Ergebnis"
+                            title="Previous Result"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -1302,7 +1302,7 @@ const JsonVastExplorer = React.memo(({
                             variant="secondary"
                             isDarkMode={isDarkMode}
                             size="sm"
-                            title="Nächstes Ergebnis"
+                            title="Next Result"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -1337,9 +1337,9 @@ const JsonVastExplorer = React.memo(({
                         }`}
                       >
                         {item.isLoading ? (
-                          <span>Wrapper {index + 1} (lädt...)</span>
+                          <span>Wrapper {index + 1} (loading...)</span>
                         ) : item.error ? (
-                          <span>Wrapper {index + 1} (Fehler)</span>
+                          <span>Wrapper {index + 1} (error)</span>
                         ) : (
                           <span>Wrapper {index + 1}</span>
                         )}
@@ -1354,12 +1354,12 @@ const JsonVastExplorer = React.memo(({
                       variant="secondary"
                       isDarkMode={isDarkMode}
                       size="sm"
-                      title={showVastStructure ? "VAST anzeigen" : "Struktur anzeigen"}
+                      title={showVastStructure ? "Show VAST" : "Show Structure"}
                     >
-                      {showVastStructure ? "VAST anzeigen" : "Struktur anzeigen"}
+                      {showVastStructure ? "Show VAST" : "Show Structure"}
                     </Button>
                     <div className={`ml-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {expandedVastNodes.size} XML-Knoten
+                      {expandedVastNodes.size} XML nodes
                     </div>
                   </div>
 
@@ -1372,11 +1372,11 @@ const JsonVastExplorer = React.memo(({
                     <div ref={getFetchedVastRef(activeVastTabIndex - 1)} className={isWordWrapEnabled ? 'whitespace-pre-wrap' : 'whitespace-pre'}>
                       {vastChain[activeVastTabIndex - 1]?.isLoading ? (
                         <div className="flex justify-center items-center p-10">
-                          <span className="animate-pulse text-blue-500 dark:text-blue-400">Lade VAST-Daten...</span>
+                          <span className="animate-pulse text-blue-500 dark:text-blue-400">Loading VAST data...</span>
                         </div>
                       ) : vastChain[activeVastTabIndex - 1]?.error ? (
                         <div className="text-red-500 dark:text-red-400 p-4">
-                          <p className="font-bold">Fehler beim Laden des VAST:</p>
+                          <p className="font-bold">Error loading VAST:</p>
                           <p>{vastChain[activeVastTabIndex - 1].error}</p>
                         </div>
                       ) : (
