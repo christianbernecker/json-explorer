@@ -225,8 +225,7 @@ const JsonVastExplorer = React.memo(({
 
   // Zuerst füge ich einen State für die aufgeklappten JSON-Elemente hinzu
   const [expandedJsonPaths, setExpandedJsonPaths] = useState<Set<string>>(new Set());
-  const [expandedVastNodes, setExpandedVastNodes] = useState<Set<string>>(new Set());
-
+  
   // Funktion zum Anzeigen der JSON-Outline
   const generateJsonOutline = (json: any, path: string = ''): React.ReactNode => {
     if (!json || typeof json !== 'object') return null;
@@ -371,7 +370,7 @@ const JsonVastExplorer = React.memo(({
       // Starte mit dem Root-Element
       traverseNode(xmlDoc.documentElement);
       
-      setExpandedVastNodes(paths);
+      setExpandedJsonPaths(paths);
     } catch (error) {
       console.error("Error initializing expanded VAST nodes:", error);
     }
@@ -538,7 +537,6 @@ const JsonVastExplorer = React.memo(({
     setIsSearchOpen(false); // Also hide search on clear
     // Leere die aufgeklappten Pfade
     setExpandedJsonPaths(new Set());
-    setExpandedVastNodes(new Set());
   }, []);
 
   // Format XML for display - adding proper styling and line breaks
@@ -808,6 +806,7 @@ const JsonVastExplorer = React.memo(({
       );
       
       let currentNode: Node | null;
+      // eslint-disable-next-line no-cond-assign
       while (currentNode = walker.nextNode()) {
         // Überspringe Elemente, die bereits Teil einer Suche sind
         if (currentNode.parentElement?.classList.contains('search-term-highlight') ||
@@ -991,6 +990,7 @@ const JsonVastExplorer = React.memo(({
       );
       
       let currentNode: Node | null;
+      // eslint-disable-next-line no-cond-assign
       while (currentNode = walker.nextNode()) {
         // Überspringe Elemente, die bereits Teil einer Suche sind
         if (currentNode.parentElement?.classList.contains('search-term-highlight') ||
