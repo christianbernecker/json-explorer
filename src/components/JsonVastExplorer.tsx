@@ -589,6 +589,7 @@ const JsonVastExplorer = React.memo(({
           // Prüfen, ob es ein Verarbeitungsanweisung ist
           const isProcessingInstruction = line.startsWith('<?') && line.endsWith('?>');
           // Prüfen, ob es ein CDATA-Block ist
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const isCdataTag = line.match(/!\[CDATA\[.*?\]\]/);
           
           // Einrückung für schließende Tags reduzieren (vor dem Hinzufügen)

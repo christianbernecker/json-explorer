@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 11:49:29 CEST 2025", "commit": "Fix: ESLint-Fehler behoben für Vercel-Build"}
+{"deployment": "staging", "timestamp": "Fri May 23 12:09:05 CEST 2025", "commit": "Fix: Suchfunktion, XML-Einrückung, VAST-Struktur entfernt, lange ADM-Inhalte in Cards wrappen, JsonDiffTool UI-Verbesserungen"}
