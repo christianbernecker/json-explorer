@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 15:11:16 CEST 2025", "commit": "Integriere Suchfunktion direkt in Cards und ändere Text auf Englisch"}
+{"deployment": "staging", "timestamp": "Fri May 23 15:12:13 CEST 2025", "commit": "Behebe ESLint-Warnungen für ungenutzte Funktionen"}

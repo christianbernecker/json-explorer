@@ -1062,6 +1062,7 @@ const JsonVastExplorer = React.memo(({
   }, [vastSearchTerm, activeVastTabIndex, vastTabSearches, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
 
   // Navigation für die VAST-Tabs
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const goToNextVastResult = useCallback(() => {
     const currentTabSearch = vastTabSearches[activeVastTabIndex];
     if (!currentTabSearch || currentTabSearch.results.length === 0) return;
@@ -1101,9 +1102,9 @@ const JsonVastExplorer = React.memo(({
     };
     
     highlightVastMatches(nextIndex);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, [vastTabSearches, activeVastTabIndex, scrollToElement]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const goToPrevVastResult = useCallback(() => {
     const currentTabSearch = vastTabSearches[activeVastTabIndex];
     if (!currentTabSearch || currentTabSearch.results.length === 0) return;
@@ -1143,7 +1144,6 @@ const JsonVastExplorer = React.memo(({
     };
     
     highlightVastMatches(prevIndex);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   }, [vastTabSearches, activeVastTabIndex, scrollToElement]);
 
   // WICHTIG: Tab-Wechsel-Handler um Hervorhebungen zu aktualisieren
