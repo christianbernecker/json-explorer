@@ -79,29 +79,53 @@ const JsonTcfAnalyzer: React.FC<JsonTcfAnalyzerProps> = ({
   const findTcfStringInJson = useCallback((obj: any, path = ''): { path: string, tcfString: string } | null => {
     if (typeof obj !== 'object' || obj === null) return null;
     
+    console.log('Checking for TCF string in JSON:', obj);
+    
     // Direkte Überprüfung auf bekannte TCF-String-Pfade wie gdpr.consent
-    if (obj.gdpr && typeof obj.gdpr.consent === 'string' && obj.gdpr.consent.length > 10) {
-      // Spezielle Prüfung für das häufig verwendete gdpr.consent-Feld
-      return { path: 'gdpr.consent', tcfString: obj.gdpr.consent };
+    if (obj.gdpr && obj.gdpr.consent) {
+      console.log('Found gdpr.consent field:', obj.gdpr.consent);
+      const consentString = obj.gdpr.consent;
+      if (typeof consentString === 'string' && consentString.length > 10 && consentString.startsWith('C')) {
+        console.log('Valid TCF string found in gdpr.consent');
+        return { path: 'gdpr.consent', tcfString: consentString };
+      }
     }
     
-    // TCF-String-Pattern: Base64-kodierte Zeichen, beginnend mit typischen TCF-Präfixen
-    // Weniger restriktiver Regex, der verschiedene TCF-Formate akzeptiert
-    const tcfRegex = /^C[A-Za-z0-9_\-+/=]{10,}$/;
+    // Allgemeiner Check für Consent-ähnliche Felder
+    const consentFields = ['consent', 'tcString', 'tcstring', 'tcf', 'tcfString', 'tc_string'];
+    for (const fieldName of consentFields) {
+      if (obj[fieldName] && typeof obj[fieldName] === 'string' && obj[fieldName].length > 10 && obj[fieldName].startsWith('C')) {
+        console.log(`Found consent string in field '${fieldName}':`, obj[fieldName]);
+        return { path: fieldName, tcfString: obj[fieldName] };
+      }
+    }
+    
+    // TCF-String-Pattern: Verschiedene Formate akzeptieren, sehr breiter Match
+    const tcfRegex = /^C[A-Za-z0-9_\-+/=.]{10,}$/;
     
     // Rekursiv durch JSON traversieren
     const traverse = (obj: any, path = ''): { path: string, tcfString: string } | null => {
       for (const key in obj) {
         const currentPath = path ? `${path}.${key}` : key;
         
-        // Spezielle Prüfung für consent-Felder, auch wenn sie nicht direkt unter gdpr liegen
-        if (key === 'consent' && typeof obj[key] === 'string' && obj[key].length > 20) {
-          return { path: currentPath, tcfString: obj[key] };
+        // Spezielle Prüfung für Felder, die 'consent' enthalten
+        if (typeof key === 'string' && 
+            (key.toLowerCase().includes('consent') || key.toLowerCase().includes('tcf') || key.toLowerCase().includes('gdpr')) && 
+            typeof obj[key] === 'string' && 
+            obj[key].length > 20) {
+          console.log(`Found possible TCF string in field '${currentPath}':`, obj[key].substring(0, 30) + '...');
+          if (obj[key].startsWith('C')) {
+            return { path: currentPath, tcfString: obj[key] };
+          }
         }
         
         // Prüfe, ob der aktuelle Wert ein String ist und dem TCF-Pattern entspricht
-        if (typeof obj[key] === 'string' && tcfRegex.test(obj[key])) {
-          return { path: currentPath, tcfString: obj[key] };
+        if (typeof obj[key] === 'string') {
+          const value = obj[key];
+          if (value.length > 20 && value.startsWith('C') && /[A-Za-z0-9_\-+/=.]{20,}/.test(value)) {
+            console.log(`Found TCF string pattern match in field '${currentPath}':`, value.substring(0, 30) + '...');
+            return { path: currentPath, tcfString: value };
+          }
         }
         
         // Rekursiv durch nested Objects gehen
@@ -113,7 +137,11 @@ const JsonTcfAnalyzer: React.FC<JsonTcfAnalyzerProps> = ({
       return null;
     };
     
-    return traverse(obj, path);
+    const result = traverse(obj, path);
+    if (!result) {
+      console.log('No TCF string found in JSON structure after exhaustive search');
+    }
+    return result;
   }, []);
 
   // JSON parsen und TCF-String suchen

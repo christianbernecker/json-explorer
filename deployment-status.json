@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 16:16:18 CEST 2025", "commit": "Route für JSON & TCF String Check Tab hinzugefügt"}
+{"deployment": "staging", "timestamp": "Fri May 23 16:25:45 CEST 2025", "commit": "Verbesserte TCF-String-Erkennung mit Unterstützung für gdpr.consent und anderen Formaten"}
