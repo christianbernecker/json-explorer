@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { JsonVastExplorerProps, HistoryItem as HistoryItemType } from '../types';
-import useHighlighter from '../utils/highlighter';
 import JsonHistoryPanel from './shared/JsonHistoryPanel';
 import JsonSearch from './search/JsonSearch';
 import { performSearch } from './search/SearchFix';
@@ -115,9 +114,6 @@ const JsonVastExplorer = React.memo(({
     return fetchedVastOutputRefs.current.get(index)!;
   }, []);
   
-  // Custom hook for Syntax Highlighting
-  const { highlightJson } = useHighlighter();
-  
   // Hook für Zeilennummern aufrufen
   const addLineNumbersGlobal = useAddLineNumbers(isDarkMode);
   
@@ -219,30 +215,6 @@ const JsonVastExplorer = React.memo(({
     }
   }, [extractAdTagUri, MAX_VAST_WRAPPER]);
 
-  // Zuerst füge ich einen State für die aufgeklappten JSON-Elemente hinzu
-  const [expandedJsonPaths, setExpandedJsonPaths] = useState<Set<string>>(new Set());
-
-  // Hilfsfunktion, um alle JSON-Pfade rekursiv aufzuklappen
-  const initializeExpandedPaths = useCallback((json: any, path: string = '', paths: Set<string> = new Set<string>()) => {
-    if (!json || typeof json !== 'object') return paths;
-    
-    // Aktuellen Pfad hinzufügen
-    if (path) {
-      paths.add(path);
-    }
-    
-    // Rekursiv alle Kinder durchgehen
-    Object.keys(json).forEach(key => {
-      const currentPath = path ? `${path}.${key}` : key;
-      if (json[key] && typeof json[key] === 'object') {
-        initializeExpandedPaths(json[key], currentPath, paths);
-      }
-    });
-    
-    setExpandedJsonPaths(paths);
-    return paths;
-  }, []);
-  
   // Hilfsfunktion, um alle XML-Knoten rekursiv aufzuklappen
   const initializeExpandedVastNodes = useCallback((xmlContent: string) => {
     if (!xmlContent) return;
@@ -272,7 +244,6 @@ const JsonVastExplorer = React.memo(({
       // Starte mit dem Root-Element
       traverseNode(xmlDoc.documentElement);
       
-      setExpandedJsonPaths(paths);
     } catch (error) {
       console.error("Error initializing expanded VAST nodes:", error);
     }
@@ -336,9 +307,6 @@ const JsonVastExplorer = React.memo(({
         const currentRawVast = vastInfo.content;
         setRawVastContent(currentRawVast);
         
-        // Initialisiere die aufgeklappten JSON-Pfade, wenn neue Daten geladen werden
-        initializeExpandedPaths(currentParsedJson);
-        
         // Initialisiere die aufgeklappten VAST-Nodes, wenn neue VAST-Daten geladen werden
         if (currentRawVast) {
           initializeExpandedVastNodes(currentRawVast);
@@ -366,9 +334,6 @@ const JsonVastExplorer = React.memo(({
         setVastChain([]); // Ensure chain is clear if no VAST found
         setActiveVastTabIndex(0); // Reset tab
         
-        // Initialisiere die aufgeklappten JSON-Pfade, auch wenn kein VAST gefunden wurde
-        initializeExpandedPaths(currentParsedJson);
-        
         const newHistoryItem: HistoryItemType = {
           type: 'json',
           content: currentParsedJson,
@@ -385,7 +350,7 @@ const JsonVastExplorer = React.memo(({
       setActiveVastTabIndex(0);
       setIsSearchOpen(false); // Also hide search on error
     }
-  }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastChainRecursive, addToHistoryItem, initializeExpandedPaths, initializeExpandedVastNodes]);
+  }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastChainRecursive, addToHistoryItem, initializeExpandedVastNodes]);
   
   // Handle JSON input change
   const handleJsonInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -422,8 +387,6 @@ const JsonVastExplorer = React.memo(({
     setVastChain([]);
     setActiveVastTabIndex(0);
     setIsSearchOpen(false); // Also hide search on clear
-    // Leere die aufgeklappten Pfade
-    setExpandedJsonPaths(new Set());
   }, []);
 
   // Referenzen für DOM-Elemente
@@ -617,101 +580,6 @@ const JsonVastExplorer = React.memo(({
     setVastTabSearches(newUpdatedSearches);
   }, [vastSearchTerm, activeVastTabIndex, vastTabSearches, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
 
-  // WICHTIG: Tab-Wechsel-Handler um Hervorhebungen zu aktualisieren
-  const handleVastTabChange = useCallback((newTabIndex: number) => {
-    // Wenn der aktuelle Tab mit dem neuen Tab identisch ist, nichts tun
-    if (activeVastTabIndex === newTabIndex) return;
-    
-    // Entferne alle Hervorhebungen
-    document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
-      if (el instanceof HTMLElement) {
-        // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
-        const text = el.textContent || '';
-        const textNode = document.createTextNode(text);
-        // Und ersetzen das hervorgehobene Element durch diesen TextNode
-        if (el.parentNode) {
-          el.parentNode.replaceChild(textNode, el);
-        }
-      }
-    });
-    
-    // Führe die Cleanup-Funktion für den aktuellen Tab aus
-    if (vastTabSearches[activeVastTabIndex]?.cleanup) {
-      vastTabSearches[activeVastTabIndex].cleanup?.();
-    }
-    
-    // Setze den neuen Tab-Index
-    setActiveVastTabIndex(newTabIndex);
-    
-    // Verzögert die Hervorhebung neu erstellen, wenn der neue Tab gerendert wurde
-    setTimeout(() => {
-      // Wenn es Ergebnisse im neuen Tab gibt, hervorheben
-      if (vastTabSearches[newTabIndex]?.results.length > 0) {
-        const vastContainer = newTabIndex === 0 
-          ? embeddedVastOutputRef.current 
-          : getFetchedVastRef(newTabIndex - 1).current;
-        
-        // Hervorhebe das letzte aktive Ergebnis im neuen Tab
-        const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
-        const currentIndex = vastTabSearches[newTabIndex].currentIndex;
-        
-        if (currentIndex >= 0 && vastTabSearches[newTabIndex].results.length > currentIndex) {
-          highlightMatch(currentIndex, vastTabSearches[newTabIndex].results);
-          
-          // Scroll zum Ergebnis
-          if (vastTabSearches[newTabIndex].results[currentIndex]?.element) {
-            scrollToElement(vastTabSearches[newTabIndex].results[currentIndex].element);
-          }
-        }
-      }
-    }, 100);
-  }, [activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, scrollToElement, vastSearchTerm, vastTabSearches]);
-
-  // Wenn sich die Tab-Struktur ändert, müssen wir die VAST-Tabs-Suche neu initialisieren
-  useEffect(() => {
-    if (vastChain.length > 0) {
-      // Beim Ändern der VAST-Kette die Suchhervorhebungen entfernen
-      document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
-        if (el instanceof HTMLElement) {
-          // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
-          const text = el.textContent || '';
-          const textNode = document.createTextNode(text);
-          // Und ersetzen das hervorgehobene Element durch diesen TextNode
-          if (el.parentNode) {
-            el.parentNode.replaceChild(textNode, el);
-          }
-        }
-      });
-    }
-  }, [vastChain]);
-
-  // Add CSS for search highlighting - jetzt mit Hervorhebung aller Treffer
-  useEffect(() => {
-    // Create a style element
-    const style = document.createElement('style');
-    style.innerHTML = `
-      .search-term-highlight {
-        background-color: rgba(59, 130, 246, 0.3);
-        padding: 1px;
-        border-radius: 2px;
-        font-weight: bold;
-      }
-      .search-term-current {
-        background-color: rgba(239, 68, 68, 0.7);
-        color: white;
-        padding: 1px;
-        border-radius: 2px;
-        outline: 2px solid rgba(239, 68, 68, 0.9);
-        font-weight: bold;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
-
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* Original search component - keeping this for reference */}
@@ -800,11 +668,7 @@ const JsonVastExplorer = React.memo(({
                 <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h3>
-                    {/* Control buttons ... */}
-                    {/* ... bestehender Button-Code ... */}
                   </div>
-                  {/* Toggle zwischen JSON und Structure */}
-                  {/* ... bestehender Toggle-Code ... */}
                 </div>
               </div>
             )}
@@ -813,8 +677,6 @@ const JsonVastExplorer = React.memo(({
               <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
                 <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
                   <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
-                  {/* Tabs und Toggle für Structure ... */}
-                  {/* ... bestehender Tab/Toggle-Code ... */}
                 </div>
               </div>
             )}
