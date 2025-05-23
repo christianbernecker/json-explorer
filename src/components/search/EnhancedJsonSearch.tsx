@@ -94,33 +94,32 @@ const EnhancedJsonSearch: React.FC<EnhancedJsonSearchProps> = ({
     }
   }, [isVisible]);
   
-  // Styles für die Suche-Box
+  // Styles für die Suche-Box - jetzt als inline component
   const searchStyles = {
-    container: `fixed top-0 left-0 w-full h-full flex justify-center items-start z-50
-                ${isVisible ? 'block' : 'hidden'}`,
-    panel: `mt-4 w-full max-w-xl rounded-lg shadow-2xl p-4
+    container: `w-full ${isVisible ? 'block' : 'hidden'}`,
+    panel: `rounded-lg mb-3 p-3 
             ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-300'}`,
-    inputContainer: `flex items-center mb-3`,
-    input: `w-full px-3 py-2 rounded-lg border
+    inputContainer: `flex items-center`,
+    input: `w-full px-3 py-1 rounded-lg border
              ${isDarkMode 
                ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                : 'bg-white border-gray-300 text-gray-800 placeholder-gray-500'}
-             focus:outline-none focus:ring-2
+             focus:outline-none focus:ring-1
              ${isDarkMode ? 'focus:ring-blue-500' : 'focus:ring-blue-400'}`,
-    optionsContainer: `flex items-center my-2`,
+    optionsContainer: `flex items-center my-2 flex-wrap`,
     checkbox: `mr-1`,
-    checkboxLabel: `mr-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`,
-    resultsText: `text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`,
+    checkboxLabel: `mr-4 text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`,
+    resultsText: `text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`,
     navigationContainer: `flex items-center justify-between mt-2`,
-    button: `px-3 py-1 rounded-md text-sm
+    button: `px-2 py-1 rounded-md text-xs
               ${isDarkMode 
                 ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
                 : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`,
-    closeButton: `ml-2 p-2 rounded-full 
+    closeButton: `ml-2 p-1 rounded-full 
                   ${isDarkMode 
                     ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700' 
                     : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'}`,
-    searchButton: `ml-2 px-3 py-1 rounded-md text-white
+    searchButton: `ml-2 px-2 py-1 rounded-md text-white text-xs
                    ${isDarkMode ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'}`
   };
   
@@ -129,12 +128,12 @@ const EnhancedJsonSearch: React.FC<EnhancedJsonSearchProps> = ({
   return (
     <div className={searchStyles.container}>
       <div className={searchStyles.panel}>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className={`text-base font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
-            JSON Suche
+        <div className="flex justify-between items-center mb-2">
+          <h3 className={`text-sm font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+            Search
           </h3>
           <button onClick={onClose} className={searchStyles.closeButton}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
@@ -148,20 +147,13 @@ const EnhancedJsonSearch: React.FC<EnhancedJsonSearchProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Suchbegriff eingeben..."
+              placeholder="Enter search term..."
               className={searchStyles.input}
             />
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-              <svg className={`w-5 h-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`} 
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-            </div>
           </div>
           
           <button onClick={executeSearch} className={searchStyles.searchButton}>
-            Suchen
+            Search
           </button>
         </div>
         
@@ -174,7 +166,7 @@ const EnhancedJsonSearch: React.FC<EnhancedJsonSearchProps> = ({
             className={searchStyles.checkbox}
           />
           <label htmlFor="caseSensitive" className={searchStyles.checkboxLabel}>
-            Groß-/Kleinschreibung beachten
+            Case sensitive
           </label>
           
           <input
@@ -185,7 +177,7 @@ const EnhancedJsonSearch: React.FC<EnhancedJsonSearchProps> = ({
             className={searchStyles.checkbox}
           />
           <label htmlFor="matchWholeWord" className={searchStyles.checkboxLabel}>
-            Ganze Wörter
+            Match whole word
           </label>
         </div>
         
@@ -193,19 +185,19 @@ const EnhancedJsonSearch: React.FC<EnhancedJsonSearchProps> = ({
           <div className={searchStyles.navigationContainer}>
             <div className={searchStyles.resultsText}>
               {resultsCount === 0 
-                ? 'Keine Treffer gefunden' 
-                : `${currentIndex + 1} von ${resultsCount} Treffer`}
+                ? 'No matches found' 
+                : `${currentIndex + 1} of ${resultsCount} matches`}
             </div>
             
             {resultsCount > 0 && (
               <div className="flex space-x-2">
-                <button onClick={goToPrevResult} className={searchStyles.button} title="Vorheriges Ergebnis">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <button onClick={goToPrevResult} className={searchStyles.button} title="Previous Result">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"></path>
                   </svg>
                 </button>
-                <button onClick={goToNextResult} className={searchStyles.button} title="Nächstes Ergebnis">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <button onClick={goToNextResult} className={searchStyles.button} title="Next Result">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"></path>
                   </svg>
                 </button>

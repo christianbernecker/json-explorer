@@ -53,7 +53,8 @@ const JsonVastExplorer = React.memo(({
   const [copyMessageVisible, setCopyMessageVisible] = useState(false);
   
   // Suche und Tab-Verwaltung
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isJsonSearchOpen, setIsJsonSearchOpen] = useState(false);
+  const [isVastSearchOpen, setIsVastSearchOpen] = useState(false);
   const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false); // State für Zeilenumbruch
   const [showStructure, setShowStructure] = useState(false); // State für JSON-Struktur-Ansicht
   
@@ -393,11 +394,11 @@ const JsonVastExplorer = React.memo(({
     }
     
     // Aktive Suche deaktivieren, wenn keine gültigen Refs mehr vorhanden sind
-    if (isSearchOpen && (!jsonRef.current && !vastRef.current)) {
+    if (isJsonSearchOpen && (!jsonRef.current && !vastRef.current)) {
       console.warn("Suche ist aktiv, aber keine Refs sind gültig - deaktiviere Suche");
-      setIsSearchOpen(false);
+      setIsJsonSearchOpen(false);
     }
-  }, [parsedJson, rawVastContent, isSearchOpen]);
+  }, [parsedJson, rawVastContent, isJsonSearchOpen]);
 
   // Tastaturkürzel für die Suche
   useEffect(() => {
@@ -405,7 +406,7 @@ const JsonVastExplorer = React.memo(({
       // Ctrl/Cmd+F für Suchfunktion
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
-        setIsSearchOpen(true);
+        setIsJsonSearchOpen(true);
       }
     };
     
@@ -486,7 +487,7 @@ const JsonVastExplorer = React.memo(({
       setRawVastContent(null);
       setVastChain([]);
       setActiveVastTabIndex(0);
-      setIsSearchOpen(false); // Also hide search on error
+      setIsJsonSearchOpen(false); // Also hide search on error
     }
   }, [jsonInput, findVastContent, extractVastUrl, extractAdTagUri, fetchVastChainRecursive, addToHistoryItem, initializeExpandedPaths, initializeExpandedVastNodes]);
   
@@ -525,8 +526,8 @@ const JsonVastExplorer = React.memo(({
       // Restore VAST chain potentially? For now, just clear it.
       setVastChain([]);
     }
-    setIsSearchOpen(false);
-  }, [setIsSearchOpen, setJsonInput, setParsedJson, setRawVastContent, setError, setVastChain]);
+    setIsJsonSearchOpen(false);
+  }, [setIsJsonSearchOpen, setJsonInput, setParsedJson, setRawVastContent, setError, setVastChain]);
   
   // Clear all fields
   const handleClear = useCallback(() => {
@@ -535,11 +536,11 @@ const JsonVastExplorer = React.memo(({
     setRawVastContent(null);
     setError('');
     setCopyMessage('');
-    setIsSearchOpen(false);
+    setIsJsonSearchOpen(false);
     // Reset fetch states on clear
     setVastChain([]);
     setActiveVastTabIndex(0);
-    setIsSearchOpen(false); // Also hide search on clear
+    setIsJsonSearchOpen(false); // Also hide search on clear
     // Leere die aufgeklappten Pfade
     setExpandedJsonPaths(new Set());
   }, []);
@@ -761,12 +762,12 @@ const JsonVastExplorer = React.memo(({
 
   // Log search state changes
   useEffect(() => {
-    console.log("Search state changed:", isSearchOpen);
-    setSearchDebugMessage(`Search state: ${isSearchOpen ? 'OPEN' : 'CLOSED'}`);
+    console.log("Search state changed:", isJsonSearchOpen);
+    setSearchDebugMessage(`Search state: ${isJsonSearchOpen ? 'OPEN' : 'CLOSED'}`);
     // Clear message after 3 seconds
     const timer = setTimeout(() => setSearchDebugMessage(null), 3000);
     return () => clearTimeout(timer);
-  }, [isSearchOpen]);
+  }, [isJsonSearchOpen]);
 
   // Hilfsfunktion zum Scrollen zu einem Element (vertikal UND horizontal)
   const scrollToElement = useCallback((element: HTMLElement) => {
@@ -1242,8 +1243,12 @@ const JsonVastExplorer = React.memo(({
   }, []);
 
   // Füge diese Handler-Definitionen nach performJsonSearch und performVastSearch ein
-  const handleSearchButtonClick = useCallback(() => {
-    setIsSearchOpen(true);
+  const handleJsonSearchButtonClick = useCallback(() => {
+    setIsJsonSearchOpen(prev => !prev);
+  }, []);
+
+  const handleVastSearchButtonClick = useCallback(() => {
+    setIsVastSearchOpen(prev => !prev);
   }, []);
 
   const handleToggleWordWrapClick = useCallback(() => {
@@ -1269,14 +1274,6 @@ const JsonVastExplorer = React.memo(({
 
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
-      {/* Neue verbesserte Suchkomponente */}
-      <EnhancedJsonSearch 
-        isDarkMode={isDarkMode}
-        containerRef={activeVastTabIndex === 0 && !rawVastContent ? jsonRef : vastRef}
-        isVisible={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
-    
       {/* History Panel */}
       {showHistory && (
         <JsonHistoryPanel
@@ -1359,7 +1356,7 @@ const JsonVastExplorer = React.memo(({
                     {/* Control buttons für JSON */}
                     <div className="flex space-x-2">
                       <Button
-                        onClick={handleSearchButtonClick}
+                        onClick={handleJsonSearchButtonClick}
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
@@ -1391,35 +1388,17 @@ const JsonVastExplorer = React.memo(({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                         </svg>
                       </Button>
-                      {/* Buttons für JSON-Suche */}
-                      {jsonSearchResults.length > 0 && (
-                        <>
-                          <Button
-                            onClick={() => console.log("Suche nicht mehr implementiert")}
-                            variant="secondary"
-                            isDarkMode={isDarkMode}
-                            size="sm"
-                            title="Previous Result (Suche wird ersetzt)"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                          </Button>
-                          <Button
-                            onClick={() => console.log("Suche nicht mehr implementiert")}
-                            variant="secondary"
-                            isDarkMode={isDarkMode}
-                            size="sm"
-                            title="Next Result (Suche wird ersetzt)"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Button>
-                        </>
-                      )}
                     </div>
                   </div>
+                  
+                  {/* Inline JSON Search */}
+                  <EnhancedJsonSearch 
+                    isDarkMode={isDarkMode}
+                    containerRef={jsonRef}
+                    isVisible={isJsonSearchOpen}
+                    onClose={() => setIsJsonSearchOpen(false)}
+                  />
+                  
                   {/* JSON Outline/Content */}
                   <div className="flex mb-2 mt-2">
                     <Button
@@ -1465,7 +1444,7 @@ const JsonVastExplorer = React.memo(({
                     {/* Control buttons für VAST */}
                     <div className="flex space-x-2">
                       <Button
-                        onClick={handleSearchButtonClick}
+                        onClick={handleVastSearchButtonClick}
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
@@ -1497,35 +1476,16 @@ const JsonVastExplorer = React.memo(({
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                         </svg>
                       </Button>
-                      {/* Buttons für VAST-Suche */}
-                      {vastTabSearches[activeVastTabIndex]?.results.length > 0 && (
-                        <>
-                          <Button
-                            onClick={goToPrevVastResult}
-                            variant="secondary"
-                            isDarkMode={isDarkMode}
-                            size="sm"
-                            title="Previous Result"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                          </Button>
-                          <Button
-                            onClick={goToNextVastResult}
-                            variant="secondary"
-                            isDarkMode={isDarkMode}
-                            size="sm"
-                            title="Next Result"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                          </Button>
-                        </>
-                      )}
                     </div>
                   </div>
+
+                  {/* Inline VAST Search */}
+                  <EnhancedJsonSearch 
+                    isDarkMode={isDarkMode}
+                    containerRef={vastRef}
+                    isVisible={isVastSearchOpen}
+                    onClose={() => setIsVastSearchOpen(false)}
+                  />
 
                   {/* VAST Tabs */}
                   <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
