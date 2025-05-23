@@ -16,6 +16,7 @@ import jsPDF from 'jspdf';
 import DataVisualizerPlugin from './DataVisualizerPlugin';
 import ApplicationHeader from './ApplicationHeader';
 import PrimaryContainer from './shared/PrimaryContainer';
+import MaintenanceOverlay from './shared/MaintenanceOverlay';
 
 // Import AG-Grid styles
 import 'ag-grid-community/styles/ag-grid.css';
@@ -1262,6 +1263,13 @@ function DataVisualizer({ isDarkMode }: DataVisualizerProps) {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
+      {/* Maintenance Overlay für Data Visualizer - nur in Produktionsversion angezeigt */}
+      <MaintenanceOverlay 
+        isDarkMode={isDarkMode} 
+        featureName="Data Visualizer"
+        showOnEnv="production" 
+      />
+      
       <SEO
         title="Data Visualizer | CSV und Excel Analyse Tool"
         description="Laden Sie CSV oder Excel Dateien hoch und analysieren Sie Ihre Daten mit interaktiven Visualisierungen und KI-gestützten Erkenntnissen."

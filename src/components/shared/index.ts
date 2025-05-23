@@ -12,4 +12,5 @@ export { default as AppHeader } from './AppHeader';
 export { default as Section } from './Section';
 export { default as TabSystem } from './TabSystem';
 export { default as HistoryPanel } from './HistoryPanel';
-export { default as Header } from './Header'; 
+export { default as Header } from './Header';
+export { default as MaintenanceOverlay } from './MaintenanceOverlay'; 
