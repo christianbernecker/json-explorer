@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 15:42:18 CEST 2025", "commit": "Verbessere Suchfunktionalität mit Keyboard-Shortcuts, JSON-Path-Anzeige und weiteren Usability-Features"}
+{"deployment": "staging", "timestamp": "Fri May 23 16:06:14 CEST 2025", "commit": "Neuer JSON & TCF String Check Tab hinzugefügt"}

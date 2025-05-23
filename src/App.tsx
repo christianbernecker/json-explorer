@@ -69,6 +69,7 @@ function AppContent() {
               <Route path="/apps/json-explorer" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
               <Route path="/apps/json-explorer/validator" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
               <Route path="/apps/json-explorer/diff" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
+              <Route path="/apps/json-explorer/tcf-analyzer" element={<JsonToolsApp parentIsDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
               <Route path="/apps/data-visualizer" element={<DataVisualizer isDarkMode={isDarkMode} />} />
               <Route path="/apps/tcf-decoder" element={<TCFDecoderPage isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
               <Route path="/guide" element={<HelpPage isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />} />
