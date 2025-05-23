@@ -191,11 +191,11 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
   };
 
   return (
-    <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
+    <div className="w-full h-full">
       {/* TCF Decoder Tab */}
       {(activeTab === 'decoder' || !activeTab) && (
-        <Card isDarkMode={isDarkMode} className="mt-8 mb-8" withPadding>
-          <div className="mb-2">
+        <div>
+          <div className="mb-4">
             <h3 className={`text-base md:text-lg font-semibold mb-2 ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>TCF String Input</h3>
             <textarea
               className={`w-full h-32 p-3 border rounded-lg font-mono text-xs mb-2 outline-none transition ${
@@ -259,7 +259,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
           
           {/* Results section */}
           {processedTcfData && (
-            <div id="results" className={`my-6 p-5 border ${borderColor} rounded-md`}>
+            <Card isDarkMode={isDarkMode} className="my-6" withPadding>
               {/* Key Vendors Section */}
               <div className="mb-6">
                 <h3 className="text-lg font-semibold mb-3">Key Vendors (136, 137, 44)</h3>
@@ -562,31 +562,21 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
           )}
-        </Card>
+        </div>
       )}
       
       {/* GVL Explorer Tab */}
       {activeTab === 'gvl-explorer' && (
-        <div className="mt-4">
-          {isLoadingGVL ? (
-            <div className="text-center p-10">
-              <p>Loading Global Vendor List...</p>
-            </div>
-          ) : !gvlExplorerInstance ? (
-            <div className="text-center p-10">
-              <p>No GVL data available. Please decode a TCF string first or refresh.</p>
-              <Button
-                onClick={loadGVL}
-                isDarkMode={isDarkMode}
-                className="mt-4"
-              >
-                Load GVL
-              </Button>
+        <div>
+          {!gvlExplorerInstance ? (
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+              <p className="mt-4">Loading Global Vendor List...</p>
             </div>
           ) : (
-            <>
+            <Card isDarkMode={isDarkMode} className="mb-6" withPadding>
               <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
                   <h3 className="text-lg font-semibold">Global Vendor List Explorer</h3>
@@ -693,14 +683,14 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
                   ` (of ${Object.keys(gvlExplorerInstance?.vendors || {}).length} total)`
                 }
               </div>
-            </>
+            </Card>
           )}
         </div>
       )}
       
       {/* Vendor Details Tab */}
       {activeTab === 'vendor-details' && selectedVendor && (
-        <div className="mb-6">
+        <Card isDarkMode={isDarkMode} className="mb-6" withPadding>
           <div className="flex items-center mb-4">
             <Button
               onClick={handleBackFromVendorDetails}
@@ -777,7 +767,7 @@ const TCFDecoder: React.FC<TCFDecoderProps> = ({ isDarkMode, initialTcString, in
               ) : <p className="text-sm italic">None</p>}
             </div>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );
