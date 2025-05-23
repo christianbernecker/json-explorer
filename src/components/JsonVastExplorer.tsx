@@ -61,14 +61,14 @@ const JsonVastExplorer = React.memo(({
   const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
   
   // Separate Suchvariablen für JSON und VAST
-  const [jsonSearchTerm, setJsonSearchTerm] = useState('');
+  const [jsonSearchTerm] = useState('');
   const [jsonSearchResults, setJsonSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
   const [jsonCurrentResultIndex, setJsonCurrentResultIndex] = useState(-1);
   const [jsonSearchCleanup, setJsonSearchCleanup] = useState<(() => void) | null>(null);
-  const [jsonSearchStatus, setJsonSearchStatus] = useState<'idle' | 'no-results' | 'results'>('idle');
+  const [jsonSearchStatus] = useState<'idle' | 'no-results' | 'results'>('idle');
   
   // Suchvariablen für VAST - jetzt als Array für jeden Tab
-  const [vastSearchTerm, setVastSearchTerm] = useState('');
+  const [vastSearchTerm] = useState('');
   const [vastTabSearches, setVastTabSearches] = useState<{
     results: {element: HTMLElement, text: string, startPos: number}[];
     currentIndex: number;
@@ -93,8 +93,6 @@ const JsonVastExplorer = React.memo(({
   const [directSearchResults, setDirectSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [currentDirectResultIndex, setCurrentDirectResultIndex] = useState(-1);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [directSearchCleanup, setDirectSearchCleanup] = useState<(() => void) | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [activeTabIndex, _setActiveTabIndex] = useState(0);
   
@@ -311,140 +309,6 @@ const JsonVastExplorer = React.memo(({
       </ul>
     );
   };
-
-  // Funktion zum Generieren der XML-Outline - Verbesserte Version
-  const generateVastOutline = useCallback((xmlContent: string | null): React.ReactNode => {
-    if (!xmlContent) return null;
-    
-    try {
-      // XML parsen und als Baumstruktur darstellen
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
-      
-      // Rekursive Funktion zum Aufbau der Outline
-      const traverseNode = (node: Node, depth: number = 0, parentPath: string = ''): React.ReactNode => {
-        // Textknoten ignorieren
-        if (node.nodeType === Node.TEXT_NODE) {
-          const textContent = node.textContent?.trim();
-          if (!textContent) return null;
-          
-          // Nur Textknoten mit Inhalt anzeigen (maximal 20 Zeichen)
-          return (
-            <li className="py-1 pl-2 ml-4 text-gray-500 text-xs">
-              {textContent.length > 20 ? `${textContent.substring(0, 20)}...` : textContent}
-            </li>
-          );
-        }
-        
-        // Element-Knoten verarbeiten
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const element = node as Element;
-          const nodeName = element.nodeName;
-          const hasChildren = element.childNodes.length > 0;
-          const attributes = element.attributes;
-          const nodePath = `${parentPath}/${nodeName}`;
-          const isExpanded = expandedVastNodes.has(nodePath);
-          
-          return (
-            <li key={`${nodeName}-${depth}`} className="py-1">
-              <div className="flex items-start">
-                <span 
-                  className={`cursor-pointer flex items-center ${isDarkMode ? 'hover:text-blue-300' : 'hover:text-blue-600'}`}
-                  onClick={() => {
-                    if (hasChildren) {
-                      // Toggle expanded state für diesen Pfad
-                      const newExpandedNodes = new Set(expandedVastNodes);
-                      if (isExpanded) {
-                        newExpandedNodes.delete(nodePath);
-                      } else {
-                        newExpandedNodes.add(nodePath);
-                      }
-                      setExpandedVastNodes(newExpandedNodes);
-                    }
-                  }}
-                >
-                  {hasChildren && (
-                    <svg xmlns="http://www.w3.org/2000/svg" 
-                      className={`h-4 w-4 mr-1 transition-transform duration-200 ${isExpanded ? 'transform rotate-90' : ''}`} 
-                      fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  )}
-                  <span className="text-orange-500 dark:text-orange-400">
-                    {nodeName}
-                  </span>
-                  
-                  {/* Zeige Attribute an, wenn vorhanden */}
-                  {attributes.length > 0 && (
-                    <span className="ml-2 text-blue-500 text-xs">
-                      {Array.from(attributes).map((attr) => 
-                        <span key={attr.name}>{attr.name}="{attr.value}" </span>
-                      )}
-                    </span>
-                  )}
-                </span>
-              </div>
-              
-              {/* Rekursion für Kinder-Elemente, nur wenn ausgeklappt */}
-              {hasChildren && isExpanded && (
-                <ul className="ml-4">
-                  {Array.from(element.childNodes).map((childNode, index) => (
-                    <React.Fragment key={index}>
-                      {traverseNode(childNode, depth + 1, nodePath)}
-                    </React.Fragment>
-                  ))}
-                </ul>
-              )}
-            </li>
-          );
-        }
-        
-        // CDATA-Knoten explizit verarbeiten
-        if (node.nodeType === Node.CDATA_SECTION_NODE) {
-          const cdataContent = node.nodeValue?.trim();
-          if (!cdataContent) return null;
-          
-          return (
-            <li className="py-1 pl-2 ml-4">
-              <span className="text-purple-500 dark:text-purple-400 text-xs">
-                {'<![CDATA['}{cdataContent.length > 30 ? `${cdataContent.substring(0, 30)}...` : cdataContent}{']]>'}
-              </span>
-            </li>
-          );
-        }
-        
-        // Comment-Knoten verarbeiten
-        if (node.nodeType === Node.COMMENT_NODE) {
-          const commentContent = node.nodeValue?.trim();
-          if (!commentContent) return null;
-          
-          return (
-            <li className="py-1 pl-2 ml-4 text-gray-400 text-xs">
-              {'<!-- '}{commentContent.length > 20 ? `${commentContent.substring(0, 20)}...` : commentContent}{' -->'}
-            </li>
-          );
-        }
-        
-        return null;
-      };
-      
-      // Traversiere vom Root-Element aus
-      const rootElement = xmlDoc.documentElement;
-      return (
-        <ul className={`${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-          {traverseNode(rootElement)}
-        </ul>
-      );
-    } catch (error) {
-      console.error("Error generating XML outline:", error);
-      return <p className="text-red-500">Failed to parse XML</p>;
-    }
-  }, [isDarkMode, expandedVastNodes]);
-
-  // Zuerst füge ich die State-Variablen für die Ansichtsumschaltung hinzu
-  const [showJsonStructure, setShowJsonStructure] = useState(false);
-  const [showVastStructure, setShowVastStructure] = useState(false);
 
   // Helper function für VAST Refs
   const getFetchedVastRef = useCallback((index: number): React.RefObject<HTMLDivElement> => {
@@ -927,7 +791,6 @@ const JsonVastExplorer = React.memo(({
     setJsonCurrentResultIndex(-1);
     
     if (!jsonSearchTerm.trim()) {
-      setJsonSearchStatus('idle');
       return;
     }
     
@@ -942,21 +805,9 @@ const JsonVastExplorer = React.memo(({
     setJsonSearchResults(matches);
     setJsonSearchCleanup(() => cleanup);
     
-    // Set appropriate status
-    if (matches.length > 0) {
-      setJsonSearchStatus('results');
-      setJsonCurrentResultIndex(0);
-      highlightMatch(0, matches);
-      
-      // Scroll zum ersten Ergebnis (auch horizontal)
-      if (matches[0] && matches[0].element) {
-        const element = matches[0].element;
-        
-        // Verbesserte Scroll-Funktion mit horizontalem Scrollen
-        scrollToElement(element);
-      }
-    } else {
-      setJsonSearchStatus('no-results');
+    // Scroll zum ersten Ergebnis (auch horizontal)
+    if (matches[0] && matches[0].element) {
+      scrollToElement(matches[0].element);
     }
   }, [jsonSearchTerm, jsonRef, jsonSearchCleanup, scrollToElement]);
 
@@ -1287,22 +1138,7 @@ const JsonVastExplorer = React.memo(({
                     {/* ... bestehender Button-Code ... */}
                   </div>
                   {/* Toggle zwischen JSON und Structure */}
-                  {showJsonStructure ? (
-                    <div className="text-xs font-mono">
-                      {generateJsonOutline(parsedJson)}
-                    </div>
-                  ) : (
-                    <div 
-                      ref={jsonRef}
-                      key={`json-output-${parsedJson ? 'loaded' : 'empty'}`}
-                      className={`w-full ${isWordWrapEnabled ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'}`}
-                      style={{ maxWidth: "100%" }}
-                    >
-                      <div 
-                        dangerouslySetInnerHTML={{ __html: addLineNumbersGlobal(highlightJson(parsedJson, isDarkMode), 'json') }}
-                      />
-                    </div>
-                  )}
+                  {generateJsonOutline(parsedJson)}
                 </div>
               </div>
             )}
