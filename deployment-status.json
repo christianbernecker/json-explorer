@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 10:09:09 CEST 2025", "commit": "Reverted to English UI: All UI texts changed back to English while preserving button functionality improvements."}
+{"deployment": "staging", "timestamp": "Fri May 23 10:57:24 CEST 2025", "commit": "Fixed button functionality and UI styling: 1) Fixed all button handlers with direct functions, 2) Updated Output Card styling to match Input Card, 3) Adjusted background colors and shadows for consistency"}

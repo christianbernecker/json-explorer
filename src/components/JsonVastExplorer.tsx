@@ -49,8 +49,8 @@ const JsonVastExplorer = React.memo(({
   const [error, setError] = useState('');
   
   // copyMessage wird für Benachrichtigungen nach dem Kopieren verwendet
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [copyMessage, setCopyMessage] = useState('');
+  const [copyMessageVisible, setCopyMessageVisible] = useState(false);
   
   // Suche und Tab-Verwaltung
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -491,7 +491,11 @@ const JsonVastExplorer = React.memo(({
     navigator.clipboard.writeText(text).then(
       () => {
         setCopyMessage(`${type} copied!`);
-        setTimeout(() => setCopyMessage(''), 2000);
+        setCopyMessageVisible(true);
+        setTimeout(() => {
+          setCopyMessageVisible(false);
+          setTimeout(() => setCopyMessage(''), 300); // Warte auf Fade-Out-Animation
+        }, 2000);
       },
       (err) => console.error('Error copying: ', err)
     );
@@ -550,8 +554,9 @@ const JsonVastExplorer = React.memo(({
         let inCdata = false;
         
         // CDATA-Inhalte inline lassen und nicht umbrechen
-        xml = xml.replace(/(<!\[CDATA\[.*?\]\]>)/g, function(match) {
-          return match.replace(/\s+/g, ' ');
+        // Verwende mehrere Regex ohne s-Flag (dotall) für Abwärtskompatibilität
+        xml = xml.replace(/(<!\[CDATA\[)([^]*?)(\]\]>)/g, function(match, p1, p2, p3) {
+          return p1 + p2.replace(/\s+/g, ' ') + p3;
         });
         
         // Tag-Inhalte und Tags durch Zeilenumbrüche trennen
@@ -572,7 +577,7 @@ const JsonVastExplorer = React.memo(({
           
           // Einrückung für schließende Tags reduzieren
           if (isClosingTag) {
-            indentLevel--;
+            indentLevel = Math.max(0, indentLevel - 1);
           }
           
           // Einrückung hinzufügen (nur wenn nicht in CDATA-Block)
@@ -764,15 +769,18 @@ const JsonVastExplorer = React.memo(({
   // Perform JSON search function
   const performJsonSearch = useCallback(() => {
     // Reset previous search results
+    if (jsonSearchCleanup) {
+      jsonSearchCleanup();
+    }
     setJsonSearchResults([]);
     setJsonCurrentResultIndex(-1);
     
-    if (!jsonSearchTerm.trim()) {
+    if (!jsonSearchTerm.trim() || !jsonRef.current) {
       return;
     }
     
     // Perform the search
-    const { matches, cleanup } = performSearch(
+    const { matches, cleanup, highlightMatch } = performSearch(
       jsonSearchTerm,
       jsonRef.current,
       jsonSearchCleanup
@@ -782,9 +790,15 @@ const JsonVastExplorer = React.memo(({
     setJsonSearchResults(matches);
     setJsonSearchCleanup(() => cleanup);
     
-    // Scroll zum ersten Ergebnis (auch horizontal)
-    if (matches[0] && matches[0].element) {
-      scrollToElement(matches[0].element);
+    // Highlight first match if exists
+    if (matches.length > 0) {
+      setJsonCurrentResultIndex(0);
+      highlightMatch(0, matches);
+      
+      // Scroll zum ersten Ergebnis (auch horizontal)
+      if (matches[0] && matches[0].element) {
+        scrollToElement(matches[0].element);
+      }
     }
   }, [jsonSearchTerm, jsonRef, jsonSearchCleanup, scrollToElement]);
 
@@ -866,6 +880,11 @@ const JsonVastExplorer = React.memo(({
       }
     });
     
+    // Führe die alte Cleanup-Funktion aus, falls vorhanden
+    if (currentTabSearch.cleanup) {
+      currentTabSearch.cleanup();
+    }
+    
     // Aktualisiere das Array mit leeren Ergebnissen für die aktuelle Suche
     const updatedSearches = [...vastTabSearches];
     updatedSearches[activeVastTabIndex] = {
@@ -886,13 +905,13 @@ const JsonVastExplorer = React.memo(({
       ? embeddedVastOutputRef.current 
       : getFetchedVastRef(activeVastTabIndex - 1).current;
     
-    // Führe die alte Cleanup-Funktion aus, falls vorhanden
-    if (currentTabSearch.cleanup) {
-      currentTabSearch.cleanup();
+    if (!vastContainer) {
+      console.error("VAST container not found for search");
+      return;
     }
     
     // Perform the search
-    const { matches, cleanup } = performSearch(
+    const { matches, cleanup, highlightMatch } = performSearch(
       vastSearchTerm,
       vastContainer,
       null // Kein direktes Cleanup, wir verwalten es selbst im Array
@@ -910,7 +929,6 @@ const JsonVastExplorer = React.memo(({
       };
       
       // Highlight first match
-      const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
       highlightMatch(0, matches);
       
       // Scroll zum ersten Ergebnis (auch horizontal)
@@ -1028,13 +1046,18 @@ const JsonVastExplorer = React.memo(({
   const handleSearchButtonClick = useCallback(() => {
     setIsSearchOpen(true);
     setTimeout(() => {
-      if (jsonRef.current) {
+      if (activeVastTabIndex === 0 && !rawVastContent) {
+        // Nur JSON suche
         performJsonSearch();
-      } else if (vastRef.current) {
+      } else if (activeVastTabIndex === 0 && rawVastContent) {
+        // In Embedded VAST suchen
+        performVastSearch();
+      } else {
+        // In VAST Chain Item suchen
         performVastSearch();
       }
     }, 100);
-  }, [performJsonSearch, performVastSearch, jsonRef, vastRef]);
+  }, [performJsonSearch, performVastSearch, activeVastTabIndex, rawVastContent]);
 
   const handleToggleWordWrapClick = useCallback(() => {
     setIsWordWrapEnabled(prev => !prev);
@@ -1073,7 +1096,11 @@ const JsonVastExplorer = React.memo(({
         }}
         onSearchComplete={(count) => {
           console.log(`Search completed with ${count} results`);
-          performJsonSearch();
+          if (activeVastTabIndex === 0 && !rawVastContent) {
+            performJsonSearch();
+          } else {
+            performVastSearch();
+          }
         }}
       />
     
@@ -1085,6 +1112,15 @@ const JsonVastExplorer = React.memo(({
           onRestore={restoreFromHistory}
           onClose={() => setShowHistory(false)}
         />
+      )}
+
+      {/* Copy Confirmation Message */}
+      {copyMessageVisible && (
+        <div className={`fixed top-4 right-4 p-3 rounded-md shadow-lg transition-opacity duration-300 z-50 ${
+          isDarkMode ? 'bg-gray-700 text-white' : 'bg-green-100 text-green-800'
+        } ${copyMessageVisible ? 'opacity-100' : 'opacity-0'}`}>
+          {copyMessage}
+        </div>
       )}
 
       <Card isDarkMode={isDarkMode} className="mt-8 mb-8" withPadding>
