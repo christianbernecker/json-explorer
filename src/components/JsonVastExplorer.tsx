@@ -537,13 +537,6 @@ const JsonVastExplorer = React.memo(({
     setExpandedVastNodes(new Set());
   }, []);
 
-  // Kopieren des JSON-Inhalts in die Zwischenablage
-  const copyJsonToClipboard = useCallback(() => {
-    if (parsedJson) {
-      copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
-    }
-  }, [parsedJson, copyToClipboard]);
-
   // Format XML for display - adding proper styling and line breaks
   const formatXmlForDisplay = useCallback((xml: string | null): string => {
     if (!xml) return '';
@@ -613,24 +606,6 @@ const JsonVastExplorer = React.memo(({
       return xml;
     }
   }, []);
-  
-  // Handle toggle word wrap
-  const toggleWordWrap = useCallback(() => {
-    setIsWordWrapEnabled(prev => !prev);
-  }, []);
-  
-  // Copy VAST content to clipboard
-  const copyVastToClipboard = useCallback(() => {
-    if (activeVastTabIndex === 0 && rawVastContent) {
-      copyToClipboard(rawVastContent, 'VAST');
-    } else if (activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1]?.content) {
-      // Stellen sicher, dass content nicht null ist
-      const content = vastChain[activeVastTabIndex - 1].content;
-      if (content) {
-        copyToClipboard(content, 'VAST');
-      }
-    }
-  }, [activeVastTabIndex, rawVastContent, vastChain, copyToClipboard]);
   
   // Render VAST content with proper formatting
   const renderVastContent = useCallback((vastContent: string | null) => {
@@ -1049,6 +1024,39 @@ const JsonVastExplorer = React.memo(({
     };
   }, []);
 
+  // Füge diese Handler-Definitionen nach performJsonSearch und performVastSearch ein
+  const handleSearchButtonClick = useCallback(() => {
+    setIsSearchOpen(true);
+    setTimeout(() => {
+      if (jsonRef.current) {
+        performJsonSearch();
+      } else if (vastRef.current) {
+        performVastSearch();
+      }
+    }, 100);
+  }, [performJsonSearch, performVastSearch, jsonRef, vastRef]);
+
+  const handleToggleWordWrapClick = useCallback(() => {
+    setIsWordWrapEnabled(prev => !prev);
+  }, []);
+
+  const handleCopyJsonButtonClick = useCallback(() => {
+    if (parsedJson) {
+      copyToClipboard(JSON.stringify(parsedJson, null, 2), 'JSON');
+    }
+  }, [parsedJson, copyToClipboard]);
+
+  const handleCopyVastButtonClick = useCallback(() => {
+    if (activeVastTabIndex === 0 && rawVastContent) {
+      copyToClipboard(rawVastContent, 'VAST');
+    } else if (activeVastTabIndex > 0 && vastChain[activeVastTabIndex - 1]?.content) {
+      const content = vastChain[activeVastTabIndex - 1].content;
+      if (content) {
+        copyToClipboard(content, 'VAST');
+      }
+    }
+  }, [activeVastTabIndex, rawVastContent, vastChain, copyToClipboard]);
+
   return (
     <div className="w-full h-full flex flex-col px-0 sm:px-1 md:px-3 lg:px-4">
       {/* Original search component - keeping this for reference */}
@@ -1133,16 +1141,13 @@ const JsonVastExplorer = React.memo(({
             {/* JSON Content - Left column */}
             {parsedJson && (
               <div className={`${rawVastContent ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
-                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
+                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 shadow-md">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>Formatted JSON</h3>
                     {/* Control buttons für JSON */}
                     <div className="flex space-x-2">
                       <Button
-                        onClick={() => {
-                          setIsSearchOpen(true);
-                          setTimeout(() => performJsonSearch(), 100);
-                        }}
+                        onClick={handleSearchButtonClick}
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
@@ -1153,7 +1158,7 @@ const JsonVastExplorer = React.memo(({
                         </svg>
                       </Button>
                       <Button
-                        onClick={toggleWordWrap}
+                        onClick={handleToggleWordWrapClick}
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
@@ -1164,7 +1169,7 @@ const JsonVastExplorer = React.memo(({
                         </svg>
                       </Button>
                       <Button
-                        onClick={copyJsonToClipboard}
+                        onClick={handleCopyJsonButtonClick}
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
@@ -1242,16 +1247,13 @@ const JsonVastExplorer = React.memo(({
             {/* VAST Content - Right column or full width if no JSON */}
             {rawVastContent && (
               <div className={`${parsedJson ? 'w-full md:w-1/2' : 'w-full'} min-w-0 flex flex-col`}>
-                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-50 dark:bg-gray-800">
+                <div className="my-6 p-5 border border-gray-200 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 shadow-md">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-gray-100' : 'text-gray-800'}`}>VAST Tags</h3>
                     {/* Control buttons für VAST */}
                     <div className="flex space-x-2">
                       <Button
-                        onClick={() => {
-                          setIsSearchOpen(true);
-                          setTimeout(() => performVastSearch(), 100);
-                        }}
+                        onClick={handleSearchButtonClick}
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
@@ -1262,7 +1264,7 @@ const JsonVastExplorer = React.memo(({
                         </svg>
                       </Button>
                       <Button
-                        onClick={toggleWordWrap}
+                        onClick={handleToggleWordWrapClick}
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"
@@ -1273,7 +1275,7 @@ const JsonVastExplorer = React.memo(({
                         </svg>
                       </Button>
                       <Button
-                        onClick={copyVastToClipboard}
+                        onClick={handleCopyVastButtonClick}
                         variant="secondary"
                         isDarkMode={isDarkMode}
                         size="sm"

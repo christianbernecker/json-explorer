@@ -1,1 +1,1 @@
-{"deployment": "staging", "timestamp": "Fri May 23 09:46:04 CEST 2025", "commit": "Deutsche Texte und korrigierte Button-Functionality: 1) Alle UI-Texte auf Deutsch übersetzt, 2) Korrigierte onClick-Handler für alle Buttons, 3) Verbesserte Such-Funktionalität"}
+{"deployment": "staging", "timestamp": "Fri May 23 10:09:09 CEST 2025", "commit": "Reverted to English UI: All UI texts changed back to English while preserving button functionality improvements."}
