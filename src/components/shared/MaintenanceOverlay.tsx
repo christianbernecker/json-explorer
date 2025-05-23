@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { APP_VERSION, APP_ENV } from '../../constants';
+import { APP_VERSION } from '../../constants';
 
 interface MaintenanceOverlayProps {
   isDarkMode: boolean;
