@@ -62,9 +62,13 @@ const JsonVastExplorer = React.memo(({
   const [searchDebugMessage, setSearchDebugMessage] = useState<string | null>(null);
   
   // Separate Suchvariablen für JSON und VAST
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jsonSearchTerm] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jsonSearchResults, setJsonSearchResults] = useState<{element: HTMLElement, text: string, startPos: number}[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jsonCurrentResultIndex, setJsonCurrentResultIndex] = useState(-1);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jsonSearchCleanup, setJsonSearchCleanup] = useState<(() => void) | null>(null);
   const [jsonSearchStatus] = useState<'idle' | 'no-results' | 'results'>('idle');
   
@@ -1171,6 +1175,7 @@ const JsonVastExplorer = React.memo(({
     setTimeout(() => {
       // Wenn es Ergebnisse im neuen Tab gibt, hervorheben
       if (vastTabSearches[newTabIndex]?.results.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const vastContainer = newTabIndex === 0 
           ? embeddedVastOutputRef.current 
           : getFetchedVastRef(newTabIndex - 1).current;
@@ -1191,7 +1196,7 @@ const JsonVastExplorer = React.memo(({
         */
       }
     }, 100);
-  }, [activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, scrollToElement, vastTabSearches]);
+  }, [activeVastTabIndex, embeddedVastOutputRef, getFetchedVastRef, vastTabSearches]);
 
   // Wenn sich die Tab-Struktur ändert, müssen wir die VAST-Tabs-Suche neu initialisieren
   useEffect(() => {
