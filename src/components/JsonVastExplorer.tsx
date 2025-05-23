@@ -559,11 +559,25 @@ const JsonVastExplorer = React.memo(({
           return p1 + p2.replace(/\s+/g, ' ') + p3;
         });
         
+        // Spezialbehandlung für XML-Deklaration (startet mit <?)
+        const xmlHeaderMatch = xml.match(/^\s*<\?xml[^>]*\?>/);
+        let xmlHeader = '';
+        if (xmlHeaderMatch) {
+          xmlHeader = xmlHeaderMatch[0] + '\n';
+          xml = xml.substring(xmlHeaderMatch[0].length).trim();
+        }
+        
         // Tag-Inhalte und Tags durch Zeilenumbrüche trennen
         xml = xml.replace(/>\s*</g, '>\n<');
         
         // Durch die Zeilen gehen und Einrückung hinzufügen
         const lines = xml.split('\n');
+        
+        // Mit XML-Header beginnen, falls vorhanden
+        if (xmlHeader) {
+          formattedXml = xmlHeader;
+        }
+        
         for (let i = 0; i < lines.length; i++) {
           let line = lines[i].trim();
           if (!line) continue;
@@ -572,24 +586,27 @@ const JsonVastExplorer = React.memo(({
           const isClosingTag = line.startsWith('</');
           // Prüfen, ob es ein selbstschließendes Tag ist
           const isSelfClosingTag = line.match(/<[^>]*\/>/);
+          // Prüfen, ob es ein Verarbeitungsanweisung ist
+          const isProcessingInstruction = line.startsWith('<?') && line.endsWith('?>');
           // Prüfen, ob es ein CDATA-Block ist
           const isCdataTag = line.match(/!\[CDATA\[.*?\]\]/);
           
-          // Einrückung für schließende Tags reduzieren
+          // Einrückung für schließende Tags reduzieren (vor dem Hinzufügen)
           if (isClosingTag) {
             indentLevel = Math.max(0, indentLevel - 1);
           }
           
-          // Einrückung hinzufügen (nur wenn nicht in CDATA-Block)
-          if (!inCdata) {
+          // Einrückung hinzufügen (nur wenn nicht in CDATA-Block und keine Verarbeitungsanweisung)
+          if (!inCdata && !isProcessingInstruction) {
             formattedXml += '  '.repeat(Math.max(0, indentLevel)) + line + '\n';
           } else {
             formattedXml += line + '\n';
           }
           
-          // Einrückung für öffnende Tags erhöhen
+          // Einrückung für öffnende Tags erhöhen (nach dem Hinzufügen)
           // Wenn es ein öffnendes, nicht selbstschließendes Tag ist
-          if (!isClosingTag && !isSelfClosingTag && line.startsWith('<') && !isCdataTag) {
+          if (!isClosingTag && !isSelfClosingTag && line.startsWith('<') && 
+              !isProcessingInstruction && !isCdataTag) {
             indentLevel++;
           }
           
@@ -766,7 +783,7 @@ const JsonVastExplorer = React.memo(({
     }
   }, [activeVastTabIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Perform JSON search function
+  // Perform JSON search function - robustere Implementation
   const performJsonSearch = useCallback(() => {
     // Reset previous search results
     if (jsonSearchCleanup) {
@@ -779,89 +796,143 @@ const JsonVastExplorer = React.memo(({
       return;
     }
     
-    // Perform the search
-    const { matches, cleanup, highlightMatch } = performSearch(
-      jsonSearchTerm,
-      jsonRef.current,
-      jsonSearchCleanup
-    );
-    
-    // Set the results and cleanup function
-    setJsonSearchResults(matches);
-    setJsonSearchCleanup(() => cleanup);
-    
-    // Highlight first match if exists
-    if (matches.length > 0) {
-      setJsonCurrentResultIndex(0);
-      highlightMatch(0, matches);
+    try {
+      console.log("Performing JSON search for:", jsonSearchTerm);
       
-      // Scroll zum ersten Ergebnis (auch horizontal)
-      if (matches[0] && matches[0].element) {
-        scrollToElement(matches[0].element);
+      // Sammle alle Textelemente im JSON-Container
+      const allTextElements: Array<{ node: Node, text: string, parent: HTMLElement | null }> = [];
+      const walker = document.createTreeWalker(
+        jsonRef.current,
+        NodeFilter.SHOW_TEXT,
+        { acceptNode: (node) => node.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT }
+      );
+      
+      let currentNode: Node | null;
+      while (currentNode = walker.nextNode()) {
+        // Überspringe Elemente, die bereits Teil einer Suche sind
+        if (currentNode.parentElement?.classList.contains('search-term-highlight') ||
+            currentNode.parentElement?.classList.contains('search-term-current')) {
+          continue;
+        }
+        
+        allTextElements.push({
+          node: currentNode,
+          text: currentNode.textContent || '',
+          parent: currentNode.parentElement
+        });
       }
+      
+      // Suche nach dem Term in allen Textelementen
+      const matches: Array<{ element: HTMLElement | null, text: string, startPos: number, node: Node }> = [];
+      const searchTermLower = jsonSearchTerm.toLowerCase();
+      
+      for (const element of allTextElements) {
+        const textLower = element.text.toLowerCase();
+        let startPos = 0;
+        let pos;
+        
+        // Finde alle Vorkommen im Text
+        while ((pos = textLower.indexOf(searchTermLower, startPos)) !== -1) {
+          if (element.parent) {
+            matches.push({
+              element: element.parent,
+              text: element.text,
+              startPos: pos,
+              node: element.node
+            });
+          }
+          startPos = pos + searchTermLower.length;
+        }
+      }
+      
+      console.log(`Found ${matches.length} JSON search matches`);
+      
+      // Speichere Ergebnisse im State - nur gültige Elemente
+      const validMatches = matches.filter(match => match.element !== null) as { 
+        element: HTMLElement, 
+        text: string, 
+        startPos: number, 
+        node: Node 
+      }[];
+      
+      setJsonSearchResults(validMatches.map(({ element, text, startPos }) => ({
+        element,
+        text,
+        startPos
+      })));
+      
+      // Highlight matches
+      if (validMatches.length > 0) {
+        const highlightElements = () => {
+          // Entferne alte Highlights
+          document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+            if (el instanceof HTMLElement) {
+              const text = el.textContent || '';
+              const textNode = document.createTextNode(text);
+              if (el.parentNode) {
+                el.parentNode.replaceChild(textNode, el);
+              }
+            }
+          });
+          
+          // Markiere alle Treffer
+          validMatches.forEach((match, index) => {
+            if (!match.node || !match.node.textContent) return;
+            
+            const originalText = match.node.textContent;
+            const startPos = match.startPos;
+            const endPos = startPos + jsonSearchTerm.length;
+            
+            const before = originalText.substring(0, startPos);
+            const term = originalText.substring(startPos, endPos);
+            const after = originalText.substring(endPos);
+            
+            const spanClass = index === jsonCurrentResultIndex ? 'search-term-current' : 'search-term-highlight';
+            
+            const newContent = document.createRange().createContextualFragment(
+              `${before}<span class="${spanClass}">${term}</span>${after}`
+            );
+            
+            if (match.node.parentNode) {
+              match.node.parentNode.replaceChild(newContent, match.node);
+            }
+          });
+          
+          // Scroll zum aktuellen Ergebnis
+          if (validMatches[jsonCurrentResultIndex]?.element) {
+            scrollToElement(validMatches[jsonCurrentResultIndex].element);
+          }
+        };
+        
+        // Führe Highlighting aus
+        highlightElements();
+        
+        // Setze den aktuellen Index, wenn noch keiner gesetzt ist
+        if (jsonCurrentResultIndex === -1) {
+          setJsonCurrentResultIndex(0);
+        }
+        
+        // Erstelle Cleanup-Funktion
+        const cleanup = () => {
+          document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+            if (el instanceof HTMLElement) {
+              const text = el.textContent || '';
+              const textNode = document.createTextNode(text);
+              if (el.parentNode) {
+                el.parentNode.replaceChild(textNode, el);
+              }
+            }
+          });
+        };
+        
+        setJsonSearchCleanup(() => cleanup);
+      }
+    } catch (error) {
+      console.error("Error in JSON search:", error);
     }
-  }, [jsonSearchTerm, jsonRef, jsonSearchCleanup, scrollToElement]);
+  }, [jsonSearchTerm, jsonRef, jsonSearchCleanup, jsonCurrentResultIndex, scrollToElement]);
 
-  // Navigation für die VAST-Tabs
-  const goToNextVastResult = useCallback(() => {
-    const currentTabSearch = vastTabSearches[activeVastTabIndex];
-    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
-    
-    const nextIndex = (currentTabSearch.currentIndex + 1) % currentTabSearch.results.length;
-    
-    // Aktualisiere den Index im Tab-spezifischen Zustand
-    const updatedSearches = [...vastTabSearches];
-    updatedSearches[activeVastTabIndex] = {
-      ...updatedSearches[activeVastTabIndex],
-      currentIndex: nextIndex
-    };
-    setVastTabSearches(updatedSearches);
-    
-    // Get the appropriate VAST container for the current tab
-    const vastContainer = activeVastTabIndex === 0 
-      ? embeddedVastOutputRef.current 
-      : getFetchedVastRef(activeVastTabIndex - 1).current;
-    
-    // Perform the highlight
-    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
-    highlightMatch(nextIndex, currentTabSearch.results);
-    
-    // Scroll zum Ergebnis
-    if (currentTabSearch.results[nextIndex]?.element) {
-      scrollToElement(currentTabSearch.results[nextIndex].element);
-    }
-  }, [vastTabSearches, activeVastTabIndex, vastSearchTerm, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
-
-  const goToPrevVastResult = useCallback(() => {
-    const currentTabSearch = vastTabSearches[activeVastTabIndex];
-    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
-    
-    const prevIndex = (currentTabSearch.currentIndex - 1 + currentTabSearch.results.length) % currentTabSearch.results.length;
-    
-    // Aktualisiere den Index im Tab-spezifischen Zustand
-    const updatedSearches = [...vastTabSearches];
-    updatedSearches[activeVastTabIndex] = {
-      ...updatedSearches[activeVastTabIndex],
-      currentIndex: prevIndex
-    };
-    setVastTabSearches(updatedSearches);
-    
-    // Get the appropriate VAST container for the current tab
-    const vastContainer = activeVastTabIndex === 0 
-      ? embeddedVastOutputRef.current 
-      : getFetchedVastRef(activeVastTabIndex - 1).current;
-    
-    // Perform the highlight
-    const { highlightMatch } = performSearch(vastSearchTerm, vastContainer, null);
-    highlightMatch(prevIndex, currentTabSearch.results);
-    
-    // Scroll zum Ergebnis
-    if (currentTabSearch.results[prevIndex]?.element) {
-      scrollToElement(currentTabSearch.results[prevIndex].element);
-    }
-  }, [vastTabSearches, activeVastTabIndex, vastSearchTerm, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
-
-  // Perform VAST search function - jetzt tabspezifisch
+  // Perform VAST search function - robustere Implementation
   const performVastSearch = useCallback(() => {
     // Hole den aktuellen Tab-Suchstatus
     const currentTabSearch = vastTabSearches[activeVastTabIndex];
@@ -870,10 +941,8 @@ const JsonVastExplorer = React.memo(({
     // Entferne zuerst alle vorherigen Hervorhebungen
     document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
       if (el instanceof HTMLElement) {
-        // Wir erstellen ein TextNode mit dem ursprünglichen Inhalt
         const text = el.textContent || '';
         const textNode = document.createTextNode(text);
-        // Und ersetzen das hervorgehobene Element durch diesen TextNode
         if (el.parentNode) {
           el.parentNode.replaceChild(textNode, el);
         }
@@ -900,52 +969,199 @@ const JsonVastExplorer = React.memo(({
       return;
     }
     
-    // Get the appropriate VAST container for the current tab
-    const vastContainer = activeVastTabIndex === 0 
-      ? embeddedVastOutputRef.current 
-      : getFetchedVastRef(activeVastTabIndex - 1).current;
-    
-    if (!vastContainer) {
-      console.error("VAST container not found for search");
-      return;
-    }
-    
-    // Perform the search
-    const { matches, cleanup, highlightMatch } = performSearch(
-      vastSearchTerm,
-      vastContainer,
-      null // Kein direktes Cleanup, wir verwalten es selbst im Array
-    );
-    
-    // Update the current tab's search state
-    const newUpdatedSearches = [...vastTabSearches];
-    
-    if (matches.length > 0) {
-      newUpdatedSearches[activeVastTabIndex] = {
-        results: matches,
-        currentIndex: 0,
-        cleanup: cleanup,
-        status: 'results' as const
-      };
+    try {
+      // Get the appropriate VAST container for the current tab
+      const vastContainer = activeVastTabIndex === 0 
+        ? embeddedVastOutputRef.current 
+        : getFetchedVastRef(activeVastTabIndex - 1).current;
       
-      // Highlight first match
-      highlightMatch(0, matches);
-      
-      // Scroll zum ersten Ergebnis (auch horizontal)
-      if (matches[0] && matches[0].element) {
-        scrollToElement(matches[0].element);
+      if (!vastContainer) {
+        console.error("VAST container not found for search");
+        return;
       }
-    } else {
-      newUpdatedSearches[activeVastTabIndex] = {
-        results: [],
-        currentIndex: -1,
-        cleanup: cleanup,
-        status: 'no-results' as const
-      };
+      
+      console.log("Performing VAST search for:", vastSearchTerm);
+      
+      // Sammle alle Textelemente im VAST-Container
+      const allTextElements: Array<{ node: Node, text: string, parent: HTMLElement | null }> = [];
+      const walker = document.createTreeWalker(
+        vastContainer,
+        NodeFilter.SHOW_TEXT,
+        { acceptNode: (node) => node.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT }
+      );
+      
+      let currentNode: Node | null;
+      while (currentNode = walker.nextNode()) {
+        // Überspringe Elemente, die bereits Teil einer Suche sind
+        if (currentNode.parentElement?.classList.contains('search-term-highlight') ||
+            currentNode.parentElement?.classList.contains('search-term-current')) {
+          continue;
+        }
+        
+        allTextElements.push({
+          node: currentNode,
+          text: currentNode.textContent || '',
+          parent: currentNode.parentElement
+        });
+      }
+      
+      // Suche nach dem Term in allen Textelementen
+      const matches: Array<{ element: HTMLElement | null, text: string, startPos: number, node: Node }> = [];
+      const searchTermLower = vastSearchTerm.toLowerCase();
+      
+      for (const element of allTextElements) {
+        const textLower = element.text.toLowerCase();
+        let startPos = 0;
+        let pos;
+        
+        // Finde alle Vorkommen im Text
+        while ((pos = textLower.indexOf(searchTermLower, startPos)) !== -1) {
+          if (element.parent) {
+            matches.push({
+              element: element.parent,
+              text: element.text,
+              startPos: pos,
+              node: element.node
+            });
+          }
+          startPos = pos + searchTermLower.length;
+        }
+      }
+      
+      console.log(`Found ${matches.length} VAST search matches for tab ${activeVastTabIndex}`);
+      
+      // Filtere gültige Matches
+      const validMatches = matches.filter(match => match.element !== null) as { 
+        element: HTMLElement, 
+        text: string, 
+        startPos: number, 
+        node: Node 
+      }[];
+      
+      // Update the current tab's search state
+      const newUpdatedSearches = [...vastTabSearches];
+      
+      if (validMatches.length > 0) {
+        // Highlight-Funktion für VAST-Suche
+        const highlightVastMatches = (currentIndex: number) => {
+          // Entferne alte Highlights
+          document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+            if (el instanceof HTMLElement) {
+              const text = el.textContent || '';
+              const textNode = document.createTextNode(text);
+              if (el.parentNode) {
+                el.parentNode.replaceChild(textNode, el);
+              }
+            }
+          });
+          
+          // Markiere alle Treffer
+          validMatches.forEach((match, index) => {
+            if (!match.node || !match.node.textContent) return;
+            
+            const originalText = match.node.textContent;
+            const startPos = match.startPos;
+            const endPos = startPos + vastSearchTerm.length;
+            
+            const before = originalText.substring(0, startPos);
+            const term = originalText.substring(startPos, endPos);
+            const after = originalText.substring(endPos);
+            
+            const spanClass = index === currentIndex ? 'search-term-current' : 'search-term-highlight';
+            
+            const newContent = document.createRange().createContextualFragment(
+              `${before}<span class="${spanClass}">${term}</span>${after}`
+            );
+            
+            if (match.node.parentNode) {
+              match.node.parentNode.replaceChild(newContent, match.node);
+            }
+          });
+          
+          // Scroll zum aktuellen Ergebnis
+          if (validMatches[currentIndex]?.element) {
+            scrollToElement(validMatches[currentIndex].element);
+          }
+        };
+        
+        // Cleanup-Funktion für VAST-Suche
+        const cleanup = () => {
+          document.querySelectorAll('.search-term-highlight, .search-term-current').forEach(el => {
+            if (el instanceof HTMLElement) {
+              const text = el.textContent || '';
+              const textNode = document.createTextNode(text);
+              if (el.parentNode) {
+                el.parentNode.replaceChild(textNode, el);
+              }
+            }
+          });
+        };
+        
+        // Aktualisiere den Suchstatus für den aktuellen Tab
+        newUpdatedSearches[activeVastTabIndex] = {
+          results: validMatches.map(({ element, text, startPos }) => ({
+            element,
+            text,
+            startPos
+          })),
+          currentIndex: 0,
+          cleanup: cleanup,
+          status: 'results' as const
+        };
+        
+        // Highlight first match
+        highlightVastMatches(0);
+      } else {
+        newUpdatedSearches[activeVastTabIndex] = {
+          results: [],
+          currentIndex: -1,
+          cleanup: null,
+          status: 'no-results' as const
+        };
+      }
+      
+      setVastTabSearches(newUpdatedSearches);
+    } catch (error) {
+      console.error("Error in VAST search:", error);
     }
-    
-    setVastTabSearches(newUpdatedSearches);
   }, [vastSearchTerm, activeVastTabIndex, vastTabSearches, embeddedVastOutputRef, getFetchedVastRef, scrollToElement]);
+
+  // Navigation für die VAST-Tabs
+  const goToNextVastResult = useCallback(() => {
+    const currentTabSearch = vastTabSearches[activeVastTabIndex];
+    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
+    
+    const nextIndex = (currentTabSearch.currentIndex + 1) % currentTabSearch.results.length;
+    
+    // Aktualisiere den Index im Tab-spezifischen Zustand und führe Highlight durch
+    const updatedSearches = [...vastTabSearches];
+    updatedSearches[activeVastTabIndex] = {
+      ...updatedSearches[activeVastTabIndex],
+      currentIndex: nextIndex
+    };
+    setVastTabSearches(updatedSearches);
+    
+    // Perform the search again to highlight the next result
+    performVastSearch();
+  }, [vastTabSearches, activeVastTabIndex, performVastSearch]);
+
+  const goToPrevVastResult = useCallback(() => {
+    const currentTabSearch = vastTabSearches[activeVastTabIndex];
+    if (!currentTabSearch || currentTabSearch.results.length === 0) return;
+    
+    const prevIndex = (currentTabSearch.currentIndex - 1 + currentTabSearch.results.length) % currentTabSearch.results.length;
+    
+    // Aktualisiere den Index im Tab-spezifischen Zustand und führe Highlight durch
+    const updatedSearches = [...vastTabSearches];
+    updatedSearches[activeVastTabIndex] = {
+      ...updatedSearches[activeVastTabIndex],
+      currentIndex: prevIndex
+    };
+    setVastTabSearches(updatedSearches);
+    
+    // Perform the search again to highlight the previous result
+    performVastSearch();
+  }, [vastTabSearches, activeVastTabIndex, performVastSearch]);
 
   // WICHTIG: Tab-Wechsel-Handler um Hervorhebungen zu aktualisieren
   const handleVastTabChange = useCallback((newTabIndex: number) => {
@@ -1114,11 +1330,14 @@ const JsonVastExplorer = React.memo(({
         />
       )}
 
-      {/* Copy Confirmation Message */}
+      {/* Copy Confirmation Message - Jetzt rechts unten mit Icon */}
       {copyMessageVisible && (
-        <div className={`fixed top-4 right-4 p-3 rounded-md shadow-lg transition-opacity duration-300 z-50 ${
+        <div className={`fixed bottom-4 right-4 flex items-center p-3 rounded-md shadow-lg transition-opacity duration-300 z-50 ${
           isDarkMode ? 'bg-gray-700 text-white' : 'bg-green-100 text-green-800'
         } ${copyMessageVisible ? 'opacity-100' : 'opacity-0'}`}>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
           {copyMessage}
         </div>
       )}
@@ -1385,7 +1604,7 @@ const JsonVastExplorer = React.memo(({
                     ))}
                   </div>
 
-                  {/* VAST Struktur-Toggle */}
+                  {/* VAST Struktur-Toggle ohne XML Nodes Anzahl */}
                   <div className="flex mb-2 mt-2">
                     <Button
                       onClick={() => setShowVastStructure(!showVastStructure)}
@@ -1396,9 +1615,6 @@ const JsonVastExplorer = React.memo(({
                     >
                       {showVastStructure ? "Show VAST" : "Show Structure"}
                     </Button>
-                    <div className={`ml-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {expandedVastNodes.size} XML nodes
-                    </div>
                   </div>
 
                   {/* VAST Content Display */}
